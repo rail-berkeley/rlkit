@@ -6,13 +6,15 @@ Reinforcement learning framework implemented in PyTorch.
 Some implemented algorithms:
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
-    - [paper](https://arxiv.org/pdf/1509.02971.pdf)
+    - [DDPG paper](https://arxiv.org/pdf/1509.02971.pdf)
  - (Double) Deep Q-Network (DQN)
     - [example script](examples/dqn_and_double_dqn.py)
     - [DQN paper](https://arxiv.org/pdf/1509.06461.pdf)
     - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
  - Soft Actor Critic (SAC)
     - [example script](examples/sac.py)
+    - [SAC paper](https://drive.google.com/file/d/0Bxz3x8U2LH_2QllDZVlUQ1BJVEJHeER2YU5mODNaeFZmc3dz/view)
+    - [TensorFlow implementation from author](https://github.com/haarnoja/sac)
 
 To get started, checkout the example scripts, linked above.
 
@@ -49,6 +51,10 @@ tl;dr run
 python rllab/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
 
-## Credit
+## Algorithm-Specific Comments
+### SAC
+The SAC implementation provided here only uses Gaussian policy, rather than a Gaussian mixture model, as described in the original SAC paper.
+
+## Credits
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
-Also, the serialization and logger code are basically a carbon copy.
+The serialization and logger code are basically a carbon copy of the rllab versions.
