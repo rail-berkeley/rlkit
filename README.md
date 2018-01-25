@@ -1,7 +1,7 @@
 README last updated on: 01/24/2018
 
 # rlkit
-Reinforcement learning framework.
+Reinforcement learning framework implemented in PyTorch.
 
 Some implemented algorithms:
  - Deep Deterministic Policy Gradient (DDPG)
@@ -36,7 +36,7 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>
  - inside this folder, you should see a file called `params.pkl`. To visualize a policy, run
 
 ```
-(rlkit) $ python scripts/sim_policy LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+(rlkit-env) $ python scripts/sim_policy LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
 If you have rllab installed, you can also visualize the results
