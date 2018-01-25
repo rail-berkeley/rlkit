@@ -29,7 +29,7 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>
  - inside this folder, you should see a file called `params.pkl`. To visualize a policy, run
 
 ```
-(rlkit) $ python scripts/sim_policy LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+(rlkit-env) $ python scripts/sim_policy LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
 If you have rllab installed, you can also visualize the results
