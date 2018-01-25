@@ -8,8 +8,7 @@ from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.launchers.launcher_util import setup_logger
-from rlkit.torch.algos.double_dqn import DoubleDQN
-from rlkit.torch.algos.dqn import DQN
+from rlkit.torch.dqn.dqn import DQN
 from rlkit.torch.networks import Mlp
 
 

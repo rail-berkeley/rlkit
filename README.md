@@ -4,8 +4,15 @@ README last updated on: 01/24/2018
 Reinforcement learning framework.
 
 Some implemented algorithms:
- - [Deep Deterministic Policy Gradient (DDPG)](examples/ddpg.py)
- - [(Double) Deep Q-Network (DQN)](examples/dqn_and_double_dqn.py)
+ - Deep Deterministic Policy Gradient (DDPG)
+    - [example script](examples/ddpg.py)
+    - [paper](https://arxiv.org/pdf/1509.02971.pdf)
+ - (Double) Deep Q-Network (DQN)
+    - [example script](examples/dqn_and_double_dqn.py)
+    - [DQN paper](https://arxiv.org/pdf/1509.06461.pdf)
+    - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
+ - Soft Actor Critic (SAC)
+    - [example script](examples/sac.py)
 
 To get started, checkout the example scripts, linked above.
 

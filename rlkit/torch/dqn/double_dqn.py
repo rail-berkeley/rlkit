@@ -5,7 +5,7 @@ import torch
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.algos.dqn import DQN
+from rlkit.torch.dqn.dqn import DQN
 
 
 class DoubleDQN(DQN):

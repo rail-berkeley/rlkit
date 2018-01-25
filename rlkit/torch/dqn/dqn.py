@@ -12,7 +12,7 @@ from rlkit.exploration_strategies.base import (
 from rlkit.exploration_strategies.epsilon_greedy import EpsilonGreedy
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.policies.argmax import ArgmaxDiscretePolicy
-from rlkit.torch.algos.torch_rl_algorithm import TorchRLAlgorithm
+from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
 
 
 class DQN(TorchRLAlgorithm):
