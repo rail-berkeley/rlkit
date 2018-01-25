@@ -1,7 +1,7 @@
 README last updated on: 01/24/2018
 
 # rlkit
-Reinforcement learning framework.
+Reinforcement learning framework implemented in PyTorch.
 
 Some implemented algorithms:
  - [Deep Deterministic Policy Gradient (DDPG)](examples/ddpg.py)
