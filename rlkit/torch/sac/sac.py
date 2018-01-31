@@ -200,8 +200,10 @@ class SoftActorCritic(TorchRLAlgorithm):
 
     def get_epoch_snapshot(self, epoch):
         snapshot = super().get_epoch_snapshot(epoch)
-        snapshot['qf'] = self.qf
-        snapshot['policy'] = self.policy
-        snapshot['vf'] = self.vf
-        snapshot['target_vf'] = self.target_vf
+        snapshot.update(
+            qf=self.qf,
+            policy=self.policy,
+            vf=self.vf,
+            target_vf=self.target_vf,
+        )
         return snapshot

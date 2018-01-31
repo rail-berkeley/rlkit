@@ -119,15 +119,12 @@ class DQN(TorchRLAlgorithm):
         raise NotImplementedError()
 
     def get_epoch_snapshot(self, epoch):
-        self.training_env.render(close=True)
-        data_to_save = dict(
-            epoch=epoch,
+        snapshot = super().get_epoch_snapshot(epoch)
+        snapshot.update(
             exploration_policy=self.exploration_policy,
             policy=self.policy,
         )
-        if self.save_environment:
-            data_to_save['env'] = self.training_env
-        return data_to_save
+        return snapshot
 
     @property
     def networks(self):
