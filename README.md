@@ -1,9 +1,13 @@
-README last updated on: 01/24/2018
+README last updated on: 02/19/2018
 
 # rlkit
-Reinforcement learning framework implemented in PyTorch.
+Reinforcement learning framework and algorithms implemented in PyTorch.
 
 Some implemented algorithms:
+ - Temporal Difference Models (TDMs)
+    - [example script](examples/tdm/7dof_reacher.py)
+    - [TDM paper](https://openreview.net/pdf?id=Skw0n-W0Z)
+    - [Details on implementation](rlkit/torch/tdm/TDMs.md)
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
     - [DDPG paper](https://arxiv.org/pdf/1509.02971.pdf)

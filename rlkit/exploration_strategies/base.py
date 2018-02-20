@@ -24,9 +24,9 @@ class RawExplorationStrategy(ExplorationStrategy, metaclass=abc.ABCMeta):
     def get_actions_from_raw_actions(self, actions, **kwargs):
         raise NotImplementedError()
 
-    def get_action(self, t, observation, policy, **kwargs):
-        action, agent_info = policy.get_action(observation)
-        return self.get_action_from_raw_action(action, **kwargs), agent_info
+    def get_action(self, t, policy, *args, **kwargs):
+        action, agent_info = policy.get_action(*args, **kwargs)
+        return self.get_action_from_raw_action(action), agent_info
 
     def get_actions(self, t, observation, policy, **kwargs):
         actions = policy.get_actions(observation)
@@ -49,11 +49,11 @@ class PolicyWrappedWithExplorationStrategy(ExplorationPolicy, SerializablePolicy
     def set_num_steps_total(self, t):
         self.t = t
 
-    def get_action(self, obs, *args, **kwargs):
-        return self.es.get_action(self.t, obs, self.policy)
+    def get_action(self, *args, **kwargs):
+        return self.es.get_action(self.t, self.policy, *args, **kwargs)
 
-    def get_actions(self, obs, *args, **kwargs):
-        return self.es.get_actions(self.t, obs, self.policy)
+    def get_actions(self, *args, **kwargs):
+        return self.es.get_actions(self.t, self.policy, *args, **kwargs)
 
     def reset(self):
         self.es.reset()
