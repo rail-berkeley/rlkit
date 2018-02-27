@@ -5,8 +5,8 @@ Reinforcement learning framework and algorithms implemented in PyTorch.
 
 Some implemented algorithms:
  - Temporal Difference Models (TDMs)
-    - [example script](examples/tdm/7dof_reacher.py)
-    - [TDM paper](https://openreview.net/pdf?id=Skw0n-W0Z)
+    - [example script](examples/tdm/cheetah.py)
+    - [TDM paper](https://openreview.net/forum?id=HkLRnW-CW)
     - [Details on implementation](rlkit/torch/tdm/TDMs.md)
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
