@@ -6,7 +6,7 @@ Reinforcement learning framework and algorithms implemented in PyTorch.
 Some implemented algorithms:
  - Temporal Difference Models (TDMs)
     - [example script](examples/tdm/cheetah.py)
-    - [TDM paper](https://openreview.net/forum?id=HkLRnW-CW)
+    - [TDM paper](https://arxiv.org/abs/1802.09081)
     - [Details on implementation](rlkit/torch/tdm/TDMs.md)
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
@@ -17,7 +17,7 @@ Some implemented algorithms:
     - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
  - Soft Actor Critic (SAC)
     - [example script](examples/sac.py)
-    - [SAC paper](https://drive.google.com/file/d/0Bxz3x8U2LH_2QllDZVlUQ1BJVEJHeER2YU5mODNaeFZmc3dz/view)
+    - [SAC paper](https://arxiv.org/abs/1801.01290)
     - [TensorFlow implementation from author](https://github.com/haarnoja/sac)
 
 To get started, checkout the example scripts, linked above.
