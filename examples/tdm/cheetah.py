@@ -64,14 +64,14 @@ if __name__ == "__main__":
     variant = dict(
         tdm_kwargs=dict(
             # TDM parameters
-            max_tau=9,
+            max_tau=10,
             num_pretrain_paths=20,  # Set to zero to not normalize
 
             # General parameters
-            num_epochs=500,
-            num_steps_per_epoch=100,
+            num_epochs=100,
+            num_steps_per_epoch=1000,
             num_steps_per_eval=1000,
-            max_path_length=100,
+            max_path_length=99,
             num_updates_per_env_step=25,
             batch_size=128,
             discount=1,  # TDMs does no discounting
