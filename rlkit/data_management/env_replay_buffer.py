@@ -1,3 +1,4 @@
+import numpy as np
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
 from gym.spaces import Box, Discrete, Tuple
 
@@ -20,6 +21,15 @@ class EnvReplayBuffer(SimpleReplayBuffer):
             observation_dim=get_dim(self._ob_space),
             action_dim=get_dim(self._action_space),
         )
+
+    def add_sample(self, observation, action, reward, terminal,
+            next_observation, **kwargs):
+
+        if isinstance(self._action_space, Discrete):
+            action = np.eye(self._action_space.n)[action]
+        super(EnvReplayBuffer, self).add_sample(
+                observation, action, reward, terminal, 
+                next_observation, **kwargs)
 
 
 def get_dim(space):

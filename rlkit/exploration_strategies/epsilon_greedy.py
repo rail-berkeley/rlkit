@@ -17,10 +17,6 @@ class EpsilonGreedy(RawExplorationStrategy, Serializable):
         self.prob_random_action = prob_random_action
         self.action_space = action_space
 
-    def get_action(self, t, observation, policy, **kwargs):
-        action, agent_info = policy.get_action(observation)
-        return self.get_action_from_raw_action(action, **kwargs), agent_info
-
     def get_action_from_raw_action(self, action, **kwargs):
         if random.random() <= self.prob_random_action:
             return self.action_space.sample()
