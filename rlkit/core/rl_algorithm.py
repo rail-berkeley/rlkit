@@ -348,8 +348,6 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             self._current_path_builder = PathBuilder()
 
     def get_epoch_snapshot(self, epoch):
-        if self.render:
-            self.training_env.render(close=True)
         data_to_save = dict(
             epoch=epoch,
             exploration_policy=self.exploration_policy,

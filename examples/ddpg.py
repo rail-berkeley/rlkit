@@ -1,7 +1,7 @@
 """
 Example of running PyTorch implementation of DDPG on HalfCheetah.
 """
-import gym
+from gym.envs.mujoco import HalfCheetahEnv
 
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.exploration_strategies.base import (
@@ -15,7 +15,10 @@ import rlkit.torch.pytorch_util as ptu
 
 
 def experiment(variant):
-    env = NormalizedBoxEnv(gym.make('HalfCheetah-v1'))
+    env = NormalizedBoxEnv(HalfCheetahEnv())
+    # Or for a specific version:
+    # import gym
+    # env = NormalizedBoxEnv(gym.make('HalfCheetah-v1'))
     es = OUStrategy(action_space=env.action_space)
     obs_dim = env.observation_space.low.size
     action_dim = env.action_space.low.size

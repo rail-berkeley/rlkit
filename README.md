@@ -26,13 +26,25 @@ Some implemented algorithms:
 To get started, checkout the example scripts, linked above.
 
 ## Installation
-Install and use the included ananconda environment
+Install and use the included Ananconda environment
 ```
 $ conda env create -f docker/rlkit/rlkit-env.yml
-$ source activate rlkit-env
-(rlkit-env) $ # Ready to run examples/ddpg_cheetah_no_doodad.py
+$ source activate rlkit
+(rlkit) $ python examples/ddpg.py
 ```
-Or if you want you can use the docker image included.
+
+There is also a GPU-version in `docker/rlkit-gpu`
+```
+$ conda env create -f docker/rlkit_gpu/rlkit-env.yml
+$ source activate rlkit-gpu
+(rlkit-gpu) $ python examples/ddpg.py
+```
+
+NOTE: these Anaconda environments use MuJoCo 1.5 and gym 0.10.5, unlike previous versions.
+
+For an even more portable solution, try using the docker image provided in `docker/rlkit_gpu`.
+The Anaconda env should be enough, but this docker image addresses some of the rendering issues that may arise when using MuJoCo 1.5 and GPUs.
+Note that you'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
 
 ## Visualizing a policy and seeing results
 During training, the results will be saved to a file called under
@@ -58,6 +70,12 @@ tl;dr run
 python rllab/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
 
+Alternatively, if you don't want to clone all of `rllab`, a repository containing only viskit can be found [here](https://github.com/vitchyr/viskit).
+Then you can similarly visualize results with.
+```bash
+python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
+```
+
 ## Algorithm-Specific Comments
 ### SAC
 The SAC implementation provided here only uses Gaussian policy, rather than a Gaussian mixture model, as described in the original SAC paper.
@@ -65,3 +83,5 @@ The SAC implementation provided here only uses Gaussian policy, rather than a Ga
 ## Credits
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
 The serialization and logger code are basically a carbon copy of the rllab versions.
+
+The Dockerfile is based on the [OpenAI mujoco-py Dockerfile](https://github.com/openai/mujoco-py/blob/master/Dockerfile).
