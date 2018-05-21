@@ -51,13 +51,13 @@ During training, the results will be saved to a file called under
 ```
 LOCAL_LOG_DIR/<exp_prefix>/<foldername>
 ```
- - `LOCAL_LOG_DIR` is the directory set by `rlkit.launchers.config.LOCAL_LOG_DIR`
+ - `LOCAL_LOG_DIR` is the directory set by `rlkit.launchers.config.LOCAL_LOG_DIR`. Default name is 'output'.
  - `<exp_prefix>` is given either to `setup_logger`.
  - `<foldername>` is auto-generated and based off of `exp_prefix`.
  - inside this folder, you should see a file called `params.pkl`. To visualize a policy, run
 
 ```
-(rlkit-env) $ python scripts/sim_policy LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+(rlkit) $ python scripts/sim_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
 If you have rllab installed, you can also visualize the results
@@ -74,6 +74,12 @@ Alternatively, if you don't want to clone all of `rllab`, a repository containin
 Then you can similarly visualize results with.
 ```bash
 python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
+```
+
+## Visualizing a TDM policy
+To visualize a TDM policy, run
+```
+(rlkit) $ python scripts/sim_tdm_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
 ## Algorithm-Specific Comments
