@@ -38,20 +38,20 @@ class GoalXYPosAnt(AntEnv, MultitaskEnv, Serializable):
         site_pos = self.model.site_pos.copy()
         site_pos[0, 0:2] = goal
         site_pos[0, 2] = 0.5
-        self.model.site_pos = site_pos
+        self.model.site_pos[:] = site_pos
 
     def convert_obs_to_goals(self, obs):
         return obs[:, 27:29]
 
     def _get_obs(self):
         return np.concatenate([
-            self.model.data.qpos.flat[2:],
-            self.model.data.qvel.flat,
+            self.sim.data.qpos.flat[2:],
+            self.sim.data.qvel.flat,
             self.get_body_com("torso"),
         ])
 
-    def _step(self, action):
-        ob, _, done, info_dict = super()._step(action)
+    def step(self, action):
+        ob, _, done, info_dict = super().step(action)
         xy_pos = self.convert_ob_to_goal(ob)
         pos_error = np.linalg.norm(xy_pos - self.multitask_goal)
         reward = - pos_error
@@ -181,12 +181,12 @@ class GoalXYPosAndVelAnt(AntEnv, MultitaskEnv, Serializable):
         site_pos = self.model.site_pos.copy()
         site_pos[0, 0:2] = goal[:2]
         site_pos[0, 2] = 0.5
-        self.model.site_pos = site_pos
+        self.model.site_pos[:] = site_pos
 
     def _get_obs(self):
         raise NotImplementedError()
 
-    def _step(self, action):
+    def step(self, action):
         # get_body_comvel doesn't work, so you need to save the last position
         torso_xyz_before = self.get_body_com("torso")
         self.do_simulation(action, self.frame_skip)
@@ -196,8 +196,8 @@ class GoalXYPosAndVelAnt(AntEnv, MultitaskEnv, Serializable):
         done = False
 
         ob = np.hstack((
-            self.model.data.qpos.flat[2:],
-            self.model.data.qvel.flat,
+            self.sim.data.qpos.flat[2:],
+            self.sim.data.qvel.flat,
             self.get_body_com("torso"),
             torso_velocity,
         ))
@@ -224,8 +224,8 @@ class GoalXYPosAndVelAnt(AntEnv, MultitaskEnv, Serializable):
         qvel = self.init_qvel + self.np_random.randn(self.model.nv) * .1
         self.set_state(qpos, qvel)
         return np.hstack((
-            self.model.data.qpos.flat[2:],
-            self.model.data.qvel.flat,
+            self.sim.data.qpos.flat[2:],
+            self.sim.data.qvel.flat,
             self.get_body_com("torso"),
             np.zeros(3),  # init velocity is zero
         ))

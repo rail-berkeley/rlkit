@@ -34,8 +34,8 @@ class GoalXVelHalfCheetah(HalfCheetahEnv, MultitaskEnv, Serializable):
         MultitaskEnv.set_goal(self, goal)
         self.target_x_vel = goal
 
-    def _step(self, action):
-        ob, _, done, info_dict = super()._step(action)
+    def step(self, action):
+        ob, _, done, info_dict = super().step(action)
         xvel = ob[8]
         desired_xvel = self.target_x_vel
         xvel_error = np.linalg.norm(xvel - desired_xvel)
