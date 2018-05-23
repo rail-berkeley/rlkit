@@ -70,12 +70,12 @@ if __name__ == "__main__":
             # General parameters
             num_epochs=100,
             num_steps_per_epoch=1000,
-            num_steps_per_eval=1000,
+            num_steps_per_eval=10000,
             max_path_length=99,
             num_updates_per_env_step=25,
             batch_size=128,
             discount=1,  # TDMs does no discounting
-            reward_scale=100,
+            reward_scale=10,
 
             # DDPG soft-target tau (not TDM tau)
             tau=0.001,
