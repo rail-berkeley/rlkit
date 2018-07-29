@@ -44,6 +44,7 @@ NOTE: these Anaconda environments use MuJoCo 1.5 and gym 0.10.5, unlike previous
 
 For an even more portable solution, try using the docker image provided in `docker/rlkit_gpu`.
 The Anaconda env should be enough, but this docker image addresses some of the rendering issues that may arise when using MuJoCo 1.5 and GPUs.
+To use the GPU docker image, you will need a GPU and [nvidia-docker installed](https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)).
 Note that you'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
 
 ## Visualizing a policy and seeing results
