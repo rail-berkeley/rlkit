@@ -70,12 +70,16 @@ tl;dr run
 ```bash
 python rllab/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
+to visualize all experiments with a prefix of `exp_prefix`. To only visualize a single run, you can do
+```bash
+python rllab/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/<folder name>
+```
 
-Alternatively, if you don't want to clone all of `rllab`, a repository containing only viskit can be found [here](https://github.com/vitchyr/viskit).
-Then you can similarly visualize results with.
+Alternatively, if you don't want to clone all of `rllab`, a repository containing only viskit can be found [here](https://github.com/vitchyr/viskit). You can similarly visualize results with.
 ```bash
 python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
+This `viskit` repo also has a few extra nice features, like plotting multiple Y-axis values at once, figure-splitting on multiple keys, and being able to filter hyperparametrs out. 
 
 ## Visualizing a TDM policy
 To visualize a TDM policy, run
