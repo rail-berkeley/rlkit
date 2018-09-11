@@ -1,0 +1,21 @@
+## General
+
+*.pyc
+*.ipynb_checkpoints
+__pycache__
+
+*.npy
+*.pkl
+
+*.swp
+*.swo
+
+.envrc
+
+## Project
+
+*.pth
+*live.ipynb
+
+/output
+/output/**
