@@ -2,6 +2,7 @@ import numpy as np
 import torch
 from torch import nn as nn
 
+from rlkit.core.util import Wrapper
 from rlkit.policies.base import ExplorationPolicy, Policy
 from rlkit.torch.distributions import TanhNormal
 from rlkit.torch.networks import Mlp
@@ -11,7 +12,7 @@ LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
 
 
-class TanhGaussianPolicy(Mlp, ExplorationPolicy):
+class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
     """
     Usage:
 
@@ -21,6 +22,9 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
     action, mean, log_std, _ = policy(obs, deterministic=True)
     action, mean, log_std, log_prob = policy(obs, return_log_prob=True)
     ```
+    NOTE: when calling the module, pass both the obs and the latent task code
+    but when using the `get_action` interface, rely on the instance
+    variable task code
 
     Here, mean and log_std are the mean and log_std of the Gaussian that is
     sampled from.
@@ -33,6 +37,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             self,
             hidden_sizes,
             obs_dim,
+            latent_dim,
             action_dim,
             std=None,
             init_w=1e-3,
@@ -46,6 +51,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             init_w=init_w,
             **kwargs
         )
+        self.latent_dim = latent_dim
         self.log_std = None
         self.std = std
         if std is None:
@@ -59,12 +65,22 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             self.log_std = np.log(std)
             assert LOG_SIG_MIN <= self.log_std <= LOG_SIG_MAX
 
+        # this task encoding will only be used for policy eval
+        # so it does not need to be attached to the graph
+        # TODO: this does not seem very PyTorch-esque, neither does `eval_np`
+        # investigate this more later
+        self.np_z = np.zeros(self.latent_dim)
+
+    def set_eval_z(self, z):
+        self.np_z = z
+
     def get_action(self, obs_np, deterministic=False):
         actions = self.get_actions(obs_np[None], deterministic=deterministic)
         return actions[0, :], {}
 
     def get_actions(self, obs_np, deterministic=False):
-        return self.eval_np(obs_np, deterministic=deterministic)[0]
+        in_ = np.concatenate([obs_np, self.np_z[None]], axis=1)
+        return self.eval_np(in_, deterministic=deterministic)[0]
 
     def forward(
             self,
@@ -115,8 +131,28 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         )
 
 
-class MakeDeterministic(Policy):
+class ProtoExplorationPolicy(Wrapper, Policy):
+    '''
+    exploration by setting task encoding z = 0
+    '''
+
+    def __init__(self, policy, *args, **kwargs):
+        super().__init__(policy)
+        self.np_z = np.zeros(policy.latent_dim)
+        self.policy = policy
+
+    # TODO: Wrapper won't handle these because they are abstract methods
+    # in Policy class, boo
+    def get_action(self, observation, **kwargs):
+        return self.policy.get_action(observation, **kwargs)
+
+    def get_actions(self, observations, **kwargs):
+        return self.policy.get_actions(observations, **kwargs)
+
+
+class MakeDeterministic(Wrapper, Policy):
     def __init__(self, stochastic_policy):
+        super().__init__(stochastic_policy)
         self.stochastic_policy = stochastic_policy
 
     def get_action(self, observation):

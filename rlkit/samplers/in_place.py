@@ -12,9 +12,12 @@ class InPlacePathSampler(object):
     sampler.obtain_samples  # this has side-effects: env will change!
     ```
     """
-    def __init__(self, env, policy, max_samples, max_path_length):
+    def __init__(self, env, policy, exploration_policy, max_samples, max_path_length):
         self.env = env
         self.policy = policy
+        self.exploration_policy = exploration_policy
+        if exploration_policy is None:
+            self.exploration_policy = policy
         self.max_path_length = max_path_length
         self.max_samples = max_samples
         assert (
@@ -28,12 +31,13 @@ class InPlacePathSampler(object):
     def shutdown_worker(self):
         pass
 
-    def obtain_samples(self):
+    def obtain_samples(self, explore=False):
+        policy = self.policy if not explore else self.exploration_policy
         paths = []
         n_steps_total = 0
         while n_steps_total + self.max_path_length <= self.max_samples:
             path = rollout(
-                self.env, self.policy, max_path_length=self.max_path_length
+                self.env, policy, max_path_length=self.max_path_length
             )
             paths.append(path)
             n_steps_total += len(path['observations'])
