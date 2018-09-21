@@ -3,6 +3,8 @@ Run Prototypical Soft Actor Critic on HalfCheetahEnv.
 
 """
 import numpy as np
+import click
+from gym.envs.mujoco import HalfCheetahEnv
 from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
 from rlkit.envs.point_mass import PointEnv
 
@@ -58,20 +60,21 @@ def experiment(variant):
     algorithm.train()
 
 
-if __name__ == "__main__":
+@click.command()
+@click.argument('docker', default=0)
+def main(docker):
+    log_dir = '/mounts/output' if docker == 1 else 'output'
     # noinspection PyTypeChecker
     variant = dict(
         meta_epochs=10,
         mbatch_size=32,
         algo_params=dict(
-
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
             batch_size=128, # to compute training grads from
             max_path_length=10,
             discount=0.99,
-
             soft_target_tau=0.001,
             policy_lr=3E-4,
             qf_lr=3E-4,
@@ -79,5 +82,8 @@ if __name__ == "__main__":
         ),
         net_size=300,
     )
-    setup_logger('proto-sac-point-mass-fb', variant=variant)
+    setup_logger('proto-sac-point-mass-fb', variant=variant, base_log_dir=log_dir)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()
