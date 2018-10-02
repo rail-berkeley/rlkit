@@ -21,5 +21,5 @@ dependencies:
   - cloudpickle==0.5.2
   - gym[all]==0.10.5
   - gitpython==2.1.7
-  - gtimer==1.0.1b5
+  - gtimer==1.0.0b5
   - pygame==1.9.2
