@@ -1,6 +1,7 @@
 import abc
 from collections import OrderedDict
 from typing import Iterable
+import pickle
 
 import numpy as np
 from torch.autograd import Variable
@@ -53,6 +54,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             self.eval_sampler.env.reset_task(idx)
 
             test_paths = self.obtain_samples()
+            # TODO incorporate into proper logging
+            # save evaluation rollouts for vis
+            with open("/mounts/output/proto-sac-point-mass-fb-task{}-{}.pkl".format(idx, epoch), 'wb') as f:
+                pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
             statistics.update(eval_util.get_generic_path_information(
                 test_paths, stat_prefix="Test_task{}".format(idx),
