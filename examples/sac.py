@@ -54,7 +54,6 @@ def experiment(variant):
         train_tasks=tasks,
         eval_tasks=tasks,
         nets=[task_enc, policy, qf, vf],
-        meta_batch=variant['mbatch_size'],
         **variant['algo_params']
     )
     algorithm.train()
@@ -66,9 +65,8 @@ def main(docker):
     log_dir = '/mounts/output' if docker == 1 else 'output'
     # noinspection PyTypeChecker
     variant = dict(
-        meta_epochs=10,
-        mbatch_size=32,
         algo_params=dict(
+            meta_batch=2,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
