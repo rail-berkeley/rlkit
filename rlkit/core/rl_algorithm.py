@@ -164,6 +164,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         for _ in range(self.meta_batch):
             # sample a task and set env accordingly
             self.task_idx = self.sample_task()
+            self.train_obs[-1] = self.task_idx
             self.env.reset_task(self.train_tasks[self.task_idx])
             self.collect_data(self.exploration_policy, num_samples=1)
             if self._can_train():
