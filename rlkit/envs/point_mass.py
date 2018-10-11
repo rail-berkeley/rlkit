@@ -15,13 +15,12 @@ class PointEnv(Env):
         self._task = task
         self._goal = self.reset_goal(task.get('direction', 1))
         self.reset_model()
-        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(3,))
+        self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
 
     def reset_task(self, idx):
         self._task = self.tasks[idx]
         self._goal = self.reset_goal(self._task['direction'])
-        self._state[-1] = self._task['direction']
 
     def reset_goal(self, direction):
         if direction == 1:
@@ -33,8 +32,7 @@ class PointEnv(Env):
         return range(len(self.tasks))
 
     def reset_model(self):
-        state = np.random.uniform(-1, 1, size=(2,))
-        self._state = np.concatenate([state, np.array([self._task['direction']], dtype=np.float32)])
+        self._state = np.random.uniform(-1, 1, size=(2,))
         return self._get_obs()
 
     def reset(self):
@@ -44,8 +42,8 @@ class PointEnv(Env):
         return np.copy(self._state)
 
     def step(self, action):
-        self._state = self._state + np.concatenate([action, np.zeros(1, dtype=np.float32)])
-        x, y, task = self._state
+        self._state = self._state + action
+        x, y = self._state
         x -= self._goal[0]
         y -= self._goal[1]
         reward = - (x ** 2 + y ** 2) ** 0.5
