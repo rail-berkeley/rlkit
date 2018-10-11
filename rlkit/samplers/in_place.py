@@ -31,11 +31,14 @@ class InPlacePathSampler(object):
     def shutdown_worker(self):
         pass
 
-    def obtain_samples(self, explore=False):
+    def obtain_samples(self, explore=False, num_samples=None):
         policy = self.policy if not explore else self.exploration_policy
         paths = []
         n_steps_total = 0
-        while n_steps_total + self.max_path_length <= self.max_samples:
+        max_samp = self.max_samples
+        if num_samples is not None:
+            max_samp = num_samples
+        while n_steps_total + self.max_path_length <= max_samp:
             path = rollout(
                 self.env, policy, max_path_length=self.max_path_length
             )

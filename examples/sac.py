@@ -29,7 +29,7 @@ def experiment(variant):
     net_size = variant['net_size']
     # start with linear task encoding
     task_enc = FlattenMlp(
-            hidden_sizes=[],
+            hidden_sizes=[4],
             input_size=obs_dim + reward_dim,
             output_size=latent_dim,
     )

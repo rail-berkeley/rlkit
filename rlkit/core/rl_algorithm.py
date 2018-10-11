@@ -28,7 +28,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             max_path_length=1000,
             discount=0.99,
             replay_buffer_size=1000000,
-            reward_scale=1,
+            reward_scale=100,
             render=False,
             save_replay_buffer=False,
             save_algorithm=False,
@@ -143,6 +143,26 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # train
             self._start_epoch(epoch)
             self.training_mode(True)
+            print('training task classifier')
+            if epoch == 0:
+                print('initializing replay buffer')
+                for idx in self.train_tasks:
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
+                    self.collect_data(self.exploration_policy, num_samples=2000)
+
+                    with open("/mounts/output/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb') as f:
+                        paths = self.replay_buffer.random_batch(idx, 2000)
+                        obs = paths['observations']
+                        rewards = paths['rewards']
+                        aug_obs = np.concatenate([obs, rewards], axis=1)
+
+                        pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
+
+            if epoch == 0:
+                self.train_task_classifier()
+            else:
+                self.train_task_classifier(train_flag=False)
             for i in range(self.num_env_steps_per_epoch):
                 self.collect_batch_updates()
                 self.perform_meta_update()
@@ -165,7 +185,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # sample a task and set env accordingly
             self.task_idx = self.sample_task()
             self.env.reset_task(self.train_tasks[self.task_idx])
-            self.collect_data(self.exploration_policy, num_samples=1)
+            self.collect_data(self.exploration_policy, num_samples=10)
             if self._can_train():
                 self._do_training()
                 self._n_train_steps_total += 1

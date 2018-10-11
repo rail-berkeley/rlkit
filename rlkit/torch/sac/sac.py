@@ -1,5 +1,6 @@
 from collections import OrderedDict
 import numpy as np
+import pickle
 
 import torch
 import torch.optim as optim
@@ -7,7 +8,7 @@ from torch import nn as nn
 from torch.autograd import Variable
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.core import np_ify
+from rlkit.torch.core import np_ify, torch_ify
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
 from rlkit.torch.sac.policies import MakeDeterministic, ProtoExplorationPolicy
@@ -21,6 +22,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_tasks,
             nets,
 
+            class_lr=1e-1,
             policy_lr=1e-3,
             qf_lr=1e-3,
             vf_lr=1e-3,
@@ -51,9 +53,15 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.render_eval_paths = render_eval_paths
 
         self.target_vf = self.vf.copy()
+        self.class_criterion = nn.BCEWithLogitsLoss()
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
         self.eval_statistics = None
+
+        self.class_optimizer = optim.SGD(
+                self.task_enc.parameters(),
+                lr=class_lr,
+        )
 
         self.policy_optimizer = optimizer_class(
             self.policy.parameters(),
@@ -68,6 +76,51 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=vf_lr,
         )
 
+    def make_dataset(self, batch, idx):
+        obs = batch['observations']
+        rewards = batch['rewards'] / self.reward_scale
+        targets = np.full_like(rewards, idx)
+        l = len(obs) // 2
+        train = np.concatenate([obs[:l], rewards[:l], targets[:l]], axis=1)
+        test = np.concatenate([obs[l:], rewards[l:], targets[l:]], axis=1)
+        return train, test
+
+    def train_task_classifier(self, train_flag=True):
+        # train classifier to convergence to distinguish between tasks,
+        # using data collected by exploration policy
+        training_data = []
+        test_data = []
+        for idx in self.train_tasks:
+            nsamp = min(2000, self.replay_buffer.num_steps_can_sample(idx))
+            train, test = self.make_dataset(self.replay_buffer.random_batch(idx, nsamp), idx)
+            training_data.append(train)
+            test_data.append(test)
+        training_data = np.concatenate(training_data)
+        test_data = np.concatenate(test_data)
+
+        if train_flag:
+            batch_size = 256
+            for epoch in range(10):
+                for it in range(len(training_data // batch_size)):
+                    indices = np.random.choice(len(training_data), batch_size)
+                    train = training_data[indices]
+                    obs = torch_ify(train[:, :2])
+                    rewards = torch_ify(train[:, 2:3])
+                    targets = torch_ify(train[:, -1:])
+                    preds = self.task_enc(obs, rewards)
+                    class_loss = self.class_criterion(preds, targets)
+                    class_loss.backward()
+                    self.class_optimizer.step()
+                    self.class_optimizer.zero_grad()
+                print('Loss:', class_loss)
+        # evaluate
+        obs = torch_ify(test_data[:, :2])
+        rewards = torch_ify(test_data[:, 2:3])
+        targets = test_data[:, -1:]
+        preds = (np_ify(self.task_enc(obs, rewards).detach()) > 0).astype(np.int)
+        errors = np.sum(np.abs(np_ify(preds) - targets)) / len(preds)
+        print('Classification error:', errors)
+
     def make_exploration_policy(self, policy):
         return ProtoExplorationPolicy(policy)
 
@@ -78,15 +131,19 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_policy = self.policy
         return eval_policy
 
-    def obtain_samples(self):
+    def obtain_samples(self, idx, epoch):
         '''
         this is more involved than usual because we have to sample rollouts, compute z, then sample new rollouts conditioned on z
         '''
         # TODO for now set task encoder to zero, should be sampled
-        trajs = self.eval_sampler.obtain_samples(explore=True)
-        rewards = Variable(torch.from_numpy(np.concatenate([t['rewards'] for t in trajs]).astype(np.float32)))
-        obs = Variable(torch.from_numpy(np.concatenate([t['observations'] for t in trajs]).astype(np.float32)))
-        z = np_ify(torch.mean(self.task_enc(obs, rewards)))
+        # TODO: collect context tuples from replay buffer to match training stats
+        batch = self.get_batch()
+        rewards = batch['rewards']
+        obs = batch['observations']
+        # Evaluate task classifier on sampled tuples
+        # Task encoding is classification prob of a single tuple
+        z = np_ify(torch.mean(torch.sigmoid(self.task_enc(obs, rewards / self.reward_scale))))
+        print('task encoding', z)
         self.eval_sampler.policy.set_eval_z(z)
         test_paths = self.eval_sampler.obtain_samples(explore=False)
         return test_paths
@@ -114,7 +171,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
-        z = torch.mean(self.task_enc(obs, rewards))
+        # TODO: don't backprop through pre-trained task encoder
+        z = torch.mean(torch.sigmoid(self.task_enc(obs, rewards / self.reward_scale).detach()))
         batch_z = z.repeat(obs.shape[0])[..., None]
         q_pred = self.qf(obs, actions, batch_z)
         v_pred = self.vf(obs, batch_z)
