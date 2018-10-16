@@ -1,15 +1,12 @@
+import datetime
 import json
 import os
 import os.path as osp
 import pickle
 import random
 import sys
-import time
-import uuid
 from collections import namedtuple
 
-import __main__ as main
-import datetime
 import dateutil.tz
 import numpy as np
 
@@ -17,7 +14,42 @@ from rlkit.core import logger
 from rlkit.launchers import config
 from rlkit.torch.pytorch_util import set_gpu_mode
 
-GitInfo = namedtuple('GitInfo', ['code_diff', 'commit_hash', 'branch_name'])
+GitInfo = namedtuple(
+    'GitInfo',
+    [
+        'directory',
+        'code_diff',
+        'code_diff_staged',
+        'commit_hash',
+        'branch_name',
+    ],
+)
+
+
+def get_git_infos(dirs):
+    try:
+        import git
+        git_infos = []
+        for directory in dirs:
+            # Idk how to query these things, so I'm just doing try-catch
+            try:
+                repo = git.Repo(directory)
+                try:
+                    branch_name = repo.active_branch.name
+                except TypeError:
+                    branch_name = '[DETACHED]'
+                git_infos.append(GitInfo(
+                    directory=directory,
+                    code_diff=repo.git.diff(None),
+                    code_diff_staged=repo.git.diff('--staged'),
+                    commit_hash=repo.head.commit.hexsha,
+                    branch_name=branch_name,
+                ))
+            except git.exc.InvalidGitRepositoryError as e:
+                print("Not a valid git repo: {}".format(directory))
+    except ImportError:
+        git_infos = None
+    return git_infos
 
 
 def recursive_items(dictionary):
@@ -45,54 +77,6 @@ def recursive_items(dictionary):
             yield from recursive_items(value)
 
 
-def create_mounts(
-        mode,
-        base_log_dir,
-        sync_interval=180,
-        local_input_dir_to_mount_point_dict=None,
-):
-    if local_input_dir_to_mount_point_dict is None:
-        local_input_dir_to_mount_point_dict = {}
-    else:
-        raise NotImplementedError("TODO(vitchyr): Implement this")
-
-    mounts = [m for m in CODE_MOUNTS]
-    for dir, mount_point in local_input_dir_to_mount_point_dict.items():
-        mounts.append(mount.MountLocal(
-            local_dir=dir,
-            mount_point=mount_point,
-            pythonpath=False,
-        ))
-
-    if mode != 'local':
-        for m in NON_CODE_MOUNTS:
-            mounts.append(m)
-
-    if mode == 'ec2':
-        output_mount = mount.MountS3(
-            s3_path='',
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
-            output=True,
-            sync_interval=sync_interval,
-        )
-    elif mode == 'local':
-        output_mount = mount.MountLocal(
-            local_dir=base_log_dir,
-            mount_point=None,  # For purely local mode, skip mounting.
-            output=True,
-        )
-    elif mode == 'local_docker':
-        output_mount = mount.MountLocal(
-            local_dir=base_log_dir,
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
-            output=True,
-        )
-    else:
-        raise NotImplementedError("Mode not supported: {}".format(mode))
-    mounts.append(output_mount)
-    return mounts
-
-
 def save_experiment_data(dictionary, log_dir):
     with open(log_dir + '/experiment.pkl', 'wb') as handle:
         pickle.dump(dictionary, handle, protocol=pickle.HIGHEST_PROTOCOL)
@@ -108,7 +92,7 @@ def run_experiment_here(
         exp_prefix="default",
         snapshot_mode='last',
         snapshot_gap=1,
-        git_info=None,
+        git_infos=None,
         script_name=None,
         base_log_dir=None,
         log_dir=None,
@@ -147,7 +131,7 @@ def run_experiment_here(
         snapshot_gap=snapshot_gap,
         base_log_dir=base_log_dir,
         log_dir=log_dir,
-        git_info=git_info,
+        git_infos=git_infos,
         script_name=script_name,
     )
 
@@ -162,7 +146,7 @@ def run_experiment_here(
         exp_prefix=exp_prefix,
         snapshot_mode=snapshot_mode,
         snapshot_gap=snapshot_gap,
-        git_info=git_info,
+        git_infos=git_infos,
         script_name=script_name,
         base_log_dir=base_log_dir,
     )
@@ -220,7 +204,7 @@ def setup_logger(
         snapshot_gap=1,
         log_tabular_only=False,
         log_dir=None,
-        git_info=None,
+        git_infos=None,
         script_name=None,
 ):
     """
@@ -246,10 +230,12 @@ def setup_logger(
     :param log_tabular_only:
     :param snapshot_gap:
     :param log_dir:
-    :param git_info:
+    :param git_infos:
     :param script_name: If set, save the script name to this.
     :return:
     """
+    if git_infos is None:
+        git_infos = get_git_infos(config.CODE_DIRS_TO_MOUNT)
     first_time = log_dir is None
     if first_time:
         log_dir = create_log_dir(exp_prefix, exp_id=exp_id, seed=seed,
@@ -279,15 +265,26 @@ def setup_logger(
     exp_name = log_dir.split("/")[-1]
     logger.push_prefix("[%s] " % exp_name)
 
-    if git_info is not None:
-        code_diff, commit_hash, branch_name = git_info
-        if code_diff is not None:
-            with open(osp.join(log_dir, "code.diff"), "w") as f:
-                f.write(code_diff)
-        with open(osp.join(log_dir, "git_info.txt"), "w") as f:
-            f.write("git hash: {}".format(commit_hash))
-            f.write('\n')
-            f.write("git branch name: {}".format(branch_name))
+    if git_infos is not None:
+        for (
+            directory, code_diff, code_diff_staged, commit_hash, branch_name
+        ) in git_infos:
+            if directory[-1] == '/':
+                directory = directory[:-1]
+            diff_file_name = directory[1:].replace("/", "-") + ".patch"
+            diff_staged_file_name = (
+                directory[1:].replace("/", "-") + "_staged.patch"
+            )
+            if code_diff is not None and len(code_diff) > 0:
+                with open(osp.join(log_dir, diff_file_name), "w") as f:
+                    f.write(code_diff + '\n')
+            if code_diff_staged is not None and len(code_diff_staged) > 0:
+                with open(osp.join(log_dir, diff_staged_file_name), "w") as f:
+                    f.write(code_diff_staged + '\n')
+            with open(osp.join(log_dir, "git_infos.txt"), "a") as f:
+                f.write("directory: {}\n".format(directory))
+                f.write("git hash: {}\n".format(commit_hash))
+                f.write("git branch name: {}\n\n".format(branch_name))
     if script_name is not None:
         with open(osp.join(log_dir, "script_name.txt"), "w") as f:
             f.write(script_name)
