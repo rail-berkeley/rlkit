@@ -10,6 +10,7 @@ from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.sac.policies import TanhGaussianPolicy
 from rlkit.torch.sac.sac import SoftActorCritic
 from rlkit.torch.networks import FlattenMlp
+from rlkit.torch.sac.twin_sac import TwinSAC
 
 
 def experiment(variant):
@@ -20,7 +21,12 @@ def experiment(variant):
     action_dim = int(np.prod(env.action_space.shape))
 
     net_size = variant['net_size']
-    qf = FlattenMlp(
+    qf1 = FlattenMlp(
+        hidden_sizes=[net_size, net_size],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+    )
+    qf2 = FlattenMlp(
         hidden_sizes=[net_size, net_size],
         input_size=obs_dim + action_dim,
         output_size=1,
@@ -35,10 +41,11 @@ def experiment(variant):
         obs_dim=obs_dim,
         action_dim=action_dim,
     )
-    algorithm = SoftActorCritic(
+    algorithm = TwinSAC(
         env=env,
         policy=policy,
-        qf=qf,
+        qf1=qf1,
+        qf2=qf2,
         vf=vf,
         **variant['algo_params']
     )
@@ -53,8 +60,8 @@ if __name__ == "__main__":
             num_epochs=1000,
             num_steps_per_epoch=1000,
             num_steps_per_eval=1000,
+            max_path_length=1000,
             batch_size=128,
-            max_path_length=999,
             discount=0.99,
 
             soft_target_tau=0.001,

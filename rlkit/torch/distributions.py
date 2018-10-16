@@ -1,78 +1,5 @@
 import torch
-try:
-    from torch.distributions import Distribution, Normal
-except ImportError:
-    print("You should use a PyTorch version that has torch.distributions.")
-    print("See docker/rlkit/rlkit-env.yml")
-    import math
-    from numbers import Number
-    class Distribution(object):
-        r"""
-        Distribution is the abstract base class for probability distributions.
-        """
-
-        def sample(self):
-            """
-            Generates a single sample or single batch of samples if the distribution
-            parameters are batched.
-            """
-            raise NotImplementedError
-
-        def sample_n(self, n):
-            """
-            Generates n samples or n batches of samples if the distribution parameters
-            are batched.
-            """
-            raise NotImplementedError
-
-        def log_prob(self, value):
-            """
-            Returns the log of the probability density/mass function evaluated at
-            `value`.
-
-            Args:
-                value (Tensor or Variable):
-            """
-            raise NotImplementedError
-
-    class Normal(Distribution):
-        r"""
-        Creates a normal (also called Gaussian) distribution parameterized by
-        `mean` and `std`.
-
-        Example::
-
-            >>> m = Normal(torch.Tensor([0.0]), torch.Tensor([1.0]))
-            >>> m.sample()  # normally distributed with mean=0 and stddev=1
-             0.1046
-            [torch.FloatTensor of size 1]
-
-        Args:
-            mean (float or Tensor or Variable): mean of the distribution
-            std (float or Tensor or Variable): standard deviation of the distribution
-        """
-
-        def __init__(self, mean, std):
-            self.mean = mean
-            self.std = std
-
-        def sample(self):
-            return torch.normal(self.mean, self.std)
-
-        def sample_n(self, n):
-            # cleanly expand float or Tensor or Variable parameters
-            def expand(v):
-                if isinstance(v, Number):
-                    return torch.Tensor([v]).expand(n, 1)
-                else:
-                    return v.expand(n, *v.size())
-            return torch.normal(expand(self.mean), expand(self.std))
-
-        def log_prob(self, value):
-            # compute the variance
-            var = (self.std ** 2)
-            log_std = math.log(self.std) if isinstance(self.std, Number) else self.std.log()
-            return -((value - self.mean) ** 2) / (2 * var) - log_std - math.log(math.sqrt(2 * math.pi))
+from torch.distributions import Distribution, Normal
 
 
 class TanhNormal(Distribution):
@@ -89,6 +16,8 @@ class TanhNormal(Distribution):
         :param normal_std: Std of the normal distribution
         :param epsilon: Numerical stability epsilon when computing log-prob.
         """
+        self.normal_mean = normal_mean
+        self.normal_std = normal_std
         self.normal = Normal(normal_mean, normal_std)
         self.epsilon = epsilon
 
@@ -101,6 +30,7 @@ class TanhNormal(Distribution):
 
     def log_prob(self, value, pre_tanh_value=None):
         """
+
         :param value: some value, x
         :param pre_tanh_value: arctanh(x)
         :return:
@@ -114,7 +44,32 @@ class TanhNormal(Distribution):
         )
 
     def sample(self, return_pretanh_value=False):
-        z = self.normal.sample()
+        """
+        Gradients will and should *not* pass through this operation.
+
+        See https://github.com/pytorch/pytorch/issues/4620 for discussion.
+        """
+        z = self.normal.sample().detach()
+
+        if return_pretanh_value:
+            return torch.tanh(z), z
+        else:
+            return torch.tanh(z)
+
+    def rsample(self, return_pretanh_value=False):
+        """
+        Sampling in the reparameterization case.
+        """
+        z = (
+            self.normal_mean +
+            self.normal_std *
+            Normal(
+                torch.zeros(self.normal_mean.size()),
+                torch.ones(self.normal_std.size())
+            ).sample()
+        )
+        z.requires_grad_()
+
         if return_pretanh_value:
             return torch.tanh(z), z
         else:
