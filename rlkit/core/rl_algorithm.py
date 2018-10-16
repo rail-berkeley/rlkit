@@ -136,32 +136,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         ):
             self._start_epoch(epoch)
             for _ in range(self.num_env_steps_per_epoch):
-                action, agent_info = self._get_action_and_info(
-                    observation,
-                )
-                if self.render:
-                    self.training_env.render()
-                next_ob, raw_reward, terminal, env_info = (
-                    self.training_env.step(action)
-                )
-                self._n_env_steps_total += 1
-                reward = raw_reward * self.reward_scale
-                terminal = np.array([terminal])
-                reward = np.array([reward])
-                self._handle_step(
-                    observation,
-                    action,
-                    reward,
-                    next_ob,
-                    terminal,
-                    agent_info=agent_info,
-                    env_info=env_info,
-                )
-                if terminal or len(self._current_path_builder) >= self.max_path_length:
-                    self._handle_rollout_ending()
-                    observation = self._start_new_rollout()
-                else:
-                    observation = next_ob
+                observation = self._take_step_in_env(observation)
 
                 gt.stamp('sample')
                 self._try_to_train()
@@ -170,6 +145,35 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             self._try_to_eval(epoch)
             gt.stamp('eval')
             self._end_epoch()
+
+    def _take_step_in_env(self, observation):
+        action, agent_info = self._get_action_and_info(
+            observation,
+        )
+        if self.render:
+            self.training_env.render()
+        next_ob, raw_reward, terminal, env_info = (
+            self.training_env.step(action)
+        )
+        self._n_env_steps_total += 1
+        reward = raw_reward * self.reward_scale
+        terminal = np.array([terminal])
+        reward = np.array([reward])
+        self._handle_step(
+            observation,
+            action,
+            reward,
+            next_ob,
+            terminal,
+            agent_info=agent_info,
+            env_info=env_info,
+        )
+        if terminal or len(self._current_path_builder) >= self.max_path_length:
+            self._handle_rollout_ending()
+            observation = self._start_new_rollout()
+        else:
+            observation = next_ob
+        return observation
 
     def _try_to_train(self):
         if self._can_train():
