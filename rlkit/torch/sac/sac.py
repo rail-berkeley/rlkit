@@ -55,7 +55,6 @@ class SoftActorCritic(TorchRLAlgorithm):
         self.target_vf = vf.copy()
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
-        self.eval_statistics = None
 
         self.policy_optimizer = optimizer_class(
             self.policy.parameters(),
@@ -132,14 +131,10 @@ class SoftActorCritic(TorchRLAlgorithm):
         self._update_target_network()
 
         """
-        Save some statistics for eval
+        Save some statistics for eval using just one batch.
         """
-        if self.eval_statistics is None:
-            """
-            Eval should set this to None.
-            This way, these statistics are only computed for one batch.
-            """
-            self.eval_statistics = OrderedDict()
+        if self.need_to_update_eval_statistics:
+            self.need_to_update_eval_statistics = False
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
             self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(

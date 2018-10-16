@@ -42,10 +42,10 @@ class DoubleDQN(DQN):
         self._update_target_network()
 
         """
-        Save some statistics for eval
+        Save some statistics for eval using just one batch.
         """
-        if self.eval_statistics is None:
-            self.eval_statistics = OrderedDict()
+        if self.need_to_update_eval_statistics:
+            self.need_to_update_eval_statistics = False
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Y Predictions',

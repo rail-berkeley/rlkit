@@ -1,10 +1,12 @@
 import abc
 import pickle
 import time
+from collections import OrderedDict
 
 import gtimer as gt
 import numpy as np
 
+from rlkit.core import eval_util
 from rlkit.core import logger
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.data_management.path_builder import PathBuilder
@@ -85,6 +87,8 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             )
         self.eval_policy = eval_policy
         self.eval_sampler = eval_sampler
+        self.eval_statistics = OrderedDict()
+        self.need_to_update_eval_statistics = True
 
         self.action_space = env.action_space
         self.obs_space = env.observation_space
@@ -234,7 +238,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         """
         return (
             len(self._exploration_paths) > 0
-            and self.replay_buffer.num_steps_can_sample() >= self.batch_size
+            and not self.need_to_update_eval_statistics
         )
 
     def _can_train(self):
@@ -385,14 +389,33 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    @abc.abstractmethod
-    def evaluate(self, epoch):
-        """
-        Evaluate the policy, e.g. save/print progress.
-        :param epoch:
-        :return:
-        """
-        pass
+    def evaluate(self, epoch, eval_paths=None):
+        statistics = OrderedDict()
+        statistics.update(self.eval_statistics)
+
+        logger.log("Collecting samples for evaluation")
+        if eval_paths:
+            test_paths = eval_paths
+        else:
+            test_paths = self.eval_sampler.obtain_samples()
+
+        statistics.update(eval_util.get_generic_path_information(
+            test_paths, stat_prefix="Test",
+        ))
+        if len(self._exploration_paths) > 0:
+            statistics.update(eval_util.get_generic_path_information(
+                self._exploration_paths, stat_prefix="Exploration",
+            ))
+        if hasattr(self.env, "log_diagnostics"):
+            self.env.log_diagnostics(test_paths, logger=logger)
+        if hasattr(self.env, "get_diagnostics"):
+            statistics.update(self.env.get_diagnostics(test_paths))
+
+        average_returns = eval_util.get_average_returns(test_paths)
+        statistics['AverageReturn'] = average_returns
+        for key, value in statistics.items():
+            logger.record_tabular(key, value)
+        self.need_to_update_eval_statistics = True
 
     @abc.abstractmethod
     def _do_training(self):
