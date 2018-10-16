@@ -58,7 +58,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             test_paths = self.obtain_samples(idx, epoch)
             # TODO incorporate into proper logging
             # save evaluation rollouts for vis
-            with open("/mounts/output/proto-sac-point-mass-fb-task{}-{}.pkl".format(idx, epoch), 'wb') as f:
+            with open("/mounts/output/proto-sac-point-mass-fb-16z-task{}-{}.pkl".format(idx, epoch), 'wb') as f:
                 pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
             statistics.update(eval_util.get_generic_path_information(

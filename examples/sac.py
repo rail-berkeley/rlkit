@@ -23,13 +23,13 @@ def experiment(variant):
 
     obs_dim = int(np.prod(env.observation_space.shape))
     action_dim = int(np.prod(env.action_space.shape))
-    latent_dim = 1
+    latent_dim = 16
     reward_dim = 1
 
     net_size = variant['net_size']
     # start with linear task encoding
     task_enc = FlattenMlp(
-            hidden_sizes=[4],
+            hidden_sizes=[32],
             input_size=obs_dim + reward_dim,
             output_size=latent_dim,
     )
@@ -80,7 +80,7 @@ def main(docker):
         ),
         net_size=300,
     )
-    setup_logger('proto-sac-point-mass-fb', variant=variant, base_log_dir=log_dir)
+    setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     experiment(variant)
 
 if __name__ == "__main__":
