@@ -26,6 +26,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             policy_lr=1e-3,
             qf_lr=1e-3,
             vf_lr=1e-3,
+            context_lr=1e-3,
             policy_mean_reg_weight=1e-3,
             policy_std_reg_weight=1e-3,
             policy_pre_activation_weight=0.,
@@ -74,6 +75,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.vf_optimizer = optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
+        )
+        self.context_optimizer = optimizer_class(
+            self.task_enc.parameters(),
+            lr=context_lr,
         )
 
     def make_dataset(self, batch, idx):
@@ -153,11 +158,13 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.qf_optimizer.step()
         self.vf_optimizer.step()
         self.policy_optimizer.step()
+        self.context_optimizer.step()
         self._update_target_network()
 
         self.qf_optimizer.zero_grad()
         self.vf_optimizer.zero_grad()
         self.policy_optimizer.zero_grad()
+        self.context_optimizer.zero_grad()
 
     def _do_training(self):
 
