@@ -18,6 +18,7 @@ import errno
 
 from rlkit.core.tabulate import tabulate
 
+
 class TerminalTablePrinter(object):
     def __init__(self):
         self.headers = None
@@ -39,6 +40,7 @@ class TerminalTablePrinter(object):
         sys.stdout.write(tabulate(tabulars, self.headers))
         sys.stdout.write("\n")
 
+
 class MyEncoder(json.JSONEncoder):
     def default(self, o):
         if isinstance(o, type):
@@ -53,6 +55,7 @@ class MyEncoder(json.JSONEncoder):
             }
         return json.JSONEncoder.default(self, o)
 
+
 def mkdir_p(path):
     try:
         os.makedirs(path)
@@ -61,6 +64,7 @@ def mkdir_p(path):
             pass
         else:
             raise
+
 
 class Logger(object):
     def __init__(self):
@@ -296,3 +300,6 @@ class Logger(object):
                 pass
             else:
                 raise NotImplementedError
+
+
+logger = Logger()

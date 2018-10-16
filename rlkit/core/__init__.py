@@ -1,6 +1,7 @@
 """
 General classes, functions, utilities that are used throughout rlkit.
 """
-from rlkit.core.logging import Logger
+from rlkit.core.logging import logger
 
-logger = Logger()
+__all__ = ['logger']
+
