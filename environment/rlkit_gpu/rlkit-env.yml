@@ -14,7 +14,7 @@ dependencies:
 - pybox2d=2.3.1post2=py35_0
 - python=3.5.2
 - python-dateutil=2.6.1=py35_0
-- pytorch=0.3.0
+- pytorch=0.4.1
 - scipy=1.0.1
 - patchelf
 - pip:

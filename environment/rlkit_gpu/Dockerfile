@@ -2,7 +2,8 @@
 # on hosts with GPUs.
 # The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
 # If updating the base image, be sure to test on GPU since it has broken in the past.
-FROM nvidia/cuda:8.0-cudnn6-devel-ubuntu16.04
+FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+
 
 RUN apt-get update -q \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -51,35 +52,6 @@ RUN chmod +x /usr/local/bin/Xdummy
 # Workaround for https://bugs.launchpad.net/ubuntu/+source/nvidia-graphics-drivers-375/+bug/1674677
 COPY ./vendor/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
-WORKDIR /mujoco_py
-# Copy over just requirements.txt at first. That way, the Docker cache doesn't
-# expire until we actually change the requirements.
-COPY ./requirements.txt /mujoco_py/
-COPY ./requirements.dev.txt /mujoco_py/
-RUN pip install -r requirements.txt
-RUN pip install -r requirements.dev.txt
-RUN pip install cloudpickle==0.5.2
-RUN pip install cached-property==1.3.1
-# For atari-py
-RUN apt-get install -y zlib1g-dev swig cmake
-RUN pip install gym[all]==0.10.5
-RUN pip install gitpython==2.1.7
-RUN pip install gtimer==1.0.0b5
-RUN pip install pygame
-RUN pip install awscli==1.11.179
-RUN pip install boto3==1.4.8
-RUN pip install dominate==2.3.1
-RUN pip install ray==0.2.2
-RUN pip install path.py==10.3.1
-
-RUN pip install http://download.pytorch.org/whl/cu80/torch-0.3.0.post4-cp35-cp35m-linux_x86_64.whl
-RUN pip install joblib==0.9.4
-
-# If you're curious what the DEBIAN_FRONTEND is all about:
-# https://askubuntu.com/questions/506158/unable-to-initialize-frontend-dialog-when-using-ssh
-#RUN apt-get purge nvidia*
-#RUN add-apt-repository --yes ppa:graphics-drivers && apt-get update
-
 RUN apt-get update && apt-get install -y libav-tools
 
 # For some reason this works despite an error showing up...
@@ -89,9 +61,39 @@ ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-384
 RUN mkdir /root/code
 WORKDIR /root/code
 
-# trigger the mujoco_py cythonization
-RUN python -c 'import mujoco_py'
+WORKDIR /mujoco_py
 
+# For atari-py
+RUN apt-get install -y zlib1g-dev swig cmake
+
+# Previous versions installed from a requirements.txt, but direct pip
+# install seems cleaner
+RUN pip install glfw>=1.4.0
+RUN pip install numpy>=1.11
+RUN pip install Cython>=0.27.2
+RUN pip install imageio>=2.1.2
+RUN pip install cffi>=1.10
+RUN pip install imagehash>=3.4
+RUN pip install ipdb
+RUN pip install Pillow>=4.0.0
+RUN pip install pycparser>=2.17.0
+RUN pip install pytest>=3.0.5
+RUN pip install pytest-instafail==0.3.0
+RUN pip install scipy>=0.18.0
+RUN pip install sphinx
+RUN pip install sphinx_rtd_theme
+RUN pip install numpydoc
+RUN pip install cloudpickle==0.5.2
+RUN pip install cached-property==1.3.1
+RUN pip install gym[all]==0.10.5
+RUN pip install gitpython==2.1.7
+RUN pip install gtimer==1.0.0b5
+RUN pip install awscli==1.11.179
+RUN pip install boto3==1.4.8
+RUN pip install ray==0.2.2
+RUN pip install path.py==10.3.1
+RUN pip install http://download.pytorch.org/whl/cu90/torch-0.4.1-cp35-cp35m-linux_x86_64.whl
+RUN pip install joblib==0.9.4
 RUN pip install opencv-python==3.4.0.12
 RUN pip install torchvision==0.2.0
 RUN pip install sk-video==1.1.10
