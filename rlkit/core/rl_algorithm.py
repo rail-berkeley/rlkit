@@ -386,14 +386,6 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         pass
 
     @abc.abstractmethod
-    def cuda(self):
-        """
-        Turn cuda on.
-        :return:
-        """
-        pass
-
-    @abc.abstractmethod
     def evaluate(self, epoch):
         """
         Evaluate the policy, e.g. save/print progress.

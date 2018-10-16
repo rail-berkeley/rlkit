@@ -1,10 +1,8 @@
 """
-Run PyTorch Soft Actor Critic on HalfCheetahEnv.
-
-NOTE: You need PyTorch 0.3 or more (to have torch.distributions)
+Run PyTorch Soft Actor Critic on HalfCheetahEnv with the "Twin" architecture
+from TD3: https://arxiv.org/pdf/1802.09477.pdf
 """
 import numpy as np
-from gym.envs.mujoco import HalfCheetahEnv
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.wrappers import NormalizedBoxEnv
@@ -15,10 +13,8 @@ from rlkit.torch.networks import FlattenMlp
 
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HalfCheetahEnv())
-    # Or for a specific version:
-    # import gym
-    # env = NormalizedBoxEnv(gym.make('HalfCheetah-v1'))
+    import gym
+    env = NormalizedBoxEnv(gym.make('HalfCheetah-v2'))
 
     obs_dim = int(np.prod(env.observation_space.shape))
     action_dim = int(np.prod(env.action_space.shape))

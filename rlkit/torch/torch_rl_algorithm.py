@@ -5,7 +5,6 @@ from typing import Iterable
 import numpy as np
 from torch.autograd import Variable
 
-import rlkit.core.eval_util
 from rlkit.core.rl_algorithm import RLAlgorithm
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
@@ -32,9 +31,11 @@ class TorchRLAlgorithm(RLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.networks:
             net.train(mode)
 
-    def cuda(self):
+    def to(self, device=None):
+        if device == None:
+            device = ptu.device
         for net in self.networks:
-            net.cuda()
+            net.to(device)
 
     def evaluate(self, epoch):
         statistics = OrderedDict()
@@ -53,7 +54,7 @@ class TorchRLAlgorithm(RLAlgorithm, metaclass=abc.ABCMeta):
         if hasattr(self.env, "log_diagnostics"):
             self.env.log_diagnostics(test_paths)
 
-        average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+        average_returns = eval_util.get_average_returns(test_paths)
         statistics['AverageReturn'] = average_returns
         for key, value in statistics.items():
             logger.record_tabular(key, value)

@@ -3,6 +3,7 @@ import numpy as np
 from collections import OrderedDict
 
 from torch import nn as nn
+from torch.autograd import Variable
 
 from rlkit.torch import pytorch_util as ptu
 from rlkit.core.serializable import Serializable
@@ -91,13 +92,13 @@ class PyTorchModule(nn.Module, Serializable, metaclass=abc.ABCMeta):
 
 def torch_ify(np_array_or_other):
     if isinstance(np_array_or_other, np.ndarray):
-        return ptu.np_to_var(np_array_or_other)
+        return ptu.from_numpy(np_array_or_other)
     else:
         return np_array_or_other
 
 
 def np_ify(tensor_or_other):
-    if isinstance(tensor_or_other, ptu.TorchVariable):
+    if isinstance(tensor_or_other, Variable):
         return ptu.get_numpy(tensor_or_other)
     else:
         return tensor_or_other

@@ -14,8 +14,8 @@ class TorchNormalizer(Normalizer):
             self.synchronize()
         if clip_range is None:
             clip_range = self.default_clip_range
-        mean = ptu.np_to_var(self.mean, requires_grad=False)
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        mean = ptu.from_numpy(self.mean)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             # Unsqueeze along the batch use automatic broadcasting
             mean = mean.unsqueeze(0)
@@ -25,8 +25,8 @@ class TorchNormalizer(Normalizer):
     def denormalize(self, v):
         if not self.synchronized:
             self.synchronize()
-        mean = ptu.np_to_var(self.mean, requires_grad=False)
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        mean = ptu.from_numpy(self.mean)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             mean = mean.unsqueeze(0)
             std = std.unsqueeze(0)
@@ -37,8 +37,8 @@ class TorchFixedNormalizer(FixedNormalizer):
     def normalize(self, v, clip_range=None):
         if clip_range is None:
             clip_range = self.default_clip_range
-        mean = ptu.np_to_var(self.mean, requires_grad=False)
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        mean = ptu.from_numpy(self.mean)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             # Unsqueeze along the batch use automatic broadcasting
             mean = mean.unsqueeze(0)
@@ -49,14 +49,14 @@ class TorchFixedNormalizer(FixedNormalizer):
         """
         Only normalize the scale. Do not subtract the mean.
         """
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             std = std.unsqueeze(0)
         return v / std
 
     def denormalize(self, v):
-        mean = ptu.np_to_var(self.mean, requires_grad=False)
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        mean = ptu.from_numpy(self.mean)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             mean = mean.unsqueeze(0)
             std = std.unsqueeze(0)
@@ -66,7 +66,7 @@ class TorchFixedNormalizer(FixedNormalizer):
         """
         Only denormalize the scale. Do not add the mean.
         """
-        std = ptu.np_to_var(self.std, requires_grad=False)
+        std = ptu.from_numpy(self.std)
         if v.dim() == 2:
             std = std.unsqueeze(0)
         return v * std

@@ -56,8 +56,7 @@ def experiment(variant):
         tdm_normalizer=tdm_normalizer,
         **variant['tdm_kwargs']
     )
-    if ptu.gpu_enabled():
-        algorithm.cuda()
+    algorithm.to(ptu.device)
     algorithm.train()
 
 
