@@ -142,7 +142,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         obs = batch['observations']
         # Evaluate task classifier on sampled tuples
         # Task encoding is classification prob of a single tuple
-        z = np_ify(torch.mean(torch.sigmoid(self.task_enc(obs, rewards / self.reward_scale))))
+        z = np_ify(torch.mean(self.task_enc(obs, rewards / self.reward_scale)))
         print('task encoding', z)
         self.eval_sampler.policy.set_eval_z(z)
         test_paths = self.eval_sampler.obtain_samples(explore=False)
@@ -171,8 +171,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
-        # TODO: don't backprop through pre-trained task encoder
-        z = torch.mean(torch.sigmoid(self.task_enc(obs, rewards / self.reward_scale).detach()))
+        z = torch.mean(self.task_enc(obs, rewards / self.reward_scale))
         batch_z = z.repeat(obs.shape[0])[..., None]
         q_pred = self.qf(obs, actions, batch_z)
         v_pred = self.vf(obs, batch_z)

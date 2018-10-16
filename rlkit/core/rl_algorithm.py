@@ -159,10 +159,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                         pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
 
-            if epoch == 0:
-                self.train_task_classifier()
-            else:
-                self.train_task_classifier(train_flag=False)
             for i in range(self.num_env_steps_per_epoch):
                 self.collect_batch_updates()
                 self.perform_meta_update()
