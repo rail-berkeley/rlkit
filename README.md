@@ -22,6 +22,9 @@ Some implemented algorithms:
  - Twin Dueling Deep Determinstic Policy Gradient (TD3)
     - [example script](examples/td3.py)
     - [TD3 paper](https://arxiv.org/abs/1802.09477)
+ - Twin Soft Actor Critic (Twin SAC)
+    - [example script](examples/tsac.py)
+    - Combination of SAC and TD3
 
 To get started, checkout the example scripts, linked above.
 
@@ -88,11 +91,27 @@ To visualize a TDM policy, run
 ```
 
 ## Algorithm-Specific Comments
+### TDM
+Recommended hyperparameters to tune:
+ - `max_tau`
+ - `reward_scale`
+ 
 ### SAC
 The SAC implementation provided here only uses Gaussian policy, rather than a Gaussian mixture model, as described in the original SAC paper.
+Recommended hyperparameters to tune:
+ - `reward_scale`
+
+### Twin SAC
+This quite literally combines TD3 and SAC.
+Recommended hyperparameters to tune:
+ - `reward_scale`
 
 ## Credits
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
 The serialization and logger code are basically a carbon copy of the rllab versions.
 
 The Dockerfile is based on the [OpenAI mujoco-py Dockerfile](https://github.com/openai/mujoco-py/blob/master/Dockerfile).
+
+## TODOs
+ - Include policy-gradient algorithms.
+ - Include model-based algorithms.
