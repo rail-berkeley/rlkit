@@ -28,6 +28,12 @@ Some implemented algorithms:
 
 To get started, checkout the example scripts, linked above.
 
+## What's New
+10/16/2018
+ - Upgraded to PyTorch v0.4
+ - Added Twin Soft Actor Critic Implementation
+ - Various small refactor (e.g. logger, evaluate code)
+
 ## Installation
 Install and use the included Ananconda environment
 ```
