@@ -6,21 +6,20 @@ a bit noisy from one epoch to the next (occasionally dips dow to ~2000).
 
 Note that one epoch = 5k steps, so 200 epochs = 1 million steps.
 """
-from gym.envs.mujoco import HopperEnv
+import gym
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_strategy import GaussianStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerTd3
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
-from rlkit.torch.td3.td3 import TD3
 
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HopperEnv())
+    env = gym.make('FetchReach-v1')
+    import ipdb; ipdb.set_trace()
     es = GaussianStrategy(
         action_space=env.action_space,
         max_sigma=0.1,
