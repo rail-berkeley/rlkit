@@ -144,16 +144,16 @@ class HerTd3(HER, TD3):
     def __init__(
             self,
             *args,
-            td3_kwargs,
-            her_kwargs,
-            base_kwargs,
+            observation_key=None,
+            desired_goal_key=None,
             **kwargs
     ):
         HER.__init__(
             self,
-            **her_kwargs,
+            observation_key=observation_key,
+            desired_goal_key=desired_goal_key,
         )
-        TD3.__init__(self, *args, **kwargs, **td3_kwargs, **base_kwargs)
+        TD3.__init__(self, *args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         )
@@ -190,8 +190,15 @@ class HerDdpg(HER, DDPG):
     def __init__(
             self,
             *args,
+            observation_key=None,
+            desired_goal_key=None,
             **kwargs
     ):
+        HER.__init__(
+            self,
+            observation_key=observation_key,
+            desired_goal_key=desired_goal_key,
+        )
         super().__init__(*args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
@@ -202,16 +209,16 @@ class HerTwinSAC(HER, TwinSAC):
     def __init__(
             self,
             *args,
-            twin_sac_kwargs,
-            her_kwargs,
-            base_kwargs,
+            observation_key=None,
+            desired_goal_key=None,
             **kwargs
     ):
         HER.__init__(
             self,
-            **her_kwargs,
+            observation_key=observation_key,
+            desired_goal_key=desired_goal_key,
         )
-        TwinSAC.__init__(self, *args, **kwargs, **twin_sac_kwargs, **base_kwargs)
+        TwinSAC.__init__(self, *args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         )
