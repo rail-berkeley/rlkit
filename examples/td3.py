@@ -7,6 +7,7 @@ a bit noisy from one epoch to the next (occasionally dips dow to ~2000).
 Note that one epoch = 5k steps, so 200 epochs = 1 million steps.
 """
 from gym.envs.mujoco import HopperEnv
+from rlkit.envs.point_mass import PointEnv
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.wrappers import NormalizedBoxEnv
@@ -19,7 +20,7 @@ from rlkit.torch.td3.td3 import TD3
 
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HopperEnv())
+    env = NormalizedBoxEnv(PointEnv())
     es = GaussianStrategy(
         action_space=env.action_space,
         max_sigma=0.1,

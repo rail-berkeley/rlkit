@@ -165,6 +165,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.vf_optimizer.zero_grad()
         self.policy_optimizer.zero_grad()
         self.context_optimizer.zero_grad()
+        # self.train_task_classifier()
 
     def _do_training(self):
 
@@ -179,6 +180,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
         z = torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0)
+        # z = Variable(torch.FloatTensor([1.]))
+        # import ipdb; ipdb.set_trace()
         batch_z = z.repeat(obs.shape[0], 1)
         q_pred = self.qf(obs, actions, batch_z)
         v_pred = self.vf(obs, batch_z)
