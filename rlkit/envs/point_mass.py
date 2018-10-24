@@ -26,7 +26,7 @@ class PointEnv(Env):
         if direction == 1:
             return np.array([10, 10]) # 1,1 and -1,-1 originally
         else:
-            return np.array([-10, -10])
+            return np.array([-10, 0])
 
     def get_all_task_idx(self):
         return range(len(self.tasks))

@@ -49,11 +49,18 @@ def experiment(variant):
         latent_dim=latent_dim,
         action_dim=action_dim,
     )
+
+    rf = FlattenMlp(
+        hidden_sizes=[net_size, net_size],
+        input_size=obs_dim + latent_dim,
+        output_size=1
+    )
+
     algorithm = ProtoSoftActorCritic(
         env=env,
         train_tasks=tasks,
         eval_tasks=tasks,
-        nets=[task_enc, policy, qf, vf],
+        nets=[task_enc, policy, qf, vf, rf],
         **variant['algo_params']
     )
     algorithm.train()

@@ -38,7 +38,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_deterministic=True,
             **kwargs
     ):
-        self.task_enc, self.policy, self.qf, self.vf = nets
+        self.task_enc, self.policy, self.qf, self.vf, self.rf = nets
         super().__init__(
             env=env,
             policy=self.policy,
@@ -57,6 +57,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.class_criterion = nn.BCEWithLogitsLoss()
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
+        self.rf_criterion = nn.MSELoss()
+        self.l2_reg_criterion = nn.MSELoss()
         self.eval_statistics = None
 
         self.class_optimizer = optim.SGD(
@@ -78,6 +80,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         )
         self.context_optimizer = optimizer_class(
             self.task_enc.parameters(),
+            lr=context_lr,
+        )
+        self.rf_optimizer = optimizer_class(
+            self.rf.parameters(),
             lr=context_lr,
         )
 
@@ -159,10 +165,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.vf_optimizer.step()
         self.policy_optimizer.step()
         self.context_optimizer.step()
+        self.rf_optimizer.step()
         self._update_target_network()
 
         self.qf_optimizer.zero_grad()
         self.vf_optimizer.zero_grad()
+        self.rf_optimizer.zero_grad()
         self.policy_optimizer.zero_grad()
         self.context_optimizer.zero_grad()
         # self.train_task_classifier()
@@ -180,18 +188,26 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
         z = torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0)
-        # z = Variable(torch.FloatTensor([1.]))
-        # import ipdb; ipdb.set_trace()
         batch_z = z.repeat(obs.shape[0], 1)
+
+        # z_magnitude_loss = self.l2_reg_criterion(z, 0.)
+        # z_magnitude_loss.backward(retain_graph=True)
+
+        r_pred = self.rf(obs, batch_z)
+        rf_loss = self.rf_criterion(r_pred, rewards / self.reward_scale)
+        rf_loss.backward(retain_graph=True)
+
+
+
         q_pred = self.qf(obs, actions, batch_z)
-        v_pred = self.vf(obs, batch_z)
+        v_pred = self.vf(obs, batch_z.detach())
         # make sure policy accounts for squashing functions like tanh correctly!
-        in_ = torch.cat([obs, batch_z], dim=1)
+        in_ = torch.cat([obs, batch_z.detach()], dim=1)
         policy_outputs = self.policy(in_, return_log_prob=True)
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # qf loss and gradients
-        target_v_values = self.target_vf(next_obs, batch_z)
+        target_v_values = self.target_vf(next_obs, batch_z.detach())
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
         qf_loss = self.qf_criterion(q_pred, q_target.detach())
         qf_loss.backward(retain_graph=True)
@@ -224,6 +240,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.eval_statistics = OrderedDict()
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
+            self.eval_statistics['RF Loss'] = np.mean(ptu.get_numpy(rf_loss))
             self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
                 policy_loss
             ))
@@ -234,6 +251,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.eval_statistics.update(create_stats_ordered_dict(
                 'V Predictions',
                 ptu.get_numpy(v_pred),
+            ))
+            self.eval_statistics.update(create_stats_ordered_dict(
+                'R Predictions',
+                ptu.get_numpy(r_pred)
             ))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Log Pis',
@@ -258,6 +279,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.policy,
             self.qf,
             self.vf,
+            self.rf,
             self.target_vf,
         ]
 
@@ -270,6 +292,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             qf=self.qf,
             policy=self.policy,
             vf=self.vf,
+            rf=self.rf,
             target_vf=self.target_vf,
         )
         return snapshot
