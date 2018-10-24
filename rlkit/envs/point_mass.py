@@ -24,9 +24,9 @@ class PointEnv(Env):
 
     def reset_goal(self, direction):
         if direction == 1:
-            return np.array([10, 10]) # 1,1 and -1,-1 originally
+            return np.array([1, 1]) # 1,1 and -1,-1 originally
         else:
-            return np.array([-10, 0])
+            return np.array([-1, 0])
 
     def get_all_task_idx(self):
         return range(len(self.tasks))
@@ -49,7 +49,7 @@ class PointEnv(Env):
         reward = - (x ** 2 + y ** 2) ** 0.5
         done = False # abs(x) < 0.01 and abs(y) < 0.01
         ob = self._get_obs()
-        return ob, .1 * reward, done, dict()
+        return ob, reward, done, dict()
 
     def viewer_setup(self):
         print('no viewer')

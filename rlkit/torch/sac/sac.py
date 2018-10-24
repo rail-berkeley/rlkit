@@ -194,12 +194,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs, batch_z)
-        rf_loss = self.rf_criterion(r_pred, rewards / self.reward_scale)
+        rf_loss = 1. * self.rf_criterion(r_pred, rewards / self.reward_scale)
         rf_loss.backward(retain_graph=True)
 
 
 
-        q_pred = self.qf(obs, actions, batch_z)
+        q_pred = self.qf(obs, actions, batch_z.detach())
         v_pred = self.vf(obs, batch_z.detach())
         # make sure policy accounts for squashing functions like tanh correctly!
         in_ = torch.cat([obs, batch_z.detach()], dim=1)

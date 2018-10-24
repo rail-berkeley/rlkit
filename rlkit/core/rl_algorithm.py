@@ -187,7 +187,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.env.reset_task(self.train_tasks[self.task_idx])
             self.collect_data(self.exploration_policy, num_samples=100)
             if self._can_train():
-                self._do_training()
+                for i in range(5):
+                    self._do_training()
+                    self.perform_meta_update()
                 self._n_train_steps_total += 1
                 gt.stamp('train')
                 self.collect_data(self.policy, num_samples=100)
