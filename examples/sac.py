@@ -34,24 +34,24 @@ def experiment(variant):
             output_size=latent_dim,
     )
     qf = FlattenMlp(
-        hidden_sizes=[net_size, net_size],
+        hidden_sizes=[net_size, net_size, net_size],
         input_size=obs_dim + action_dim + latent_dim,
         output_size=1,
     )
     vf = FlattenMlp(
-        hidden_sizes=[net_size, net_size],
+        hidden_sizes=[net_size, net_size, net_size],
         input_size=obs_dim + latent_dim,
         output_size=1,
     )
     policy = ProtoTanhGaussianPolicy(
-        hidden_sizes=[net_size, net_size],
+        hidden_sizes=[net_size, net_size, net_size],
         obs_dim=obs_dim + latent_dim,
         latent_dim=latent_dim,
         action_dim=action_dim,
     )
 
     rf = FlattenMlp(
-        hidden_sizes=[net_size, net_size],
+        hidden_sizes=[net_size, net_size, net_size],
         input_size=obs_dim + latent_dim,
         output_size=1
     )
@@ -77,15 +77,16 @@ def main(docker):
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
-            batch_size=128, # to compute training grads from
-            max_path_length=20,
+            batch_size=256, # to compute training grads from
+            max_path_length=10,
             discount=0.99,
             soft_target_tau=0.001,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
+            context_lr=3e-4,
         ),
-        net_size=300,
+        net_size=200,
     )
     setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     experiment(variant)

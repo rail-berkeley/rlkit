@@ -20,8 +20,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
 
-    def get_batch(self):
-        batch = self.replay_buffer.random_batch(self.task_idx, self.batch_size)
+    def get_batch(self, idx=None):
+        if idx is None:
+            idx = self.task_idx
+        batch = self.replay_buffer.random_batch(idx, self.batch_size)
         return np_to_pytorch_batch(batch)
 
     @property

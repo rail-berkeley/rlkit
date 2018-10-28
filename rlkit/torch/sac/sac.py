@@ -159,7 +159,40 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         test_paths = self.eval_sampler.obtain_samples(explore=False)
         return test_paths
 
+    def train_reward_prediction(self, train_flag=True):
+        # train classifier to convergence to distinguish between tasks,
+        # using data collected by exploration policy
+        import ipdb; ipdb.set_trace()
+        batch_size = 256
+        batches = []
+        rf_losses = []
+        for idx in self.train_tasks:
+            batch = self.get_batch(idx)
+            rewards = batch['rewards']
+            terminals = batch['terminals']
+            obs = batch['observations']
+            actions = batch['actions']
+            next_obs = batch['next_observations']
+
+            enc = self.task_enc(obs, rewards / self.reward_scale)
+            z = torch.mean(enc, dim=0)
+            batch_z = z.repeat(obs.shape[0], 1)
+            # z_magnitude_loss.backward(retain_graph=True)
+
+            r_pred = self.rf(obs, batch_z)
+            rf_loss = 10000. * self.rf_criterion(r_pred, rewards)
+            rf_losses.append(rf_loss)
+        total_rf_loss = sum(rf_losses)
+        total_rf_loss.backward(retain_graph=True)
+
+        self.rf_optimizer.step()
+        self.context_optimizer.step()
+
+        self.rf_optimizer.zero_grad()
+        self.context_optimizer.zero_grad()
+
     def perform_meta_update(self):
+        # self.train_reward_prediction()
         # assume gradients have been accumulated for each parameter, apply update
         self.qf_optimizer.step()
         self.vf_optimizer.step()
@@ -175,10 +208,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.context_optimizer.zero_grad()
         # self.train_task_classifier()
 
-    def _do_training(self):
+    def _do_training(self, idx):
 
         # sample from replay buffer to compute training update
-        batch = self.get_batch()
+        batch = self.get_batch(idx)
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
@@ -187,10 +220,21 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
-        z = torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0)
+        enc = self.task_enc(obs, rewards / self.reward_scale)
+
+        enc_np = ptu.get_numpy(enc)
+        # print('Mean', np.mean(enc_np), 'Var', np.var(enc_np))
+        """
+        import matplotlib.pyplot as plt
+        plt.plot(enc_np, np.zeros(128))
+        # plt.show()
+        import ipdb; ipdb.set_trace()
+        """
+
+        z = torch.mean(enc, dim=0)
         batch_z = z.repeat(obs.shape[0], 1)
 
-        # z_magnitude_loss = self.l2_reg_criterion(z, 0.)
+        z_magnitude_loss = torch.dot(z, z)
         # z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs, batch_z)
@@ -199,8 +243,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
 
 
-        q_pred = self.qf(obs, actions, batch_z.detach())
-        v_pred = self.vf(obs, batch_z.detach())
+        q_pred = self.qf(obs, actions, batch_z)
+        v_pred = self.vf(obs, batch_z)
         # make sure policy accounts for squashing functions like tanh correctly!
         in_ = torch.cat([obs, batch_z.detach()], dim=1)
         policy_outputs = self.policy(in_, return_log_prob=True)
@@ -209,11 +253,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # qf loss and gradients
         target_v_values = self.target_vf(next_obs, batch_z.detach())
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
-        qf_loss = self.qf_criterion(q_pred, q_target.detach())
+        # no detach here for residual gradient through batch_z
+        qf_loss = torch.mean((q_pred - q_target) ** 2) # self.qf_criterion(q_pred, q_target)
         qf_loss.backward(retain_graph=True)
 
         # vf loss and gradients
-        q_new_actions = self.qf(obs, new_actions, batch_z)
+        q_new_actions = self.qf(obs, new_actions, batch_z.detach())
         v_target = q_new_actions - log_pi
         vf_loss = self.vf_criterion(v_pred, v_target.detach())
         vf_loss.backward(retain_graph=True)

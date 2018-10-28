@@ -158,13 +158,21 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                         aug_obs = np.concatenate([obs, rewards], axis=1)
 
                         pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
-                # self.train_task_classifier()
+                self.train_task_classifier()
+                self.train_task_classifier()
+                self.train_task_classifier()
 
             for i in range(self.num_env_steps_per_epoch):
                 self.collect_batch_updates()
-                self.perform_meta_update()
 
-            self.train_task_classifier()
+                for i in range(10):
+                    # self.train_reward_prediction()
+                    for idx in self.train_tasks:
+                        self._do_training(idx)
+                    self.perform_meta_update()
+                    gt.stamp('train')
+
+            # self.train_task_classifier()
 
             self.training_mode(False)
 
@@ -185,14 +193,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # sample a task and set env accordingly
             self.task_idx = self.sample_task()
             self.env.reset_task(self.train_tasks[self.task_idx])
-            self.collect_data(self.exploration_policy, num_samples=100)
-            if self._can_train():
-                for i in range(5):
-                    self._do_training()
-                    self.perform_meta_update()
-                self._n_train_steps_total += 1
-                gt.stamp('train')
-                self.collect_data(self.policy, num_samples=100)
+            self.collect_data(self.exploration_policy, num_samples=10)
+            self.collect_data(self.policy, num_samples=10)
 
     def perform_meta_update(self):
         '''
