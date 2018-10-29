@@ -1,10 +1,13 @@
-name: rlkit-gpu
+name: rlkit
 channels:
 - kne  # for pybox2d
 - pytorch
 - anaconda  # for mkl
 dependencies:
+- cython
+- ipython  # technically unnecessary
 - joblib=0.9.4
+- lockfile
 - mako=1.0.6=py35_0
 - matplotlib=2.0.2=np111py35_0
 - mkl=2018.0.2  # Need to add explicit dependence for pytorch
@@ -23,3 +26,4 @@ dependencies:
   - gitpython==2.1.7
   - gtimer==1.0.0b5
   - pygame==1.9.2
+  - ipdb  # technically unnecessary
