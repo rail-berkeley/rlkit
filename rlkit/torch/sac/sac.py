@@ -180,7 +180,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             # z_magnitude_loss.backward(retain_graph=True)
 
             r_pred = self.rf(obs, batch_z)
-            rf_loss = 10000. * self.rf_criterion(r_pred, rewards)
+            rf_loss = 1. * self.rf_criterion(r_pred, rewards)
             rf_losses.append(rf_loss)
         total_rf_loss = sum(rf_losses)
         total_rf_loss.backward(retain_graph=True)
@@ -193,6 +193,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
     def perform_meta_update(self):
         # self.train_reward_prediction()
+
         # assume gradients have been accumulated for each parameter, apply update
         self.qf_optimizer.step()
         self.vf_optimizer.step()
@@ -223,7 +224,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         enc = self.task_enc(obs, rewards / self.reward_scale)
 
         enc_np = ptu.get_numpy(enc)
-        # print('Mean', np.mean(enc_np), 'Var', np.var(enc_np))
+        # print('Mean', np.mean(enc_np, axis=0), 'Var', np.var(enc_np, axis=0))
         """
         import matplotlib.pyplot as plt
         plt.plot(enc_np, np.zeros(128))
@@ -233,24 +234,26 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         z = torch.mean(enc, dim=0)
         batch_z = z.repeat(obs.shape[0], 1)
+        # batch_z = batch_z.detach()
 
-        z_magnitude_loss = torch.dot(z, z)
+        z_magnitude_loss = 1. * torch.dot(z, z)
         # z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs, batch_z)
-        rf_loss = 1. * self.rf_criterion(r_pred, rewards / self.reward_scale)
+        rf_loss = 1. * self.rf_criterion(r_pred, rewards)
         rf_loss.backward(retain_graph=True)
 
 
 
         q_pred = self.qf(obs, actions, batch_z)
-        v_pred = self.vf(obs, batch_z)
+        v_pred = self.vf(obs, batch_z.detach())
         # make sure policy accounts for squashing functions like tanh correctly!
         in_ = torch.cat([obs, batch_z.detach()], dim=1)
         policy_outputs = self.policy(in_, return_log_prob=True)
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # qf loss and gradients
+        # do residual q next
         target_v_values = self.target_vf(next_obs, batch_z.detach())
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
         # no detach here for residual gradient through batch_z
@@ -314,6 +317,18 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                 ptu.get_numpy(policy_log_std),
             ))
 
+    def set_policy_eval_z(self, idx):
+        batch = self.get_batch(idx)
+        rewards = batch['rewards']
+        obs = batch['observations']
+
+        # NOTE: right now policy is updated on the same rollouts used
+        # for the task encoding z
+        enc = self.task_enc(obs, rewards / self.reward_scale)
+
+        enc_np = ptu.get_numpy(enc)
+
+        z = torch.mean(enc, dim=0)
         # update policy's task encoding for data collection
         self.policy.set_eval_z(np_ify(z))
 
