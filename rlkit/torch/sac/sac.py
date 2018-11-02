@@ -254,7 +254,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # qf loss and gradients
         # do residual q next
-        target_v_values = self.target_vf(next_obs, batch_z.detach())
+        target_v_values = self.target_vf(next_obs, batch_z)
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
         # no detach here for residual gradient through batch_z
         qf_loss = torch.mean((q_pred - q_target) ** 2) # self.qf_criterion(q_pred, q_target)

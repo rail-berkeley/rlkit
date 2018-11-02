@@ -29,7 +29,7 @@ def experiment(variant):
     net_size = variant['net_size']
     # start with linear task encoding
     task_enc = FlattenMlp(
-            hidden_sizes=[32, 32, 32],
+            hidden_sizes=[200, 200, 200],
             input_size=obs_dim + reward_dim,
             output_size=latent_dim,
     )
@@ -79,13 +79,13 @@ def main(docker):
             num_steps_per_eval=100, # num obs to eval on
             batch_size=256, # to compute training grads from
             max_path_length=100,
-            discount=0.99,
+            discount=0.9,
             soft_target_tau=0.001,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=100.,
+            reward_scale=10.,
         ),
         net_size=200,
     )

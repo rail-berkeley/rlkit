@@ -10,7 +10,7 @@ class PointEnv(Env):
     """
 
     def __init__(self, task={'direction': 1}):
-        directions = [-1, 0]
+        directions = [-1, 0, 1]
         self.tasks = [{'direction': direction} for direction in directions]
         self._task = task
         self._goal = self.reset_goal(task.get('direction', 1))
