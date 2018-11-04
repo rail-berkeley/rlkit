@@ -10,7 +10,7 @@ class PointEnv(Env):
     """
 
     def __init__(self, task={'direction': 1}):
-        directions = [-1, 0, 1]
+        directions = [-1, 0, 1, 2, 3]
         self.tasks = [{'direction': direction} for direction in directions]
         self._task = task
         self._goal = self.reset_goal(task.get('direction', 1))
@@ -23,12 +23,16 @@ class PointEnv(Env):
         self._goal = self.reset_goal(self._task['direction'])
 
     def reset_goal(self, direction):
-        if direction == 1:
-            return np.array([5, 10]) # 1,1 and -1,-1 originally
+        if direction == 2:
+            return np.array([-1., -1.]) # 1,1 and -1,-1 originally
+        elif direction == 1:
+            return np.array([.5, 1]) # 1,1 and -1,-1 originally
         elif direction == 0:
-            return np.array([10, -10])
+            return np.array([1, -1])
+        elif direction == 3:
+            return np.array([0., 0.])
         else:
-            return np.array([-10, 0])
+            return np.array([-1, 0])
 
     def get_all_task_idx(self):
         return range(len(self.tasks))

@@ -23,7 +23,7 @@ def experiment(variant):
 
     obs_dim = int(np.prod(env.observation_space.shape))
     action_dim = int(np.prod(env.action_space.shape))
-    latent_dim = 2
+    latent_dim = 5
     reward_dim = 1
 
     net_size = variant['net_size']
@@ -78,14 +78,14 @@ def main(docker):
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
             batch_size=256, # to compute training grads from
-            max_path_length=100,
+            max_path_length=10,
             discount=0.9,
             soft_target_tau=0.001,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=10.,
+            reward_scale=100.,
         ),
         net_size=200,
     )
