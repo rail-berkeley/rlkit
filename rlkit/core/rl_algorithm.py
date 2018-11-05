@@ -196,9 +196,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.env.reset_task(self.train_tasks[self.task_idx])
 
             # samples an episode from each
-            self.collect_data(self.exploration_policy, num_samples=10)
+            # self.collect_data(self.exploration_policy, num_samples=10)
             self.set_policy_eval_z(self.task_idx)
-            self.collect_data(self.policy, num_samples=10)
+            self.collect_data(self.policy, num_samples=100)
 
     def perform_meta_update(self):
         '''

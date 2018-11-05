@@ -24,21 +24,21 @@ class PointEnv(Env):
 
     def reset_goal(self, direction):
         if direction == 2:
-            return np.array([-1., -1.]) # 1,1 and -1,-1 originally
+            return np.array([-10., -10.]) # 1,1 and -1,-1 originally
         elif direction == 1:
-            return np.array([.5, 1]) # 1,1 and -1,-1 originally
+            return np.array([5, 10]) # 1,1 and -1,-1 originally
         elif direction == 0:
-            return np.array([1, -1])
+            return np.array([10, -10])
         elif direction == 3:
             return np.array([0., 0.])
         else:
-            return np.array([-1, 0])
+            return np.array([-10, 0])
 
     def get_all_task_idx(self):
         return range(len(self.tasks))
 
     def reset_model(self):
-        self._state = np.random.uniform(-0.1, 0.1, size=(2,))
+        self._state = np.random.uniform(-10., 10., size=(2,))
         return self._get_obs()
 
     def reset(self):
