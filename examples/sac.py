@@ -4,6 +4,9 @@ Run Prototypical Soft Actor Critic on HalfCheetahEnv.
 """
 import numpy as np
 import click
+import datetime
+
+
 from gym.envs.mujoco import HalfCheetahEnv
 from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
 from rlkit.envs.point_mass import PointEnv
@@ -15,6 +18,9 @@ from rlkit.torch.sac.policies import ProtoTanhGaussianPolicy
 from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.sac.sac import ProtoSoftActorCritic
 
+def datetimestamp(divider=''):
+    now = datetime.datetime.now()
+    return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
     #env = NormalizedBoxEnv(HalfCheetahDirEnv())
@@ -79,13 +85,14 @@ def main(docker):
             num_steps_per_eval=100, # num obs to eval on
             batch_size=256, # to compute training grads from
             max_path_length=100,
-            discount=0.9,
+            discount=0.99,
             soft_target_tau=0.001,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
             reward_scale=100.,
+            pickle_output_dir='data/proto_sac_point_mass_{}'.format(datetimestamp('-'))
         ),
         net_size=200,
     )

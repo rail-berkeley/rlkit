@@ -1,6 +1,7 @@
 import abc
 import pickle
 import time
+import pathlib
 
 import gtimer as gt
 import numpy as np
@@ -35,6 +36,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             save_environment=False, # TODO was true
             eval_sampler=None,
             replay_buffer=None,
+            pickle_output_dir=None,
     ):
         """
         Base class for Meta RL Algorithms
@@ -97,6 +99,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     env,
                     self.train_tasks,
                 )
+        if pickle_output_dir is None:
+            self.pickle_output_dir = '/mounts/output'
+        else:
+            self.pickle_output_dir = pickle_output_dir
+
+        # creates directories for pickle outputs
+        pathlib.Path(self.pickle_output_dir + '/eval_trajectories').mkdir(parents=True, exist_ok=True)
+
+
 
         self._n_env_steps_total = 0
         self._n_train_steps_total = 0
@@ -143,7 +154,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # train
             self._start_epoch(epoch)
             self.training_mode(True)
-            print('training task classifier')
             if epoch == 0:
                 print('initializing replay buffer')
                 for idx in self.train_tasks:
@@ -151,16 +161,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.env.reset_task(idx)
                     self.collect_data(self.exploration_policy, num_samples=2000)
 
-                    with open("mounts/output/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+                    with open(self.pickle_output_dir + "/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
                         paths = self.replay_buffer.random_batch(idx, 2000)
                         obs = paths['observations']
                         rewards = paths['rewards']
                         aug_obs = np.concatenate([obs, rewards], axis=1)
 
                         pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
-                # self.train_task_classifier()
-                # self.train_task_classifier()
-                # self.train_task_classifier()
 
             for i in range(self.num_env_steps_per_epoch):
                 self.collect_batch_updates()
@@ -172,8 +179,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self._n_train_steps_total += 1
                     self.perform_meta_update()
                     gt.stamp('train')
-
-            # self.train_task_classifier()
 
             self.training_mode(False)
 

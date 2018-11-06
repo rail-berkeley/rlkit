@@ -57,10 +57,15 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             # TODO how to handle eval over multiple tasks?
             self.eval_sampler.env.reset_task(idx)
 
+            goal = self.eval_sampler.env._goal
             test_paths = self.obtain_samples(idx, epoch)
             # TODO incorporate into proper logging
+            for path in test_paths:
+                path['goal'] = goal
+
             # save evaluation rollouts for vis
-            with open("mounts/output/proto-sac-point-mass-fb-16z-task{}-{}.pkl".format(idx, epoch), 'wb') as f:
+            with open(self.pickle_output_dir +
+                      "/eval_trajectories/proto-sac-point-mass-fb-16z-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
                 pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
             statistics.update(eval_util.get_generic_path_information(
@@ -74,6 +79,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_task{}'.format(idx)] = average_returns
+            statistics['GoalPosition_task{}'.format(idx)] = self.eval_sampler.env._goal
         for key, value in statistics.items():
             logger.record_tabular(key, value)
 
