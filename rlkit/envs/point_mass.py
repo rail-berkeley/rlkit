@@ -9,8 +9,24 @@ class PointEnv(Env):
     two tasks: move to (-1, -1) or move to (1,1)
     """
 
-    def __init__(self, task={'direction': 1}):
-        directions = [-1, 0, 1, 2, 3, 4, 5, 6]
+    def __init__(self, task={'direction': 1}, randomize_tasks=False, n_tasks=2):
+        # directions = [-1, 0, 1, 2, 3, 4, 5, 6]
+        directions = list(range(n_tasks))
+
+        if randomize_tasks:
+            goals = [np.random.uniform(-10., 10., 2) for _ in directions]
+        else:
+            # add more goals in n_tasks > 7
+            goals = [np.array([10, -10]),
+                     np.array([5, 10]),
+                     np.array([-10, 10]),
+                     np.array([0, 0]),
+                     np.array([7, 2]),
+                     np.array([0, 4]),
+                     np.array([-6, 9])
+                     ]
+        self.goals = goals
+
         self.tasks = [{'direction': direction} for direction in directions]
         self._task = task
         self._goal = self.reset_goal(task.get('direction', 1))
@@ -23,6 +39,8 @@ class PointEnv(Env):
         self._goal = self.reset_goal(self._task['direction'])
 
     def reset_goal(self, direction):
+        return self.goals[direction]
+        """
         if direction == 6:
             return np.array([-6., 9.]) # 1,1 and -1,-1 originally
         if direction == 5:
@@ -39,6 +57,7 @@ class PointEnv(Env):
             return np.array([0., 0.])
         else:
             return np.array([-10, 0])
+        """
 
     def get_all_task_idx(self):
         return range(len(self.tasks))

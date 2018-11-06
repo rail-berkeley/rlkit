@@ -24,7 +24,7 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     #env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    env = NormalizedBoxEnv(PointEnv())
+    env = NormalizedBoxEnv(PointEnv(n_tasks=2, randomize_tasks=False))
     tasks = env.get_all_task_idx()
 
     obs_dim = int(np.prod(env.observation_space.shape))
@@ -79,7 +79,7 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         algo_params=dict(
-            meta_batch=2,
+            meta_batch=1,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
@@ -92,7 +92,8 @@ def main(docker):
             vf_lr=3E-4,
             context_lr=3e-4,
             reward_scale=100.,
-            pickle_output_dir='data/proto_sac_point_mass_{}'.format(datetimestamp('-'))
+            # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
+            pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=200,
     )

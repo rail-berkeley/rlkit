@@ -237,7 +237,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # batch_z = batch_z.detach()
 
         z_magnitude_loss = 1. * torch.dot(z, z)
-        # z_magnitude_loss.backward(retain_graph=True)
+        z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs, batch_z)
         rf_loss = 1. * self.rf_criterion(r_pred, rewards)
