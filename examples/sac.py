@@ -23,8 +23,9 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    #env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    env = NormalizedBoxEnv(PointEnv(n_tasks=2, randomize_tasks=False))
+    # env = NormalizedBoxEnv(HalfCheetahDirEnv())
+    env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
+
     tasks = env.get_all_task_idx()
 
     obs_dim = int(np.prod(env.observation_space.shape))
@@ -35,7 +36,7 @@ def experiment(variant):
     net_size = variant['net_size']
     # start with linear task encoding
     task_enc = FlattenMlp(
-            hidden_sizes=[200, 200, 200],
+            hidden_sizes=[200, 200, 200], # deeper net + higher dim space generalize better
             input_size=obs_dim + reward_dim,
             output_size=latent_dim,
     )
@@ -64,8 +65,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=tasks,
-        eval_tasks=tasks,
+        train_tasks=list(tasks[:-30]),
+        eval_tasks=list(tasks[-30:]),
         nets=[task_enc, policy, qf, vf, rf],
         **variant['algo_params']
     )
@@ -78,13 +79,17 @@ def main(docker):
     log_dir = '/mounts/output' if docker == 1 else 'output'
     # noinspection PyTypeChecker
     variant = dict(
+        task_params=dict(
+            n_tasks=40, # 20 works pretty well
+            randomize_tasks=True,
+        ),
         algo_params=dict(
-            meta_batch=1,
+            meta_batch=2,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=100, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
             batch_size=256, # to compute training grads from
-            max_path_length=100,
+            max_path_length=20,
             discount=0.99,
             soft_target_tau=0.001,
             policy_lr=3E-4,

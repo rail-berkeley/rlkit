@@ -97,7 +97,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.replay_buffer = MultiTaskReplayBuffer(
                     self.replay_buffer_size,
                     env,
-                    self.train_tasks,
+                    self.train_tasks + self.eval_tasks,
                 )
         if pickle_output_dir is None:
             self.pickle_output_dir = '/mounts/output'
@@ -150,13 +150,15 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 range(self.num_epochs),
                 save_itrs=True,
         ):
-            self._n_env_steps_total = epoch * self.num_env_steps_per_epoch
+            #
+            # self._n_env_steps_total = epoch * self.num_env_steps_per_epoch
             # train
             self._start_epoch(epoch)
             self.training_mode(True)
             if epoch == 0:
                 print('initializing replay buffer')
-                for idx in self.train_tasks:
+                # temp for evaluating
+                for idx in self.train_tasks + self.eval_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     self.collect_data(self.exploration_policy, num_samples=2000)
@@ -173,7 +175,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.collect_batch_updates()
 
                 for i in range(10):
-                    # self.train_reward_prediction()
                     for idx in self.train_tasks:
                         self._do_training(idx)
                     self._n_train_steps_total += 1
@@ -203,7 +204,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # samples an episode from each
             # self.collect_data(self.exploration_policy, num_samples=10)
             self.set_policy_eval_z(self.task_idx)
-            self.collect_data(self.policy, num_samples=100)
+            self.collect_data(self.policy, num_samples=20)
 
     def perform_meta_update(self):
         '''

@@ -237,7 +237,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # batch_z = batch_z.detach()
 
         z_magnitude_loss = 1. * torch.dot(z, z)
-        z_magnitude_loss.backward(retain_graph=True)
+        # z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs, batch_z)
         rf_loss = 1. * self.rf_criterion(r_pred, rewards)
@@ -254,7 +254,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # qf loss and gradients
         # do residual q next
-        target_v_values = self.target_vf(next_obs, batch_z)
+        target_v_values = self.target_vf(next_obs, batch_z.detach())
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
         # no detach here for residual gradient through batch_z
         qf_loss = torch.mean((q_pred - q_target) ** 2) # self.qf_criterion(q_pred, q_target)
