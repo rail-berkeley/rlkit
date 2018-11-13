@@ -174,7 +174,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             for i in range(self.num_env_steps_per_epoch):
                 self.collect_batch_updates()
 
-                for i in range(10):
+                for i in range(100):
                     for idx in self.train_tasks:
                         self._do_training(idx)
                     self._n_train_steps_total += 1
@@ -204,7 +204,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # samples an episode from each
             # self.collect_data(self.exploration_policy, num_samples=10)
             self.set_policy_eval_z(self.task_idx)
-            self.collect_data(self.policy, num_samples=20)
+            self.collect_data(self.policy, num_samples=100)
 
     def perform_meta_update(self):
         '''
