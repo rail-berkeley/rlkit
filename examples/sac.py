@@ -23,8 +23,8 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    # env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
+    # env = NormalizedBoxEnv(HalfCheetahDirEnv())
+    env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
 
     tasks = env.get_all_task_idx()
 
@@ -40,7 +40,12 @@ def experiment(variant):
             input_size=obs_dim + reward_dim,
             output_size=latent_dim,
     )
-    qf = FlattenMlp(
+    qf1 = FlattenMlp(
+        hidden_sizes=[net_size, net_size, net_size],
+        input_size=obs_dim + action_dim + latent_dim,
+        output_size=1,
+    )
+    qf2 = FlattenMlp(
         hidden_sizes=[net_size, net_size, net_size],
         input_size=obs_dim + action_dim + latent_dim,
         output_size=1,
@@ -67,7 +72,7 @@ def experiment(variant):
         env=env,
         train_tasks=list(tasks), # list(tasks[:30]),
         eval_tasks=[], # list(tasks[30:]),
-        nets=[task_enc, policy, qf, vf, rf],
+        nets=[task_enc, policy, qf1, qf2, vf, rf],
         **variant['algo_params']
     )
     algorithm.train()
@@ -87,6 +92,7 @@ def main(docker):
             meta_batch=2,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=10, # num updates per epoch
+            num_train_steps_per_itr=100,
             num_steps_per_eval=100, # num obs to eval on
             batch_size=256, # to compute training grads from
             max_path_length=100,
@@ -97,10 +103,11 @@ def main(docker):
             vf_lr=3E-4,
             context_lr=3e-4,
             reward_scale=5.,
+            reparameterize=True,
             # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
             pickle_output_dir='data/half-cheetah/', # proto_sac_point_mass', # change this to just log dir?
         ),
-        net_size=200,
+        net_size=300,
     )
     # setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)

@@ -23,6 +23,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             meta_batch=64,
             num_epochs=100,
             num_steps_per_epoch=10000,
+            num_train_steps_per_itr=100,
             num_eval_tasks=1,
             num_steps_per_eval=1000,
             batch_size=1024,
@@ -68,7 +69,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.exploration_policy = self.make_exploration_policy(policy)
         self.meta_batch = meta_batch
         self.num_epochs = num_epochs
-        self.num_env_steps_per_epoch = num_steps_per_epoch
+
+        self.num_env_steps_per_epoch = num_steps_per_epoch # iterations
+        self.num_train_steps_per_itr = num_train_steps_per_itr
+
         self.num_eval_tasks = num_eval_tasks
         self.num_steps_per_eval = num_steps_per_eval
         self.batch_size = batch_size
@@ -171,10 +175,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                         pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
 
-            for i in range(self.num_env_steps_per_epoch):
+            for i in range(self.num_env_steps_per_epoch): # num iterations
                 self.collect_batch_updates()
 
-                for i in range(100):
+                for _ in range(self.num_train_steps_per_itr):
                     for idx in self.train_tasks:
                         self._do_training(idx)
                     self._n_train_steps_total += 1
@@ -204,7 +208,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             # samples an episode from each
             # self.collect_data(self.exploration_policy, num_samples=10)
             self.set_policy_eval_z(self.task_idx)
-            self.collect_data(self.policy, num_samples=100)
+            self.collect_data(self.policy, num_samples=self.max_path_length) # gathers a trajectory (assuming no early terminations)
 
     def perform_meta_update(self):
         '''

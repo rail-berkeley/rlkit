@@ -85,6 +85,7 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
     def forward(
             self,
             obs,
+            reparameterize=False,
             deterministic=False,
             return_log_prob=False,
     ):
@@ -114,16 +115,24 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
         else:
             tanh_normal = TanhNormal(mean, std)
             if return_log_prob:
-                action, pre_tanh_value = tanh_normal.sample(
-                    return_pretanh_value=True
-                )
+                if reparameterize:
+                    action, pre_tanh_value = tanh_normal.rsample(
+                        return_pretanh_value=True
+                    )
+                else:
+                    action, pre_tanh_value = tanh_normal.sample(
+                        return_pretanh_value=True
+                    )
                 log_prob = tanh_normal.log_prob(
                     action,
                     pre_tanh_value=pre_tanh_value
                 )
                 log_prob = log_prob.sum(dim=1, keepdim=True)
             else:
-                action = tanh_normal.sample()
+                if reparameterize:
+                    action = tanh_normal.rsample()
+                else:
+                    action = tanh_normal.sample()
 
         return (
             action, mean, log_std, log_prob, expected_log_prob, std,

@@ -1,4 +1,5 @@
 import torch
+from torch.autograd import Variable
 try:
     from torch.distributions import Distribution, Normal
 except ImportError:
@@ -36,7 +37,7 @@ except ImportError:
             raise NotImplementedError
 
     class Normal(Distribution):
-        r"""
+        """
         Creates a normal (also called Gaussian) distribution parameterized by
         `mean` and `std`.
 
@@ -89,6 +90,8 @@ class TanhNormal(Distribution):
         :param normal_std: Std of the normal distribution
         :param epsilon: Numerical stability epsilon when computing log-prob.
         """
+        self.normal_mean = normal_mean
+        self.normal_std = normal_std
         self.normal = Normal(normal_mean, normal_std)
         self.epsilon = epsilon
 
@@ -115,6 +118,21 @@ class TanhNormal(Distribution):
 
     def sample(self, return_pretanh_value=False):
         z = self.normal.sample()
+        if return_pretanh_value:
+            return torch.tanh(z), z
+        else:
+            return torch.tanh(z)
+
+    def rsample(self, return_pretanh_value=False):
+        z = (
+            self.normal_mean +
+            self.normal_std *
+            Variable(Normal(
+                torch.zeros(self.normal_mean.size()),
+                torch.ones(self.normal_std.size())
+            ).sample())
+        )
+        # z.requires_grad_()
         if return_pretanh_value:
             return torch.tanh(z), z
         else:
