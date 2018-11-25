@@ -58,10 +58,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             self.eval_sampler.env.reset_task(idx)
 
             # goal = self.eval_sampler.env._goal
+            goal = self.eval_sampler.env._goal_vel
             test_paths = self.obtain_samples(idx, epoch)
             # TODO incorporate into proper logging
             for path in test_paths:
-                path['goal'] = idx # goal
+                path['goal'] = goal # goal
 
             # save evaluation rollouts for vis
             with open(self.pickle_output_dir +
@@ -79,9 +80,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_training_task{}'.format(idx)] = average_returns
-            # statistics['GoalPosition_training_task{}'.format(idx)] = goal
+            statistics['Goal_training_task{}'.format(idx)] = goal
 
-        """
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
         for idx in self.eval_tasks:
             self.task_idx = idx
@@ -90,7 +90,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             self.eval_sampler.env.reset_task(idx)
 
             # import ipdb; ipdb.set_trace()
-            goal = self.eval_sampler.env._goal
+            goal = self.eval_sampler.env._goal_vel
             test_paths = self.obtain_samples(idx, epoch)
             # TODO incorporate into proper logging
             for path in test_paths:
@@ -109,8 +109,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
-            statistics['GoalPosition_test_task{}'.format(idx)] = self.eval_sampler.env._goal
-        """
+            statistics['Goal_test_task{}'.format(idx)] = goal
 
         for key, value in statistics.items():
             logger.record_tabular(key, value)

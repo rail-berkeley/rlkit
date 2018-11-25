@@ -9,6 +9,7 @@ import datetime
 
 from gym.envs.mujoco import HalfCheetahEnv
 from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
+from rlkit.envs.half_cheetah_vel import HalfCheetahVelEnv
 from rlkit.envs.point_mass import PointEnv
 
 import rlkit.torch.pytorch_util as ptu
@@ -23,7 +24,7 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HalfCheetahDirEnv())
+    env = NormalizedBoxEnv(HalfCheetahVelEnv(n_tasks=30))
 
     tasks = env.get_all_task_idx()
 
@@ -69,8 +70,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=list(tasks), # list(tasks[:30]),
-        eval_tasks=[], # list(tasks[30:]),
+        train_tasks=list(tasks[:4]), # list(tasks[:30]),
+        eval_tasks=list(tasks[4:]), # list(tasks[30:]),
         nets=[task_enc, policy, qf1, qf2, vf, rf],
         **variant['algo_params']
     )
@@ -90,18 +91,18 @@ def main(docker):
         algo_params=dict(
             meta_batch=2,
             num_epochs=1000, # meta-train epochs
-            num_steps_per_epoch=10, # num updates per epoch
+            num_steps_per_epoch=2, # num updates per epoch
             num_steps_per_eval=100, # num obs to eval on
-            num_train_steps_per_itr=100,
+            num_train_steps_per_itr=200,
             batch_size=256, # to compute training grads from
-            max_path_length=100,
+            max_path_length=200,
             discount=0.99,
-            soft_target_tau=0.001,
+            soft_target_tau=0.005,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=5.,
+            reward_scale=500.,
             reparameterize=True,
             # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
             pickle_output_dir='data/half-cheetah/', # proto_sac_point_mass', # change this to just log dir?
