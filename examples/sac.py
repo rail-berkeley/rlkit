@@ -73,6 +73,7 @@ def experiment(variant):
         train_tasks=list(tasks), # list(tasks[:30]),
         eval_tasks=[], # list(tasks[30:]),
         nets=[task_enc, policy, qf1, qf2, vf, rf],
+        latent_dim=latent_dim,
         **variant['algo_params']
     )
     algorithm.train()

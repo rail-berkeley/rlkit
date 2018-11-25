@@ -48,6 +48,13 @@ class MultiTaskReplayBuffer(object):
     def add_path(self, task, path):
         self.task_buffers[task].add_path(path)
 
+    def add_paths(self, task, paths):
+        for path in paths:
+            self.task_buffers[task].add_path(path)
+
+    def clear_buffer(self, task):
+        self.task_buffers[task].clear()
+
 
 def get_dim(space):
     if isinstance(space, Box):

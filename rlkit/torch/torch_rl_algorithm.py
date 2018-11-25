@@ -45,6 +45,52 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         '''
         return self.eval_sampler.obtain_samples()
 
+    def evaluate_with_online_embedding(self, idx, statistics, epoch):
+        self.task_idx = idx
+        print('Task:', idx)
+        self.replay_buffer.clear_buffer(idx)
+        # TODO how to handle eval over multiple tasks?
+        self.eval_sampler.env.reset_task(idx)
+
+        goal = self.eval_sampler.env._goal_vel
+
+        initial_z = np.random.normal(size=self.latent_dim)
+        init_paths = self.obtain_eval_samples(idx, epoch, z=initial_z, explore=True)
+        self.replay_buffer.add_path(idx, init_paths)
+
+        n_inference_episodes = 3
+        all_inference_paths =[]
+
+        for i in range(n_inference_episodes):
+            inference_paths = self.obtain_eval_samples(idx, epoch, explore=True)
+            all_inference_paths += [inference_paths]
+            self.replay_buffer.add_paths(inference_paths)
+
+        # sac.obtain_samples
+        test_paths = self.obtain_eval_samples(idx, epoch)
+        # TODO incorporate into proper logging
+        for path in test_paths:
+            path['goal'] = goal
+
+        # save evaluation rollouts for vis
+        with open(self.pickle_output_dir +
+                  "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+            pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
+
+        statistics.update(eval_util.get_generic_path_information(
+            test_paths, stat_prefix="Test_task{}".format(idx),
+        ))
+        if hasattr(self.env, "log_diagnostics"):
+            self.env.log_diagnostics(test_paths)
+
+        average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+        average_inference_returns = [rlkit.core.eval_util.get_average_returns(paths) for paths in all_inference_paths]
+        statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
+        statistics['AverageInferenceReturns_test_task{}'.format(idx)] = average_inference_returns
+        statistics['Goal_test_task{}'.format(idx)] = goal
+        return test_paths
+
+
     def evaluate(self, epoch):
         statistics = OrderedDict()
         # save stuff from training
@@ -59,7 +105,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             # goal = self.eval_sampler.env._goal
             goal = self.eval_sampler.env._goal_vel
-            test_paths = self.obtain_samples(idx, epoch)
+            test_paths = self.obtain_eval_samples(idx, epoch)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal # goal
@@ -81,9 +127,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_training_task{}'.format(idx)] = average_returns
             statistics['Goal_training_task{}'.format(idx)] = goal
+            return test_paths
 
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
         for idx in self.eval_tasks:
+            """
             self.task_idx = idx
             print('Task:', idx)
             # TODO how to handle eval over multiple tasks?
@@ -91,7 +139,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             # import ipdb; ipdb.set_trace()
             goal = self.eval_sampler.env._goal_vel
-            test_paths = self.obtain_samples(idx, epoch)
+            test_paths = self.obtain_eval_samples(idx, epoch)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal
@@ -110,6 +158,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
             statistics['Goal_test_task{}'.format(idx)] = goal
+            """
+            test_paths = self.evaluate_with_online_embedding(idx, statistics, epoch)
 
         for key, value in statistics.items():
             logger.record_tabular(key, value)

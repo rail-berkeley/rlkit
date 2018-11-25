@@ -20,6 +20,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             env,
             train_tasks,
             eval_tasks,
+            latent_dim,
             nets,
 
             class_lr=1e-1,
@@ -47,6 +48,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_tasks=eval_tasks,
             **kwargs
         )
+
+        self.latent_dim = latent_dim
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -149,23 +152,25 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_policy = self.policy
         return eval_policy
 
-    def obtain_samples(self, idx, epoch):
+    def obtain_eval_samples(self, idx, epoch, z=None, explore=True):
         '''
         this is more involved than usual because we have to sample rollouts, compute z, then sample new rollouts conditioned on z
         '''
         # TODO for now set task encoder to zero, should be sampled
         # TODO: collect context tuples from replay buffer to match training stats
-        batch = self.get_batch()
-        rewards = batch['rewards']
-        obs = batch['observations']
-        # Evaluate task classifier on sampled tuples
-        # Task encoding is classification prob of a single tuple
-        z = np_ify(torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0))
+        if z is None:
+            batch = self.get_batch()
+            rewards = batch['rewards']
+            obs = batch['observations']
+            # Evaluate task classifier on sampled tuples
+            # Task encoding is classification prob of a single tuple
+            z = np_ify(torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0))
         print('task encoding', z)
         self.eval_sampler.policy.set_eval_z(z)
-        test_paths = self.eval_sampler.obtain_samples(explore=False)
+        test_paths = self.eval_sampler.obtain_samples(explore=explore)
         return test_paths
 
+    """
     def train_reward_prediction(self, train_flag=True):
         # train classifier to convergence to distinguish between tasks,
         # using data collected by exploration policy
@@ -197,6 +202,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         self.rf_optimizer.zero_grad()
         self.context_optimizer.zero_grad()
+    """
 
     def perform_meta_update(self):
         # self.train_reward_prediction()
