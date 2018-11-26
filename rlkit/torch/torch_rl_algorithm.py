@@ -35,9 +35,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.networks:
             net.train(mode)
 
-    def cuda(self):
+    def to(self):
+        if device == None:
+            device = ptu.device
         for net in self.networks:
-            net.cuda()
+            net.to(device)
 
     def obtain_samples(self, env):
         '''
