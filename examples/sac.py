@@ -70,8 +70,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=list(tasks), # list(tasks[:30]),
-        eval_tasks=[], # list(tasks[30:]),
+        train_tasks=list(tasks[:-5]),
+        eval_tasks=list(tasks[-5:]),
         nets=[task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
@@ -86,32 +86,32 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=5, # 20 works pretty well
+            n_tasks=20, # 20 works pretty well
             randomize_tasks=True,
         ),
         algo_params=dict(
             meta_batch=2,
             num_epochs=1000, # meta-train epochs
-            num_steps_per_epoch=10, # num updates per epoch
+            num_steps_per_epoch=2, # num updates per epoch
             num_train_steps_per_itr=100,
-            num_steps_per_eval=100, # num obs to eval on
+            num_steps_per_eval=20, # num obs to eval on
             batch_size=256, # to compute training grads from
-            max_path_length=100,
+            max_path_length=20,
             discount=0.99,
-            soft_target_tau=0.001,
+            soft_target_tau=0.005,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=5.,
+            reward_scale=100.,
             reparameterize=True,
             # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
-            pickle_output_dir='data/half-cheetah/', # proto_sac_point_mass', # change this to just log dir?
+            pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
     )
-    # setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
-    setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
+    setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
+    # setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
     experiment(variant)
 
 if __name__ == "__main__":
