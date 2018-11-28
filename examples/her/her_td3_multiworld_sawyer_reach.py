@@ -11,21 +11,23 @@ import gym
 import rlkit.torch.pytorch_util as ptu
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
-from rlkit.exploration_strategies.gaussian_strategy import GaussianStrategy
+from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
+    GaussianAndEpislonStrategy
+)
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerTd3
 from rlkit.torch.her.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
-import multiworld.envs.mujoco
+import multiworld.envs.mujoco  # trigger environment registration
 
 
 def experiment(variant):
-    env = gym.make('FetchReach-v1')
     env = gym.make('SawyerReachXYEnv-v1')
-    es = GaussianStrategy(
+    es = GaussianAndEpislonStrategy(
         action_space=env.action_space,
-        max_sigma=0.1,
-        min_sigma=0.1,  # Constant sigma
+        max_sigma=.2,
+        min_sigma=.2,  # constant sigma
+        epsilon=.3,
     )
     obs_dim = env.observation_space.spaces['observation'].low.size
     goal_dim = env.observation_space.spaces['desired_goal'].low.size
@@ -71,23 +73,18 @@ def experiment(variant):
 if __name__ == "__main__":
     variant = dict(
         algo_kwargs=dict(
-            # num_epochs=200,
-            # num_steps_per_epoch=5000,
-            # num_steps_per_eval=10000,
-            # max_path_length=100,
-            num_epochs=20,
-            num_steps_per_epoch=500,
-            num_steps_per_eval=100,
+            num_epochs=100,
+            num_steps_per_epoch=1000,
+            num_steps_per_eval=1000,
             max_path_length=50,
-            min_num_steps_before_training=1000,
-            batch_size=100,
+            batch_size=128,
             discount=0.99,
         ),
         replay_buffer_kwargs=dict(
             max_size=100000,
-            fraction_goals_rollout_goals=1.0,
+            fraction_goals_rollout_goals=0.2,
             fraction_goals_env_goals=0.0,
         ),
     )
-    setup_logger('name-of-td3-experiment', variant=variant)
+    setup_logger('her-td3-sawyer-experiment', variant=variant)
     experiment(variant)

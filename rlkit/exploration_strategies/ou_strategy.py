@@ -60,10 +60,3 @@ class OUStrategy(RawExplorationStrategy, Serializable):
             * min(1.0, t * 1.0 / self._decay_period)
         )
         return np.clip(action + ou_state, self.low, self.high)
-
-    def get_actions_from_raw_actions(self, actions, t=0, **kwargs):
-        noise = (
-            self.state + self.theta * (self.mu - self.state)
-            + self.sigma * nr.randn(*actions.shape)
-        )
-        return np.clip(actions + noise, self.low, self.high)
