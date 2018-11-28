@@ -4,6 +4,7 @@ from rlkit.data_management.path_builder import PathBuilder
 import rlkit.samplers.rollout_functions as rf
 from rlkit.torch.ddpg.ddpg import DDPG
 from rlkit.torch.her.her_replay_buffer import RelabelingReplayBuffer
+from rlkit.torch.her.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.torch.sac.sac import SoftActorCritic
 from rlkit.torch.sac.twin_sac import TwinSAC
 from rlkit.torch.td3.td3 import TD3
@@ -51,13 +52,6 @@ class HER(TorchRLAlgorithm):
             desired_goal_key=self.desired_goal_key
         )
 
-    def _start_new_rollout(self):
-        self.exploration_policy.reset()
-        # Note: we assume we're using a silent env.
-        o = self.training_env.reset()
-        self._rollout_goal = self.training_env.get_goal()
-        return o
-
     def _handle_step(
             self,
             observation,
@@ -76,7 +70,6 @@ class HER(TorchRLAlgorithm):
             terminals=terminal,
             agent_infos=agent_info,
             env_infos=env_info,
-            goals=self._rollout_goal,
         )
 
     def _handle_path(self, path):
@@ -114,12 +107,10 @@ class HER(TorchRLAlgorithm):
         :return:
         """
         self.exploration_policy.set_num_steps_total(self._n_env_steps_total)
-        goal = self._rollout_goal
-        if self.observation_key:
-            observation = observation[self.observation_key]
-        if self.desired_goal_key:
-            goal = self._rollout_goal[self.desired_goal_key]
-        new_obs = np.hstack((observation, goal))
+        new_obs = np.hstack((
+            observation[self.observation_key],
+            observation[self.desired_goal_key],
+        ))
         return self.exploration_policy.get_action(new_obs)
 
     def get_eval_paths(self):
@@ -136,7 +127,6 @@ class HER(TorchRLAlgorithm):
             self.env,
             self.policy,
             self.max_path_length,
-            animated=self.render_during_eval
         )
 
 
@@ -144,8 +134,8 @@ class HerTd3(HER, TD3):
     def __init__(
             self,
             *args,
-            observation_key=None,
-            desired_goal_key=None,
+            observation_key='observation',
+            desired_goal_key='desired_goal',
             **kwargs
     ):
         HER.__init__(
@@ -156,6 +146,8 @@ class HerTd3(HER, TD3):
         TD3.__init__(self, *args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
         )
 
 
@@ -163,8 +155,8 @@ class HerSac(HER, SoftActorCritic):
     def __init__(
             self,
             *args,
-            observation_key=None,
-            desired_goal_key=None,
+            observation_key='observation',
+            desired_goal_key='desired_goal',
             **kwargs
     ):
         HER.__init__(
@@ -175,6 +167,8 @@ class HerSac(HER, SoftActorCritic):
         SoftActorCritic.__init__(self, *args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
         )
 
     def get_eval_action(self, observation, goal):
@@ -190,8 +184,8 @@ class HerDdpg(HER, DDPG):
     def __init__(
             self,
             *args,
-            observation_key=None,
-            desired_goal_key=None,
+            observation_key='observation',
+            desired_goal_key='desired_goal',
             **kwargs
     ):
         HER.__init__(
@@ -202,6 +196,8 @@ class HerDdpg(HER, DDPG):
         super().__init__(*args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
         )
 
 
@@ -209,8 +205,8 @@ class HerTwinSAC(HER, TwinSAC):
     def __init__(
             self,
             *args,
-            observation_key=None,
-            desired_goal_key=None,
+            observation_key='observation',
+            desired_goal_key='desired_goal',
             **kwargs
     ):
         HER.__init__(
@@ -221,6 +217,8 @@ class HerTwinSAC(HER, TwinSAC):
         TwinSAC.__init__(self, *args, **kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
         )
 
     def get_eval_action(self, observation, goal):
