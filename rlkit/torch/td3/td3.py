@@ -27,7 +27,6 @@ class TD3(TorchRLAlgorithm):
 
             target_policy_noise=0.2,
             target_policy_noise_clip=0.5,
-            min_num_steps_before_training=1000,
 
             policy_learning_rate=1e-3,
             qf_learning_rate=1e-3,
@@ -52,7 +51,6 @@ class TD3(TorchRLAlgorithm):
 
         self.target_policy_noise = target_policy_noise
         self.target_policy_noise_clip = target_policy_noise_clip
-        self.min_num_steps_before_training = min_num_steps_before_training
 
         self.policy_and_target_update_period = policy_and_target_update_period
         self.tau = tau
@@ -188,18 +186,6 @@ class TD3(TorchRLAlgorithm):
             exploration_policy=self.exploration_policy,
         )
         return snapshot
-
-    def _can_train(self):
-        return (
-            self.replay_buffer.num_steps_can_sample() >=
-            self.min_num_steps_before_training
-        )
-
-    def _can_evaluate(self):
-        return (
-            len(self._exploration_paths) > 0
-            and self.eval_statistics is not None
-        )
 
     @property
     def networks(self):
