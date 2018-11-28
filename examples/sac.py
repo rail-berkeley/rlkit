@@ -60,6 +60,7 @@ if __name__ == "__main__":
             batch_size=128,
             max_path_length=999,
             discount=0.99,
+            reward_scale=1,
 
             soft_target_tau=0.001,
             policy_lr=3E-4,

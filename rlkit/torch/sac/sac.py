@@ -26,6 +26,7 @@ class SoftActorCritic(TorchRLAlgorithm):
             policy_pre_activation_weight=0.,
             optimizer_class=optim.Adam,
 
+            train_policy_with_reparameterization=True,
             soft_target_tau=1e-2,
             plotter=None,
             render_eval_paths=False,
@@ -45,6 +46,9 @@ class SoftActorCritic(TorchRLAlgorithm):
         self.policy = policy
         self.qf = qf
         self.vf = vf
+        self.train_policy_with_reparameterization = (
+            train_policy_with_reparameterization
+        )
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -80,7 +84,11 @@ class SoftActorCritic(TorchRLAlgorithm):
         q_pred = self.qf(obs, actions)
         v_pred = self.vf(obs)
         # Make sure policy accounts for squashing functions like tanh correctly!
-        policy_outputs = self.policy(obs, return_log_prob=True)
+        policy_outputs = self.policy(
+                obs,
+                reparameterize=self.train_policy_with_reparameterization,
+                return_log_prob=True,
+        )
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         """
@@ -100,10 +108,13 @@ class SoftActorCritic(TorchRLAlgorithm):
         """
         Policy Loss
         """
-        log_policy_target = q_new_actions - v_pred
-        policy_loss = (
-            log_pi * (log_pi - log_policy_target).detach()
-        ).mean()
+        if self.train_policy_with_reparameterization:
+            policy_loss = (log_pi - q_new_actions).mean()
+        else:
+            log_policy_target = q_new_actions - v_pred
+            policy_loss = (
+                    log_pi * (log_pi - log_policy_target).detach()
+            ).mean()
         mean_reg_loss = self.policy_mean_reg_weight * (policy_mean**2).mean()
         std_reg_loss = self.policy_std_reg_weight * (policy_log_std**2).mean()
         pre_tanh_value = policy_outputs[-1]

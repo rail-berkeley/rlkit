@@ -37,24 +37,20 @@ To get started, checkout the example scripts, linked above.
 ## Installation
 Install and use the included Ananconda environment
 ```
-$ conda env create -f docker/rlkit/rlkit-env.yml
+$ conda env create -f environment/[linux-cpu|linux-gpu|mac]-env.yml
 $ source activate rlkit
 (rlkit) $ python examples/ddpg.py
 ```
+Choose the appropriate `.yml` file for your system.
+These Anaconda environments use MuJoCo 1.5 and gym 0.10.5.
+You'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
 
-There is also a GPU-version in `docker/rlkit-gpu`
-```
-$ conda env create -f docker/rlkit_gpu/rlkit-env.yml
-$ source activate rlkit-gpu
-(rlkit-gpu) $ python examples/ddpg.py
-```
+DISCLAIMER: the mac environment has only been tested without a GPU.
 
-NOTE: these Anaconda environments use MuJoCo 1.5 and gym 0.10.5, unlike previous versions.
-
-For an even more portable solution, try using the docker image provided in `docker/rlkit_gpu`.
+For an even more portable solution, try using the docker image provided in `environment/docker`.
 The Anaconda env should be enough, but this docker image addresses some of the rendering issues that may arise when using MuJoCo 1.5 and GPUs.
-To use the GPU docker image, you will need a GPU and [nvidia-docker installed](https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)).
-Note that you'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
+The docker image supports GPU, but it should work without a GPU.
+To use a GPU with the image, you need to have [nvidia-docker installed](https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)).
 
 ## Visualizing a policy and seeing results
 During training, the results will be saved to a file called under
