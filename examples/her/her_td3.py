@@ -14,31 +14,34 @@ from rlkit.exploration_strategies.base import \
 from rlkit.exploration_strategies.gaussian_strategy import GaussianStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerTd3
+from rlkit.torch.her.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+import multiworld.envs.mujoco
 
 
 def experiment(variant):
     env = gym.make('FetchReach-v1')
-    import ipdb; ipdb.set_trace()
+    env = gym.make('SawyerReachXYEnv-v1')
     es = GaussianStrategy(
         action_space=env.action_space,
         max_sigma=0.1,
         min_sigma=0.1,  # Constant sigma
     )
-    obs_dim = env.observation_space.low.size
+    obs_dim = env.observation_space.spaces['observation'].low.size
+    goal_dim = env.observation_space.spaces['desired_goal'].low.size
     action_dim = env.action_space.low.size
     qf1 = FlattenMlp(
-        input_size=obs_dim + action_dim,
+        input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         hidden_sizes=[400, 300],
     )
     qf2 = FlattenMlp(
-        input_size=obs_dim + action_dim,
+        input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         hidden_sizes=[400, 300],
     )
     policy = TanhMlpPolicy(
-        input_size=obs_dim,
+        input_size=obs_dim + goal_dim,
         output_size=action_dim,
         hidden_sizes=[400, 300],
     )
@@ -46,15 +49,20 @@ def experiment(variant):
         exploration_strategy=es,
         policy=policy,
     )
+    replay_buffer = ObsDictRelabelingBuffer(
+        env=env,
+        achieved_goal_key='state_achieved_goal',
+        desired_goal_key='state_desired_goal',
+        **variant['replay_buffer_kwargs']
+    )
     algorithm = HerTd3(
-        td3_kwargs=dict(
-            env,
-            qf1=qf1,
-            qf2=qf2,
-            policy=policy,
-            exploration_policy=exploration_policy,
-            **variant['algo_kwargs']
-        ),
+        env=env,
+        qf1=qf1,
+        qf2=qf2,
+        policy=policy,
+        exploration_policy=exploration_policy,
+        replay_buffer=replay_buffer,
+        **variant['algo_kwargs']
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -63,13 +71,22 @@ def experiment(variant):
 if __name__ == "__main__":
     variant = dict(
         algo_kwargs=dict(
-            num_epochs=200,
-            num_steps_per_epoch=5000,
-            num_steps_per_eval=10000,
-            max_path_length=1000,
+            # num_epochs=200,
+            # num_steps_per_epoch=5000,
+            # num_steps_per_eval=10000,
+            # max_path_length=100,
+            num_epochs=20,
+            num_steps_per_epoch=500,
+            num_steps_per_eval=100,
+            max_path_length=50,
+            min_num_steps_before_training=1000,
             batch_size=100,
             discount=0.99,
-            replay_buffer_size=int(1E6),
+        ),
+        replay_buffer_kwargs=dict(
+            max_size=100000,
+            fraction_goals_rollout_goals=1.0,
+            fraction_goals_env_goals=0.0,
         ),
     )
     setup_logger('name-of-td3-experiment', variant=variant)

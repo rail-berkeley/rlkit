@@ -31,8 +31,8 @@ def multitask_rollout(
         agent,
         max_path_length=np.inf,
         animated=False,
-        observation_key=None,
-        desired_goal_key=None,
+        observation_key='observation',
+        desired_goal_key='desired_goal',
 ):
     full_observations = []
     observations = []
@@ -47,13 +47,10 @@ def multitask_rollout(
     o = env.reset()
     if animated:
         env.render()
-    goal = env.get_goal()
-    if desired_goal_key:
-        goal = goal[desired_goal_key]
+    goal = o[desired_goal_key]
     while path_length < max_path_length:
         full_observations.append(o)
-        if observation_key:
-            o = o[observation_key]
+        o = o[observation_key]
         new_obs = np.hstack((o, goal))
         a, agent_info = agent.get_action(new_obs)
         next_o, r, d, env_info = env.step(a)
