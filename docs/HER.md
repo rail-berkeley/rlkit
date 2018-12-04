@@ -4,11 +4,11 @@ Some notes on the implementation of
 ## Expected Results
 If you run the [Fetch example](examples/her/her_td3_gym_fetch_reach.py), then
  you should get results like this:
- ![Fetch HER results](docs/images/FetchReach-v1_HER-TD3.png)
+ ![Fetch HER results](images/FetchReach-v1_HER-TD3.png)
  
 If you run the [Sawyer example](examples/her/her_td3_multiworld_sawyer_reach.py)
 , then you should get results like this:
- ![Sawyer HER results](docs/images/SawyerReachXYZEnv-v0_HER-TD3.png)
+ ![Sawyer HER results](images/SawyerReachXYZEnv-v0_HER-TD3.png)
  
 Note that these examples use HER combined with TD3, and not DDPG.
 TD3 is a new method that came out after the HER paper, and it seems to work 
