@@ -35,6 +35,7 @@ To get started, checkout the example scripts, linked above.
 ## What's New
 12/03/2018
  - Add HER implementation
+ - Add doodad support
 
 10/16/2018
  - Upgraded to PyTorch v0.4
@@ -42,7 +43,11 @@ To get started, checkout the example scripts, linked above.
  - Various small refactor (e.g. logger, evaluate code)
 
 ## Installation
-Install and use the included Ananconda environment
+1. Copy `config_template.py` to `config.py`:
+```
+cp rlkit/launchers/config_template.py rlkit/launchers/config.py
+```
+2. Install and use the included Ananconda environment
 ```
 $ conda env create -f environment/[linux-cpu|linux-gpu|mac]-env.yml
 $ source activate rlkit
@@ -93,27 +98,41 @@ python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
 This `viskit` repo also has a few extra nice features, like plotting multiple Y-axis values at once, figure-splitting on multiple keys, and being able to filter hyperparametrs out.
 
-## Visualizing a TDM policy
+## Visualizing a TDM/HER policy
 To visualize a TDM policy, run
 ```
 (rlkit) $ python scripts/sim_tdm_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
+To visualize a HER policy, run
+```
+(rlkit) $ python scripts/sim_goal_conditioned_policy.py
+LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+```
 
-## Algorithm-Specific Comments
-### TDM
-Recommended hyperparameters to tune:
- - `max_tau`
- - `reward_scale`
+## Launching jobs with `doodad`
+The `run_experiment` function makes it easy to run Python code on Amazon Web
+Services (AWS) or Google Cloud Platform (GCP) by using
+[doodad](https://github.com/justinjfu/doodad/).
 
-### SAC
-The SAC implementation provided here only uses Gaussian policy, rather than a Gaussian mixture model, as described in the original SAC paper.
-Recommended hyperparameters to tune:
- - `reward_scale`
+It's as easy as:
+```
+from rlkit.launchers.launcher_util import run_experiment
 
-### Twin SAC
-This quite literally combines TD3 and SAC.
-Recommended hyperparameters to tune:
- - `reward_scale`
+def function_to_run(variant):
+    learning_rate = variant['learning_rate']
+    ...
+
+run_experiment(
+    function_to_run,
+    exp_prefix="my-experiment-name",
+    mode='ec2',  # or 'gcp'
+    variant={'learning_rate': 1e-3},
+)
+```
+You will need to set up parameters in config.py (see step one of Installation).
+This requires some knowledge of AWS and/or GCP, which is beyond the scope of
+this README.
+To learn more, more about `doodad`, [go to the repository](https://github.com/justinjfu/doodad/).
 
 ## Credits
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
