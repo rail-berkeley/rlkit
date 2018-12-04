@@ -7,7 +7,11 @@ Some implemented algorithms:
  - Temporal Difference Models (TDMs)
     - [example script](examples/tdm/cheetah.py)
     - [TDM paper](https://arxiv.org/abs/1802.09081)
-    - [Details on implementation](rlkit/torch/tdm/TDMs.md)
+    - [Documentation](docs/TDMs.md)
+ - Hindsight Experience Replay (HER)
+    - [example script](examples/her/her_td3_gym_fetch_reach.py)
+    - [HER paper](https://arxiv.org/abs/1707.01495)
+    - [Documentation](docs/HER.md)
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
     - [DDPG paper](https://arxiv.org/pdf/1509.02971.pdf)
@@ -84,7 +88,7 @@ Alternatively, if you don't want to clone all of `rllab`, a repository containin
 ```bash
 python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
-This `viskit` repo also has a few extra nice features, like plotting multiple Y-axis values at once, figure-splitting on multiple keys, and being able to filter hyperparametrs out. 
+This `viskit` repo also has a few extra nice features, like plotting multiple Y-axis values at once, figure-splitting on multiple keys, and being able to filter hyperparametrs out.
 
 ## Visualizing a TDM policy
 To visualize a TDM policy, run
@@ -97,7 +101,7 @@ To visualize a TDM policy, run
 Recommended hyperparameters to tune:
  - `max_tau`
  - `reward_scale`
- 
+
 ### SAC
 The SAC implementation provided here only uses Gaussian policy, rather than a Gaussian mixture model, as described in the original SAC paper.
 Recommended hyperparameters to tune:
