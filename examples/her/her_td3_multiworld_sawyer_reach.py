@@ -22,7 +22,7 @@ import multiworld.envs.mujoco  # trigger environment registration
 
 
 def experiment(variant):
-    env = gym.make('SawyerReachXYEnv-v1')
+    env = gym.make('SawyerReachXYZEnv-v0')
     es = GaussianAndEpislonStrategy(
         action_space=env.action_space,
         max_sigma=.2,
