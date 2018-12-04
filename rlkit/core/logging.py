@@ -91,6 +91,9 @@ class Logger(object):
         self._header_printed = False
         self.table_printer = TerminalTablePrinter()
 
+    def reset(self):
+        self.__init__()
+
     def _add_output(self, file_name, arr, fds, mode='a'):
         if file_name not in arr:
             mkdir_p(os.path.dirname(file_name))
