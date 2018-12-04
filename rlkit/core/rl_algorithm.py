@@ -24,6 +24,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             num_steps_per_epoch=10000,
             num_steps_per_eval=1000,
             num_updates_per_env_step=1,
+            min_num_steps_before_training=None,
             batch_size=1024,
             max_path_length=1000,
             discount=0.99,
@@ -61,12 +62,15 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :param eval_policy: Policy to evaluate with.
         :param replay_buffer:
         """
+        if min_num_steps_before_training is None:
+            min_num_steps_before_training = num_steps_per_epoch
         self.training_env = training_env or pickle.loads(pickle.dumps(env))
         self.exploration_policy = exploration_policy
         self.num_epochs = num_epochs
         self.num_env_steps_per_epoch = num_steps_per_epoch
         self.num_steps_per_eval = num_steps_per_eval
         self.num_updates_per_train_call = num_updates_per_env_step
+        self.min_num_steps_before_training = min_num_steps_before_training
         self.batch_size = batch_size
         self.max_path_length = max_path_length
         self.discount = discount
@@ -246,7 +250,10 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         )
 
     def _can_train(self):
-        return self.replay_buffer.num_steps_can_sample() >= self.batch_size
+        return (
+            self.replay_buffer.num_steps_can_sample() >=
+            self.min_num_steps_before_training
+        )
 
     def _get_action_and_info(self, observation):
         """
@@ -401,7 +408,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         if eval_paths:
             test_paths = eval_paths
         else:
-            test_paths = self.eval_sampler.obtain_samples()
+            test_paths = self.get_eval_paths()
 
         statistics.update(eval_util.get_generic_path_information(
             test_paths, stat_prefix="Test",
@@ -420,6 +427,9 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         for key, value in statistics.items():
             logger.record_tabular(key, value)
         self.need_to_update_eval_statistics = True
+
+    def get_eval_paths(self):
+        return self.eval_sampler.obtain_samples()
 
     @abc.abstractmethod
     def _do_training(self):
