@@ -33,6 +33,9 @@ Some implemented algorithms:
 To get started, checkout the example scripts, linked above.
 
 ## What's New
+12/03/2018
+ - Add HER implementation
+
 10/16/2018
  - Upgraded to PyTorch v0.4
  - Added Twin Soft Actor Critic Implementation
