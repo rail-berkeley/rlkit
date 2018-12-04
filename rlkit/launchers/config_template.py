@@ -12,10 +12,7 @@ DIR_AND_MOUNT_POINT_MAPPINGS = [
         mount_point='/root/.mujoco',
     ),
 ]
-LOCAL_LOG_DIR = '/home/user/git/path/to/save/data/'
-RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
-    '/home/user/path/to/railrl/scripts/run_experiment_from_doodad.py'
-)
+LOCAL_LOG_DIR = 'output'
 
 
 """
@@ -31,6 +28,9 @@ ignoring most of these things and only using them on an as-needed basis.
 ********************************************************************************
 ********************************************************************************
 """
+RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
+    '/home/user/path/to/rlkit/scripts/run_experiment_from_doodad.py'
+)
 
 """
 AWS Settings

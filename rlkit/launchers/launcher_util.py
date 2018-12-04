@@ -89,7 +89,7 @@ def run_experiment_here(
         experiment_function,
         variant=None,
         exp_id=0,
-        seed=0,
+        seed=None,
         use_gpu=True,
         # Logger params:
         exp_prefix="default",
@@ -98,7 +98,9 @@ def run_experiment_here(
         git_infos=None,
         script_name=None,
         base_log_dir=None,
+        force_randomize_seed=False,
         log_dir=None,
+        **setup_logger_kwargs
 ):
     """
     Run an experiment locally without any serialization.
@@ -120,7 +122,7 @@ def run_experiment_here(
         variant = {}
     variant['exp_id'] = str(exp_id)
 
-    if seed is None and 'seed' not in variant:
+    if force_randomize_seed or seed is None:
         seed = random.randint(0, 100000)
         variant['seed'] = str(seed)
     reset_execution_environment()
@@ -136,6 +138,7 @@ def run_experiment_here(
         log_dir=log_dir,
         git_infos=git_infos,
         script_name=script_name,
+        **setup_logger_kwargs
     )
 
     set_seed(seed)
@@ -152,6 +155,7 @@ def run_experiment_here(
         git_infos=git_infos,
         script_name=script_name,
         base_log_dir=base_log_dir,
+        **setup_logger_kwargs
     )
     save_experiment_data(
         dict(
@@ -174,20 +178,31 @@ def create_exp_name(exp_prefix, exp_id=0, seed=0):
     return "%s_%s_%04d--s-%d" % (exp_prefix, timestamp, exp_id, seed)
 
 
-def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
+def create_log_dir(
+        exp_prefix,
+        exp_id=0,
+        seed=0,
+        base_log_dir=None,
+        include_exp_prefix_sub_dir=True,
+):
     """
     Creates and returns a unique log directory.
 
     :param exp_prefix: All experiments with this prefix will have log
     directories be under this directory.
-    :param exp_id: Different exp_ids will be in different directories.
+    :param exp_id: The number of the specific experiment run within this
+    experiment.
+    :param base_log_dir: The directory where all log should be saved.
     :return:
     """
     exp_name = create_exp_name(exp_prefix, exp_id=exp_id,
                                seed=seed)
     if base_log_dir is None:
         base_log_dir = config.LOCAL_LOG_DIR
-    log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
+    if include_exp_prefix_sub_dir:
+        log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
+    else:
+        log_dir = osp.join(base_log_dir, exp_name)
     if osp.exists(log_dir):
         print("WARNING: Log directory already exists {}".format(log_dir))
     os.makedirs(log_dir, exist_ok=True)
@@ -196,10 +211,7 @@ def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
 
 def setup_logger(
         exp_prefix="default",
-        exp_id=0,
-        seed=0,
         variant=None,
-        base_log_dir=None,
         text_log_file="debug.log",
         variant_log_file="variant.json",
         tabular_log_file="progress.csv",
@@ -209,6 +221,7 @@ def setup_logger(
         log_dir=None,
         git_infos=None,
         script_name=None,
+        **create_log_dir_kwargs
 ):
     """
     Set up logger to have some reasonable default settings.
@@ -222,10 +235,7 @@ def setup_logger(
     If log_dir is specified, then that directory is used as the output dir.
 
     :param exp_prefix: The sub-directory for this specific experiment.
-    :param exp_id: The number of the specific experiment run within this
-    experiment.
     :param variant:
-    :param base_log_dir: The directory where all log should be saved.
     :param text_log_file:
     :param variant_log_file:
     :param tabular_log_file:
@@ -241,8 +251,7 @@ def setup_logger(
         git_infos = get_git_infos(config.CODE_DIRS_TO_MOUNT)
     first_time = log_dir is None
     if first_time:
-        log_dir = create_log_dir(exp_prefix, exp_id=exp_id, seed=seed,
-                                 base_log_dir=base_log_dir)
+        log_dir = create_log_dir(exp_prefix, **create_log_dir_kwargs)
 
     if variant is not None:
         logger.log("Variant:")
@@ -341,8 +350,7 @@ def reset_execution_environment():
     Call this between calls to separate experiments.
     :return:
     """
-    import importlib
-    importlib.reload(logger)
+    logger.reset()
 
 
 def query_yes_no(question, default="yes"):
@@ -422,7 +430,6 @@ def run_experiment(
         exp_id=0,
         prepend_date_to_exp_prefix=True,
         use_gpu=False,
-        gpu_id=0,
         snapshot_mode='last',
         snapshot_gap=1,
         base_log_dir=None,
@@ -435,7 +442,6 @@ def run_experiment(
         instance_type=None,
         spot_price=None,
         verbose=False,
-        trial_dir_suffix=None,
         num_exps_per_instance=1,
         # sss settings
         time_in_mins=None,
@@ -567,12 +573,10 @@ def run_experiment(
         exp_id=exp_id,
         seed=seed,
         use_gpu=use_gpu,
-        gpu_id=gpu_id,
         snapshot_mode=snapshot_mode,
         snapshot_gap=snapshot_gap,
         git_infos=git_infos,
         script_name=main.__file__,
-        trial_dir_suffix=trial_dir_suffix,
     )
     if mode == 'here_no_doodad':
         run_experiment_kwargs['base_log_dir'] = base_log_dir
@@ -642,14 +646,6 @@ def run_experiment(
         aws_s3_path = config.AWS_S3_PATH
     else:
         aws_s3_path = None
-
-    if "run_id" in variant and variant["run_id"] is not None:
-        run_id, exp_id = variant["run_id"], variant["exp_id"]
-        s3_log_name = "run{}/id{}".format(run_id, exp_id)
-    else:
-        s3_log_name = "{}-id{}-s{}".format(exp_prefix, exp_id, seed)
-    if trial_dir_suffix is not None:
-        s3_log_name = s3_log_name + "-" + trial_dir_suffix
 
     """
     Create mode
@@ -764,7 +760,7 @@ def run_experiment(
     if mode == 'ec2':
         # Ignored since I'm setting the snapshot dir directly
         base_log_dir_for_script = None
-        run_experiment_kwargs['randomize_seed'] = True
+        run_experiment_kwargs['force_randomize_seed'] = True
         # The snapshot dir needs to be specified for S3 because S3 will
         # automatically create the experiment director and sub-directory.
         snapshot_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
@@ -796,7 +792,7 @@ def run_experiment(
     elif mode == 'gcp':
         # Ignored since I'm setting the snapshot dir directly
         base_log_dir_for_script = None
-        run_experiment_kwargs['randomize_seed'] = True
+        run_experiment_kwargs['force_randomize_seed'] = True
         snapshot_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
     else:
         raise NotImplementedError("Mode not supported: {}".format(mode))

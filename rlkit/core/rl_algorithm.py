@@ -113,6 +113,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         self._old_table_keys = None
         self._current_path_builder = PathBuilder()
         self._exploration_paths = []
+        self.post_epoch_funcs = []
 
     def train(self, start_epoch=0):
         self.pretrain()
@@ -148,7 +149,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
 
             self._try_to_eval(epoch)
             gt.stamp('eval')
-            self._end_epoch()
+            self._end_epoch(epoch)
 
     def _take_step_in_env(self, observation):
         action, agent_info = self._get_action_and_info(
@@ -272,12 +273,15 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         self._do_train_time = 0
         logger.push_prefix('Iteration #%d | ' % epoch)
 
-    def _end_epoch(self):
+    def _end_epoch(self, epoch):
         logger.log("Epoch Duration: {0}".format(
             time.time() - self._epoch_start_time
         ))
         logger.log("Started Training: {0}".format(self._can_train()))
         logger.pop_prefix()
+
+        for post_epoch_func in self.post_epoch_funcs:
+            post_epoch_func(self, epoch)
 
     def _start_new_rollout(self):
         self.exploration_policy.reset()
