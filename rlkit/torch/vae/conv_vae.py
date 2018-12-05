@@ -234,7 +234,7 @@ class ConvVAE(GaussianLatentVAE):
                 obs_distribution_params[0],
                 inputs,
                 reduction='elementwise_mean'
-            )
+            ) * self.imlength
             return log_prob
         if self.decoder_distribution == 'gaussian_identity_variance':
             inputs = inputs.narrow(start=0, length=self.imlength,
