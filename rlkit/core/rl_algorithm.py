@@ -6,8 +6,7 @@ from collections import OrderedDict
 import gtimer as gt
 import numpy as np
 
-from rlkit.core import eval_util
-from rlkit.core import logger
+from rlkit.core import eval_util, logger
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.policies.base import ExplorationPolicy
