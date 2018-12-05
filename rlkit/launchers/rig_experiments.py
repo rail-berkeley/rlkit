@@ -127,6 +127,7 @@ def generate_vae_dataset(variant):
                                                 False)
     random_and_oracle_policy_data_split = variant.get(
         'random_and_oracle_policy_data_split', 0)
+    random_rollout_data = variant.get('random_rollout_data', False)
     policy_file = variant.get('policy_file', None)
     n_random_steps = variant.get('n_random_steps', 100)
     vae_dataset_specific_env_kwargs = variant.get(
@@ -212,6 +213,11 @@ def generate_vae_dataset(variant):
                     goal = env.sample_goal()
                     env.set_to_goal(goal)
                     obs = env._get_obs()
+                elif random_rollout_data:
+                    if i % n_random_steps == 0:
+                        g = env.sample_goal()
+                        env.set_to_goal(g)
+                    obs = env.step(env.action_space.sample())[0]
                 else:
                     env.reset()
                     for _ in range(n_random_steps):
