@@ -126,7 +126,6 @@ class Logger(object):
 
     def remove_tabular_output(self, file_name,
                               relative_to_snapshot_dir=False):
-        import ipdb; ipdb.set_trace()
         if relative_to_snapshot_dir:
             file_name = osp.join(self._snapshot_dir, file_name)
         if self._tabular_fds[file_name] in self._tabular_header_written:
@@ -304,6 +303,3 @@ class Logger(object):
                 pass
             else:
                 raise NotImplementedError
-
-
-logger = Logger()
