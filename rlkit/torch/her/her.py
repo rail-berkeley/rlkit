@@ -1,10 +1,11 @@
 import numpy as np
 import torch
-from rlkit.data_management.path_builder import PathBuilder
+
 import rlkit.samplers.rollout_functions as rf
+from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
+from rlkit.data_management.path_builder import PathBuilder
 from rlkit.torch.ddpg.ddpg import DDPG
 from rlkit.torch.her.her_replay_buffer import RelabelingReplayBuffer
-from rlkit.torch.her.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.torch.sac.sac import SoftActorCritic
 from rlkit.torch.sac.twin_sac import TwinSAC
 from rlkit.torch.td3.td3 import TD3
@@ -134,16 +135,12 @@ class HerTd3(HER, TD3):
     def __init__(
             self,
             *args,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
+            her_kwargs,
+            td3_kwargs,
             **kwargs
     ):
-        HER.__init__(
-            self,
-            observation_key=observation_key,
-            desired_goal_key=desired_goal_key,
-        )
-        TD3.__init__(self, *args, **kwargs)
+        HER.__init__(self, **her_kwargs)
+        TD3.__init__(self, *args, **kwargs, **td3_kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         ) or isinstance(
@@ -155,16 +152,12 @@ class HerSac(HER, SoftActorCritic):
     def __init__(
             self,
             *args,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
+            her_kwargs,
+            sac_kwargs,
             **kwargs
     ):
-        HER.__init__(
-            self,
-            observation_key=observation_key,
-            desired_goal_key=desired_goal_key,
-        )
-        SoftActorCritic.__init__(self, *args, **kwargs)
+        HER.__init__(self, **her_kwargs)
+        SoftActorCritic.__init__(self, *args, **kwargs, **sac_kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         ) or isinstance(
@@ -184,16 +177,12 @@ class HerDdpg(HER, DDPG):
     def __init__(
             self,
             *args,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
+            her_kwargs,
+            ddpg_kwargs,
             **kwargs
     ):
-        HER.__init__(
-            self,
-            observation_key=observation_key,
-            desired_goal_key=desired_goal_key,
-        )
-        super().__init__(*args, **kwargs)
+        HER.__init__(self, **her_kwargs)
+        DDPG.__init__(self, *args, **kwargs, **ddpg_kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         ) or isinstance(
@@ -205,16 +194,12 @@ class HerTwinSAC(HER, TwinSAC):
     def __init__(
             self,
             *args,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
+            her_kwargs,
+            tsac_kwargs,
             **kwargs
     ):
-        HER.__init__(
-            self,
-            observation_key=observation_key,
-            desired_goal_key=desired_goal_key,
-        )
-        TwinSAC.__init__(self, *args, **kwargs)
+        HER.__init__(self, **her_kwargs)
+        TwinSAC.__init__(self, *args, **kwargs, **tsac_kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         ) or isinstance(
