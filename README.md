@@ -4,6 +4,10 @@ README last updated on: 02/19/2018
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
 Some implemented algorithms:
+ - Reinforcement Learning with Imagined Goals (RIG)
+    - [example script](examples/rig/pusher/rig.py)
+    - [RIG paper](https://arxiv.org/abs/1807.04742)
+    - [Documentation](docs/RIG.md)
  - Temporal Difference Models (TDMs)
     - [example script](examples/tdm/cheetah.py)
     - [TDM paper](https://arxiv.org/abs/1802.09081)
@@ -33,6 +37,9 @@ Some implemented algorithms:
 To get started, checkout the example scripts, linked above.
 
 ## What's New
+12/04/2018
+ - Add RIG implementation
+ 
 12/03/2018
  - Add HER implementation
  - Add doodad support
