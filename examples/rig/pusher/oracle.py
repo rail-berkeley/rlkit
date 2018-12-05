@@ -1,5 +1,3 @@
-import rlkit.util.hyperparameter as hyp
-
 from multiworld.envs.mujoco.cameras import sawyer_pusher_camera_upright_v2
 from multiworld.envs.mujoco.sawyer_xyz.sawyer_push_nips import SawyerPushAndReachXYEasyEnv
 from rlkit.launchers.launcher_util import run_experiment
@@ -65,26 +63,15 @@ if __name__ == "__main__":
         algorithm='Oracle',
     )
 
-    search_space = {}
-    sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
-    )
-
     n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'test'
+    mode = 'here_no_doodad'
+    exp_prefix = 'rlkit-pusher-oracle-from-ari-fixed-logprob'
 
-    n_seeds = 5
-    mode = 'ec2'
-    exp_prefix = 'rlkit-pusher-oracle'
-
-    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        for _ in range(n_seeds):
-            run_experiment(
-                her_td3_experiment,
-                exp_prefix=exp_prefix,
-                mode=mode,
-                variant=variant,
-                use_gpu=True,
-                num_exps_per_instance=1,
-            )
+    for _ in range(n_seeds):
+        run_experiment(
+            her_td3_experiment,
+            exp_prefix=exp_prefix,
+            mode=mode,
+            variant=variant,
+            # use_gpu=True,  # Turn on if you have a GPU
+        )
