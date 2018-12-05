@@ -73,9 +73,6 @@ if __name__ == "__main__":
                 input_channels=3,
             ),
             algo_kwargs=dict(
-                do_scatterplot=False,
-                use_linear_dynamics=False,
-                is_auto_encoder=False,
                 batch_size=128,
                 lr=1e-3,
             ),
