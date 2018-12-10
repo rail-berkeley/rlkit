@@ -7,8 +7,8 @@ import click
 import datetime
 
 
-from gym.envs.mujoco import HalfCheetahEnv
-from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
+# from gym.envs.mujoco import HalfCheetahEnv
+# from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
 from rlkit.envs.point_mass import PointEnv
 
 import rlkit.torch.pytorch_util as ptu

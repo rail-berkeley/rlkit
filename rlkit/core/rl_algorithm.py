@@ -8,9 +8,12 @@ import numpy as np
 
 from rlkit.core import logger
 from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
+from rlkit.data_management.encoding_replay_buffer import EncodingReplayBuffer
+
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.policies.base import ExplorationPolicy
 from rlkit.samplers.in_place import InPlacePathSampler
+import pdb
 
 
 class MetaRLAlgorithm(metaclass=abc.ABCMeta):
@@ -20,6 +23,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             policy,
             train_tasks,
             eval_tasks,
+            # test_env,
             meta_batch=64,
             num_epochs=100,
             num_steps_per_epoch=10000,
@@ -36,6 +40,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             save_algorithm=False,
             save_environment=False, # TODO was true
             eval_sampler=None,
+            test_sampler=None,
             replay_buffer=None,
             pickle_output_dir=None,
     ):
@@ -63,6 +68,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param replay_buffer:
         """
         self.env = env
+        # self.env = test_env
         self.policy = policy
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
@@ -91,11 +97,22 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 env=env,
                 policy=eval_policy,
                 exploration_policy=eval_exploration_policy,
-                max_samples=self.num_steps_per_eval + self.max_path_length,
+                max_samples=self.num_steps_per_eval * self.max_path_length,
                 max_path_length=self.max_path_length,
             )
+        # if test_sampler is None:
+        #     eval_policy = self.make_eval_policy(policy)
+        #     eval_exploration_policy = self.make_eval_policy(self.make_exploration_policy(policy))
+        #     test_sampler = InPlacePathSampler(
+        #         env=test_env,
+        #         policy=eval_policy,
+        #         exploration_policy=eval_exploration_policy,
+        #         max_samples=self.num_steps_per_eval + self.max_path_length,
+        #         max_path_length=self.max_path_length,
+        #     )
         self.eval_policy = eval_policy
         self.eval_sampler = eval_sampler
+        self.test_sampler = test_sampler
 
         if replay_buffer is None:
             self.replay_buffer = MultiTaskReplayBuffer(
@@ -103,6 +120,26 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     env,
                     self.train_tasks + self.eval_tasks,
                 )
+
+        # self.eval_replay_buffer = MultiTaskReplayBuffer(
+        #         self.replay_buffer_size,
+        #         env,
+        #         self.eval_tasks,
+        # )
+
+        self.enc_replay_buffer = EncodingReplayBuffer(
+                self.replay_buffer_size,
+                env,
+                self.train_tasks + self.eval_tasks,
+        )
+
+
+        # self.enc_eval_replay_buffer = EncodingReplayBuffer(
+        #         self.replay_buffer_size,
+        #         env,
+        #         self.eval_tasks,
+        # )
+
         if pickle_output_dir is None:
             self.pickle_output_dir = '/mounts/output'
         else:
@@ -123,8 +160,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self._current_path_builder = PathBuilder()
         self._exploration_paths = []
 
-    def make_exploration_policy(self, policy):
-        return policy
+    # def make_exploration_policy(self, policy):
+    #     return policy
 
     def make_eval_policy(self, policy):
         return policy
@@ -163,24 +200,36 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 print('initializing replay buffer')
                 # temp for evaluating
                 for idx in self.train_tasks + self.eval_tasks:
+                    print(idx)
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data(self.exploration_policy, num_samples=2000)
+                    print('exploration policy', self.exploration_policy)
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10, eval_task=True)
 
-                    with open(self.pickle_output_dir + "/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
-                        paths = self.replay_buffer.random_batch(idx, 2000)
-                        obs = paths['observations']
-                        rewards = paths['rewards']
-                        aug_obs = np.concatenate([obs, rewards], axis=1)
+                    # with open(self.pickle_output_dir + "/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+                    #     paths = self.replay_buffer.random_batch(idx, 2000)
+                    #     obs = paths['observations']
+                    #     rewards = paths['rewards']
+                    #     aug_obs = np.concatenate([obs, rewards], axis=1)
 
-                        pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
+                    #     pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
 
+            
             for i in range(self.num_env_steps_per_epoch): # num iterations
-                self.collect_batch_updates()
+                for idx in self.train_tasks:
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                    self.collect_batch_updates(epoch, idx)
+                
+                for idx in self.eval_tasks:
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
 
                 for _ in range(self.num_train_steps_per_itr):
                     for idx in self.train_tasks:
-                        self._do_training(idx)
+                        self._do_training(idx, epoch)
                     self._n_train_steps_total += 1
                     self.perform_meta_update()
                     gt.stamp('train')
@@ -193,7 +242,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             self._end_epoch()
 
-    def collect_batch_updates(self):
+    def collect_batch_updates(self, epoch, idx):
         '''
         for each task in the meta batch
          - collect data from exploration policy
@@ -202,13 +251,23 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         '''
         for _ in range(self.meta_batch):
             # sample a task and set env accordingly
-            self.task_idx = self.sample_task()
-            self.env.reset_task(self.train_tasks[self.task_idx])
+            # if epoch == 3:
+            #     pdb.set_trace()
+            # self.task_idx = self.sample_task()
+
+            # self.env.reset_task(self.train_tasks[self.task_idx])
+            self.task_idx = idx
+            self.env.reset_task(idx)
 
             # samples an episode from each
             # self.collect_data(self.exploration_policy, num_samples=10)
-            self.set_policy_eval_z(self.task_idx)
-            self.collect_data(self.policy, num_samples=self.max_path_length) # gathers a trajectory (assuming no early terminations)
+            # pulls from replay buffer for idx
+
+            self.set_policy_eval_z(self.task_idx, eval_task=False)
+
+            # print('collect batch updates')
+            # pdb.set_trace()
+            self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10) # gathers a trajectory (assuming no early terminations)
 
     def perform_meta_update(self):
         '''
@@ -222,7 +281,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    def collect_data(self, agent, num_samples=1):
+    def collect_data(self, agent, explore, num_samples=1, eval_task=False):
         '''
         collect data from current env in batch mode
         with exploration policy
@@ -245,6 +304,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 reward,
                 next_ob,
                 terminal,
+                explore=explore,
+                eval_task=eval_task,                
                 agent_info=agent_info,
                 env_info=env_info,
             )
@@ -390,8 +451,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             reward,
             next_observation,
             terminal,
+            explore,
             agent_info,
             env_info,
+            eval_task=False,
     ):
         """
         Implement anything that needs to happen after every step
@@ -407,6 +470,28 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             agent_infos=agent_info,
             env_infos=env_info,
         )
+        # if eval_task:
+        #     self.eval_replay_buffer.add_sample(
+        #         task=task_idx,
+        #         observation=observation,
+        #         action=action,
+        #         reward=reward,
+        #         terminal=terminal,
+        #         next_observation=next_observation,
+        #         agent_info=agent_info,
+        #         env_info=env_info,
+        #     )
+        #     if explore:
+        #         self.enc_eval_replay_buffer.add_sample(
+        #                 task=task_idx,
+        #                 observation=observation,
+        #                 action=action,
+        #                 reward=reward,
+        #                 terminal=terminal,
+        #                 next_observation=next_observation,
+        #                 agent_info=agent_info,
+        #                 env_info=env_info,
+        #         )
         self.replay_buffer.add_sample(
             task=task_idx,
             observation=observation,
@@ -417,6 +502,20 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             agent_info=agent_info,
             env_info=env_info,
         )
+        # pdb.set_trace()
+        # print('explore', explore)
+        if explore:
+            # print('adding to encoding replay buffer')
+            self.enc_replay_buffer.add_sample(
+                task=task_idx,
+                observation=observation,
+                action=action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation,
+                agent_info=agent_info,
+                env_info=env_info,
+            )
 
     def _handle_rollout_ending(self):
         """

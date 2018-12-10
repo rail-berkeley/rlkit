@@ -12,6 +12,7 @@ from rlkit.torch.core import np_ify, torch_ify
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
 from rlkit.torch.sac.policies import MakeDeterministic, ProtoExplorationPolicy
+import pdb
 
 
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
@@ -48,8 +49,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_tasks=eval_tasks,
             **kwargs
         )
-
-        self.latent_dim = latent_dim
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -62,8 +61,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
         self.rf_criterion = nn.MSELoss()
+        self.vib_criterion = nn.MSELoss()
         self.l2_reg_criterion = nn.MSELoss()
         self.eval_statistics = None
+        self.latent_dim = latent_dim
 
         self.reparameterize = reparameterize
 
@@ -152,60 +153,75 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             eval_policy = self.policy
         return eval_policy
 
-    def obtain_eval_samples(self, idx, epoch, z=None, explore=True):
+
+    def obtain_eval_samples(self, idx, sampler, eval_task=False, z=None, explore=True):
         '''
         this is more involved than usual because we have to sample rollouts, compute z, then sample new rollouts conditioned on z
         '''
         # TODO for now set task encoder to zero, should be sampled
         # TODO: collect context tuples from replay buffer to match training stats
         if z is None:
-            batch = self.get_batch()
+            batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
             rewards = batch['rewards']
+            rewards = self.dense_to_sparse(batch['rewards'])
             obs = batch['observations']
             # Evaluate task classifier on sampled tuples
             # Task encoding is classification prob of a single tuple
-            z = np_ify(torch.mean(self.task_enc(obs, rewards / self.reward_scale), dim=0))
-        print('task encoding', z)
-        self.eval_sampler.policy.set_eval_z(z)
-        test_paths = self.eval_sampler.obtain_samples(explore=explore)
+            mu, sigma = self.product_of_gaussians(batch)
+            z = mu
+            print('sigma ', sigma)
+
+        print('task encoding ', z)
+        # print('task encoding mean', np.mean(z))
+        # print('task encoding std', np.std(z))
+
+        sampler.policy.set_eval_z(np_ify(z))
+        test_paths = sampler.obtain_samples(explore=explore)
         return test_paths
 
-    """
-    def train_reward_prediction(self, train_flag=True):
-        # train classifier to convergence to distinguish between tasks,
-        # using data collected by exploration policy
-        import ipdb; ipdb.set_trace()
-        batch_size = 256
-        batches = []
-        rf_losses = []
-        for idx in self.train_tasks:
-            batch = self.get_batch(idx)
-            rewards = batch['rewards']
-            terminals = batch['terminals']
-            obs = batch['observations']
-            actions = batch['actions']
-            next_obs = batch['next_observations']
 
-            enc = self.task_enc(obs, rewards / self.reward_scale)
-            z = torch.mean(enc, dim=0)
-            batch_z = z.repeat(obs.shape[0], 1)
-            # z_magnitude_loss.backward(retain_graph=True)
+    def dense_to_sparse(self, rewards):
+        # rewards_np = rewards.data.numpy()
+        # sparse_reward = (rewards_np < .2).astype(int)
+        # return torch.autograd.Variable(torch.FloatTensor(sparse_reward), requires_grad=False)
+        return rewards
 
-            r_pred = self.rf(obs, batch_z)
-            rf_loss = 1. * self.rf_criterion(r_pred, rewards)
-            rf_losses.append(rf_loss)
-        total_rf_loss = sum(rf_losses)
-        total_rf_loss.backward(retain_graph=True)
 
-        self.rf_optimizer.step()
-        self.context_optimizer.step()
+    # def train_reward_prediction(self, train_flag=True):
+    #     # train classifier to convergence to distinguish between tasks,
+    #     # using data collected by exploration policy
+    #     # import ipdb; ipdb.set_trace()
+    #     batch_size = 256
+    #     batches = []
+    #     rf_losses = []
+    #     for idx in self.train_tasks:
+    #         batch = self.get_batch(idx)
+    #         rewards = self.dense_to_sparse(batch['rewards'])
+    #         terminals = batch['terminals']
+    #         obs = batch['observations']
+    #         actions = batch['actions']
+    #         next_obs = batch['next_observations']
 
-        self.rf_optimizer.zero_grad()
-        self.context_optimizer.zero_grad()
-    """
+    #         enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
+    #         z = torch.mean(enc, dim=0)
+    #         batch_z = z.repeat(obs.shape[0], 1)
+    #         # z_magnitude_loss.backward(retain_graph=True)
+
+    #         r_pred = self.rf(obs, batch_z)
+    #         rf_loss = 1. * self.rf_criterion(r_pred, self.dense_to_sparse(rewards))
+    #         rf_losses.append(rf_loss)
+    #     total_rf_loss = sum(rf_losses)
+    #     total_rf_loss.backward(retain_graph=True)
+
+    #     self.rf_optimizer.step()
+    #     self.context_optimizer.step()
+
+    #     self.rf_optimizer.zero_grad()
+    #     self.context_optimizer.zero_grad()
 
     def perform_meta_update(self):
         # self.train_reward_prediction()
+        # self._do_information_bottleneck()
 
         # assume gradients have been accumulated for each parameter, apply update
         # self.qf1_optimizer.step()
@@ -224,7 +240,51 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.context_optimizer.zero_grad()
         # self.train_task_classifier()
 
-    def _do_training(self, idx):
+    def _do_information_bottleneck(self):
+
+        batch_size = 256
+        batches = []
+        for idx in self.train_tasks:
+            batch = self.get_encoding_batch(eval_task=False)
+            rewards = self.dense_to_sparse(batch['rewards'])
+            terminals = batch['terminals']
+            obs = batch['observations']
+            actions = batch['actions']
+            next_obs = batch['next_observations']        
+
+        mu, sigma = self.product_of_gaussians(batch)
+        
+        z_dist = torch.distributions.Normal(mu, sigma)
+        kl_loss = torch.sum(torch.distributions.kl.kl_divergence(
+            z_dist, torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))))
+        kl_loss.backward(retain_graph=True)
+
+    def product_of_gaussians(self, batch):
+        rewards = batch['rewards']
+        obs = batch['observations']
+        # NOTE: right now policy is updated on the same rollouts used
+        # for the task encoding z
+        
+        enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
+        mu_i = enc[:, :self.latent_dim]
+        softplus = torch.nn.Softplus()
+        
+        sigma_i = softplus(enc[:, self.latent_dim:])
+
+        mu = torch.mean(mu_i, dim=0)
+        sigma = torch.sqrt(torch.mean(sigma_i**2, dim=0))
+
+        # mu = torch.sum(mu_i, dim=0)
+        # sigma = torch.sqrt(torch.sum(sigma_i**2, dim=0))
+        # # pdb.set_trace()
+        
+        # sigma = torch.reciprocal(torch.sqrt(torch.reciprocal(torch.sum(sigma_i**2, dim=0))))
+        # mu = torch.sum(mu_i/sigma_i**2, dim=0)*sigma
+
+
+        return mu, sigma
+
+    def _do_training(self, idx, epoch):
 
         # sample from replay buffer to compute training update
         batch = self.get_batch(idx)
@@ -236,30 +296,27 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
-        enc = self.task_enc(obs, rewards / self.reward_scale)
 
-        enc_np = ptu.get_numpy(enc)
-        # print('Mean', np.mean(enc_np, axis=0), 'Var', np.var(enc_np, axis=0))
-        """
-        import matplotlib.pyplot as plt
-        plt.plot(enc_np, np.zeros(128))
-        # plt.show()
-        import ipdb; ipdb.set_trace()
-        """
+        batch_enc = self.get_encoding_batch(eval_task=False, idx=idx)
+        obs_enc = batch_enc['observations']
+        rewards_enc = batch_enc['rewards']
 
-        z = torch.mean(enc, dim=0)
-        batch_z = z.repeat(obs.shape[0], 1)
+        # Product of Gaussians.
+        mu, _ = self.product_of_gaussians(batch_enc)
+        z = mu
+        batch_z_enc = z.repeat(obs_enc.shape[0], 1)
         # batch_z = batch_z.detach()
 
         z_magnitude_loss = 1. * torch.dot(z, z)
         # z_magnitude_loss.backward(retain_graph=True)
 
-        r_pred = self.rf(obs, batch_z)
-        rf_loss = 1. * self.rf_criterion(r_pred, rewards)
+        r_pred = self.rf(obs_enc, batch_z_enc)
+        rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc)
         rf_loss.backward(retain_graph=True)
 
+        self._do_information_bottleneck()
 
-
+        batch_z = z.repeat(obs.shape[0], 1)
         self.qf1_optimizer.zero_grad()
         self.qf2_optimizer.zero_grad()
         q1_pred = self.qf1(obs, actions, batch_z)
@@ -352,19 +409,27 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                 ptu.get_numpy(policy_log_std),
             ))
 
-    def set_policy_eval_z(self, idx):
-        batch = self.get_batch(idx)
+    def set_policy_eval_z(self, idx, eval_task=False):
+        batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
         rewards = batch['rewards']
         obs = batch['observations']
 
         # NOTE: right now policy is updated on the same rollouts used
         # for the task encoding z
-        enc = self.task_enc(obs, rewards / self.reward_scale)
+        # enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
 
-        enc_np = ptu.get_numpy(enc)
+        # enc_np = ptu.get_numpy(enc)
 
-        z = torch.mean(enc, dim=0)
+        # z = torch.mean(enc, dim=0)
+        # z = z[:self.latent_dim]
+
+        mu, sigma = self.product_of_gaussians(batch)
+        z = mu
+        # batch_z_enc = z.repeat(obs.shape[0], 1)
+
         # update policy's task encoding for data collection
+        # pdb.set_trace()
+
         self.policy.set_eval_z(np_ify(z))
 
 

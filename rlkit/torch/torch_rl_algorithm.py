@@ -26,6 +26,15 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         batch = self.replay_buffer.random_batch(idx, self.batch_size)
         return np_to_pytorch_batch(batch)
 
+    def get_encoding_batch(self, eval_task=False, idx=None):
+        if idx is None:
+            idx = self.task_idx
+        # if eval_task:
+        #     batch = self.enc_eval_replay_buffer.random_batch(idx, self.batch_size)
+        # else:
+        batch = self.enc_replay_buffer.random_batch(idx, self.batch_size)
+        return np_to_pytorch_batch(batch)
+
     @property
     @abc.abstractmethod
     def networks(self) -> Iterable[PyTorchModule]:
@@ -41,37 +50,56 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.networks:
             net.to(device)
 
-    def obtain_samples(self, env):
-        '''
-        get rollouts of current policy in env
-        '''
-        return self.eval_sampler.obtain_samples()
+    # def obtain_samples(self, env):
+    #     '''
+    #     get rollouts of current policy in env
+    #     '''
+    #     return self.eval_sampler.obtain_samples()
 
     def evaluate_with_online_embedding(self, idx, statistics, epoch):
         self.task_idx = idx
         print('Task:', idx)
-        self.replay_buffer.clear_buffer(idx)
+        # self.enc_eval_replay_buffer.clear_buffer(idx)
         # TODO how to handle eval over multiple tasks?
         self.eval_sampler.env.reset_task(idx)
 
         goal = self.eval_sampler.env._goal
 
-        initial_z = np.random.normal(size=self.latent_dim)
-        init_paths = self.obtain_eval_samples(idx, epoch, z=initial_z, explore=True)
-        self.replay_buffer.add_paths(idx, init_paths)
-
-        n_inference_episodes = 0
+        n_exploration_episodes = 10
+        all_init_paths = []
         all_inference_paths =[]
+        
+        self.enc_replay_buffer.clear_buffer(idx)
+        
+        for i in range(n_exploration_episodes):
+            initial_z = np.random.normal(size=self.latent_dim)
 
-        for i in range(n_inference_episodes):
-            inference_paths = self.obtain_eval_samples(idx, epoch, explore=True)
-            for path in inference_paths:
-                path['goal'] = goal
-            all_inference_paths += [inference_paths]
-            self.replay_buffer.add_paths(idx, inference_paths)
+            init_paths = self.obtain_eval_samples(idx, self.eval_sampler, z=initial_z, eval_task=True, explore=True)
+            all_init_paths += init_paths
+            self.enc_replay_buffer.add_paths(idx, init_paths)
+            # if i % 10 == 0:
+            #     for j in range(10):
+            #         inference_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True, explore=True)
+            #         self.enc_eval_replay_buffer.add_paths(idx, inference_paths)
+            #         all_inference_paths += [inference_paths]
+            #         self.enc_eval_replay_buffer.clear_buffer(idx)
+
+
+        # n_inference_episodes = 50
+        # all_inference_paths =[]
+
+        # for i in range(n_inference_episodes):
+        #     inference_paths = self.obtain_eval_samples(idx, epoch, self.eval_sampler, explore=True)
+        #     for path in inference_paths:
+        #         path['goal'] = goal
+        #     all_inference_paths += [inference_paths]
+        #     self.replay_buffer.add_paths(idx, inference_paths)
 
         # sac.obtain_samples
-        test_paths = self.obtain_eval_samples(idx, epoch)
+        # print("self.enc_replay_buffer._size", self.enc_replay_buffer._size)
+        print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+
+        test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
         # TODO incorporate into proper logging
         for path in test_paths:
             path['goal'] = goal
@@ -80,9 +108,15 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
         # all paths
         all_paths = []
-        for paths in all_inference_paths:
-            all_paths += paths
+        # for paths in all_inference_paths:
+        #     all_paths += paths
         all_paths += test_paths
+        # with open(self.pickle_output_dir +
+        #           "/eval_trajectories/proto-sac-point-mass-fb-16z-inference-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+        #     pickle.dump(all_inference_paths, f, pickle.HIGHEST_PROTOCOL)
+        with open(self.pickle_output_dir +
+                  "/eval_trajectories/proto-sac-point-mass-fb-16z-init-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+            pickle.dump(all_init_paths, f, pickle.HIGHEST_PROTOCOL)
         with open(self.pickle_output_dir +
                   "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
             pickle.dump(all_paths, f, pickle.HIGHEST_PROTOCOL)
@@ -100,7 +134,6 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         statistics['Goal_test_task{}'.format(idx)] = goal
         return test_paths, statistics
 
-
     def evaluate(self, epoch):
         statistics = OrderedDict()
         # save stuff from training
@@ -113,9 +146,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             # TODO how to handle eval over multiple tasks?
             self.eval_sampler.env.reset_task(idx)
 
-            # goal = self.eval_sampler.env._goal
             goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_samples(idx, epoch)
+            print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+            test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=False)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal # goal
@@ -136,40 +169,43 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_training_task{}'.format(idx)] = average_returns
-            statistics['Goal_training_task{}'.format(idx)] = goal
+            statistics['GoalPosition_training_task{}'.format(idx)] = goal
+            print('GoalPosition_training_task')
+            print(goal)
 
+        
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
         for idx in self.eval_tasks:
-            """
-            self.task_idx = idx
-            print('Task:', idx)
-            # TODO how to handle eval over multiple tasks?
-            self.eval_sampler.env.reset_task(idx)
+        #     self.task_idx = idx
+        #     print('Task:', idx)
+        #     # TODO how to handle eval over multiple tasks?
+        #     self.eval_sampler.env.reset_task(idx)
 
-            # import ipdb; ipdb.set_trace()
-            goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_samples(idx, epoch)
-            # TODO incorporate into proper logging
-            for path in test_paths:
-                path['goal'] = goal
+        #     # import ipdb; ipdb.set_trace()
+        #     goal = self.eval_sampler.env._goal
+        #     test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
+        #     # TODO incorporate into proper logging
+        #     for path in test_paths:
+        #         path['goal'] = goal
 
-            # save evaluation rollouts for vis
-            with open(self.pickle_output_dir +
-                      "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
-                pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
+        #     # save evaluation rollouts for vis
+        #     with open(self.pickle_output_dir +
+        #               "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+        #         pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
-            statistics.update(eval_util.get_generic_path_information(
-                test_paths, stat_prefix="Test_task{}".format(idx),
-            ))
-            if hasattr(self.env, "log_diagnostics"):
-                self.env.log_diagnostics(test_paths)
+        #     statistics.update(eval_util.get_generic_path_information(
+        #         test_paths, stat_prefix="Test_task{}".format(idx),
+        #     ))
+        #     if hasattr(self.env, "log_diagnostics"):
+        #         self.env.log_diagnostics(test_paths)
 
-            average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
-            statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
-            statistics['Goal_test_task{}'.format(idx)] = goal
-            """
+        #     average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+        #     statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
+        #     statistics['GoalPosition_test_task{}'.format(idx)] = goal
+
             # UNCOMMENT THIS AND COMMENT OUT THE ABOVE CODE TO USE ONLINE EMBEDDING
             test_paths, statistics = self.evaluate_with_online_embedding(idx, statistics, epoch)
+        
 
         for key, value in statistics.items():
             logger.record_tabular(key, value)
