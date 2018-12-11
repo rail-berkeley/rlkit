@@ -1,19 +1,17 @@
 """
 Copy this file to config.py and modify as needed.
 """
-# Change these things
-CODE_DIRS_TO_MOUNT = [
-    '/home/user/python/module/one',
-    '/home/user/python/module/two',
-]
-DIR_AND_MOUNT_POINT_MAPPINGS = [
-    dict(
-        local_dir='/home/user/.mujoco/',
-        mount_point='/root/.mujoco',
-    ),
-]
-LOCAL_LOG_DIR = 'output'
+import os
+from os.path import join
+import rlkit
 
+"""
+`doodad.mount.MountLocal` by default ignores directories called "data"
+If you're going to rename this directory and use EC2, then change
+`doodad.mount.MountLocal.filter_dir`
+"""
+rlkit_dir = os.path.dirname(rlkit.__file__)
+LOCAL_LOG_DIR = join(rlkit_dir, os.pardir, 'data')
 
 """
 ********************************************************************************
@@ -28,18 +26,31 @@ ignoring most of these things and only using them on an as-needed basis.
 ********************************************************************************
 ********************************************************************************
 """
-RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
-    '/home/user/path/to/rlkit/scripts/run_experiment_from_doodad.py'
-)
 
+"""
+General doodad settings.
+"""
+CODE_DIRS_TO_MOUNT = [
+    join(rlkit_dir, os.pardir),
+    # '/home/user/python/module/one', Add more paths as needed
+]
+DIR_AND_MOUNT_POINT_MAPPINGS = [
+    dict(
+        local_dir=join(os.getenv('HOME'), '.mujoco/'),
+        mount_point='/root/.mujoco',
+    ),
+]
+RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
+    join(rlkit_dir, 'scripts', 'run_experiment_from_doodad.py')
+    # '/home/user/path/to/rlkit/scripts/run_experiment_from_doodad.py'
+)
 """
 AWS Settings
 """
 # If not set, default will be chosen by doodad
 # AWS_S3_PATH = 's3://bucket/directory
 
-# You probably don't need to change things below
-# Specifically, the docker image is looked up on dockerhub.com.
+# The docker image is looked up on dockerhub.com.
 DOODAD_DOCKER_IMAGE = "TODO"
 INSTANCE_TYPE = 'c4.large'
 SPOT_PRICE = 0.03
@@ -47,7 +58,8 @@ SPOT_PRICE = 0.03
 GPU_DOODAD_DOCKER_IMAGE = 'TODO'
 GPU_INSTANCE_TYPE = 'g2.2xlarge'
 GPU_SPOT_PRICE = 0.5
-# These AMI images have the docker images already installed.
+
+# You can use AMI images with the docker images already installed.
 REGION_TO_GPU_AWS_IMAGE_ID = {
     'us-west-1': "TODO",
     'us-east-1': "TODO",
@@ -65,6 +77,7 @@ OUTPUT_DIR_FOR_DOODAD_TARGET = '/tmp/doodad-output/'
 Slurm Settings
 """
 SINGULARITY_IMAGE = '/home/PATH/TO/IMAGE.img'
+# This assumes you saved mujoco to $HOME/.mujoco
 SINGULARITY_PRE_CMDS = [
     'export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mjpro150/bin'
 ]

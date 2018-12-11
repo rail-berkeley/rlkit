@@ -81,7 +81,7 @@ if __name__ == "__main__":
 
     n_seeds = 1
     mode = 'here_no_doodad'
-    exp_prefix = 'rlkit-pusher-rig-from-ari-fixed-logprob-quick-gen'
+    exp_prefix = 'rlkit-pusher-rig-example'
 
     for _ in range(n_seeds):
         run_experiment(
