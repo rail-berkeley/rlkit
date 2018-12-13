@@ -26,7 +26,7 @@ Some implemented algorithms:
  - Soft Actor Critic (SAC)
     - [example script](examples/sac.py)
     - [SAC paper](https://arxiv.org/abs/1801.01290)
-    - [TensorFlow implementation from author](https://github.com/haarnoja/sac)
+    - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
  - Twin Dueling Deep Determinstic Policy Gradient (TD3)
     - [example script](examples/td3.py)
     - [TD3 paper](https://arxiv.org/abs/1802.09477)
@@ -39,7 +39,7 @@ To get started, checkout the example scripts, linked above.
 ## What's New
 12/04/2018
  - Add RIG implementation
- 
+
 12/03/2018
  - Add HER implementation
  - Add doodad support
