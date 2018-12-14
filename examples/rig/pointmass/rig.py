@@ -53,7 +53,7 @@ if __name__ == "__main__":
             vae_path=None,
             representation_size=4,
             beta=10.0,
-            num_epochs=101,
+            num_epochs=1,
             dump_skew_debug_plots=False,
             decoder_activation='sigmoid',
             generate_vae_dataset_kwargs=dict(
@@ -88,15 +88,10 @@ if __name__ == "__main__":
         algorithm='RIG',
     )
 
-    n_seeds = 1
-    mode = 'here_no_doodad'
-    exp_prefix = 'rlkit-pointmass-rig-example'
-
-    for _ in range(n_seeds):
-        run_experiment(
-            grill_her_td3_full_experiment,
-            exp_prefix=exp_prefix,
-            mode=mode,
-            variant=variant,
-            # use_gpu=True,  # Turn on if you have a GPU
-        )
+    run_experiment(
+        grill_her_td3_full_experiment,
+        exp_prefix='rlkit-pointmass-rig-example',
+        mode='here_no_doodad',
+        variant=variant,
+        # use_gpu=True,  # Turn on if you have a GPU
+    )

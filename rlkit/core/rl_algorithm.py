@@ -37,6 +37,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             eval_sampler=None,
             eval_policy=None,
             replay_buffer=None,
+            collection_mode='online',
     ):
         """
         Base class for RL Algorithms
@@ -64,6 +65,9 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :param eval_sampler:
         :param eval_policy: Policy to evaluate with.
         :param replay_buffer:
+        :param collection_mode: String determining how training happens
+         - 'online': Train after every step taken in the environment.
+         - 'batch': Train after every epoch.
         """
         assert collection_mode in ['online', 'batch']
         if collection_mode == 'batch':

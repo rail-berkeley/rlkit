@@ -79,15 +79,10 @@ if __name__ == "__main__":
         algorithm='RIG',
     )
 
-    n_seeds = 1
-    mode = 'here_no_doodad'
-    exp_prefix = 'rlkit-pusher-rig-example'
-
-    for _ in range(n_seeds):
-        run_experiment(
-            grill_her_td3_full_experiment,
-            exp_prefix=exp_prefix,
-            mode=mode,
-            variant=variant,
-            # use_gpu=True,  # Turn on if you have a GPU
-        )
+    run_experiment(
+        grill_her_td3_full_experiment,
+        exp_prefix='rlkit-pusher-rig-example',
+        mode='here_no_doodad',
+        variant=variant,
+        # use_gpu=True,  # Turn on if you have a GPU
+    )
