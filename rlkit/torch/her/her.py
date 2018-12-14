@@ -1,7 +1,7 @@
 import numpy as np
 import torch
 
-import rlkit.samplers.rollout_functions as rf
+from rlkit.samplers.rollout_functions import multitask_rollout
 from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.torch.ddpg.ddpg import DDPG
@@ -42,16 +42,11 @@ class HER(TorchRLAlgorithm):
 
     def __init__(
             self,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
+            observation_key=None,
+            desired_goal_key=None,
     ):
         self.observation_key = observation_key
         self.desired_goal_key = desired_goal_key
-        self.eval_rollout_function = rf.create_rollout_function(
-            rf.multitask_rollout,
-            observation_key=self.observation_key,
-            desired_goal_key=self.desired_goal_key
-        )
 
     def _handle_step(
             self,
@@ -124,10 +119,12 @@ class HER(TorchRLAlgorithm):
         return paths
 
     def eval_multitask_rollout(self):
-        return self.eval_rollout_function(
+        return multitask_rollout(
             self.env,
             self.policy,
             self.max_path_length,
+            observation_key=self.observation_key,
+            desired_goal_key=self.desired_goal_key,
         )
 
 

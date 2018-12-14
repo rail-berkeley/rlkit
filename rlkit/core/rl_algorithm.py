@@ -23,12 +23,13 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             num_steps_per_epoch=10000,
             num_steps_per_eval=1000,
             num_updates_per_env_step=1,
-            min_num_steps_before_training=None,
+            num_updates_per_epoch=None,
             batch_size=1024,
             max_path_length=1000,
             discount=0.99,
             replay_buffer_size=1000000,
             reward_scale=1,
+            min_num_steps_before_training=None,
             render=False,
             save_replay_buffer=False,
             save_algorithm=False,
@@ -39,10 +40,12 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
     ):
         """
         Base class for RL Algorithms
+
         :param env: Environment used to evaluate.
         :param exploration_policy: Policy used to explore
         :param training_env: Environment used by the algorithm. By default, a
-        copy of `env` will be made.
+        copy of `env` will be made for training, so that training and
+        evaluation are completely independent.
         :param num_epochs:
         :param num_steps_per_epoch:
         :param num_steps_per_eval:
@@ -53,6 +56,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :param discount:
         :param replay_buffer_size:
         :param reward_scale:
+        :param min_num_steps_before_training:
         :param render:
         :param save_replay_buffer:
         :param save_algorithm:
@@ -61,24 +65,32 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :param eval_policy: Policy to evaluate with.
         :param replay_buffer:
         """
-        if min_num_steps_before_training is None:
-            min_num_steps_before_training = num_steps_per_epoch
+        assert collection_mode in ['online', 'batch']
+        if collection_mode == 'batch':
+            assert num_updates_per_epoch is not None
+
         self.training_env = training_env or pickle.loads(pickle.dumps(env))
         self.exploration_policy = exploration_policy
         self.num_epochs = num_epochs
         self.num_env_steps_per_epoch = num_steps_per_epoch
         self.num_steps_per_eval = num_steps_per_eval
-        self.num_updates_per_train_call = num_updates_per_env_step
-        self.min_num_steps_before_training = min_num_steps_before_training
+        if collection_mode == 'online':
+            self.num_updates_per_train_call = num_updates_per_env_step
+        else:
+            self.num_updates_per_train_call = num_updates_per_epoch
         self.batch_size = batch_size
         self.max_path_length = max_path_length
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
         self.reward_scale = reward_scale
         self.render = render
+        self.collection_mode = collection_mode
         self.save_replay_buffer = save_replay_buffer
         self.save_algorithm = save_algorithm
         self.save_environment = save_environment
+        if min_num_steps_before_training is None:
+            min_num_steps_before_training = self.num_env_steps_per_epoch
+        self.min_num_steps_before_training = min_num_steps_before_training
         if eval_sampler is None:
             if eval_policy is None:
                 eval_policy = exploration_policy
@@ -123,12 +135,16 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         self._n_env_steps_total = start_epoch * self.num_env_steps_per_epoch
         gt.reset()
         gt.set_def_unique(False)
-        self.train_online(start_epoch=start_epoch)
+        if self.collection_mode == 'online':
+            self.train_online(start_epoch=start_epoch)
+        elif self.collection_mode == 'batch':
+            self.train_batch(start_epoch=start_epoch)
+        else:
+            raise TypeError("Invalid collection_mode: {}".format(
+                self.collection_mode
+            ))
 
     def pretrain(self):
-        """
-        Do anything before the main training phase.
-        """
         pass
 
     def train_online(self, start_epoch=0):
@@ -139,13 +155,38 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
                 save_itrs=True,
         ):
             self._start_epoch(epoch)
+            set_to_train_mode(self.training_env)
             for _ in range(self.num_env_steps_per_epoch):
                 observation = self._take_step_in_env(observation)
-
                 gt.stamp('sample')
+
                 self._try_to_train()
                 gt.stamp('train')
 
+            set_to_eval_mode(self.env)
+            self._try_to_eval(epoch)
+            gt.stamp('eval')
+            self._end_epoch(epoch)
+
+    def train_batch(self, start_epoch):
+        self._current_path_builder = PathBuilder()
+        observation = self._start_new_rollout()
+        for epoch in gt.timed_for(
+                range(start_epoch, self.num_epochs),
+                save_itrs=True,
+        ):
+            self._start_epoch(epoch)
+            set_to_train_mode(self.training_env)
+            # This implementation is rather naive. If you want to (e.g.)
+            # parallelize data collection, this would be the place to do it.
+            for _ in range(self.num_env_steps_per_epoch):
+                observation = self._take_step_in_env(observation)
+            gt.stamp('sample')
+
+            self._try_to_train()
+            gt.stamp('train')
+
+            set_to_eval_mode(self.env)
             self._try_to_eval(epoch)
             gt.stamp('eval')
             self._end_epoch(epoch)
@@ -174,10 +215,10 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         )
         if terminal or len(self._current_path_builder) >= self.max_path_length:
             self._handle_rollout_ending()
-            observation = self._start_new_rollout()
+            new_observation = self._start_new_rollout()
         else:
-            observation = next_ob
-        return observation
+            new_observation = next_ob
+        return new_observation
 
     def _try_to_train(self):
         if self._can_train():
@@ -187,10 +228,10 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
                 self._n_train_steps_total += 1
             self.training_mode(False)
 
-    def _try_to_eval(self, epoch):
+    def _try_to_eval(self, epoch, eval_paths=None):
         logger.save_extra_data(self.get_extra_data_to_save(epoch))
         if self._can_evaluate():
-            self.evaluate(epoch)
+            self.evaluate(epoch, eval_paths=eval_paths)
 
             params = self.get_epoch_snapshot(epoch)
             logger.save_itr_params(epoch, params)
@@ -226,7 +267,6 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             logger.record_tabular('Sample Time (s)', sample_time)
             logger.record_tabular('Epoch Time (s)', epoch_time)
             logger.record_tabular('Total Train Time (s)', total_time)
-
             logger.record_tabular("Epoch", epoch)
             logger.dump_tabular(with_prefix=False, with_timestamp=False)
         else:
@@ -241,8 +281,6 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         A common example for why you might want to skip evaluation is that at
         the beginning of training, you may not have enough data for a
         validation and training set.
-
-        :return:
         """
         return (
             len(self._exploration_paths) > 0
@@ -369,6 +407,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         data_to_save = dict(
             epoch=epoch,
             exploration_policy=self.exploration_policy,
+            eval_policy=self.eval_policy,
         )
         if self.save_environment:
             data_to_save['env'] = self.training_env
@@ -412,7 +451,6 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
             test_paths = eval_paths
         else:
             test_paths = self.get_eval_paths()
-
         statistics.update(eval_util.get_generic_path_information(
             test_paths, stat_prefix="Test",
         ))
@@ -441,3 +479,13 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :return:
         """
         pass
+
+
+def set_to_train_mode(env):
+    if hasattr(env, 'train'):
+        env.train()
+
+
+def set_to_eval_mode(env):
+    if hasattr(env, 'eval'):
+        env.eval()

@@ -2,7 +2,6 @@ import abc
 from typing import Iterable
 
 import numpy as np
-from torch.autograd import Variable
 
 from rlkit.core.rl_algorithm import RLAlgorithm
 from rlkit.torch import pytorch_util as ptu
@@ -24,7 +23,7 @@ class TorchRLAlgorithm(RLAlgorithm, metaclass=abc.ABCMeta):
             net.train(mode)
 
     def to(self, device=None):
-        if device == None:
+        if device is None:
             device = ptu.device
         for net in self.networks:
             net.to(device)
@@ -35,7 +34,7 @@ def _elem_or_tuple_to_variable(elem_or_tuple):
         return tuple(
             _elem_or_tuple_to_variable(e) for e in elem_or_tuple
         )
-    return Variable(ptu.from_numpy(elem_or_tuple).float(), requires_grad=False)
+    return ptu.from_numpy(elem_or_tuple).float()
 
 
 def _filter_batch(np_batch):

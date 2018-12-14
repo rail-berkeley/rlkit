@@ -22,10 +22,9 @@ class OUStrategy(RawExplorationStrategy, Serializable):
             mu=0,
             theta=0.15,
             max_sigma=0.3,
-            min_sigma=0.3,
+            min_sigma=None,
             decay_period=100000,
     ):
-        assert len(action_space.shape) == 1
         Serializable.quick_init(self, locals())
         if min_sigma is None:
             min_sigma = max_sigma

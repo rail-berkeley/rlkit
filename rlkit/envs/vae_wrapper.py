@@ -7,8 +7,10 @@ import numpy as np
 from gym.spaces import Box, Dict
 import rlkit.torch.pytorch_util as ptu
 from multiworld.core.multitask_env import MultitaskEnv
-from multiworld.envs.env_util import get_stat_in_paths, \
-    create_stats_ordered_dict
+from multiworld.envs.env_util import (
+    get_stat_in_paths,
+    create_stats_ordered_dict,
+)
 from rlkit.envs.wrappers import ProxyEnv
 from rlkit.util.io import load_local_or_remote_file
 
@@ -85,7 +87,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
             )
 
         self.vae_input_key_prefix = vae_input_key_prefix
-        assert vae_input_key_prefix in set(['image'])
+        assert vae_input_key_prefix in {'image'}
         self.vae_input_observation_key = vae_input_key_prefix + '_observation'
         self.vae_input_achieved_goal_key = vae_input_key_prefix + '_achieved_goal'
         self.vae_input_desired_goal_key = vae_input_key_prefix + '_desired_goal'
@@ -291,7 +293,6 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
             self.decode_goals = False
             self.render_goals = False
             self.render_rollouts = False
-            self.render_decoded = False
         else:
             raise ValueError("Invalid mode: {}".format(name))
         if hasattr(self.wrapped_env, "mode"):

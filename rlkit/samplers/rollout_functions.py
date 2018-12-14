@@ -15,14 +15,12 @@ def create_rollout_function(rollout_function, **initial_kwargs):
             observation_key,
             desired_goal_key,
     """
-
     def wrapped_rollout_func(*args, **dynamic_kwargs):
         combined_args = {
             **initial_kwargs,
             **dynamic_kwargs
         }
         return rollout_function(*args, **combined_args)
-
     return wrapped_rollout_func
 
 
@@ -33,7 +31,10 @@ def multitask_rollout(
         animated=False,
         observation_key='observation',
         desired_goal_key='desired_goal',
+        get_action_kwargs=None,
 ):
+    if get_action_kwargs is None:
+        get_action_kwargs = {}
     full_observations = []
     observations = []
     actions = []
@@ -52,7 +53,7 @@ def multitask_rollout(
         full_observations.append(o)
         o = o[observation_key]
         new_obs = np.hstack((o, goal))
-        a, agent_info = agent.get_action(new_obs)
+        a, agent_info = agent.get_action(new_obs, **get_action_kwargs)
         next_o, r, d, env_info = env.step(a)
         if animated:
             env.render()
