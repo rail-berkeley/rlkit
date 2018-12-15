@@ -1,5 +1,3 @@
-README last updated on: 02/19/2018
-
 # rlkit
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
