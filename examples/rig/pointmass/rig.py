@@ -53,7 +53,7 @@ if __name__ == "__main__":
             vae_path=None,
             representation_size=4,
             beta=10.0,
-            num_epochs=1,
+            num_epochs=101,
             dump_skew_debug_plots=False,
             decoder_activation='sigmoid',
             generate_vae_dataset_kwargs=dict(
