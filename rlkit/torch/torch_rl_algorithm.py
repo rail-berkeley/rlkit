@@ -140,7 +140,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         statistics.update(self.eval_statistics)
         self.eval_statistics = None
         print('evaluating on {} training tasks')
-        for idx in self.train_tasks:
+        for idx in [1, 2, 3, 4, 5]:
             self.task_idx = idx
             print('Task:', idx)
             # TODO how to handle eval over multiple tasks?
@@ -176,35 +176,35 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
         for idx in self.eval_tasks:
-        #     self.task_idx = idx
-        #     print('Task:', idx)
-        #     # TODO how to handle eval over multiple tasks?
-        #     self.eval_sampler.env.reset_task(idx)
+            self.task_idx = idx
+            print('Task:', idx)
+            # TODO how to handle eval over multiple tasks?
+            self.eval_sampler.env.reset_task(idx)
 
-        #     # import ipdb; ipdb.set_trace()
-        #     goal = self.eval_sampler.env._goal
-        #     test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
-        #     # TODO incorporate into proper logging
-        #     for path in test_paths:
-        #         path['goal'] = goal
+            # import ipdb; ipdb.set_trace()
+            goal = self.eval_sampler.env._goal
+            test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
+            # TODO incorporate into proper logging
+            for path in test_paths:
+                path['goal'] = goal
 
-        #     # save evaluation rollouts for vis
-        #     with open(self.pickle_output_dir +
-        #               "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
-        #         pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
+            # save evaluation rollouts for vis
+            with open(self.pickle_output_dir +
+                      "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+                pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
-        #     statistics.update(eval_util.get_generic_path_information(
-        #         test_paths, stat_prefix="Test_task{}".format(idx),
-        #     ))
-        #     if hasattr(self.env, "log_diagnostics"):
-        #         self.env.log_diagnostics(test_paths)
+            statistics.update(eval_util.get_generic_path_information(
+                test_paths, stat_prefix="Test_task{}".format(idx),
+            ))
+            if hasattr(self.env, "log_diagnostics"):
+                self.env.log_diagnostics(test_paths)
 
-        #     average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
-        #     statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
-        #     statistics['GoalPosition_test_task{}'.format(idx)] = goal
+            average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+            statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
+            statistics['GoalPosition_test_task{}'.format(idx)] = goal
 
             # UNCOMMENT THIS AND COMMENT OUT THE ABOVE CODE TO USE ONLINE EMBEDDING
-            test_paths, statistics = self.evaluate_with_online_embedding(idx, statistics, epoch)
+            # test_paths, statistics = self.evaluate_with_online_embedding(idx, statistics, epoch)
         
 
         for key, value in statistics.items():

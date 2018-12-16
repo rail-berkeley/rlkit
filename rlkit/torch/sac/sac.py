@@ -314,7 +314,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc)
         rf_loss.backward(retain_graph=True)
 
-        self._do_information_bottleneck()
+        # self._do_information_bottleneck()
 
         batch_z = z.repeat(obs.shape[0], 1)
         self.qf1_optimizer.zero_grad()

@@ -200,10 +200,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 print('initializing replay buffer')
                 # temp for evaluating
                 for idx in self.train_tasks + self.eval_tasks:
-                    print(idx)
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    print('exploration policy', self.exploration_policy)
                     self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10, eval_task=True)
 
                     # with open(self.pickle_output_dir + "/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
@@ -216,23 +214,22 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             
             for i in range(self.num_env_steps_per_epoch): # num iterations
-                for idx in self.train_tasks:
-                    self.task_idx = idx
-                    self.env.reset_task(idx)
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-                    self.collect_batch_updates(epoch, idx)
-                
-                for idx in self.eval_tasks:
-                    self.task_idx = idx
-                    self.env.reset_task(idx)
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                idx = np.random.randint(len(self.train_tasks + self.eval_tasks))                
+                self.task_idx = idx
+                self.env.reset_task(idx)
+                # clear_replay()
+                self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                self.set_policy_eval_z(self.task_idx, eval_task=False)
+                self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
 
-                for _ in range(self.num_train_steps_per_itr):
-                    for idx in self.train_tasks:
-                        self._do_training(idx, epoch)
-                    self._n_train_steps_total += 1
-                    self.perform_meta_update()
-                    gt.stamp('train')
+
+            for _ in range(self.num_train_steps_per_itr):
+                for _ in range(10):
+                    idx = np.random.randint(len(self.train_tasks))                
+                    self._do_training(idx, epoch)
+                self._n_train_steps_total += 1
+                self.perform_meta_update()
+                gt.stamp('train')
 
             self.training_mode(False)
 
@@ -504,18 +501,18 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         )
         # pdb.set_trace()
         # print('explore', explore)
-        if explore:
+        # if explore:
             # print('adding to encoding replay buffer')
-            self.enc_replay_buffer.add_sample(
-                task=task_idx,
-                observation=observation,
-                action=action,
-                reward=reward,
-                terminal=terminal,
-                next_observation=next_observation,
-                agent_info=agent_info,
-                env_info=env_info,
-            )
+        self.enc_replay_buffer.add_sample(
+            task=task_idx,
+            observation=observation,
+            action=action,
+            reward=reward,
+            terminal=terminal,
+            next_observation=next_observation,
+            agent_info=agent_info,
+            env_info=env_info,
+        )
 
     def _handle_rollout_ending(self):
         """

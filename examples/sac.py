@@ -94,9 +94,9 @@ def main(docker):
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=2, # num updates per epoch
             num_train_steps_per_itr=100,
-            num_steps_per_eval=20, # num obs to eval on
+            num_steps_per_eval=10, # num obs to eval on
             batch_size=256, # to compute training grads from
-            max_path_length=20,
+            max_path_length=10,
             discount=0.99,
             soft_target_tau=0.005,
             policy_lr=3E-4,
