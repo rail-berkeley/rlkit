@@ -212,9 +212,18 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                     #     pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
 
+            for idx in self.eval_tasks:
+                self.task_idx = idx
+                self.env.reset_task(idx)
+                self.enc_replay_buffer.task_buffers[idx].clear()
+                # clear_replay()
+                self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                self.set_policy_eval_z(self.task_idx, eval_task=False)
+                self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+
             
             for i in range(self.num_env_steps_per_epoch): # num iterations
-                idx = np.random.randint(len(self.train_tasks + self.eval_tasks))                
+                idx = np.random.randint(len(self.train_tasks))                
                 self.task_idx = idx
                 self.env.reset_task(idx)
                 # clear_replay()
