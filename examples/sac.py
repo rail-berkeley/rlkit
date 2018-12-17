@@ -94,6 +94,7 @@ def main(docker):
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=2, # num updates per epoch
             num_train_steps_per_itr=100,
+            train_task_batch_size=10,
             num_steps_per_eval=10, # num obs to eval on
             batch_size=200, # to compute training grads from
             max_path_length=10,
@@ -106,11 +107,12 @@ def main(docker):
             reward_scale=100.,
             reparameterize=True,
             # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
-            pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
+            # pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
     )
-    setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
+    experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
+    variant['algo_params']['pickle_output_dir'] = experiment_log_dir
     # setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
     experiment(variant)
 

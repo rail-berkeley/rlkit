@@ -161,6 +161,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # TODO for now set task encoder to zero, should be sampled
         # TODO: collect context tuples from replay buffer to match training stats
         if z is None:
+            print('self.enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
             batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
             rewards = batch['rewards']
             rewards = self.dense_to_sparse(batch['rewards'])

@@ -26,6 +26,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         batch = self.replay_buffer.random_batch(idx, self.batch_size)
         return np_to_pytorch_batch(batch)
 
+    # Get a batch from the separate encoding replay buffer.
     def get_encoding_batch(self, eval_task=False, idx=None):
         if idx is None:
             idx = self.task_idx
@@ -175,6 +176,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
         
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
+        
+        # This is calculating the embedding online, because every iteration
+        # we clear the encoding buffer for the test tasks.
         for idx in self.eval_tasks:
             self.task_idx = idx
             print('Task:', idx)

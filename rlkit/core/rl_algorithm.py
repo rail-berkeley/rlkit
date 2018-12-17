@@ -43,6 +43,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             test_sampler=None,
             replay_buffer=None,
             pickle_output_dir=None,
+            train_task_batch_size=None,
     ):
         """
         Base class for Meta RL Algorithms
@@ -78,6 +79,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
         self.num_env_steps_per_epoch = num_steps_per_epoch # iterations
         self.num_train_steps_per_itr = num_train_steps_per_itr
+        self.train_task_batch_size = train_task_batch_size
 
         self.num_eval_tasks = num_eval_tasks
         self.num_steps_per_eval = num_steps_per_eval
@@ -212,28 +214,32 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                     #     pickle.dump(aug_obs, f, pickle.HIGHEST_PROTOCOL)
 
+            # Collect trajectories for eval tasks.
             for idx in self.eval_tasks:
                 self.task_idx = idx
                 self.env.reset_task(idx)
+
+                # Clear the encoding replay buffer, so at eval time
+                # We are computing z only from trajectories from the current epoch.
                 self.enc_replay_buffer.task_buffers[idx].clear()
-                # clear_replay()
+                
                 self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                 self.set_policy_eval_z(self.task_idx, eval_task=False)
                 self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
 
-            
+
+            # Sample data from train tasks.            
             for i in range(self.num_env_steps_per_epoch): # num iterations
                 idx = np.random.randint(len(self.train_tasks))                
                 self.task_idx = idx
                 self.env.reset_task(idx)
-                # clear_replay()
                 self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                 self.set_policy_eval_z(self.task_idx, eval_task=False)
                 self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
 
-
+            # Sample train tasks and compute gradient updates on parameters.
             for _ in range(self.num_train_steps_per_itr):
-                for _ in range(10):
+                for _ in range(self.train_task_batch_size):
                     idx = np.random.randint(len(self.train_tasks))                
                     self._do_training(idx, epoch)
                 self._n_train_steps_total += 1
@@ -257,8 +263,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         '''
         for _ in range(self.meta_batch):
             # sample a task and set env accordingly
-            # if epoch == 3:
-            #     pdb.set_trace()
             # self.task_idx = self.sample_task()
 
             # self.env.reset_task(self.train_tasks[self.task_idx])
@@ -271,8 +275,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             self.set_policy_eval_z(self.task_idx, eval_task=False)
 
-            # print('collect batch updates')
-            # pdb.set_trace()
             self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10) # gathers a trajectory (assuming no early terminations)
 
     def perform_meta_update(self):
