@@ -20,6 +20,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
 
+    def cuda(self):
+        for net in self.networks:
+            net.cuda()
+
     def get_batch(self, idx=None):
         if idx is None:
             idx = self.task_idx
@@ -125,8 +129,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         statistics.update(eval_util.get_generic_path_information(
             test_paths, stat_prefix="Test_task{}".format(idx),
         ))
-        if hasattr(self.env, "log_diagnostics"):
-            self.env.log_diagnostics(test_paths)
+        # if hasattr(self.env, "log_diagnostics"):
+        #     self.env.log_diagnostics(test_paths)
 
         average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
         average_inference_returns = [rlkit.core.eval_util.get_average_returns(paths) for paths in all_inference_paths]
@@ -141,7 +145,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         statistics.update(self.eval_statistics)
         self.eval_statistics = None
         print('evaluating on {} training tasks')
-        for idx in [1, 2, 3, 4, 5]:
+        total_train_return = 0.
+        for idx in self.train_tasks:
             self.task_idx = idx
             print('Task:', idx)
             # TODO how to handle eval over multiple tasks?
@@ -165,17 +170,20 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             statistics.update(eval_util.get_generic_path_information(
                 self._exploration_paths, stat_prefix="Exploration_task{}".format(idx),
             )) # something is wrong with these exploration paths i'm pretty sure...
-            if hasattr(self.env, "log_diagnostics"):
-                self.env.log_diagnostics(test_paths)
+            # if hasattr(self.env, "log_diagnostics"):
+            #     self.env.log_diagnostics(test_paths)
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_training_task{}'.format(idx)] = average_returns
             statistics['GoalPosition_training_task{}'.format(idx)] = goal
+            total_train_return += average_returns
             print('GoalPosition_training_task')
             print(goal)
 
         
+
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
+        total_test_return = 0.
         
         # This is calculating the embedding online, because every iteration
         # we clear the encoding buffer for the test tasks.
@@ -206,10 +214,15 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
             statistics['GoalPosition_test_task{}'.format(idx)] = goal
+            total_test_return += average_returns
 
             # UNCOMMENT THIS AND COMMENT OUT THE ABOVE CODE TO USE ONLINE EMBEDDING
             # test_paths, statistics = self.evaluate_with_online_embedding(idx, statistics, epoch)
         
+        avg_train_return = total_train_return / len(self.train_tasks)
+        avg_test_return = total_test_return / len(self.eval_tasks)
+        statistics['AverageReturn_all_train_tasks'] = avg_train_return
+        statistics['AverageReturn_all_test_tasks'] = avg_test_return
 
         for key, value in statistics.items():
             logger.record_tabular(key, value)

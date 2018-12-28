@@ -130,7 +130,7 @@ class TanhNormal(Distribution):
             Variable(Normal(
                 torch.zeros(self.normal_mean.size()),
                 torch.ones(self.normal_std.size())
-            ).sample())
+            ).sample()).cuda()
         )
         # z.requires_grad_()
         if return_pretanh_value:

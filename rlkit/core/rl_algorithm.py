@@ -199,9 +199,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self._start_epoch(epoch)
             self.training_mode(True)
             if epoch == 0:
-                print('initializing replay buffer')
                 # temp for evaluating
                 for idx in self.train_tasks + self.eval_tasks:
+                    print(idx)
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10, eval_task=True)
@@ -221,11 +221,12 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                 # Clear the encoding replay buffer, so at eval time
                 # We are computing z only from trajectories from the current epoch.
-                self.enc_replay_buffer.task_buffers[idx].clear()
+                # self.enc_replay_buffer.task_buffers[idx].clear()
                 
-                self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                # regathers with online data
+                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20)
                 self.set_policy_eval_z(self.task_idx, eval_task=False)
-                self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+                # self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
 
 
             # Sample data from train tasks.            
@@ -233,9 +234,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 idx = np.random.randint(len(self.train_tasks))                
                 self.task_idx = idx
                 self.env.reset_task(idx)
-                self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                 self.set_policy_eval_z(self.task_idx, eval_task=False)
-                self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+                self.collect_data(self.policy, explore=True, num_samples=self.max_path_length*10)
 
             # Sample train tasks and compute gradient updates on parameters.
             for _ in range(self.num_train_steps_per_itr):
@@ -275,7 +276,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
             self.set_policy_eval_z(self.task_idx, eval_task=False)
 
-            self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10) # gathers a trajectory (assuming no early terminations)
+            self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*2) # gathers a trajectory (assuming no early terminations)
 
     def perform_meta_update(self):
         '''

@@ -24,7 +24,9 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    env = NormalizedBoxEnv(HalfCheetahVelEnv(n_tasks=30))
+    task_params = variant['task_params']
+    env = NormalizedBoxEnv(HalfCheetahVelEnv(n_tasks=task_params['n_tasks']))
+    ptu.set_gpu_mode(True)
 
     tasks = env.get_all_task_idx()
 
@@ -70,12 +72,13 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=list(tasks[:4]), # list(tasks[:30]),
-        eval_tasks=list(tasks[4:]), # list(tasks[30:]),
+        train_tasks=list(tasks[:-10]), # list(tasks[:30]),
+        eval_tasks=list(tasks[-10:]), # list(tasks[30:]),
         nets=[task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
     )
+    algorithm.cuda()
     algorithm.train()
 
 
@@ -86,16 +89,17 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=5, # 20 works pretty well
+            n_tasks=50, # 20 works pretty well
             randomize_tasks=True,
         ),
         algo_params=dict(
             meta_batch=2,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=2, # num updates per epoch
-            num_steps_per_eval=100, # num obs to eval on
-            num_train_steps_per_itr=200,
-            batch_size=256, # to compute training grads from
+            num_steps_per_eval=5, # num trajectories to eval on
+            num_train_steps_per_itr=1000,
+            train_task_batch_size=10,
+            batch_size=1024, # to compute training grads from
             max_path_length=200,
             discount=0.99,
             soft_target_tau=0.005,

@@ -14,7 +14,7 @@ class PointEnv(Env):
         directions = list(range(n_tasks))
 
         if randomize_tasks:
-            goals = [[np.random.uniform(-1., 1.), 1] for _ in directions]
+            goals = [[np.random.uniform(-1., 1.), np.random.uniform(-1., 1.)] for _ in directions]
 
             # goals = [1 * np.random.uniform(-1., 1., 2) for _ in directions]
         else:

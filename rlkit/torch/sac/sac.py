@@ -170,7 +170,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             # Task encoding is classification prob of a single tuple
             mu, sigma = self.product_of_gaussians(batch)
             z = mu
-            print('sigma ', sigma)
+            # print('sigma ', sigma)
 
         print('task encoding ', z)
         # print('task encoding mean', np.mean(z))
@@ -443,6 +443,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.vf,
             self.rf,
             self.target_vf,
+            self.task_enc,
         ]
 
     def _update_target_network(self):
@@ -457,5 +458,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             vf=self.vf,
             rf=self.rf,
             target_vf=self.target_vf,
+            task_enc=self.task_enc,
         )
         return snapshot

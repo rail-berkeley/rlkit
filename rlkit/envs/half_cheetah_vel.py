@@ -23,6 +23,7 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         self._task = task
         self.tasks = self.sample_tasks(n_tasks)
         self._goal_vel = self.tasks[0].get('velocity', 0.0)
+        self._goal = self._goal_vel
         super(HalfCheetahVelEnv, self).__init__()
 
     def step(self, action):
@@ -52,3 +53,4 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
     def reset_task(self, idx):
         self._task = self.tasks[idx]
         self._goal_vel = self._task['velocity']
+        self._goal = self._goal_vel
