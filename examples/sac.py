@@ -110,7 +110,7 @@ def main(docker):
             reparameterize=True,
             # embedding_source should be chosen from 
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
-            embedding_source='online_on_policy_trajectories',
+            embedding_source='initial_pool',
             pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
