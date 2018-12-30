@@ -24,6 +24,7 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
         self.tasks = [{'direction': direction} for direction in directions]
         self._task = task
         self._goal_dir = task.get('direction', 1)
+        self._goal = self._goal_dir
         super(HalfCheetahDirEnv, self).__init__()
 
     def step(self, action):
@@ -53,3 +54,4 @@ class HalfCheetahDirEnv(HalfCheetahEnv):
     def reset_task(self, idx):
         self._task = self.tasks[idx]
         self._goal_dir = self._task['direction']
+        self._goal = self._goal_dir
