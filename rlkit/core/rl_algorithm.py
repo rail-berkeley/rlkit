@@ -35,6 +35,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             discount=0.99,
             replay_buffer_size=1000000,
             reward_scale=1,
+            embedding_source='initial_pool',
             render=False,
             save_replay_buffer=False,
             save_algorithm=False,
@@ -88,6 +89,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
         self.reward_scale = reward_scale
+        self.embedding_source = embedding_source
         self.render = render
         self.save_replay_buffer = save_replay_buffer
         self.save_algorithm = save_algorithm
@@ -204,7 +206,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     print(idx)
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10, eval_task=True)
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20, eval_task=True)
 
                     # with open(self.pickle_output_dir + "/replay-buffer-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
                     #     paths = self.replay_buffer.random_batch(idx, 2000)
@@ -219,21 +221,31 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.task_idx = idx
                 self.env.reset_task(idx)
 
-                # Clear the encoding replay buffer, so at eval time
-                # We are computing z only from trajectories from the current epoch.
-                # self.enc_replay_buffer.task_buffers[idx].clear()
-                
-                # regathers with online data
-                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20)
-                self.set_policy_eval_z(self.task_idx, eval_task=False)
-                # self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+                if self.embedding_source == 'initial_pool':
+                    pass
+                elif self.embedding_source == 'online_exploration_trajectories':
+                    self.enc_replay_buffer.task_buffers[idx].clear()
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20)
+                elif self.embedding_source == 'online_on_policy_trajectories':
+                    # Clear the encoding replay buffer, so at eval time
+                    # We are computing z only from trajectories from the current epoch.
+                    self.enc_replay_buffer.task_buffers[idx].clear()
+                    
+                    # regathers with online exploration trajectories
+                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
 
+                    # gathers more data conditioned on embedding from initial exploration trajectories
+                    self.set_policy_eval_z(self.task_idx, eval_task=False)
+                    self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+                else:
+                    raise Exception("Invalid option for computing embedding")
 
             # Sample data from train tasks.            
             for i in range(self.num_env_steps_per_epoch): # num iterations
                 idx = np.random.randint(len(self.train_tasks))                
                 self.task_idx = idx
                 self.env.reset_task(idx)
+                # TODO: add flag for this
                 # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                 self.set_policy_eval_z(self.task_idx, eval_task=False)
                 self.collect_data(self.policy, explore=True, num_samples=self.max_path_length*10)

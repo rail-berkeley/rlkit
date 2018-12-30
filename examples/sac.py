@@ -88,7 +88,7 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=50, # 20 works pretty well
+            n_tasks=100, # 20 works pretty well
             randomize_tasks=True,
         ),
         algo_params=dict(
@@ -108,7 +108,9 @@ def main(docker):
             context_lr=3e-4,
             reward_scale=100.,
             reparameterize=True,
-            # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
+            # embedding_source should be chosen from 
+            # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
+            embedding_source='online_on_policy_trajectories',
             pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,

@@ -109,7 +109,7 @@ def main(docker):
             context_lr=3e-4,
             reward_scale=500.,
             reparameterize=True,
-            # pickle_output_dir='data/proto_sac_point_mass_{}'.format(# datetimestamp('-'))
+            embedding_source='initial_pool',
             pickle_output_dir='data/half-cheetah/', # proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
