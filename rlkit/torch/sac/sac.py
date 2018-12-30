@@ -170,12 +170,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             # Task encoding is classification prob of a single tuple
             mu, sigma = self.product_of_gaussians(batch)
             z = mu
-            # print('sigma ', sigma)
 
         print('task encoding ', z)
-        # print('task encoding mean', np.mean(z))
-        # print('task encoding std', np.std(z))
 
+        # TODO(KR) is this a bug? if explore is True (as it is when we eval), then the z will be set in the sampler's policy, but not the exploration policy! that z will be zero!!
         sampler.policy.set_eval_z(np_ify(z))
         test_paths = sampler.obtain_samples(explore=explore)
         return test_paths
@@ -187,59 +185,13 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # return torch.autograd.Variable(torch.FloatTensor(sparse_reward), requires_grad=False)
         return rewards
 
-
-    # def train_reward_prediction(self, train_flag=True):
-    #     # train classifier to convergence to distinguish between tasks,
-    #     # using data collected by exploration policy
-    #     # import ipdb; ipdb.set_trace()
-    #     batch_size = 256
-    #     batches = []
-    #     rf_losses = []
-    #     for idx in self.train_tasks:
-    #         batch = self.get_batch(idx)
-    #         rewards = self.dense_to_sparse(batch['rewards'])
-    #         terminals = batch['terminals']
-    #         obs = batch['observations']
-    #         actions = batch['actions']
-    #         next_obs = batch['next_observations']
-
-    #         enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
-    #         z = torch.mean(enc, dim=0)
-    #         batch_z = z.repeat(obs.shape[0], 1)
-    #         # z_magnitude_loss.backward(retain_graph=True)
-
-    #         r_pred = self.rf(obs, batch_z)
-    #         rf_loss = 1. * self.rf_criterion(r_pred, self.dense_to_sparse(rewards))
-    #         rf_losses.append(rf_loss)
-    #     total_rf_loss = sum(rf_losses)
-    #     total_rf_loss.backward(retain_graph=True)
-
-    #     self.rf_optimizer.step()
-    #     self.context_optimizer.step()
-
-    #     self.rf_optimizer.zero_grad()
-    #     self.context_optimizer.zero_grad()
-
     def perform_meta_update(self):
-        # self.train_reward_prediction()
-        # self._do_information_bottleneck()
-
-        # assume gradients have been accumulated for each parameter, apply update
-        # self.qf1_optimizer.step()
-        # self.qf2_optimizer.step()
-        # self.vf_optimizer.step()
-        # self.policy_optimizer.step()
         self.context_optimizer.step()
         self.rf_optimizer.step()
         self._update_target_network()
 
-        # self.qf1_optimizer.zero_grad()
-        # self.qf2_optimizer.zero_grad()
-        # self.vf_optimizer.zero_grad()
         self.rf_optimizer.zero_grad()
-        # self.policy_optimizer.zero_grad()
         self.context_optimizer.zero_grad()
-        # self.train_task_classifier()
 
     def _do_information_bottleneck(self):
 
@@ -251,10 +203,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             terminals = batch['terminals']
             obs = batch['observations']
             actions = batch['actions']
-            next_obs = batch['next_observations']        
+            next_obs = batch['next_observations']
 
         mu, sigma = self.product_of_gaussians(batch)
-        
+
         z_dist = torch.distributions.Normal(mu, sigma)
         kl_loss = torch.sum(torch.distributions.kl.kl_divergence(
             z_dist, torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))))
@@ -263,25 +215,15 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
     def product_of_gaussians(self, batch):
         rewards = batch['rewards']
         obs = batch['observations']
-        # NOTE: right now policy is updated on the same rollouts used
-        # for the task encoding z
-        
+
         enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
         mu_i = enc[:, :self.latent_dim]
         softplus = torch.nn.Softplus()
-        
+
         sigma_i = softplus(enc[:, self.latent_dim:])
 
         mu = torch.mean(mu_i, dim=0)
         sigma = torch.sqrt(torch.mean(sigma_i**2, dim=0))
-
-        # mu = torch.sum(mu_i, dim=0)
-        # sigma = torch.sqrt(torch.sum(sigma_i**2, dim=0))
-        # # pdb.set_trace()
-        
-        # sigma = torch.reciprocal(torch.sqrt(torch.reciprocal(torch.sum(sigma_i**2, dim=0))))
-        # mu = torch.sum(mu_i/sigma_i**2, dim=0)*sigma
-
 
         return mu, sigma
 
@@ -295,9 +237,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         actions = batch['actions']
         next_obs = batch['next_observations']
 
-        # NOTE: right now policy is updated on the same rollouts used
-        # for the task encoding z
-
         batch_enc = self.get_encoding_batch(eval_task=False, idx=idx)
         obs_enc = batch_enc['observations']
         rewards_enc = batch_enc['rewards']
@@ -306,16 +245,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         mu, _ = self.product_of_gaussians(batch_enc)
         z = mu
         batch_z_enc = z.repeat(obs_enc.shape[0], 1)
-        # batch_z = batch_z.detach()
 
         z_magnitude_loss = 1. * torch.dot(z, z)
-        # z_magnitude_loss.backward(retain_graph=True)
 
         r_pred = self.rf(obs_enc, batch_z_enc)
         rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc)
         rf_loss.backward(retain_graph=True)
-
-        # self._do_information_bottleneck()
 
         batch_z = z.repeat(obs.shape[0], 1)
         self.qf1_optimizer.zero_grad()
@@ -333,8 +268,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         target_v_values = self.target_vf(next_obs, batch_z.detach())
         q_target = rewards + (1. - terminals) * self.discount * target_v_values
         # no detach here for residual gradient through batch_z
-        qf_loss = torch.mean((q1_pred - q_target) ** 2) # self.qf_criterion(q_pred, q_target)
-        qf_loss += torch.mean((q2_pred - q_target) ** 2) # self.qf_criterion(q_pred, q_target)
+        qf_loss = torch.mean((q1_pred - q_target) ** 2)
+        qf_loss += torch.mean((q2_pred - q_target) ** 2)
         qf_loss.backward(retain_graph=True)
         self.qf1_optimizer.step()
         self.qf2_optimizer.step()
@@ -344,16 +279,14 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         q1_new_actions = self.qf1(obs, new_actions, batch_z.detach())
         q2_new_actions = self.qf2(obs, new_actions, batch_z.detach())
         min_q_new_actions = torch.min(q1_new_actions, q2_new_actions)
-        # min_q_new_actions = (q1_new_actions + q2_new_actions) / 2
         v_target = min_q_new_actions - log_pi
-        # import ipdb; ipdb.set_trace()
         vf_loss = self.vf_criterion(v_pred, v_target.detach())
         vf_loss.backward(retain_graph=True)
         self.vf_optimizer.step()
 
         # policy loss and gradients
         self.policy_optimizer.zero_grad()
-        log_policy_target = q1_new_actions # - v_pred
+        log_policy_target = q1_new_actions
         policy_loss = (
             log_pi * (log_pi - log_policy_target).detach()
         ).mean()
@@ -414,23 +347,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
         rewards = batch['rewards']
         obs = batch['observations']
-
-        # NOTE: right now policy is updated on the same rollouts used
-        # for the task encoding z
-        # enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
-
-        # enc_np = ptu.get_numpy(enc)
-
-        # z = torch.mean(enc, dim=0)
-        # z = z[:self.latent_dim]
-
         mu, sigma = self.product_of_gaussians(batch)
         z = mu
-        # batch_z_enc = z.repeat(obs.shape[0], 1)
-
-        # update policy's task encoding for data collection
-        # pdb.set_trace()
-
         self.policy.set_eval_z(np_ify(z))
 
 
