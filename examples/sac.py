@@ -31,6 +31,7 @@ def experiment(variant):
     obs_dim = int(np.prod(env.observation_space.shape))
     action_dim = int(np.prod(env.action_space.shape))
     latent_dim = 5
+    task_enc_output_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim
     reward_dim = 1
 
     net_size = variant['net_size']

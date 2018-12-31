@@ -13,6 +13,27 @@ from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
 
 
+def product_of_gaussians_alt(mus, sigmas):
+    """
+    :param mus: Tensor containing means
+    :param sigmas: Tensor containing sigmas
+    :return: Tensor containing mu, sigma of the Gaussian likelihood formed by the product of Gaussian likelihoods
+    """
+    sigmas_squared = sigmas ** 2
+    sigma_squared = 1. / torch.sum(torch.reciprocol(sigmas_squared), dim=0)
+    mu = sigma_squared * torch.sum(mus / sigmas_squared, dim=0)
+    return mu, torch.sqrt(sigma_squared)
+
+def mean_of_gaussians(mus, sigmas):
+    """
+    :param mus: Tensor containing means
+    :param sigmas: Tensor containing sigmas
+    :return: Tensor containing mu, sigma of the Gaussian likelihood formed by the means of the Gaussians
+    """
+    mu = torch.mean(mus, dim=0)
+    sigma = torch.sqrt(torch.mean(sigmas**2, dim=0))
+    return mu, sigma
+
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
     def __init__(
             self,
@@ -98,70 +119,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=context_lr,
         )
 
-    """
-    # DELETE
-    def make_dataset(self, batch, idx):
-        obs = batch['observations']
-        rewards = batch['rewards'] / self.reward_scale
-        targets = np.full_like(rewards, idx)
-        l = len(obs) // 2
-        train = np.concatenate([obs[:l], rewards[:l], targets[:l]], axis=1)
-        test = np.concatenate([obs[l:], rewards[l:], targets[l:]], axis=1)
-        return train, test
-
-    def train_task_classifier(self, train_flag=True):
-        # train classifier to convergence to distinguish between tasks,
-        # using data collected by exploration policy
-        training_data = []
-        test_data = []
-        for idx in self.train_tasks:
-            nsamp = min(2000, self.replay_buffer.num_steps_can_sample(idx))
-            train, test = self.make_dataset(self.replay_buffer.random_batch(idx, nsamp), idx)
-            training_data.append(train)
-            test_data.append(test)
-        training_data = np.concatenate(training_data)
-        test_data = np.concatenate(test_data)
-
-        if train_flag:
-            batch_size = 256
-            for epoch in range(10):
-                for it in range(len(training_data // batch_size)):
-                    indices = np.random.choice(len(training_data), batch_size)
-                    train = training_data[indices]
-                    obs = torch_ify(train[:, :2])
-                    rewards = torch_ify(train[:, 2:3])
-                    targets = torch_ify(train[:, -1:])
-                    preds = self.task_enc(obs, rewards)
-                    class_loss = self.class_criterion(preds, targets)
-                    class_loss.backward()
-                    self.class_optimizer.step()
-                    self.class_optimizer.zero_grad()
-                print('Loss:', class_loss)
-        # evaluate
-        obs = torch_ify(test_data[:, :2])
-        rewards = torch_ify(test_data[:, 2:3])
-        targets = test_data[:, -1:]
-        preds = (np_ify(self.task_enc(obs, rewards).detach()) > 0).astype(np.int)
-        errors = np.sum(np.abs(np_ify(preds) - targets)) / len(preds)
-        print('Classification error:', errors)
-    """
-
-    """
-    # TODO: DELETE
-    def make_exploration_policy(self, policy):
-        return ProtoExplorationPolicy(policy)
-
-    def make_eval_policy(self, policy, deterministic=True):
-        if deterministic:
-            eval_policy = MakeDeterministic(policy)
-        else:
-            eval_policy = self.policy
-        return eval_policy
-    """
-
-
-
-
     # TODO: leave for now?
     def dense_to_sparse(self, rewards):
         # rewards_np = rewards.data.numpy()
@@ -190,34 +147,41 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             actions = batch['actions']
             next_obs = batch['next_observations']
 
-        mu, sigma = self.product_of_gaussians(batch)
+        # mu, sigma = self.product_of_gaussians(batch)
 
         z_dist = torch.distributions.Normal(mu, sigma)
         kl_loss = torch.sum(torch.distributions.kl.kl_divergence(
             z_dist, torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))))
         kl_loss.backward(retain_graph=True)
 
-    # TODO: Write this
-    def compute_embedding_from_batch(self, batch):
-        pass
-
-    def product_of_gaussians(self, batch):
+    def compute_embedding_from_batch(self, batch, deterministic_embedding=False):
+        """
+        Computes the embedding for a batch of data
+        :param batch: dictionary of tensors, see get_encoding_batch
+        :param deterministic_embedding: If we have a Gaussian distribution over z, this flag will select the mean
+               instaed of sampling
+        :return: Tensor of shape [latent_dim]
+        """
         rewards = batch['rewards']
         obs = batch['observations']
 
-        enc = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
-        mu_i = enc[:, :self.latent_dim]
-        softplus = torch.nn.Softplus()
+        enc_outputs = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
 
-        sigma_i = softplus(enc[:, self.latent_dim:])
+        if not self.use_information_bottleneck:
+            return torch.mean(enc_outputs, dim=0)
 
-        mu = torch.mean(mu_i, dim=0)
-        sigma = torch.sqrt(torch.mean(sigma_i**2, dim=0))
+        mus = enc_outputs[:, :self.latent_dim]
+        sigmas = torch.nn.Softplus(enc_outputs[:, self.latent_dim:])
 
-        return mu, sigma
+        mu, sigma = mean_of_gaussians(mus, sigmas)
+
+        if deterministic_embedding:
+            return mu
+
+        z_dist = torch.Distributions.Normal(mu, sigma)
+        return z_dist.sample()
 
     def _do_training(self, idx, epoch):
-
         # sample from replay buffer to compute training update
         batch = self.get_batch(idx)
         rewards = batch['rewards']
@@ -231,8 +195,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         rewards_enc = batch_enc['rewards']
 
         # Product of Gaussians.
-        mu, _ = self.product_of_gaussians(batch_enc)
-        z = mu
+        z = self.compute_embedding_from_batch(batch_enc)
         batch_z_enc = z.repeat(obs_enc.shape[0], 1)
 
         r_pred = self.rf(obs_enc, batch_z_enc)
@@ -280,9 +243,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                     log_pi - log_policy_target
             ).mean()
         else:
-            # TODO: add vf back here as baseline
             policy_loss = (
-                log_pi * (log_pi - log_policy_target).detach()
+                log_pi * (log_pi - log_policy_target + v_pred).detach()
             ).mean()
 
         mean_reg_loss = self.policy_mean_reg_weight * (policy_mean**2).mean()
@@ -343,8 +305,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         batch = self.get_encoding_batch(idx=idx, eval_task=eval_task)
 
         # replace with generic compute embedding from batch function
-        mu, sigma = self.product_of_gaussians(batch)
-        z = mu
+        z = self.compute_embedding_from_batch(batch)
         return np_ify(z)
 
     @property
