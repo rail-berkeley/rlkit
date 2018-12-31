@@ -25,8 +25,8 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     task_params = variant['task_params']
-    env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    ptu.set_gpu_mode(True)
+    env = NormalizedBoxEnv(HalfCheetahVelEnv(n_tasks=task_params['n_tasks']))
+    ptu.set_gpu_mode(variant['use_gpu'])
 
     tasks = env.get_all_task_idx()
 
@@ -107,12 +107,13 @@ def main(docker):
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=5.,
+            reward_scale=100.,
             reparameterize=True,
             embedding_source='initial_pool',
-            pickle_output_dir='data/half-cheetah/', # proto_sac_point_mass', # change this to just log dir?
+            pickle_output_dir='data/half-cheetah-vel/', # proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
+        use_gpu=False,
     )
     # setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)

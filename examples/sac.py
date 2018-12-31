@@ -24,7 +24,7 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
-    # ptu.set_gpu_mode(True)
+    ptu.set_gpu_mode(variant['use_gpu'])
 
     tasks = env.get_all_task_idx()
 
@@ -116,6 +116,7 @@ def main(docker):
             pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
+        use_gpu=False,
     )
     experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     # variant['algo_params']['pickle_output_dir'] = experiment_log_dir

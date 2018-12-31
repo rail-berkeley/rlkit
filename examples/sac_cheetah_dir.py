@@ -26,7 +26,7 @@ def datetimestamp(divider=''):
 def experiment(variant):
     task_params = variant['task_params']
     env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    ptu.set_gpu_mode(True)
+    ptu.set_gpu_mode(variant['use_gpu'])
 
     tasks = env.get_all_task_idx()
 
@@ -89,8 +89,8 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=50, # 20 works pretty well
-            randomize_tasks=True,
+            n_tasks=2, # 20 works pretty well
+            randomize_tasks=False,
         ),
         algo_params=dict(
             meta_batch=2,
@@ -113,6 +113,7 @@ def main(docker):
             pickle_output_dir='data/half-cheetah-dir/', # proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
+        use_gpu=False,
     )
     # setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
