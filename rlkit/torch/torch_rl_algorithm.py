@@ -42,7 +42,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         # TODO: collect context tuples from replay buffer to match training stats
         if z is None:
             print('self.enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
-            z = self.sample_policy_z_for_task(idx, eval_task=eval_task)
+            z = self.sample_z_from_posterior(idx, eval_task=eval_task)
 
         print('task encoding ', z)
 

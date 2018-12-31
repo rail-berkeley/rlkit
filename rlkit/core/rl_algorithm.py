@@ -245,10 +245,21 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    def sample_policy_z_from_prior(self):
+    def sample_z_from_prior(self):
+        """
+        Samples z from the prior distribution, which can be either a delta function at 0 or a standard Gaussian
+        depending on whether we use the information bottleneck.
+        :return: latent z as a Numpy array
+        """
         pass
 
-    def sample_policy_z_for_task(self, idx, eval_task):
+    def sample_z_from_posterior(self, idx, eval_task):
+        """
+        Samples z from the posterior distribution given data from task idx, where data comes from the encoding buffer
+        :param idx: task idx from which to compute the posterior from
+        :param eval_task: whether or not the task is an eval task
+        :return: latent z as a Numpy array
+        """
         pass
 
     def set_policy_z(self, z):
@@ -259,11 +270,11 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.policy.set_z(z)
 
     def collect_data_sampling_from_prior(self, num_samples=1, eval_task=False):
-        self.set_policy_z(self.sample_policy_z_from_prior())
+        self.set_policy_z(self.sample_z_from_prior())
         self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
 
     def collect_data_from_task_posterior(self, idx, num_samples=1, eval_task=False):
-        self.set_policy_z(self.sample_policy_z_for_task(idx, eval_task=eval_task))
+        self.set_policy_z(self.sample_z_from_posterior(idx, eval_task=eval_task))
         self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
 
     def collect_data(self, agent, num_samples=1, eval_task=False):

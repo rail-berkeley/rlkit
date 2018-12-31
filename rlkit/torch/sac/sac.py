@@ -295,13 +295,13 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                 ptu.get_numpy(policy_log_std),
             ))
 
-    def sample_policy_z_from_prior(self):
+    def sample_z_from_prior(self):
         if self.use_information_bottleneck:
             return np.random.normal(size=self.latent_dim)
         else:
             return np.zeros(self.latent_dim)
 
-    def sample_policy_z_for_task(self, idx, eval_task=False):
+    def sample_z_from_posterior(self, idx, eval_task=False):
         batch = self.get_encoding_batch(idx=idx, eval_task=eval_task)
 
         # replace with generic compute embedding from batch function
