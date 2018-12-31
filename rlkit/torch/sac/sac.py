@@ -13,7 +13,7 @@ from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
 
 
-def product_of_gaussians_alt(mus, sigmas):
+def product_of_gaussians(mus, sigmas):
     """
     :param mus: Tensor containing means
     :param sigmas: Tensor containing sigmas
