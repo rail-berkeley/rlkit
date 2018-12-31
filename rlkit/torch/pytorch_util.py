@@ -44,7 +44,7 @@ def fanin_init_weights_like(tensor):
 GPU wrappers
 """
 
-_use_gpu = True
+_use_gpu = False
 device = None
 
 

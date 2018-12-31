@@ -33,6 +33,7 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
     If return_log_prob is False (default), log_prob = None
         This is done because computing the log_prob can be a bit expensive.
     """
+
     def __init__(
             self,
             hidden_sizes,
@@ -69,16 +70,22 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
         # so it does not need to be attached to the graph
         # TODO: this does not seem very PyTorch-esque, neither does `eval_np`
         # investigate this more later
-        self.np_z = np.zeros(self.latent_dim)
 
-    def set_eval_z(self, z):
+        # setting to None forces algorithm to set
+        self.np_z = None # np.zeros(self.latent_dim)
+
+    def set_z(self, z):
         self.np_z = z
+
+    def clear_z(self):
+        self.np_z = None
 
     def get_action(self, obs_np, deterministic=False):
         actions = self.get_actions(obs_np[None], deterministic=deterministic)
         return actions[0, :], {}
 
     def get_actions(self, obs_np, deterministic=False):
+        assert self.np_z is not None, "Must specify an input latent variable to condition the policy on"
         in_ = np.concatenate([obs_np, self.np_z[None]], axis=1)
         return self.eval_np(in_, deterministic=deterministic)[0]
 
@@ -140,6 +147,8 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
         )
 
 
+# DEPRECATE, let algorithm choose what z to set
+"""
 class ProtoExplorationPolicy(Wrapper, Policy):
     '''
     exploration by setting task encoding z = 0
@@ -157,6 +166,7 @@ class ProtoExplorationPolicy(Wrapper, Policy):
 
     def get_actions(self, observations, **kwargs):
         return self.policy.get_actions(observations, **kwargs)
+"""
 
 
 class MakeDeterministic(Wrapper, Policy):

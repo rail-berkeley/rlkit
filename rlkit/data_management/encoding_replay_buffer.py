@@ -8,6 +8,9 @@ from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
 from gym.spaces import Box, Discrete, Tuple
 
 
+# TODO: Delete this class?
+
+# (AZ): Do we see any reason why we need different logic for the encoding replay buffer?
 class EncodingReplayBuffer(MultiTaskReplayBuffer):
     def __init__(
             self,
@@ -46,7 +49,6 @@ class EncodingReplayBuffer(MultiTaskReplayBuffer):
 
     def random_batch(self, task, batch_size):
         return self.task_buffers[task].random_batch(batch_size)
-        # return self.task_buffers[task].random_batch(batch_sizex, epoch)
 
 def get_dim(space):
     if isinstance(space, Box):

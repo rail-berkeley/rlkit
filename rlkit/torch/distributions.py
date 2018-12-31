@@ -1,5 +1,7 @@
 import torch
 from torch.autograd import Variable
+
+import rlkit.torch.pytorch_util as ptu
 try:
     from torch.distributions import Distribution, Normal
 except ImportError:
@@ -128,9 +130,9 @@ class TanhNormal(Distribution):
             self.normal_mean +
             self.normal_std *
             Variable(Normal(
-                torch.zeros(self.normal_mean.size()),
-                torch.ones(self.normal_std.size())
-            ).sample()).cuda()
+                ptu.zeros(self.normal_mean.size()),
+                ptu.ones(self.normal_std.size())
+            ).sample())
         )
         # z.requires_grad_()
         if return_pretanh_value:

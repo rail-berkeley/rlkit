@@ -47,7 +47,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         Base class for Meta RL Algorithms
         :param env: training env
-        :param policy: policy
+        :param policy: policy that is conditioned on a latent variable z that rl_algorithm is responsible for feeding in
         :param train_tasks: list of tasks used for training
         :param eval_tasks: list of tasks used for eval
         :param meta_batch: number of tasks used for meta-update
@@ -69,13 +69,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.env = env
         self.policy = policy
+        self.exploration_policy = policy # Can potentially use a different policy purely for exploration rather than also solving tasks, currently not being used
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
-        self.exploration_policy = self.make_exploration_policy(policy)
         self.meta_batch = meta_batch
         self.num_epochs = num_epochs
 
-        self.num_env_steps_per_epoch = num_steps_per_epoch # iterations
+        self.num_env_steps_per_epoch = num_steps_per_epoch # iterations TODO: rename this to be more informative
         self.num_train_steps_per_itr = num_train_steps_per_itr
         self.train_task_batch_size = train_task_batch_size
 
@@ -86,24 +86,23 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
         self.reward_scale = reward_scale
-        self.embedding_source = embedding_source
+        self.embedding_source = embedding_source # TODO: add options for computing embeddings on train tasks too
         self.render = render
         self.save_replay_buffer = save_replay_buffer
         self.save_algorithm = save_algorithm
         self.save_environment = save_environment
+
+        # do we even need this? probably need to make a copy of the env or force it reset at evaluations
         if eval_sampler is None:
-            eval_policy = self.make_eval_policy(policy)
-            eval_exploration_policy = self.make_eval_policy(self.make_exploration_policy(policy))
             eval_sampler = InPlacePathSampler(
                 env=env,
-                policy=eval_policy,
-                exploration_policy=eval_exploration_policy,
+                policy=policy,
                 max_samples=self.num_steps_per_eval * self.max_path_length,
                 max_path_length=self.max_path_length,
             )
-        self.eval_policy = eval_policy
         self.eval_sampler = eval_sampler
 
+        # TODO: might be cleaner and easier to extend to just have separate buffers for train and eval tasks, leaving in eval_task args because of this
         # separate replay buffers for encoding data and data used to compute RL objective
         if replay_buffer is None:
             self.replay_buffer = MultiTaskReplayBuffer(
@@ -112,6 +111,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.train_tasks + self.eval_tasks,
                 )
 
+        # simply use another multitaskreplay buffer, as I don't think the classes are any different
         self.enc_replay_buffer = EncodingReplayBuffer(
                 self.replay_buffer_size,
                 env,
@@ -171,11 +171,17 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.training_mode(True)
             if epoch == 0:
                 # temp for evaluating
-                for idx in self.train_tasks + self.eval_tasks:
+                for idx in self.train_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20, eval_task=True)
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=False)
+                for idx in self.eval_tasks:
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
+                    # TODO: make number of initial trajectories a parameter
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=True)
 
+            # TODO: move this into torch_rl_algorithm, where all eval related things go
             # Collect trajectories for eval tasks.
             for idx in self.eval_tasks:
                 self.task_idx = idx
@@ -183,21 +189,20 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
                 if self.embedding_source == 'initial_pool':
                     # TODO(KR) collect_data() adds everything collected to both replay buffers, so the enc replay buffer will not just be the initial pool?
+                    # TODO:(AZ): potentially address this with separating pools for train and eval tasks
                     pass
                 elif self.embedding_source == 'online_exploration_trajectories':
                     self.enc_replay_buffer.task_buffers[idx].clear()
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*20)
+                    # resamples using current policy, conditioned on prior
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=True)
                 elif self.embedding_source == 'online_on_policy_trajectories':
                     # Clear the encoding replay buffer, so at eval time
                     # We are computing z only from trajectories from the current epoch.
                     self.enc_replay_buffer.task_buffers[idx].clear()
 
                     # regathers with online exploration trajectories
-                    self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-
-                    # gathers more data conditioned on embedding from initial exploration trajectories
-                    self.set_policy_eval_z(self.task_idx, eval_task=False)
-                    self.collect_data(self.policy, explore=False, num_samples=self.max_path_length*10)
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 10, eval_task=True)
+                    self.collect_data_from_task_posterior(idx=idx, num_samples=self.max_path_length * 10, eval_task=True)
                 else:
                     raise Exception("Invalid option for computing embedding")
 
@@ -208,8 +213,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.env.reset_task(idx)
                 # TODO: add flag for this
                 # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-                self.set_policy_eval_z(self.task_idx, eval_task=False)
-                self.collect_data(self.policy, explore=True, num_samples=self.max_path_length*10)
+                self.collect_data_from_task_posterior(idx=idx, num_samples=self.max_path_length * 10, eval_task=False)
 
             # Sample train tasks and compute gradient updates on parameters.
             # TODO(KR) I think optimization will work better if we update the policy networks in a meta-batch as well as the encoder
@@ -241,7 +245,28 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    def collect_data(self, agent, explore, num_samples=1, eval_task=False):
+    def sample_policy_z_from_prior(self):
+        pass
+
+    def sample_policy_z_for_task(self, idx, eval_task):
+        pass
+
+    def set_policy_z(self, z):
+        """
+        :param z: Assumed to be numpy array
+        :return: None
+        """
+        self.policy.set_z(z)
+
+    def collect_data_sampling_from_prior(self, num_samples=1, eval_task=False):
+        self.set_policy_z(self.sample_policy_z_from_prior())
+        self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+
+    def collect_data_from_task_posterior(self, idx, num_samples=1, eval_task=False):
+        self.set_policy_z(self.sample_policy_z_for_task(idx, eval_task=eval_task))
+        self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+
+    def collect_data(self, agent, num_samples=1, eval_task=False):
         '''
         collect data from current env in batch mode
         with exploration policy
@@ -264,7 +289,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 reward,
                 next_ob,
                 terminal,
-                explore=explore,
                 eval_task=eval_task,
                 agent_info=agent_info,
                 env_info=env_info,
@@ -366,6 +390,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         logger.pop_prefix()
 
     def _start_new_rollout(self):
+        # (AZ): I don't think resetting policy currently does anything for us, but I'll leave it
         self.exploration_policy.reset()
         return self.env.reset()
 
@@ -411,7 +436,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             reward,
             next_observation,
             terminal,
-            explore,
             agent_info,
             env_info,
             eval_task=False,

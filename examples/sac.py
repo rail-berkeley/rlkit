@@ -23,9 +23,8 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    # env = NormalizedBoxEnv(HalfCheetahDirEnv())
     env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
-    ptu.set_gpu_mode(True)
+    # ptu.set_gpu_mode(True)
 
     tasks = env.get_all_task_idx()
 
@@ -77,7 +76,8 @@ def experiment(variant):
         latent_dim=latent_dim,
         **variant['algo_params']
     )
-    algorithm.cuda()
+    if ptu.gpu_enabled():
+        algorithm.cuda()
     algorithm.train()
 
 
@@ -95,7 +95,7 @@ def main(docker):
             meta_batch=2,
             num_epochs=1000, # meta-train epochs
             num_steps_per_epoch=10, # num updates per epoch
-            num_train_steps_per_itr=1000,
+            num_train_steps_per_itr=10,
             train_task_batch_size=10,
             num_steps_per_eval=10, # num obs to eval on
             batch_size=256, # to compute training grads from
@@ -108,6 +108,7 @@ def main(docker):
             context_lr=3e-4,
             reward_scale=100.,
             reparameterize=True,
+            use_information_bottleneck=False, # only supports False for now
             # embedding_source should be chosen from 
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             embedding_source='initial_pool',

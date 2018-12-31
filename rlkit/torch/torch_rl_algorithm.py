@@ -9,7 +9,7 @@ from torch.autograd import Variable
 import rlkit.core.eval_util
 from rlkit.core.rl_algorithm import MetaRLAlgorithm
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.core import PyTorchModule
+from rlkit.torch.core import PyTorchModule, np_ify, torch_ify
 from rlkit.core import logger, eval_util
 
 
@@ -37,6 +37,19 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         batch = self.enc_replay_buffer.random_batch(idx, self.batch_size)
         return np_to_pytorch_batch(batch)
 
+    # TODO: this whole function might be rewritten
+    def obtain_eval_samples(self, idx, eval_task=False, z=None, deterministic=False):
+        # TODO: collect context tuples from replay buffer to match training stats
+        if z is None:
+            print('self.enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+            z = self.sample_policy_z_for_task(idx, eval_task=eval_task)
+
+        print('task encoding ', z)
+
+        self.set_policy_z(z)
+        test_paths = self.eval_sampler.obtain_samples(deterministic=deterministic)
+        return test_paths
+
     @property
     @abc.abstractmethod
     def networks(self) -> Iterable[PyTorchModule]:
@@ -46,12 +59,13 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.networks:
             net.train(mode)
 
-    def to(self):
+    def to(self, device=None):
         if device == None:
             device = ptu.device
         for net in self.networks:
             net.to(device)
 
+    # TODO: make this useful again, and add separate evaluation functions for different eval methods
     def evaluate_with_online_embedding(self, idx, statistics, epoch):
         self.task_idx = idx
         print('Task:', idx)
@@ -107,7 +121,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         statistics.update(self.eval_statistics)
         self.eval_statistics = None
         print('evaluating on {} training tasks')
-        total_train_return = 0.
+        train_avg_returns = []
         for idx in self.train_tasks:
             self.task_idx = idx
             print('Task:', idx)
@@ -116,7 +130,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             goal = self.eval_sampler.env._goal
             print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
-            test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=False)
+            test_paths = self.obtain_eval_samples(idx, eval_task=False, deterministic=True)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal # goal
@@ -136,17 +150,18 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             #     self.env.log_diagnostics(test_paths)
 
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+            # TODO: add flag for disabling individual task logging info, since it's a lot of clutter
             statistics['AverageReturn_training_task{}'.format(idx)] = average_returns
             statistics['GoalPosition_training_task{}'.format(idx)] = goal
-            total_train_return += average_returns
+            train_avg_returns += [average_returns]
             print('GoalPosition_training_task')
             print(goal)
 
 
 
         print('evaluating on {} evaluation tasks'.format(len(self.eval_tasks)))
-        total_test_return = 0.
 
+        test_avg_returns = []
         # This is calculating the embedding online, because every iteration
         # we clear the encoding buffer for the test tasks.
         for idx in self.eval_tasks:
@@ -155,9 +170,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             # TODO how to handle eval over multiple tasks?
             self.eval_sampler.env.reset_task(idx)
 
-            # import ipdb; ipdb.set_trace()
             goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
+            test_paths = self.obtain_eval_samples(idx, eval_task=True, deterministic=True)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal
@@ -176,13 +190,14 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
             statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
             statistics['GoalPosition_test_task{}'.format(idx)] = goal
-            total_test_return += average_returns
+            test_avg_returns += [average_returns]
 
+            # TODO: flags for these, flesh out other embedding/evaluation schemes
             # UNCOMMENT THIS AND COMMENT OUT THE ABOVE CODE TO USE ONLINE EMBEDDING
             # test_paths, statistics = self.evaluate_with_online_embedding(idx, statistics, epoch)
 
-        avg_train_return = total_train_return / len(self.train_tasks)
-        avg_test_return = total_test_return / len(self.eval_tasks)
+        avg_train_return = np.mean(train_avg_returns)
+        avg_test_return = np.mean(test_avg_returns)
         statistics['AverageReturn_all_train_tasks'] = avg_train_return
         statistics['AverageReturn_all_test_tasks'] = avg_test_return
 

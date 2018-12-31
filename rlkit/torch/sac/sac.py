@@ -11,8 +11,6 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import np_ify, torch_ify
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
-from rlkit.torch.sac.policies import MakeDeterministic, ProtoExplorationPolicy
-import pdb
 
 
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
@@ -34,11 +32,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             policy_pre_activation_weight=0.,
             optimizer_class=optim.Adam,
             reparameterize=True,
+            use_information_bottleneck=False,
 
             soft_target_tau=1e-2,
             plotter=None,
             render_eval_paths=False,
-            eval_deterministic=True,
+            eval_deterministic=True, # TODO: use this flag in evals
             **kwargs
     ):
         self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
@@ -67,6 +66,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.latent_dim = latent_dim
 
         self.reparameterize = reparameterize
+        self.use_information_bottleneck = use_information_bottleneck
 
         self.class_optimizer = optim.SGD(
                 self.task_enc.parameters(),
@@ -98,6 +98,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=context_lr,
         )
 
+    """
+    # DELETE
     def make_dataset(self, batch, idx):
         obs = batch['observations']
         rewards = batch['rewards'] / self.reward_scale
@@ -142,7 +144,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         preds = (np_ify(self.task_enc(obs, rewards).detach()) > 0).astype(np.int)
         errors = np.sum(np.abs(np_ify(preds) - targets)) / len(preds)
         print('Classification error:', errors)
+    """
 
+    """
+    # TODO: DELETE
     def make_exploration_policy(self, policy):
         return ProtoExplorationPolicy(policy)
 
@@ -152,33 +157,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         else:
             eval_policy = self.policy
         return eval_policy
+    """
 
 
-    def obtain_eval_samples(self, idx, sampler, eval_task=False, z=None, explore=True):
-        '''
-        this is more involved than usual because we have to sample rollouts, compute z, then sample new rollouts conditioned on z
-        '''
-        # TODO for now set task encoder to zero, should be sampled
-        # TODO: collect context tuples from replay buffer to match training stats
-        if z is None:
-            print('self.enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
-            batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
-            rewards = batch['rewards']
-            rewards = self.dense_to_sparse(batch['rewards'])
-            obs = batch['observations']
-            # Evaluate task classifier on sampled tuples
-            # Task encoding is classification prob of a single tuple
-            mu, sigma = self.product_of_gaussians(batch)
-            z = mu
-
-        print('task encoding ', z)
-
-        # TODO(KR) is this a bug? if explore is True (as it is when we eval), then the z will be set in the sampler's policy, but not the exploration policy! that z will be zero!!
-        sampler.policy.set_eval_z(np_ify(z))
-        test_paths = sampler.obtain_samples(explore=explore)
-        return test_paths
 
 
+    # TODO: leave for now?
     def dense_to_sparse(self, rewards):
         # rewards_np = rewards.data.numpy()
         # sparse_reward = (rewards_np < .2).astype(int)
@@ -193,6 +177,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.rf_optimizer.zero_grad()
         self.context_optimizer.zero_grad()
 
+    # TODO: implement this
     def _do_information_bottleneck(self):
 
         batch_size = 256
@@ -211,6 +196,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         kl_loss = torch.sum(torch.distributions.kl.kl_divergence(
             z_dist, torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))))
         kl_loss.backward(retain_graph=True)
+
+    # TODO: Write this
+    def compute_embedding_from_batch(self, batch):
+        pass
 
     def product_of_gaussians(self, batch):
         rewards = batch['rewards']
@@ -245,8 +234,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         mu, _ = self.product_of_gaussians(batch_enc)
         z = mu
         batch_z_enc = z.repeat(obs_enc.shape[0], 1)
-
-        z_magnitude_loss = 1. * torch.dot(z, z)
 
         r_pred = self.rf(obs_enc, batch_z_enc)
         rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc)
@@ -287,13 +274,16 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # policy loss and gradients
         self.policy_optimizer.zero_grad()
         log_policy_target = q1_new_actions
-        policy_loss = (
-            log_pi * (log_pi - log_policy_target).detach()
-        ).mean()
-        policy_loss = (
-               log_pi - log_policy_target
-        ).mean()
 
+        if self.reparameterize:
+            policy_loss = (
+                    log_pi - log_policy_target
+            ).mean()
+        else:
+            # TODO: add vf back here as baseline
+            policy_loss = (
+                log_pi * (log_pi - log_policy_target).detach()
+            ).mean()
 
         mean_reg_loss = self.policy_mean_reg_weight * (policy_mean**2).mean()
         std_reg_loss = self.policy_std_reg_weight * (policy_log_std**2).mean()
@@ -343,14 +333,19 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                 ptu.get_numpy(policy_log_std),
             ))
 
-    def set_policy_eval_z(self, idx, eval_task=False):
-        batch = self.get_encoding_batch(eval_task=eval_task, idx=idx)
-        rewards = batch['rewards']
-        obs = batch['observations']
+    def sample_policy_z_from_prior(self):
+        if self.use_information_bottleneck:
+            return np.random.normal(size=self.latent_dim)
+        else:
+            return np.zeros(self.latent_dim)
+
+    def sample_policy_z_for_task(self, idx, eval_task=False):
+        batch = self.get_encoding_batch(idx=idx, eval_task=eval_task)
+
+        # replace with generic compute embedding from batch function
         mu, sigma = self.product_of_gaussians(batch)
         z = mu
-        self.policy.set_eval_z(np_ify(z))
-
+        return np_ify(z)
 
     @property
     def networks(self):
