@@ -72,7 +72,7 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
         # investigate this more later
 
         # setting to None forces algorithm to set
-        self.np_z = None # np.zeros(self.latent_dim)
+        self.np_z = None  # np.zeros(self.latent_dim)
 
     def set_z(self, z):
         self.np_z = z
@@ -145,28 +145,6 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
             action, mean, log_std, log_prob, expected_log_prob, std,
             mean_action_log_prob, pre_tanh_value,
         )
-
-
-# DEPRECATE, let algorithm choose what z to set
-"""
-class ProtoExplorationPolicy(Wrapper, Policy):
-    '''
-    exploration by setting task encoding z = 0
-    '''
-
-    def __init__(self, policy, *args, **kwargs):
-        super().__init__(policy)
-        self.np_z = np.zeros(policy.latent_dim)
-        self.policy = policy
-
-    # TODO: Wrapper won't handle these because they are abstract methods
-    # in Policy class, boo
-    def get_action(self, observation, **kwargs):
-        return self.policy.get_action(observation, **kwargs)
-
-    def get_actions(self, observations, **kwargs):
-        return self.policy.get_actions(observations, **kwargs)
-"""
 
 
 class MakeDeterministic(Wrapper, Policy):

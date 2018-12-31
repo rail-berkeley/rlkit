@@ -36,6 +36,9 @@ class SimpleReplayBuffer(ReplayBuffer):
     def terminate_episode(self):
         pass
 
+    def size(self):
+        return self._size
+
     def clear(self):
         self._top = 0
         self._size = 0

@@ -39,7 +39,7 @@ def experiment(variant):
     task_enc = FlattenMlp(
             hidden_sizes=[200, 200, 200], # deeper net + higher dim space generalize better
             input_size=obs_dim + reward_dim,
-            output_size=latent_dim,
+            output_size=task_enc_output_dim,
     )
     qf1 = FlattenMlp(
         hidden_sizes=[net_size, net_size, net_size],

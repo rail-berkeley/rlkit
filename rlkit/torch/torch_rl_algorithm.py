@@ -34,14 +34,21 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
     def get_encoding_batch(self, eval_task=False, idx=None):
         if idx is None:
             idx = self.task_idx
-        batch = self.enc_replay_buffer.random_batch(idx, self.batch_size)
+        if eval_task:
+            batch = self.eval_enc_replay_buffer.random_batch(idx, self.batch_size)
+        else:
+            batch = self.enc_replay_buffer.random_batch(idx, self.batch_size)
         return np_to_pytorch_batch(batch)
 
     # TODO: this whole function might be rewritten
     def obtain_eval_samples(self, idx, eval_task=False, z=None, deterministic=False):
         # TODO: collect context tuples from replay buffer to match training stats
         if z is None:
-            print('self.enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+            if eval_task:
+                print('eval_enc_replay_buffer size, task {}'.format(idx),
+                      self.eval_enc_replay_buffer.task_buffers[idx].size())
+            else:
+                print('enc_replay_buffer size, task {}'.format(idx), self.enc_replay_buffer.task_buffers[idx].size())
             z = self.sample_z_from_posterior(idx, eval_task=eval_task)
 
         print('task encoding ', z)

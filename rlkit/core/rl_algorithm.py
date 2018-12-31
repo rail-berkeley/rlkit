@@ -8,7 +8,6 @@ import numpy as np
 
 from rlkit.core import logger
 from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
-from rlkit.data_management.encoding_replay_buffer import EncodingReplayBuffer
 
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.policies.base import ExplorationPolicy
@@ -108,14 +107,18 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self.replay_buffer = MultiTaskReplayBuffer(
                     self.replay_buffer_size,
                     env,
-                    self.train_tasks + self.eval_tasks,
+                    self.train_tasks,
                 )
 
-        # simply use another multitaskreplay buffer, as I don't think the classes are any different
-        self.enc_replay_buffer = EncodingReplayBuffer(
+        self.enc_replay_buffer = MultiTaskReplayBuffer(
                 self.replay_buffer_size,
                 env,
-                self.train_tasks + self.eval_tasks,
+                self.train_tasks,
+        )
+        self.eval_enc_replay_buffer = MultiTaskReplayBuffer(
+            self.replay_buffer_size, # TODO: can make buffer for encoding smaller?
+            env,
+            self.eval_tasks
         )
 
         if pickle_output_dir is None:
@@ -305,7 +308,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 env_info=env_info,
             )
             if terminal or len(self._current_path_builder) >= self.max_path_length:
-                self._handle_rollout_ending()
+                self._handle_rollout_ending(eval_task=eval_task)
                 self.train_obs = self._start_new_rollout()
             else:
                 self.train_obs = next_ob
@@ -375,7 +378,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         )
 
     def _can_train(self):
-        return self.replay_buffer.num_steps_can_sample(self.task_idx) >= self.batch_size
+        return all([self.replay_buffer.num_steps_can_sample(idx) >= self.batch_size for idx in self.train_tasks])
 
     def _get_action_and_info(self, agent, observation):
         """
@@ -405,6 +408,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.exploration_policy.reset()
         return self.env.reset()
 
+    # not used
     def _handle_path(self, path):
         """
         Naive implementation: just loop through each transition.
@@ -465,32 +469,49 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             agent_infos=agent_info,
             env_infos=env_info,
         )
-        self.replay_buffer.add_sample(
-            task=task_idx,
-            observation=observation,
-            action=action,
-            reward=reward,
-            terminal=terminal,
-            next_observation=next_observation,
-            agent_info=agent_info,
-            env_info=env_info,
-        )
-        self.enc_replay_buffer.add_sample(
-            task=task_idx,
-            observation=observation,
-            action=action,
-            reward=reward,
-            terminal=terminal,
-            next_observation=next_observation,
-            agent_info=agent_info,
-            env_info=env_info,
-        )
+        if eval_task:
+            self.eval_enc_replay_buffer.add_sample(
+                task=task_idx,
+                observation=observation,
+                action=action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation,
+                agent_info=agent_info,
+                env_info=env_info,
+            )
+        else:
+            self.replay_buffer.add_sample(
+                task=task_idx,
+                observation=observation,
+                action=action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation,
+                agent_info=agent_info,
+                env_info=env_info,
+            )
+            self.enc_replay_buffer.add_sample(
+                task=task_idx,
+                observation=observation,
+                action=action,
+                reward=reward,
+                terminal=terminal,
+                next_observation=next_observation,
+                agent_info=agent_info,
+                env_info=env_info,
+            )
 
-    def _handle_rollout_ending(self):
+    def _handle_rollout_ending(self, eval_task=False):
         """
         Implement anything that needs to happen after every rollout.
         """
-        self.replay_buffer.terminate_episode(self.task_idx)
+        if eval_task:
+            self.eval_enc_replay_buffer.terminate_episode(self.task_idx)
+        else:
+            self.replay_buffer.terminate_episode(self.task_idx)
+            self.enc_replay_buffer.terminate_episode(self.task_idx)
+
         self._n_rollouts_total += 1
         if len(self._current_path_builder) > 0:
             self._exploration_paths.append(
