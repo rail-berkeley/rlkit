@@ -184,8 +184,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                 path['goal'] = goal
 
             # save evaluation rollouts for vis
-            with open(self.pickle_output_dir +
-                      "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+            with open(self.output_dir +
+                      "/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
                 pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
             statistics.update(eval_util.get_generic_path_information(
