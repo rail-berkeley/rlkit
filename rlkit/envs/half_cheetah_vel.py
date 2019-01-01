@@ -54,3 +54,4 @@ class HalfCheetahVelEnv(HalfCheetahEnv):
         self._task = self.tasks[idx]
         self._goal_vel = self._task['velocity']
         self._goal = self._goal_vel
+        self.reset()

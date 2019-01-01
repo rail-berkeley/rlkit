@@ -41,6 +41,7 @@ class PointEnv(Env):
     def reset_task(self, idx):
         self._task = self.tasks[idx]
         self._goal = self.reset_goal(self._task['direction'])
+        self.reset()
 
     def reset_goal(self, direction):
         return self.goals[direction]
