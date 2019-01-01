@@ -179,7 +179,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         z_dist = torch.Distributions.Normal(mu, sigma)
         return z_dist.sample()
 
-    def _do_training(self, idx, epoch):
+    def _do_training(self, idx):
         # sample from replay buffer to compute training update
         batch = self.get_batch(idx)
         rewards = batch['rewards']

@@ -21,9 +21,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             eval_tasks,
             meta_batch=64,
             num_iterations=100,
+            num_train_steps_per_itr=1000,
             num_tasks_sample=100,
             num_steps_per_task=100,
-            collect_data_interval=100,
             num_steps_per_eval=1000,
             batch_size=1024,
             embedding_batch_size=1024,
@@ -46,9 +46,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param eval_tasks: list of tasks used for eval
         :param meta_batch: number of tasks used for meta-update
         :param num_iterations: number of meta-updates taken
+        :param num_train_steps_per_itr: number of meta-updates performed per iteration
         :param num_tasks_sample: number of train tasks to sample to collect data for
         :param num_steps_per_task: number of transitions to collect per task
-        :param collect_data_interval: number of training iterations between each round of data collection
         :param num_steps_per_eval: number of transitions to sample for evaluation
         :param batch_size: size of batches used to compute RL update
         :param embedding_batch_size: size of batches used to compute embedding
@@ -68,9 +68,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.eval_tasks = eval_tasks
         self.meta_batch = meta_batch
         self.num_iterations = num_iterations
+        self.num_train_steps_per_itr = num_train_steps_per_itr
         self.num_tasks_sample = num_tasks_sample
         self.num_steps_per_task = num_steps_per_task
-        self.collect_data_interval = collect_data_interval
         self.num_steps_per_eval = num_steps_per_eval
         self.batch_size = batch_size
         self.embedding_batch_size = embedding_batch_size
@@ -150,6 +150,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         gt.set_def_unique(False)
         self._current_path_builder = PathBuilder()
         self.train_obs = self._start_new_rollout()
+
+        # at each iteration, we first collect data from tasks, perform meta-updates, then try to evaluate
         for it_ in gt.timed_for(
                 range(self.num_iterations),
                 save_itrs=True,
@@ -172,24 +174,23 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                                           resample_z_every_n=self.max_path_length,
                                                           eval_task=True)
 
-            # collect batches of data at regular intervals
-            if it_ % self.collect_data_interval == 0:
-                # Sample data from train tasks.
-                for i in range(self.num_tasks_sample):
-                    idx = np.random.randint(len(self.train_tasks))
-                    self.task_idx = idx
-                    self.env.reset_task(idx)
-                    # TODO: add flag for options on how to gather data, use same set of sampling schemes as for eval?
-                    # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-                    self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
+            # Sample data from train tasks.
+            for i in range(self.num_tasks_sample):
+                idx = np.random.randint(len(self.train_tasks))
+                self.task_idx = idx
+                self.env.reset_task(idx)
+                # TODO: add flag for options on how to gather data, use same set of sampling schemes as for eval?
+                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
 
             # Sample train tasks and compute gradient updates on parameters.
             # TODO(KR) I think optimization will work better if we update the policy networks in a meta-batch as well as the encoder
-            for _ in range(self.meta_batch):
-                idx = np.random.randint(len(self.train_tasks))
-                self._do_training(idx, it_)
-            self._n_train_steps_total += 1
-            self.perform_meta_update()
+            for train_step in range(self.num_train_steps_per_itr):
+                for _ in range(self.meta_batch):
+                    idx = np.random.randint(len(self.train_tasks))
+                    self._do_training(idx)
+                self._n_train_steps_total += 1
+                self.perform_meta_update()
             gt.stamp('train')
 
             self.training_mode(False)

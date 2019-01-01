@@ -91,17 +91,17 @@ def main(docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=100, # 20 works pretty well
+            n_tasks=100,
             randomize_tasks=True,
         ),
         algo_params=dict(
             meta_batch=10,
-            num_iterations=10000, # meta-train iters
+            num_iterations=10000,
             num_tasks_sample=1000,
-            num_steps_per_task=10*max_path_length,
-            collect_data_interval=10, # collect data every _ iters
-            num_steps_per_eval=10*max_path_length, # num transitions to eval on
-            batch_size=256, # to compute training grads from
+            num_steps_per_task=10 * max_path_length,
+            num_train_steps_per_itr=10,
+            num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
+            batch_size=256,  # to compute training grads from
             max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
@@ -111,7 +111,7 @@ def main(docker):
             context_lr=3e-4,
             reward_scale=100.,
             reparameterize=True,
-            use_information_bottleneck=False, # only supports False for now
+            use_information_bottleneck=False,  # only supports False for now
             # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             embedding_source='initial_pool',
