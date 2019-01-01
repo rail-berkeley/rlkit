@@ -10,7 +10,6 @@ from rlkit.data_management.env_replay_buffer import MultiTaskReplayBuffer
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.policies.base import ExplorationPolicy
 from rlkit.samplers.in_place import InPlacePathSampler
-import pdb
 
 
 class MetaRLAlgorithm(metaclass=abc.ABCMeta):
@@ -33,6 +32,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             replay_buffer_size=1000000,
             reward_scale=1,
             embedding_source='initial_pool',
+            eval_deterministic=True,
             render=False,
             save_replay_buffer=False,
             save_algorithm=False,
@@ -79,12 +79,12 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.replay_buffer_size = replay_buffer_size
         self.reward_scale = reward_scale
         self.embedding_source = embedding_source # TODO: add options for computing embeddings on train tasks too
+        self.eval_deterministic = eval_deterministic
         self.render = render
         self.save_replay_buffer = save_replay_buffer
         self.save_algorithm = save_algorithm
         self.save_environment = save_environment
 
-        # do we even need this? probably need to make a copy of the env or force it reset at evaluations
         self.eval_sampler = InPlacePathSampler(
             env=env,
             policy=policy,
@@ -156,7 +156,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         ):
             self._start_epoch(it_)
             self.training_mode(True)
-            # TODO(KR) so this is the only time that the training encoder replay buffer gets data from the prior, right? that seems potentially problematic
             if it_ == 0:
                 # temp for evaluating
                 for idx in self.train_tasks:
@@ -180,8 +179,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     idx = np.random.randint(len(self.train_tasks))
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    # TODO: add flag for this, use same set of sampling schemes as for eval?
-                    # TODO(KR) see todo at start of epoch about this
+                    # TODO: add flag for options on how to gather data, use same set of sampling schemes as for eval?
                     # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                     self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
 
@@ -238,6 +236,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.policy.set_z(z)
 
+    # TODO: maybe find a better name for resample_z_every_n?
     def collect_data_sampling_from_prior(self, num_samples=1, resample_z_every_n=None, eval_task=False):
         # do not resample z if resample_z_every_n is None
         if resample_z_every_n is None:
@@ -275,6 +274,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                               eval_task=eval_task)
 
 
+    # TODO: since switching tasks now resets the environment, we are not correctly handling episodes terminating
+    # correctly. We also aren't using the episodes anywhere, but we should probably change this to make it gather paths
+    # until we have more samples than num_samples, to make sure every episode cleanly terminates when intended.
     def collect_data(self, agent, num_samples=1, eval_task=False):
         '''
         collect data from current env in batch mode

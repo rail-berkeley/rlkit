@@ -80,8 +80,6 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         print('Task:', idx)
         self.eval_sampler.env.reset_task(idx)
 
-        goal = self.eval_sampler.env._goal
-
         n_exploration_episodes = 10
         n_inference_episodes = 10
         all_init_paths = []
@@ -146,6 +144,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             goal = self.eval_sampler.env._goal
             print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+
             # collects final evaluation trajectories
             test_paths = self.obtain_eval_paths(idx, eval_task=False, deterministic=True)
             # TODO incorporate into proper logging
@@ -212,7 +211,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                 raise Exception("Invalid option for computing embedding")
 
             goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_paths(idx, eval_task=True, deterministic=True)
+            test_paths = self.obtain_eval_paths(idx, eval_task=True, deterministic=self.eval_deterministic)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal

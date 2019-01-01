@@ -34,6 +34,7 @@ def mean_of_gaussians(mus, sigmas):
     sigma = torch.sqrt(torch.mean(sigmas**2, dim=0))
     return mu, sigma
 
+
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
     def __init__(
             self,
@@ -58,7 +59,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             soft_target_tau=1e-2,
             plotter=None,
             render_eval_paths=False,
-            eval_deterministic=True, # TODO: use this flag in evals
             **kwargs
     ):
         self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
