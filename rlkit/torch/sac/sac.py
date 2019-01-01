@@ -119,7 +119,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=context_lr,
         )
 
-    # TODO: leave for now?
     def dense_to_sparse(self, rewards):
         # rewards_np = rewards.data.numpy()
         # sparse_reward = (rewards_np < .2).astype(int)

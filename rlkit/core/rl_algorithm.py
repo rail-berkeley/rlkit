@@ -92,8 +92,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             max_path_length=self.max_path_length,
         )
 
-        # TODO: might be cleaner and easier to extend to just have separate buffers for train and eval tasks, leaving in eval_task args because of this
-        # separate replay buffers for encoding data and data used to compute RL objective
+        # separate replay buffers for
+        # - training RL update
+        # - training encoder update
+        # - testing encoder
         self.replay_buffer = MultiTaskReplayBuffer(
                 self.replay_buffer_size,
                 env,
@@ -106,7 +108,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self.train_tasks,
         )
         self.eval_enc_replay_buffer = MultiTaskReplayBuffer(
-            self.replay_buffer_size, # TODO: can make buffer for encoding smaller?
+            self.replay_buffer_size,
             env,
             self.eval_tasks
         )
@@ -154,7 +156,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         ):
             self._start_epoch(it_)
             self.training_mode(True)
-            # TODO(KR) why do we need a separate condition for the first iteration? the posterior is meaningless, but so what?
+            # TODO(KR) so this is the only time that the training encoder replay buffer gets data from the prior, right? that seems potentially problematic
             if it_ == 0:
                 # temp for evaluating
                 for idx in self.train_tasks:
@@ -177,8 +179,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.env.reset_task(idx)
 
                     if self.embedding_source == 'initial_pool':
-                        # TODO(KR) collect_data() adds everything collected to both replay buffers, so the enc replay buffer will not just be the initial pool?
-                        # TODO:(AZ): potentially address this with separating pools for train and eval tasks
                         pass
                     elif self.embedding_source == 'online_exploration_trajectories':
                         self.eval_enc_replay_buffer.task_buffers[idx].clear()
@@ -201,6 +201,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     # TODO: add flag for this
+                    # TODO(KR) see todo at start of epoch about this
                     # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                     self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
 
@@ -371,7 +372,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param observation:
         :return:
         """
-        # TODO: do all pi have this?
         agent.set_num_steps_total(self._n_env_steps_total)
         return agent.get_action(observation,)
 

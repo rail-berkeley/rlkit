@@ -175,7 +175,6 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for idx in self.eval_tasks:
             self.task_idx = idx
             print('Task:', idx)
-            # TODO how to handle eval over multiple tasks?
             self.eval_sampler.env.reset_task(idx)
 
             goal = self.eval_sampler.env._goal
