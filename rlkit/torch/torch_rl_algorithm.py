@@ -42,7 +42,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         return np_to_pytorch_batch(batch)
 
     # TODO: this whole function might be rewritten
-    def obtain_eval_samples(self, idx, eval_task=False, z=None, deterministic=False):
+    def obtain_eval_paths(self, idx, eval_task=False, z=None, deterministic=False):
         # TODO: collect context tuples from replay buffer to match training stats
         if z is None:
             if eval_task:
@@ -73,8 +73,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.networks:
             net.to(device)
 
-    # TODO: make this useful again, and add separate evaluation functions for different eval methods
-    def evaluate_with_online_embedding(self, idx, statistics, epoch):
+    # TODO: might be useful to use the logging info in this method for visualization and seeing how episodes progress as
+    # stuff gets inferred, especially as we debug online evaluations
+    def collect_data_for_embedding_online_with_logging(self, idx, statistics, epoch):
         self.task_idx = idx
         print('Task:', idx)
         self.eval_sampler.env.reset_task(idx)
@@ -82,46 +83,53 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         goal = self.eval_sampler.env._goal
 
         n_exploration_episodes = 10
+        n_inference_episodes = 10
         all_init_paths = []
         all_inference_paths =[]
 
         self.enc_replay_buffer.clear_buffer(idx)
 
         for i in range(n_exploration_episodes):
-            initial_z = np.random.normal(size=self.latent_dim)
+            initial_z = self.sample_z_from_prior()
 
-            init_paths = self.obtain_eval_samples(idx, self.eval_sampler, z=initial_z, eval_task=True, explore=True)
+            init_paths = self.obtain_eval_paths(idx, z=initial_z, eval_task=True)
             all_init_paths += init_paths
             self.enc_replay_buffer.add_paths(idx, init_paths)
         print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
 
-        test_paths = self.obtain_eval_samples(idx, self.eval_sampler, eval_task=True)
+        for i in range(n_inference_episodes):
+            paths = self.obtain_eval_paths(idx, eval_task=True)
+            all_inference_paths += paths
+            self.enc_replay_buffer.add_paths(idx, init_paths)
+
+        # don't need test paths anymore
+        """
+        test_paths = self.obtain_eval_paths(idx, deterministic=True, eval_task=True)
         # TODO incorporate into proper logging
         for path in test_paths:
             path['goal'] = goal
+        """
 
         # save evaluation rollouts for vis
 
         # all paths
-        all_paths = []
-        all_paths += test_paths
         with open(self.output_dir +
                   "/proto-sac-point-mass-fb-16z-init-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
             pickle.dump(all_init_paths, f, pickle.HIGHEST_PROTOCOL)
         with open(self.output_dir +
-                  "/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
-            pickle.dump(all_paths, f, pickle.HIGHEST_PROTOCOL)
+                  "/proto-sac-point-mass-fb-16z-inference-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+            pickle.dump(all_inference_paths, f, pickle.HIGHEST_PROTOCOL)
 
-        statistics.update(eval_util.get_generic_path_information(
-            test_paths, stat_prefix="Test_task{}".format(idx),
-        ))
+        # statistics.update(eval_util.get_generic_path_information(
+        #     test_paths, stat_prefix="Test_task{}".format(idx),
+        # ))
 
-        average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
+        # average_returns = rlkit.core.eval_util.get_average_returns(test_paths)
         average_inference_returns = [rlkit.core.eval_util.get_average_returns(paths) for paths in all_inference_paths]
-        statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
+        # statistics['AverageReturn_test_task{}'.format(idx)] = average_returns
         statistics['AverageInferenceReturns_test_task{}'.format(idx)] = average_inference_returns
-        statistics['Goal_test_task{}'.format(idx)] = goal
-        return test_paths, statistics
+        # statistics['Goal_test_task{}'.format(idx)] = goal
+        # return test_paths, statistics
 
     def evaluate(self, epoch):
         statistics = OrderedDict()
@@ -138,7 +146,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
             goal = self.eval_sampler.env._goal
             print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
-            test_paths = self.obtain_eval_samples(idx, eval_task=False, deterministic=True)
+            # collects final evaluation trajectories
+            test_paths = self.obtain_eval_paths(idx, eval_task=False, deterministic=True)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal # goal
@@ -177,8 +186,33 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             print('Task:', idx)
             self.eval_sampler.env.reset_task(idx)
 
+            # TODO: Add parameters for eval steps
+
+            # collects data fo computing embedding if needed
+            if self.embedding_source == 'initial_pool':
+                pass
+            elif self.embedding_source == 'online_exploration_trajectories':
+                self.eval_enc_replay_buffer.task_buffers[idx].clear()
+                # resamples using current policy, conditioned on prior
+                self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task,
+                                                      resample_z_every_n=self.max_path_length,
+                                                      eval_task=True)
+            elif self.embedding_source == 'online_on_policy_trajectories':
+                # Clear the encoding replay buffer, so at eval time
+                # We are computing z only from trajectories from the current epoch.
+
+                self.collect_data_online(idx=idx,
+                                         num_samples=self.num_steps_per_task,
+                                         eval_task=True)
+
+                # TODO: decide whether we want this
+                # run this instead to view extra logging
+                # self.collect_data_for_embedding_online_with_logging(idx, statistics)
+            else:
+                raise Exception("Invalid option for computing embedding")
+
             goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_samples(idx, eval_task=True, deterministic=True)
+            test_paths = self.obtain_eval_paths(idx, eval_task=True, deterministic=True)
             # TODO incorporate into proper logging
             for path in test_paths:
                 path['goal'] = goal

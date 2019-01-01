@@ -162,45 +162,25 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 for idx in self.train_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=False)
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20,
+                                                          resample_z_every_n=self.max_path_length,
+                                                          eval_task=False)
                 for idx in self.eval_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
                     # TODO: make number of initial trajectories a parameter
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=True)
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20,
+                                                          resample_z_every_n=self.max_path_length,
+                                                          eval_task=True)
 
             # collect batches of data at regular intervals
             if it_ % self.collect_data_interval == 0:
-                # TODO: move this into torch_rl_algorithm, where all eval related things go
-                # Collect trajectories for eval tasks.
-                # TODO do we want to collect for ALL eval tasks or a sample?
-                for idx in self.eval_tasks:
-                    self.task_idx = idx
-                    self.env.reset_task(idx)
-
-                    if self.embedding_source == 'initial_pool':
-                        pass
-                    elif self.embedding_source == 'online_exploration_trajectories':
-                        self.eval_enc_replay_buffer.task_buffers[idx].clear()
-                        # resamples using current policy, conditioned on prior
-                        self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task, eval_task=True)
-                    elif self.embedding_source == 'online_on_policy_trajectories':
-                        # Clear the encoding replay buffer, so at eval time
-                        # We are computing z only from trajectories from the current epoch.
-                        self.eval_enc_replay_buffer.task_buffers[idx].clear()
-
-                        # regathers with online exploration trajectories
-                        self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task, eval_task=True)
-                        self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=True)
-                    else:
-                        raise Exception("Invalid option for computing embedding")
-
                 # Sample data from train tasks.
                 for i in range(self.num_tasks_sample):
                     idx = np.random.randint(len(self.train_tasks))
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    # TODO: add flag for this
+                    # TODO: add flag for this, use same set of sampling schemes as for eval?
                     # TODO(KR) see todo at start of epoch about this
                     # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
                     self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
@@ -258,13 +238,42 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         self.policy.set_z(z)
 
-    def collect_data_sampling_from_prior(self, num_samples=1, eval_task=False):
-        self.set_policy_z(self.sample_z_from_prior())
-        self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+    def collect_data_sampling_from_prior(self, num_samples=1, resample_z_every_n=None, eval_task=False):
+        # do not resample z if resample_z_every_n is None
+        if resample_z_every_n is None:
+            self.set_policy_z(self.sample_z_from_prior())
+            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+        else:
+            # collects more data in batches of resample_z_every_n until done
+            while num_samples > 0:
+                self.collect_data_sampling_from_prior(num_samples=min(resample_z_every_n, num_samples),
+                                                      resample_z_every_n=None,
+                                                      eval_task=eval_task)
+                num_samples -= resample_z_every_n
 
-    def collect_data_from_task_posterior(self, idx, num_samples=1, eval_task=False):
-        self.set_policy_z(self.sample_z_from_posterior(idx, eval_task=eval_task))
-        self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+    def collect_data_from_task_posterior(self, idx, num_samples=1, resample_z_every_n=None, eval_task=False):
+        # do not resample z if resample_z_every_n is None
+        if resample_z_every_n is None:
+            self.set_policy_z(self.sample_z_from_posterior(idx, eval_task=eval_task))
+            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task)
+        else:
+            # collects more data in batches of resample_z_every_n until done
+            while num_samples > 0:
+                self.collect_data_from_task_posterior(num_samples=min(resample_z_every_n, num_samples),
+                                                      resample_z_every_n=None,
+                                                      eval_task=eval_task)
+                num_samples -= resample_z_every_n
+
+    # split number of prior and posterior samples
+    def collect_data_online(self, idx, num_samples, eval_task=False):
+        self.collect_data_sampling_from_prior(num_samples=num_samples,
+                                              resample_z_every_n=self.max_path_length,
+                                              eval_task=eval_task)
+        self.collect_data_from_task_posterior(idx=idx,
+                                              num_samples=num_samples,
+                                              resample_z_every_n=self.max_path_length,
+                                              eval_task=eval_task)
+
 
     def collect_data(self, agent, num_samples=1, eval_task=False):
         '''
