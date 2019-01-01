@@ -137,7 +137,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
     # TODO: implement this
     def _do_information_bottleneck(self):
 
-        batch_size = 256
         batches = []
         for idx in self.train_tasks:
             batch = self.get_encoding_batch(eval_task=False)

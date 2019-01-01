@@ -14,11 +14,12 @@ from rlkit.core import logger, eval_util
 
 
 class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
-    def __init__(self, *args, render_eval_paths=False, plotter=None, **kwargs):
+    def __init__(self, *args, render_eval_paths=False, plotter=None, output_dir=None, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_statistics = None
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
+        self.output_dir = output_dir
 
     def cuda(self):
         for net in self.networks:
@@ -35,9 +36,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         if idx is None:
             idx = self.task_idx
         if eval_task:
-            batch = self.eval_enc_replay_buffer.random_batch(idx, self.batch_size)
+            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size)
         else:
-            batch = self.enc_replay_buffer.random_batch(idx, self.batch_size)
+            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size)
         return np_to_pytorch_batch(batch)
 
     # TODO: this whole function might be rewritten
@@ -104,11 +105,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         # all paths
         all_paths = []
         all_paths += test_paths
-        with open(self.pickle_output_dir +
-                  "/eval_trajectories/proto-sac-point-mass-fb-16z-init-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+        with open(self.output_dir +
+                  "/proto-sac-point-mass-fb-16z-init-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
             pickle.dump(all_init_paths, f, pickle.HIGHEST_PROTOCOL)
-        with open(self.pickle_output_dir +
-                  "/eval_trajectories/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+        with open(self.output_dir +
+                  "/proto-sac-point-mass-fb-16z-test-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
             pickle.dump(all_paths, f, pickle.HIGHEST_PROTOCOL)
 
         statistics.update(eval_util.get_generic_path_information(
@@ -143,8 +144,8 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                 path['goal'] = goal # goal
 
             # save evaluation rollouts for vis
-            with open(self.pickle_output_dir +
-                      "/eval_trajectories/proto-sac-point-mass-fb-16z-train-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
+            with open(self.output_dir +
+                      "/proto-sac-point-mass-fb-16z-train-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
                 pickle.dump(test_paths, f, pickle.HIGHEST_PROTOCOL)
 
             statistics.update(eval_util.get_generic_path_information(

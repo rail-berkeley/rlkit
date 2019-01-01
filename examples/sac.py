@@ -5,6 +5,7 @@ Run Prototypical Soft Actor Critic on HalfCheetahEnv.
 import numpy as np
 import click
 import datetime
+import pathlib
 
 
 # from gym.envs.mujoco import HalfCheetahEnv
@@ -86,6 +87,7 @@ def experiment(variant):
 @click.argument('docker', default=0)
 def main(docker):
     log_dir = '/mounts/output' if docker == 1 else 'output'
+    max_path_length = 20
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
@@ -93,14 +95,14 @@ def main(docker):
             randomize_tasks=True,
         ),
         algo_params=dict(
-            meta_batch=2,
-            num_epochs=1000, # meta-train epochs
-            num_steps_per_epoch=10, # num updates per epoch
-            num_train_steps_per_itr=10,
-            train_task_batch_size=10,
-            num_steps_per_eval=10, # num obs to eval on
+            meta_batch=10,
+            num_iterations=10000, # meta-train iters
+            num_tasks_sample=1000,
+            num_steps_per_task=10*max_path_length,
+            collect_data_interval=10, # collect data every _ iters
+            num_steps_per_eval=10*max_path_length, # num transitions to eval on
             batch_size=256, # to compute training grads from
-            max_path_length=20,
+            max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
             policy_lr=3E-4,
@@ -110,17 +112,19 @@ def main(docker):
             reward_scale=100.,
             reparameterize=True,
             use_information_bottleneck=False, # only supports False for now
-            # embedding_source should be chosen from 
+            # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             embedding_source='initial_pool',
-            pickle_output_dir='data/proto_sac_point_mass', # change this to just log dir?
         ),
         net_size=300,
         use_gpu=False,
     )
     experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
-    # variant['algo_params']['pickle_output_dir'] = experiment_log_dir
-    # setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
+    # creates directories for pickle outputs of trajectories (point mass)
+    pickle_dir = experiment_log_dir + '/eval_trajectories'
+    pathlib.Path(pickle_dir).mkdir(parents=True, exist_ok=True)
+    variant['algo_params']['output_dir'] = pickle_dir
+
     experiment(variant)
 
 if __name__ == "__main__":

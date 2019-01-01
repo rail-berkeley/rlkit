@@ -1,7 +1,5 @@
 import abc
-import pickle
 import time
-import pathlib
 
 import gtimer as gt
 import numpy as np
@@ -23,12 +21,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             train_tasks,
             eval_tasks,
             meta_batch=64,
-            num_epochs=100,
-            num_steps_per_epoch=10000,
-            num_train_steps_per_itr=100,
-            num_eval_tasks=1,
+            num_iterations=100,
+            num_tasks_sample=100,
+            num_steps_per_task=100,
+            collect_data_interval=100,
             num_steps_per_eval=1000,
             batch_size=1024,
+            embedding_batch_size=1024,
             max_path_length=1000,
             discount=0.99,
             replay_buffer_size=1000000,
@@ -38,10 +37,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             save_replay_buffer=False,
             save_algorithm=False,
             save_environment=False,
-            eval_sampler=None,
-            replay_buffer=None,
-            pickle_output_dir=None,
-            train_task_batch_size=None,
     ):
         """
         Base class for Meta RL Algorithms
@@ -50,21 +45,21 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param train_tasks: list of tasks used for training
         :param eval_tasks: list of tasks used for eval
         :param meta_batch: number of tasks used for meta-update
-        :param num_epochs: number of meta-training epochs
-        :param num_steps_per_epoch: number of updates per epoch
-        :param num_eval_tasks: number of tasks to eval on
-        :param num_steps_per_eval:
-        :param batch_size:
-        :param max_path_length:
+        :param num_iterations: number of meta-updates taken
+        :param num_tasks_sample: number of train tasks to sample to collect data for
+        :param num_steps_per_task: number of transitions to collect per task
+        :param collect_data_interval: number of training iterations between each round of data collection
+        :param num_steps_per_eval: number of transitions to sample for evaluation
+        :param batch_size: size of batches used to compute RL update
+        :param embedding_batch_size: size of batches used to compute embedding
+        :param max_path_length: max episode length
         :param discount:
-        :param replay_buffer_size:
+        :param replay_buffer_size: max replay buffer size
         :param reward_scale:
         :param render:
         :param save_replay_buffer:
         :param save_algorithm:
         :param save_environment:
-        :param eval_sampler:
-        :param replay_buffer:
         """
         self.env = env
         self.policy = policy
@@ -72,15 +67,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.train_tasks = train_tasks
         self.eval_tasks = eval_tasks
         self.meta_batch = meta_batch
-        self.num_epochs = num_epochs
-
-        self.num_env_steps_per_epoch = num_steps_per_epoch # iterations TODO: rename this to be more informative
-        self.num_train_steps_per_itr = num_train_steps_per_itr
-        self.train_task_batch_size = train_task_batch_size
-
-        self.num_eval_tasks = num_eval_tasks
+        self.num_iterations = num_iterations
+        self.num_tasks_sample = num_tasks_sample
+        self.num_steps_per_task = num_steps_per_task
+        self.collect_data_interval = collect_data_interval
         self.num_steps_per_eval = num_steps_per_eval
         self.batch_size = batch_size
+        self.embedding_batch_size = embedding_batch_size
         self.max_path_length = max_path_length
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
@@ -92,23 +85,20 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.save_environment = save_environment
 
         # do we even need this? probably need to make a copy of the env or force it reset at evaluations
-        if eval_sampler is None:
-            eval_sampler = InPlacePathSampler(
-                env=env,
-                policy=policy,
-                max_samples=self.num_steps_per_eval * self.max_path_length,
-                max_path_length=self.max_path_length,
-            )
-        self.eval_sampler = eval_sampler
+        self.eval_sampler = InPlacePathSampler(
+            env=env,
+            policy=policy,
+            max_samples=self.num_steps_per_eval,
+            max_path_length=self.max_path_length,
+        )
 
         # TODO: might be cleaner and easier to extend to just have separate buffers for train and eval tasks, leaving in eval_task args because of this
         # separate replay buffers for encoding data and data used to compute RL objective
-        if replay_buffer is None:
-            self.replay_buffer = MultiTaskReplayBuffer(
-                    self.replay_buffer_size,
-                    env,
-                    self.train_tasks,
-                )
+        self.replay_buffer = MultiTaskReplayBuffer(
+                self.replay_buffer_size,
+                env,
+                self.train_tasks,
+            )
 
         self.enc_replay_buffer = MultiTaskReplayBuffer(
                 self.replay_buffer_size,
@@ -120,14 +110,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             env,
             self.eval_tasks
         )
-
-        if pickle_output_dir is None:
-            self.pickle_output_dir = '/mounts/output'
-        else:
-            self.pickle_output_dir = pickle_output_dir
-
-        # creates directories for pickle outputs
-        pathlib.Path(self.pickle_output_dir + '/eval_trajectories').mkdir(parents=True, exist_ok=True)
 
         self._n_env_steps_total = 0
         self._n_train_steps_total = 0
@@ -166,13 +148,14 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         gt.set_def_unique(False)
         self._current_path_builder = PathBuilder()
         self.train_obs = self._start_new_rollout()
-        for epoch in gt.timed_for(
-                range(self.num_epochs),
+        for it_ in gt.timed_for(
+                range(self.num_iterations),
                 save_itrs=True,
         ):
-            self._start_epoch(epoch)
+            self._start_epoch(it_)
             self.training_mode(True)
-            if epoch == 0:
+            # TODO(KR) why do we need a separate condition for the first iteration? the posterior is meaningless, but so what?
+            if it_ == 0:
                 # temp for evaluating
                 for idx in self.train_tasks:
                     self.task_idx = idx
@@ -184,54 +167,56 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     # TODO: make number of initial trajectories a parameter
                     self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=True)
 
-            # TODO: move this into torch_rl_algorithm, where all eval related things go
-            # Collect trajectories for eval tasks.
-            for idx in self.eval_tasks:
-                self.task_idx = idx
-                self.env.reset_task(idx)
+            # collect batches of data at regular intervals
+            if it_ % self.collect_data_interval == 0:
+                # TODO: move this into torch_rl_algorithm, where all eval related things go
+                # Collect trajectories for eval tasks.
+                # TODO do we want to collect for ALL eval tasks or a sample?
+                for idx in self.eval_tasks:
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
 
-                if self.embedding_source == 'initial_pool':
-                    # TODO(KR) collect_data() adds everything collected to both replay buffers, so the enc replay buffer will not just be the initial pool?
-                    # TODO:(AZ): potentially address this with separating pools for train and eval tasks
-                    pass
-                elif self.embedding_source == 'online_exploration_trajectories':
-                    self.enc_replay_buffer.task_buffers[idx].clear()
-                    # resamples using current policy, conditioned on prior
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20, eval_task=True)
-                elif self.embedding_source == 'online_on_policy_trajectories':
-                    # Clear the encoding replay buffer, so at eval time
-                    # We are computing z only from trajectories from the current epoch.
-                    self.enc_replay_buffer.task_buffers[idx].clear()
+                    if self.embedding_source == 'initial_pool':
+                        # TODO(KR) collect_data() adds everything collected to both replay buffers, so the enc replay buffer will not just be the initial pool?
+                        # TODO:(AZ): potentially address this with separating pools for train and eval tasks
+                        pass
+                    elif self.embedding_source == 'online_exploration_trajectories':
+                        self.enc_replay_buffer.task_buffers[idx].clear()
+                        # resamples using current policy, conditioned on prior
+                        self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task, eval_task=True)
+                    elif self.embedding_source == 'online_on_policy_trajectories':
+                        # Clear the encoding replay buffer, so at eval time
+                        # We are computing z only from trajectories from the current epoch.
+                        self.enc_replay_buffer.task_buffers[idx].clear()
 
-                    # regathers with online exploration trajectories
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 10, eval_task=True)
-                    self.collect_data_from_task_posterior(idx=idx, num_samples=self.max_path_length * 10, eval_task=True)
-                else:
-                    raise Exception("Invalid option for computing embedding")
+                        # regathers with online exploration trajectories
+                        self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task, eval_task=True)
+                        self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=True)
+                    else:
+                        raise Exception("Invalid option for computing embedding")
 
-            # Sample data from train tasks.
-            for i in range(self.num_env_steps_per_epoch): # num iterations
-                idx = np.random.randint(len(self.train_tasks))
-                self.task_idx = idx
-                self.env.reset_task(idx)
-                # TODO: add flag for this
-                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-                self.collect_data_from_task_posterior(idx=idx, num_samples=self.max_path_length * 10, eval_task=False)
+                # Sample data from train tasks.
+                for i in range(self.num_tasks_sample):
+                    idx = np.random.randint(len(self.train_tasks))
+                    self.task_idx = idx
+                    self.env.reset_task(idx)
+                    # TODO: add flag for this
+                    # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
+                    self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
 
             # Sample train tasks and compute gradient updates on parameters.
             # TODO(KR) I think optimization will work better if we update the policy networks in a meta-batch as well as the encoder
-            for _ in range(self.num_train_steps_per_itr):
-                for _ in range(self.train_task_batch_size):
-                    idx = np.random.randint(len(self.train_tasks))
-                    self._do_training(idx, epoch)
-                self._n_train_steps_total += 1
-                self.perform_meta_update()
-                gt.stamp('train')
+            for _ in range(self.meta_batch):
+                idx = np.random.randint(len(self.train_tasks))
+                self._do_training(idx, it_)
+            self._n_train_steps_total += 1
+            self.perform_meta_update()
+            gt.stamp('train')
 
             self.training_mode(False)
 
             # eval
-            self._try_to_eval(epoch)
+            self._try_to_eval(it_)
             gt.stamp('eval')
 
             self._end_epoch()
