@@ -97,7 +97,7 @@ def main(docker):
         algo_params=dict(
             meta_batch=10,
             num_iterations=10000,
-            num_tasks_sample=1000,
+            num_tasks_sample=5,
             num_steps_per_task=10 * max_path_length,
             num_train_steps_per_itr=10,
             num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
