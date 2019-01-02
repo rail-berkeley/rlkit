@@ -188,19 +188,19 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             # TODO: Add parameters for eval steps
 
             # collects data fo computing embedding if needed
-            if self.train_embedding_source == 'initial_pool':
+            if self.eval_embedding_source == 'initial_pool':
                 pass
-            elif self.train_embedding_source == 'online_exploration_trajectories':
-                self.enc_replay_buffer.task_buffers[idx].clear()
+            elif self.eval_embedding_source == 'online_exploration_trajectories':
+                self.eval_enc_replay_buffer.task_buffers[idx].clear()
                 # resamples using current policy, conditioned on prior
                 self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task,
                                                       resample_z_every_n=self.max_path_length,
                                                       eval_task=True)
-            elif self.train_embedding_source == 'online_on_policy_trajectories':
+            elif self.eval_embedding_source == 'online_on_policy_trajectories':
                 # Clear the encoding replay buffer, so at eval time
                 # we are computing z only from trajectories from the current epoch.
 
-                self.enc_replay_buffer.task_buffers[idx].clear()
+                self.eval_enc_replay_buffer.task_buffers[idx].clear()
 
                 self.collect_data_online(idx=idx,
                                          num_samples=self.num_steps_per_task,
@@ -210,7 +210,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                 # run this instead to view extra logging
                 # self.collect_data_for_embedding_online_with_logging(idx, statistics)
             else:
-                raise Exception("Invalid option for computing embedding")
+                raise Exception("Invalid option for computing eval embedding")
 
             goal = self.eval_sampler.env._goal
             test_paths = self.obtain_eval_paths(idx, eval_task=True, deterministic=self.eval_deterministic)

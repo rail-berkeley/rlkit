@@ -99,7 +99,7 @@ def main(docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=10 * max_path_length,
-            num_train_steps_per_itr=1000,
+            num_train_steps_per_itr=10,
             num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
             batch_size=256,  # to compute training grads from
             max_path_length=max_path_length,
@@ -113,6 +113,7 @@ def main(docker):
             reparameterize=True,
             use_information_bottleneck=False,  # only supports False for now
 
+            train_embedding_source='posterior_only',
             # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             eval_embedding_source='initial_pool',

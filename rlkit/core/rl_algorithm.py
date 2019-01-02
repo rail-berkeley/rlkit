@@ -181,40 +181,38 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 idx = np.random.randint(len(self.train_tasks))
                 self.task_idx = idx
                 self.env.reset_task(idx)
-                # TODO: add flag for options on how to gather data, use same set of sampling schemes as for eval?
-                # self.collect_data(self.exploration_policy, explore=True, num_samples=self.max_path_length*10)
-                self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False)
 
-
+                # TODO: there may be more permutations of sampling/adding to encoding buffer we may wish to try
                 if self.train_embedding_source == 'initial_pool':
                     # embeddings are computed using only the initial pool of data
                     # sample data from posterior to train RL algorithm
                     self.collect_data_from_task_posterior(idx=idx,
-                                             num_samples=self.num_steps_per_task,
-                                             eval_task=True,
-                                             add_to_enc_buffer=False)
+                                                          num_samples=self.num_steps_per_task,
+                                                          add_to_enc_buffer=False)
+                elif self.train_embedding_source == 'posterior_only':
+                    self.collect_data_from_task_posterior(idx=idx, num_samples=self.num_steps_per_task, eval_task=False,
+                                                          add_to_enc_buffer=True)
                 elif self.train_embedding_source == 'online_exploration_trajectories':
                     # embeddings are computed using only data collected using the prior
                     # sample data from posterior to train RL algorithm
-                    self.eval_enc_replay_buffer.task_buffers[idx].clear()
+                    self.enc_replay_buffer.task_buffers[idx].clear()
                     # resamples using current policy, conditioned on prior
                     self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task,
                                                           resample_z_every_n=self.max_path_length,
-                                                          eval_task=True)
+                                                          add_to_enc_buffer=True)
 
                     self.collect_data_from_task_posterior(idx=idx,
                                                           num_samples=self.num_steps_per_task,
-                                                          eval_task=True,
                                                           add_to_enc_buffer=False)
                 elif self.train_embedding_source == 'online_on_policy_trajectories':
                     # sample from prior, then sample more from the posterior
                     # embeddings computed from both prior and posterior data
-                    self.eval_enc_replay_buffer.task_buffers[idx].clear()
+                    self.enc_replay_buffer.task_buffers[idx].clear()
                     self.collect_data_online(idx=idx,
                                              num_samples=self.num_steps_per_task,
-                                             eval_task=True)
+                                             add_to_enc_buffer=True)
                 else:
-                    raise Exception("Invalid option for computing embedding")
+                    raise Exception("Invalid option for computing train embedding {}".format(self.train_embedding_source))
 
             # Sample train tasks and compute gradient updates on parameters.
             # TODO(KR) I think optimization will work better if we update the policy networks in a meta-batch as well as the encoder
@@ -271,11 +269,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.policy.set_z(z)
 
     # TODO: maybe find a better name for resample_z_every_n?
-    def collect_data_sampling_from_prior(self, num_samples=1, resample_z_every_n=None, eval_task=False, add_to_enc_buffer=True):
+    def collect_data_sampling_from_prior(self, num_samples=1, resample_z_every_n=None, eval_task=False,
+                                         add_to_enc_buffer=True):
         # do not resample z if resample_z_every_n is None
         if resample_z_every_n is None:
             self.set_policy_z(self.sample_z_from_prior())
-            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task, add_to_enc_buffer=add_to_enc_buffer)
+            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task,
+                              add_to_enc_buffer=add_to_enc_buffer)
         else:
             # collects more data in batches of resample_z_every_n until done
             while num_samples > 0:
@@ -285,15 +285,18 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                                       add_to_enc_buffer=add_to_enc_buffer)
                 num_samples -= resample_z_every_n
 
-    def collect_data_from_task_posterior(self, idx, num_samples=1, resample_z_every_n=None, eval_task=False, add_to_enc_buffer=True):
+    def collect_data_from_task_posterior(self, idx, num_samples=1, resample_z_every_n=None, eval_task=False,
+                                         add_to_enc_buffer=True):
         # do not resample z if resample_z_every_n is None
         if resample_z_every_n is None:
             self.set_policy_z(self.sample_z_from_posterior(idx, eval_task=eval_task))
-            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task, add_to_enc_buffer=add_to_enc_buffer)
+            self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task,
+                              add_to_enc_buffer=add_to_enc_buffer)
         else:
             # collects more data in batches of resample_z_every_n until done
             while num_samples > 0:
-                self.collect_data_from_task_posterior(num_samples=min(resample_z_every_n, num_samples),
+                self.collect_data_from_task_posterior(idx=idx,
+                                                      num_samples=min(resample_z_every_n, num_samples),
                                                       resample_z_every_n=None,
                                                       eval_task=eval_task,
                                                       add_to_enc_buffer=add_to_enc_buffer)
@@ -303,11 +306,13 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
     def collect_data_online(self, idx, num_samples, eval_task=False, add_to_enc_buffer=True):
         self.collect_data_sampling_from_prior(num_samples=num_samples,
                                               resample_z_every_n=self.max_path_length,
-                                              eval_task=eval_task)
+                                              eval_task=eval_task,
+                                              add_to_enc_buffer=True)
         self.collect_data_from_task_posterior(idx=idx,
                                               num_samples=num_samples,
                                               resample_z_every_n=self.max_path_length,
-                                              eval_task=eval_task)
+                                              eval_task=eval_task,
+                                              add_to_enc_buffer=add_to_enc_buffer)
 
 
     # TODO: since switching tasks now resets the environment, we are not correctly handling episodes terminating
