@@ -112,9 +112,10 @@ def main(docker):
             reward_scale=100.,
             reparameterize=True,
             use_information_bottleneck=False,  # only supports False for now
+
             # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
-            embedding_source='initial_pool',
+            eval_embedding_source='initial_pool',
         ),
         net_size=300,
         use_gpu=False,

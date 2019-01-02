@@ -188,17 +188,19 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             # TODO: Add parameters for eval steps
 
             # collects data fo computing embedding if needed
-            if self.embedding_source == 'initial_pool':
+            if self.train_embedding_source == 'initial_pool':
                 pass
-            elif self.embedding_source == 'online_exploration_trajectories':
-                self.eval_enc_replay_buffer.task_buffers[idx].clear()
+            elif self.train_embedding_source == 'online_exploration_trajectories':
+                self.enc_replay_buffer.task_buffers[idx].clear()
                 # resamples using current policy, conditioned on prior
                 self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task,
                                                       resample_z_every_n=self.max_path_length,
                                                       eval_task=True)
-            elif self.embedding_source == 'online_on_policy_trajectories':
+            elif self.train_embedding_source == 'online_on_policy_trajectories':
                 # Clear the encoding replay buffer, so at eval time
-                # We are computing z only from trajectories from the current epoch.
+                # we are computing z only from trajectories from the current epoch.
+
+                self.enc_replay_buffer.task_buffers[idx].clear()
 
                 self.collect_data_online(idx=idx,
                                          num_samples=self.num_steps_per_task,
