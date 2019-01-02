@@ -99,7 +99,7 @@ def main(docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=10 * max_path_length,
-            num_train_steps_per_itr=10,
+            num_train_steps_per_itr=1000,
             num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
             batch_size=256,  # to compute training grads from
             max_path_length=max_path_length,
@@ -119,7 +119,7 @@ def main(docker):
             eval_embedding_source='initial_pool',
         ),
         net_size=300,
-        use_gpu=False,
+        use_gpu=True,
     )
     experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     # creates directories for pickle outputs of trajectories (point mass)
