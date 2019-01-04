@@ -11,28 +11,7 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import np_ify, torch_ify
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
-
-
-def product_of_gaussians(mus, sigmas):
-    """
-    :param mus: Tensor containing means
-    :param sigmas: Tensor containing sigmas
-    :return: Tensor containing mu, sigma of the Gaussian likelihood formed by the product of Gaussian likelihoods
-    """
-    sigmas_squared = sigmas ** 2
-    sigma_squared = 1. / torch.sum(torch.reciprocol(sigmas_squared), dim=0)
-    mu = sigma_squared * torch.sum(mus / sigmas_squared, dim=0)
-    return mu, torch.sqrt(sigma_squared)
-
-def mean_of_gaussians(mus, sigmas):
-    """
-    :param mus: Tensor containing means
-    :param sigmas: Tensor containing sigmas
-    :return: Tensor containing mu, sigma of the Gaussian likelihood formed by the means of the Gaussians
-    """
-    mu = torch.mean(mus, dim=0)
-    sigma = torch.sqrt(torch.mean(sigmas**2, dim=0))
-    return mu, sigma
+from rlkit.torch.sac.proto import ProtoNet
 
 
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
@@ -55,20 +34,22 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             optimizer_class=optim.Adam,
             reparameterize=True,
             use_information_bottleneck=False,
+            sparse_rewards=False,
 
             soft_target_tau=1e-2,
             plotter=None,
             render_eval_paths=False,
             **kwargs
     ):
-        self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
         super().__init__(
             env=env,
-            policy=self.policy,
+            policy=nets[1],
             train_tasks=train_tasks,
             eval_tasks=eval_tasks,
             **kwargs
         )
+        deterministic_embedding=False
+        self.proto_net = ProtoNet(latent_dim, nets, reparam=reparameterize, use_ib=use_information_bottleneck, det_z=deterministic_embedding, tau=soft_target_tau)
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -76,165 +57,132 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
 
-        self.target_vf = self.vf.copy()
-        self.class_criterion = nn.BCEWithLogitsLoss()
+        self.latent_dim = latent_dim
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
         self.rf_criterion = nn.MSELoss()
         self.vib_criterion = nn.MSELoss()
         self.l2_reg_criterion = nn.MSELoss()
         self.eval_statistics = None
-        self.latent_dim = latent_dim
 
         self.reparameterize = reparameterize
         self.use_information_bottleneck = use_information_bottleneck
+        self.sparse_rewards = sparse_rewards
 
-        self.class_optimizer = optim.SGD(
-                self.task_enc.parameters(),
-                lr=class_lr,
-        )
-
+        # TODO consolidate optimizers!
         self.policy_optimizer = optimizer_class(
-            self.policy.parameters(),
+            self.proto_net.policy.parameters(),
             lr=policy_lr,
         )
         self.qf1_optimizer = optimizer_class(
-            self.qf1.parameters(),
+            self.proto_net.qf1.parameters(),
             lr=qf_lr,
         )
         self.qf2_optimizer = optimizer_class(
-            self.qf2.parameters(),
+            self.proto_net.qf2.parameters(),
             lr=qf_lr,
         )
         self.vf_optimizer = optimizer_class(
-            self.vf.parameters(),
+            self.proto_net.vf.parameters(),
             lr=vf_lr,
         )
         self.context_optimizer = optimizer_class(
-            self.task_enc.parameters(),
+            self.proto_net.task_enc.parameters(),
             lr=context_lr,
         )
         self.rf_optimizer = optimizer_class(
-            self.rf.parameters(),
+            self.proto_net.rf.parameters(),
             lr=context_lr,
         )
 
     def dense_to_sparse(self, rewards):
-        # rewards_np = rewards.data.numpy()
-        # sparse_reward = (rewards_np < .2).astype(int)
-        # return torch.autograd.Variable(torch.FloatTensor(sparse_reward), requires_grad=False)
-        return rewards
+        rewards_np = rewards.data.numpy()
+        sparse_reward = (rewards_np < .2).astype(float)
+        return Tensor(sparse_reward)
 
-    def perform_meta_update(self):
-        self.context_optimizer.step()
-        self.rf_optimizer.step()
-        self._update_target_network()
+    def sample_data(self, indices, encoder=False):
+        # sample from replay buffer for each task
+        # TODO(KR) this is ugly af
+        obs, actions, rewards, next_obs, terms = [], [], [], [], []
+        for idx in indices:
+            if encoder:
+                batch = self.get_encoding_batch(idx=idx)
+            else:
+                batch = self.get_batch(idx=idx)
+            o = batch['observations'][None, ...]
+            a = batch['actions'][None, ...]
+            r = batch['rewards'][None, ...]
+            no = batch['next_observations'][None, ...]
+            t = batch['terminals'][None, ...]
+            obs.append(o)
+            actions.append(a)
+            rewards.append(r)
+            next_obs.append(no)
+            terms.append(t)
+        obs = torch.cat(obs, dim=0)
+        actions = torch.cat(actions, dim=0)
+        rewards = torch.cat(rewards, dim=0)
+        next_obs = torch.cat(next_obs, dim=0)
+        terms = torch.cat(terms, dim=0)
+        return obs, actions, rewards, next_obs, terms
 
-        self.rf_optimizer.zero_grad()
-        self.context_optimizer.zero_grad()
+    def prepare_encoder_data(self, obs, rewards):
+        ''' prepare task data for encoding '''
+        # for now we embed only observations and rewards
+        # assume obs and rewards are (task, batch, feat)
+        if self.sparse_rewards:
+            rewards = self.dense_to_sparse(rewards)
+        rewards = rewards / self.reward_scale
+        task_data = torch.cat([obs, rewards], dim=2)
+        return task_data
 
-    # TODO: implement this
-    def _do_information_bottleneck(self):
+    def _do_training(self, indices):
 
-        batches = []
-        for idx in self.train_tasks:
-            batch = self.get_encoding_batch(eval_task=False)
-            rewards = self.dense_to_sparse(batch['rewards'])
-            terminals = batch['terminals']
-            obs = batch['observations']
-            actions = batch['actions']
-            next_obs = batch['next_observations']
+        num_tasks = len(indices)
 
-        # mu, sigma = self.product_of_gaussians(batch)
+        # data is (task, batch, feat)
+        obs, actions, rewards, next_obs, terms = self.sample_data(indices)
+        obs_enc, actions_enc, rewards_enc, next_obs_enc, terms_enc = self.sample_data(indices, encoder=True)
+        enc_data = self.prepare_encoder_data(obs_enc, rewards_enc)
 
-        z_dist = torch.distributions.Normal(mu, sigma)
-        kl_loss = torch.sum(torch.distributions.kl.kl_divergence(
-            z_dist, torch.distributions.Normal(torch.zeros(self.latent_dim), torch.ones(self.latent_dim))))
-        kl_loss.backward(retain_graph=True)
-
-    def compute_embedding_from_batch(self, batch, deterministic_embedding=False):
-        """
-        Computes the embedding for a batch of data
-        :param batch: dictionary of tensors, see get_encoding_batch
-        :param deterministic_embedding: If we have a Gaussian distribution over z, this flag will select the mean
-               instaed of sampling
-        :return: Tensor of shape [latent_dim]
-        """
-        rewards = batch['rewards']
-        obs = batch['observations']
-
-        enc_outputs = self.task_enc(obs, self.dense_to_sparse(rewards) / self.reward_scale)
-
-        if not self.use_information_bottleneck:
-            return torch.mean(enc_outputs, dim=0)
-
-        mus = enc_outputs[:, :self.latent_dim]
-        sigmas = torch.nn.Softplus(enc_outputs[:, self.latent_dim:])
-
-        mu, sigma = mean_of_gaussians(mus, sigmas)
-
-        if deterministic_embedding:
-            return mu
-
-        z_dist = torch.Distributions.Normal(mu, sigma)
-        return z_dist.sample()
-
-    def _do_training(self, idx):
-        # sample from replay buffer to compute training update
-        batch = self.get_batch(idx)
-        rewards = batch['rewards']
-        terminals = batch['terminals']
-        obs = batch['observations']
-        actions = batch['actions']
-        next_obs = batch['next_observations']
-
-        batch_enc = self.get_encoding_batch(eval_task=False, idx=idx)
-        obs_enc = batch_enc['observations']
-        rewards_enc = batch_enc['rewards']
-
-        # Product of Gaussians.
-        z = self.compute_embedding_from_batch(batch_enc)
-        batch_z_enc = z.repeat(obs_enc.shape[0], 1)
-
-        r_pred = self.rf(obs_enc, batch_z_enc)
-        rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc)
-        rf_loss.backward(retain_graph=True)
-
-        batch_z = z.repeat(obs.shape[0], 1)
-        self.qf1_optimizer.zero_grad()
-        self.qf2_optimizer.zero_grad()
-        q1_pred = self.qf1(obs, actions, batch_z)
-        q2_pred = self.qf2(obs, actions, batch_z)
-        v_pred = self.vf(obs, batch_z.detach())
-        # make sure policy accounts for squashing functions like tanh correctly!
-        in_ = torch.cat([obs, batch_z.detach()], dim=1)
-        policy_outputs = self.policy(in_, reparameterize=self.reparameterize, return_log_prob=True)
+        # run inference in networks
+        r_pred, q1_pred, q2_pred, v_pred, policy_outputs, target_v_values, task_z = self.proto_net(obs, actions, next_obs, enc_data, obs_enc)
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
-        # qf loss and gradients
-        # do residual q next
-        target_v_values = self.target_vf(next_obs, batch_z.detach())
-        q_target = rewards + (1. - terminals) * self.discount * target_v_values
-        # no detach here for residual gradient through batch_z
-        qf_loss = torch.mean((q1_pred - q_target) ** 2)
-        qf_loss += torch.mean((q2_pred - q_target) ** 2)
-        qf_loss.backward(retain_graph=True)
+        # auxiliary reward prediction from encoder states
+        rewards_enc_flat = rewards_enc.view(self.embedding_batch_size * num_tasks, -1)
+        rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc_flat)
+        self.rf_optimizer.zero_grad()
+        self.context_optimizer.zero_grad()
+        rf_loss.backward(retain_graph=True)
+        self.rf_optimizer.step()
+
+        # qf and encoder update (note encoder does not get grads from policy or vf)
+        self.qf1_optimizer.zero_grad()
+        self.qf2_optimizer.zero_grad()
+        rewards_flat = rewards.view(self.batch_size * num_tasks, -1)
+        terms_flat = terms.view(self.batch_size * num_tasks, -1)
+        q_target = rewards_flat + (1. - terms_flat) * self.discount * target_v_values
+        qf_loss = torch.mean((q1_pred - q_target) ** 2) + torch.mean((q2_pred - q_target) ** 2)
+        qf_loss.backward()
         self.qf1_optimizer.step()
         self.qf2_optimizer.step()
+        self.context_optimizer.step()
 
-        # vf loss and gradients
-        self.vf_optimizer.zero_grad()
-        q1_new_actions = self.qf1(obs, new_actions, batch_z.detach())
-        q2_new_actions = self.qf2(obs, new_actions, batch_z.detach())
-        min_q_new_actions = torch.min(q1_new_actions, q2_new_actions)
+        # compute min Q on the new actions
+        min_q_new_actions = self.proto_net.min_q(obs, new_actions, task_z)
+
+        # vf update
         v_target = min_q_new_actions - log_pi
         vf_loss = self.vf_criterion(v_pred, v_target.detach())
-        vf_loss.backward(retain_graph=True)
+        self.vf_optimizer.zero_grad()
+        vf_loss.backward()
         self.vf_optimizer.step()
+        self.proto_net._update_target_network()
 
-        # policy loss and gradients
-        self.policy_optimizer.zero_grad()
-        log_policy_target = q1_new_actions
+        # policy update
+        # n.b. policy update includes dQ/da
+        log_policy_target = min_q_new_actions
 
         if self.reparameterize:
             policy_loss = (
@@ -254,7 +202,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         policy_reg_loss = mean_reg_loss + std_reg_loss + pre_activation_reg_loss
         policy_loss = policy_loss + policy_reg_loss
 
-        policy_loss.backward(retain_graph=True)
+        self.policy_optimizer.zero_grad()
+        policy_loss.backward()
         self.policy_optimizer.step()
 
         # save some statistics for eval
@@ -301,35 +250,25 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
     def sample_z_from_posterior(self, idx, eval_task=False):
         batch = self.get_encoding_batch(idx=idx, eval_task=eval_task)
-
-        # replace with generic compute embedding from batch function
-        z = self.compute_embedding_from_batch(batch)
+        obs = batch['observations'][None, ...]
+        rewards = batch['rewards'][None, ...]
+        in_ = self.prepare_encoder_data(obs, rewards)
+        z = self.proto_net.embed(in_)[0]
         return np_ify(z)
 
     @property
     def networks(self):
-        return [
-            self.policy,
-            self.qf1,
-            self.qf2,
-            self.vf,
-            self.rf,
-            self.target_vf,
-            self.task_enc,
-        ]
-
-    def _update_target_network(self):
-        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
+        return self.proto_net.networks
 
     def get_epoch_snapshot(self, epoch):
         snapshot = super().get_epoch_snapshot(epoch)
         snapshot.update(
-            qf1=self.qf1,
-            qf2=self.qf2,
-            policy=self.policy,
-            vf=self.vf,
-            rf=self.rf,
-            target_vf=self.target_vf,
-            task_enc=self.task_enc,
+            qf1=self.proto_net.qf1,
+            qf2=self.proto_net.qf2,
+            policy=self.proto_net.policy,
+            vf=self.proto_net.vf,
+            rf=self.proto_net.rf,
+            target_vf=self.proto_net.target_vf,
+            task_enc=self.proto_net.task_enc,
         )
         return snapshot

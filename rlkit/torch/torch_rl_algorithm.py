@@ -32,7 +32,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         return np_to_pytorch_batch(batch)
 
     # Get a batch from the separate encoding replay buffer.
-    def get_encoding_batch(self, eval_task=False, idx=None):
+    def get_encoding_batch(self, idx=None, eval_task=False):
         if idx is None:
             idx = self.task_idx
         if eval_task:

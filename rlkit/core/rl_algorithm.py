@@ -161,6 +161,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             self._start_epoch(it_)
             self.training_mode(True)
             if it_ == 0:
+                print('collecting initial pool of data for train and eval')
                 # temp for evaluating
                 for idx in self.train_tasks:
                     self.task_idx = idx
@@ -215,13 +216,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     raise Exception("Invalid option for computing train embedding {}".format(self.train_embedding_source))
 
             # Sample train tasks and compute gradient updates on parameters.
-            # TODO(KR) I think optimization will work better if we update the policy networks in a meta-batch as well as the encoder
             for train_step in range(self.num_train_steps_per_itr):
-                for _ in range(self.meta_batch):
-                    idx = np.random.randint(len(self.train_tasks))
-                    self._do_training(idx)
+                indices = np.random.choice(self.train_tasks, self.meta_batch)
+                self._do_training(indices)
                 self._n_train_steps_total += 1
-                self.perform_meta_update()
             gt.stamp('train')
 
             self.training_mode(False)
@@ -231,12 +229,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             gt.stamp('eval')
 
             self._end_epoch()
-
-    def perform_meta_update(self):
-        '''
-        update networks with grads accumulated across meta batch
-        '''
-        pass
 
     def pretrain(self):
         """
