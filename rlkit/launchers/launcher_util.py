@@ -1,11 +1,13 @@
 import json
 import os
 import os.path as osp
+import shutil
 import pickle
 import random
 import sys
 import time
 import uuid
+import click
 from collections import namedtuple
 
 import __main__ as main
@@ -191,18 +193,19 @@ def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
     """
     Creates and returns a unique log directory.
 
-    :param exp_prefix: All experiments with this prefix will have log
-    directories be under this directory.
-    :param exp_id: Different exp_ids will be in different directories.
+    :param exp_prefix: name of log directory
+    :param exp_id: ignored, see exp_prefix
     :return:
     """
-    exp_name = create_exp_name(exp_prefix, exp_id=exp_id,
-                               seed=seed)
     if base_log_dir is None:
         base_log_dir = config.LOCAL_LOG_DIR
-    log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
-    if osp.exists(log_dir):
-        print("WARNING: Log directory already exists {}".format(log_dir))
+    log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"))
+    # don't overwrite existing data unless you're sure
+    if osp.isdir(log_dir):
+        click.confirm(click.style("{} already exists. Do you want to "
+            "obliterate it and continue?".format(log_dir), fg='red'),
+            abort=True)
+        shutil.rmtree(log_dir)
     os.makedirs(log_dir, exist_ok=True)
     return log_dir
 

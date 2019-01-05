@@ -83,7 +83,6 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    log_dir = '/mounts/output' if docker == 1 else 'output'
     max_path_length = 20
     # noinspection PyTypeChecker
     variant = dict(
@@ -119,7 +118,12 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
+
+    exp_name = 'proto-sac-point-mass-16z-TEST'
+
+    log_dir = '/mounts/output' if docker == 1 else 'output'
+    experiment_log_dir = setup_logger(exp_name, variant=variant, base_log_dir=log_dir)
+
     # creates directories for pickle outputs of trajectories (point mass)
     pickle_dir = experiment_log_dir + '/eval_trajectories'
     pathlib.Path(pickle_dir).mkdir(parents=True, exist_ok=True)
