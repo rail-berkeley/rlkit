@@ -1,5 +1,5 @@
 """
-Run Prototypical Soft Actor Critic on HalfCheetahEnv.
+Run Prototypical Soft Actor Critic on point mass.
 
 """
 import numpy as np
@@ -7,17 +7,13 @@ import click
 import datetime
 import pathlib
 
-
-# from gym.envs.mujoco import HalfCheetahEnv
-# from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
 from rlkit.envs.point_mass import PointEnv
-
-import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.sac.policies import ProtoTanhGaussianPolicy
 from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.sac.sac import ProtoSoftActorCritic
+import rlkit.torch.pytorch_util as ptu
 
 def datetimestamp(divider=''):
     now = datetime.datetime.now()
@@ -25,7 +21,7 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     env = NormalizedBoxEnv(PointEnv(**variant['task_params']))
-    ptu.set_gpu_mode(variant['use_gpu'])
+    ptu.set_gpu_mode(variant['use_gpu'], variant['gpu_id'])
 
     tasks = env.get_all_task_idx()
 
@@ -84,8 +80,9 @@ def experiment(variant):
 
 
 @click.command()
-@click.argument('docker', default=0)
-def main(docker):
+@click.argument('gpu', default=0)
+@click.option('--docker', default=0)
+def main(gpu, docker):
     log_dir = '/mounts/output' if docker == 1 else 'output'
     max_path_length = 20
     # noinspection PyTypeChecker
@@ -95,7 +92,7 @@ def main(docker):
             randomize_tasks=True,
         ),
         algo_params=dict(
-            meta_batch=10,
+            meta_batch=1,
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=10 * max_path_length,
@@ -120,6 +117,7 @@ def main(docker):
         ),
         net_size=300,
         use_gpu=True,
+        gpu_id=gpu,
     )
     experiment_log_dir = setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
     # creates directories for pickle outputs of trajectories (point mass)
