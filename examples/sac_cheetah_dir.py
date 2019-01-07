@@ -5,13 +5,11 @@ Run Prototypical Soft Actor Critic on HalfCheetahEnv.
 import numpy as np
 import click
 import datetime
-
-
+import pathlib
 from gym.envs.mujoco import HalfCheetahEnv
+
 from rlkit.envs.half_cheetah_dir import HalfCheetahDirEnv
 from rlkit.envs.half_cheetah_vel import HalfCheetahVelEnv
-from rlkit.envs.point_mass import PointEnv
-
 import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
@@ -24,15 +22,15 @@ def datetimestamp(divider=''):
     return now.strftime('%Y-%m-%d-%H-%M-%S-%f').replace('-', divider)
 
 def experiment(variant):
-    task_params = variant['task_params']
     env = NormalizedBoxEnv(HalfCheetahDirEnv())
-    ptu.set_gpu_mode(variant['use_gpu'])
+    ptu.set_gpu_mode(variant['use_gpu'], variant['gpu_id'])
 
     tasks = env.get_all_task_idx()
 
     obs_dim = int(np.prod(env.observation_space.shape))
     action_dim = int(np.prod(env.action_space.shape))
     latent_dim = 5
+    task_enc_output_dim = latent_dim * 2 if variant['algo_params']['use_information_bottleneck'] else latent_dim
     reward_dim = 1
 
     net_size = variant['net_size']
@@ -40,7 +38,7 @@ def experiment(variant):
     task_enc = FlattenMlp(
         hidden_sizes=[200, 200, 200], # deeper net + higher dim space generalize better
         input_size=obs_dim + reward_dim,
-        output_size=latent_dim,
+        output_size=task_enc_output_dim,
     )
     qf1 = FlattenMlp(
         hidden_sizes=[net_size, net_size, net_size],
@@ -72,8 +70,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=list(tasks[:-10]), # list(tasks[:30]),
-        eval_tasks=list(tasks[-10:]), # list(tasks[30:]),
+        train_tasks=tasks,
+        eval_tasks=tasks,
         nets=[task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
@@ -83,40 +81,48 @@ def experiment(variant):
 
 
 @click.command()
-@click.argument('docker', default=0)
-def main(docker):
+@click.argument('gpu', default=0)
+@click.option('--docker', default=0)
+def main(gpu, docker):
     log_dir = '/mounts/output' if docker == 1 else 'output'
+    max_path_length = 100
     # noinspection PyTypeChecker
     variant = dict(
-        task_params=dict(
-            n_tasks=2, # 20 works pretty well
-            randomize_tasks=False,
-        ),
         algo_params=dict(
-            meta_batch=2,
-            num_epochs=1000, # meta-train epochs
-            num_steps_per_epoch=2, # num updates per epoch
-            num_steps_per_eval=5, # num trajectories to eval on
+            meta_batch=16,
+            num_iterations=500, # meta-train epochs
+            num_tasks_sample=5,
+            num_steps_per_task=5 * max_path_length,
             num_train_steps_per_itr=1000,
-            train_task_batch_size=10,
-            batch_size=1024, # to compute training grads from
-            max_path_length=200,
+            num_steps_per_eval=10 * max_path_length,
+            batch_size=256, # to compute training grads from
+            max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
             policy_lr=3E-4,
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=500.,
+            reward_scale=5.,
             reparameterize=True,
-            embedding_source='initial_pool',
-            pickle_output_dir='data/half-cheetah-dir/', # proto_sac_point_mass', # change this to just log dir?
+            use_information_bottleneck=False,
+            train_embedding_source='online_exploration_trajectories',
+            eval_embedding_source='online_exploration_trajectories',
         ),
         net_size=300,
-        use_gpu=False,
+        use_gpu=True,
+        gpu_id=gpu,
     )
-    # setup_logger('proto-sac-point-mass-fb-16z', variant=variant, base_log_dir=log_dir)
-    setup_logger('half-cheetah-fb-16z', variant=variant, base_log_dir=log_dir)
+    exp_name = 'proto-sac-half-cheetah-dir-16z-batch16'
+
+    log_dir = '/mounts/output' if docker == 1 else 'output'
+    experiment_log_dir = setup_logger(exp_name, variant=variant, base_log_dir=log_dir)
+
+    # creates directories for pickle outputs of trajectories (point mass)
+    pickle_dir = experiment_log_dir + '/eval_trajectories'
+    pathlib.Path(pickle_dir).mkdir(parents=True, exist_ok=True)
+    variant['algo_params']['output_dir'] = pickle_dir
+
     experiment(variant)
 
 if __name__ == "__main__":
