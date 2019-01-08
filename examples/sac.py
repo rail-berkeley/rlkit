@@ -10,9 +10,10 @@ import pathlib
 from rlkit.envs.point_mass import PointEnv
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
-from rlkit.torch.sac.policies import ProtoTanhGaussianPolicy
+from rlkit.torch.sac.policies import TanhGaussianPolicy
 from rlkit.torch.networks import FlattenMlp
 from rlkit.torch.sac.sac import ProtoSoftActorCritic
+from rlkit.torch.sac.proto import ProtoAgent
 import rlkit.torch.pytorch_util as ptu
 
 def datetimestamp(divider=''):
@@ -53,7 +54,7 @@ def experiment(variant):
         input_size=obs_dim + latent_dim,
         output_size=1,
     )
-    policy = ProtoTanhGaussianPolicy(
+    policy = TanhGaussianPolicy(
         hidden_sizes=[net_size, net_size, net_size],
         obs_dim=obs_dim + latent_dim,
         latent_dim=latent_dim,
@@ -66,11 +67,17 @@ def experiment(variant):
         output_size=1
     )
 
+    agent = ProtoAgent(
+        latent_dim,
+        [task_enc, policy, qf1, qf2, vf, rf],
+        **variant['algo_params']
+    )
+
     algorithm = ProtoSoftActorCritic(
         env=env,
         train_tasks=list(tasks[:-10]),
         eval_tasks=list(tasks[-10:]),
-        nets=[task_enc, policy, qf1, qf2, vf, rf],
+        nets=[agent, task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
     )

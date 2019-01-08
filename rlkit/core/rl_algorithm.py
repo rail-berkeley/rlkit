@@ -253,19 +253,12 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         """
         pass
 
-    def set_policy_z(self, z):
-        """
-        :param z: Assumed to be numpy array
-        :return: None
-        """
-        self.policy.set_z(z)
-
     # TODO: maybe find a better name for resample_z_every_n?
     def collect_data_sampling_from_prior(self, num_samples=1, resample_z_every_n=None, eval_task=False,
                                          add_to_enc_buffer=True):
         # do not resample z if resample_z_every_n is None
         if resample_z_every_n is None:
-            self.set_policy_z(self.sample_z_from_prior())
+            self.policy.clear_z()
             self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task,
                               add_to_enc_buffer=add_to_enc_buffer)
         else:
@@ -281,7 +274,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                                          add_to_enc_buffer=True):
         # do not resample z if resample_z_every_n is None
         if resample_z_every_n is None:
-            self.set_policy_z(self.sample_z_from_posterior(idx, eval_task=eval_task))
+            self.sample_z_from_posterior(idx, eval_task=eval_task)
             self.collect_data(self.policy, num_samples=num_samples, eval_task=eval_task,
                               add_to_enc_buffer=add_to_enc_buffer)
         else:
@@ -434,8 +427,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         logger.pop_prefix()
 
     def _start_new_rollout(self):
-        # (AZ): I don't think resetting policy currently does anything for us, but I'll leave it
-        self.exploration_policy.reset()
         return self.env.reset()
 
     # not used

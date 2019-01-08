@@ -12,7 +12,7 @@ LOG_SIG_MAX = 2
 LOG_SIG_MIN = -20
 
 
-class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
+class TanhGaussianPolicy(Mlp, ExplorationPolicy):
     """
     Usage:
 
@@ -22,10 +22,6 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
     action, mean, log_std, _ = policy(obs, deterministic=True)
     action, mean, log_std, log_prob = policy(obs, return_log_prob=True)
     ```
-    NOTE: when calling the module, pass both the obs and the latent task code
-    but when using the `get_action` interface, rely on the instance
-    variable task code
-
     Here, mean and log_std are the mean and log_std of the Gaussian that is
     sampled from.
 
@@ -66,28 +62,12 @@ class ProtoTanhGaussianPolicy(Mlp, ExplorationPolicy):
             self.log_std = np.log(std)
             assert LOG_SIG_MIN <= self.log_std <= LOG_SIG_MAX
 
-        # this task encoding will only be used for policy eval
-        # so it does not need to be attached to the graph
-        # TODO: this does not seem very PyTorch-esque, neither does `eval_np`
-        # investigate this more later
-
-        # setting to None forces algorithm to set
-        self.np_z = None  # np.zeros(self.latent_dim)
-
-    def set_z(self, z):
-        self.np_z = z
-
-    def clear_z(self):
-        self.np_z = None
-
     def get_action(self, obs_np, deterministic=False):
-        actions = self.get_actions(obs_np[None], deterministic=deterministic)
+        actions = self.get_actions(obs_np, deterministic=deterministic)
         return actions[0, :], {}
 
     def get_actions(self, obs_np, deterministic=False):
-        assert self.np_z is not None, "Must specify an input latent variable to condition the policy on"
-        in_ = np.concatenate([obs_np, self.np_z[None]], axis=1)
-        return self.eval_np(in_, deterministic=deterministic)[0]
+        return self.eval_np(obs_np, deterministic=deterministic)[0]
 
     def forward(
             self,

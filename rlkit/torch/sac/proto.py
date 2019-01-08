@@ -6,6 +6,7 @@ from torch import nn as nn
 import torch.nn.functional as F
 
 import rlkit.torch.pytorch_util as ptu
+from rlkit.torch.core import np_ify, torch_ify
 
 
 class ProtoAgent(nn.Module):
@@ -17,6 +18,7 @@ class ProtoAgent(nn.Module):
                  use_ib=False,
                  det_z=False,
                  tau=1e-2,
+                 **kwaargs
     ):
         super().__init__()
         self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
@@ -74,6 +76,16 @@ class ProtoAgent(nn.Module):
         for i in range(num_updates):
             num_z += 1
             z += (new_z[i][None] - z) / num_z
+
+    def get_action(self, obs, deterministic=False):
+        ''' sample action from the policy, conditioned on the task embedding '''
+        # TODO this numpy business is stupid, there's no reason to copy to the CPU
+        z = np_ify(self.z)
+        in_ = np.concatenate([obs[None], z], axis=1)
+        return self.policy.get_action(in_, deterministic=deterministic)
+
+    def set_num_steps_total(self, n):
+        self.policy.set_num_steps_total(n)
 
     def _product_of_gaussians(mus, sigmas):
         '''

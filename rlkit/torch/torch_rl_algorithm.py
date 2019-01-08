@@ -49,11 +49,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                       self.eval_enc_replay_buffer.task_buffers[idx].size())
             else:
                 print('enc_replay_buffer size, task {}'.format(idx), self.enc_replay_buffer.task_buffers[idx].size())
-            z = self.sample_z_from_posterior(idx, eval_task=eval_task)
+            self.sample_z_from_posterior(idx, eval_task=eval_task)
 
-        print('task encoding ', z)
+        print('task encoding ', self.policy.z)
 
-        self.set_policy_z(z)
         test_paths = self.eval_sampler.obtain_samples(deterministic=deterministic)
         return test_paths
 

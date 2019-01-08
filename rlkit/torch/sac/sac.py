@@ -43,13 +43,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
     ):
         super().__init__(
             env=env,
-            policy=nets[1],
+            policy=nets[0],
             train_tasks=train_tasks,
             eval_tasks=eval_tasks,
             **kwargs
         )
         deterministic_embedding=False
-        self.proto_net = ProtoAgent(latent_dim, nets, reparam=reparameterize, use_ib=use_information_bottleneck, det_z=deterministic_embedding, tau=soft_target_tau)
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -71,27 +70,27 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
         # TODO consolidate optimizers!
         self.policy_optimizer = optimizer_class(
-            self.proto_net.policy.parameters(),
+            self.policy.policy.parameters(),
             lr=policy_lr,
         )
         self.qf1_optimizer = optimizer_class(
-            self.proto_net.qf1.parameters(),
+            self.policy.qf1.parameters(),
             lr=qf_lr,
         )
         self.qf2_optimizer = optimizer_class(
-            self.proto_net.qf2.parameters(),
+            self.policy.qf2.parameters(),
             lr=qf_lr,
         )
         self.vf_optimizer = optimizer_class(
-            self.proto_net.vf.parameters(),
+            self.policy.vf.parameters(),
             lr=vf_lr,
         )
         self.context_optimizer = optimizer_class(
-            self.proto_net.task_enc.parameters(),
+            self.policy.task_enc.parameters(),
             lr=context_lr,
         )
         self.rf_optimizer = optimizer_class(
-            self.proto_net.rf.parameters(),
+            self.policy.rf.parameters(),
             lr=context_lr,
         )
 
@@ -146,7 +145,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         enc_data = self.prepare_encoder_data(obs_enc, rewards_enc)
 
         # run inference in networks
-        r_pred, q1_pred, q2_pred, v_pred, policy_outputs, target_v_values, task_z = self.proto_net(obs, actions, next_obs, enc_data, obs_enc)
+        r_pred, q1_pred, q2_pred, v_pred, policy_outputs, target_v_values, task_z = self.policy(obs, actions, next_obs, enc_data, obs_enc)
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # auxiliary reward prediction from encoder states
@@ -170,7 +169,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.context_optimizer.step()
 
         # compute min Q on the new actions
-        min_q_new_actions = self.proto_net.min_q(obs, new_actions, task_z)
+        min_q_new_actions = self.policy.min_q(obs, new_actions, task_z)
 
         # vf update
         v_target = min_q_new_actions - log_pi
@@ -178,7 +177,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.vf_optimizer.zero_grad()
         vf_loss.backward()
         self.vf_optimizer.step()
-        self.proto_net._update_target_network()
+        self.policy._update_target_network()
 
         # policy update
         # n.b. policy update includes dQ/da
@@ -253,23 +252,21 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         obs = batch['observations'][None, ...]
         rewards = batch['rewards'][None, ...]
         in_ = self.prepare_encoder_data(obs, rewards)
-        self.proto_net.update_z(in_)
-        z = self.proto_net.z[0]
-        return np_ify(z)
+        self.policy.set_z(in_)
 
     @property
     def networks(self):
-        return self.proto_net.networks + [self.proto_net]
+        return self.policy.networks + [self.policy]
 
     def get_epoch_snapshot(self, epoch):
         snapshot = super().get_epoch_snapshot(epoch)
         snapshot.update(
-            qf1=self.proto_net.qf1,
-            qf2=self.proto_net.qf2,
-            policy=self.proto_net.policy,
-            vf=self.proto_net.vf,
-            rf=self.proto_net.rf,
-            target_vf=self.proto_net.target_vf,
-            task_enc=self.proto_net.task_enc,
+            qf1=self.policy.qf1,
+            qf2=self.policy.qf2,
+            policy=self.policy.policy,
+            vf=self.policy.vf,
+            rf=self.policy.rf,
+            target_vf=self.policy.target_vf,
+            task_enc=self.policy.task_enc,
         )
         return snapshot
