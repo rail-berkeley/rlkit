@@ -29,18 +29,21 @@ class ProtoAgent(nn.Module):
         # initialize task embedding to zero
         # (task, latent dim)
         self.register_buffer('z', torch.zeros(1, latent_dim))
+        # for incremental update, must keep track of number of datapoints accumulated
+        self.register_buffer('num_z', torch.zeros(1))
 
     def clear_z(self):
         self.z.zero_()
 
-    def update_z(self, in_):
+    def embed(self,  in_):
         '''
-        compute latent task embedding from data
+        compute latent task embedding
 
         if using info bottleneck, embedding is sampled from a
         gaussian distribution whose parameters are predicted
         '''
         z = self.z
+
         # in_ should be (num_tasks x batch x feat)
         t, b, f = in_.size()
         in_ = in_.view(t * b, f)
@@ -48,10 +51,29 @@ class ProtoAgent(nn.Module):
         # compute embedding per task
         new_z = self.task_enc(in_).view(t, b, -1)
         new_z = torch.unbind(new_z, dim=0)
+        return new_z
 
-        # TODO incremental update
+    def set_z(self, in_):
+        ''' compute latent task embedding only from this input data '''
+        self.clear_z()
+        new_z = self.embed(in_)
         new_z = [torch.mean(zs, dim=0, keepdim=True) for zs in new_z]
-        z = torch.cat(new_z)
+        self.z = torch.cat(new_z)
+
+    def update_z(self, in_):
+        ''' update current task embedding by running mean '''
+        z = self.z
+        num_z = self.num_z
+
+        # TODO this only works for single task (t == 1)
+        new_z = self.embed(in_)
+        if len(new_z) != 1:
+            raise Exception('incremental update for more than 1 task not supported')
+        new_z = new_z[0] # batch x feat
+        num_updates = new_z.size(0)
+        for i in range(num_updates):
+            num_z += 1
+            z += (new_z[i][None] - z) / num_z
 
     def _product_of_gaussians(mus, sigmas):
         '''
@@ -74,7 +96,7 @@ class ProtoAgent(nn.Module):
         ptu.soft_update_from_to(self.vf, self.target_vf, self.tau)
 
     def forward(self, obs, actions, next_obs, enc_data, obs_enc):
-        self.update_z(enc_data)
+        self.set_z(enc_data)
         return self.infer(obs, actions, next_obs, obs_enc)
 
 
