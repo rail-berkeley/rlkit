@@ -24,6 +24,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             num_train_steps_per_itr=1000,
             num_tasks_sample=100,
             num_steps_per_task=100,
+            num_evals=10,
             num_steps_per_eval=1000,
             batch_size=1024,
             embedding_batch_size=1024,
@@ -50,6 +51,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param num_train_steps_per_itr: number of meta-updates performed per iteration
         :param num_tasks_sample: number of train tasks to sample to collect data for
         :param num_steps_per_task: number of transitions to collect per task
+        :param num_evals: number of independent evaluation runs, with separate task encodings
         :param num_steps_per_eval: number of transitions to sample for evaluation
         :param batch_size: size of batches used to compute RL update
         :param embedding_batch_size: size of batches used to compute embedding
@@ -72,6 +74,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.num_train_steps_per_itr = num_train_steps_per_itr
         self.num_tasks_sample = num_tasks_sample
         self.num_steps_per_task = num_steps_per_task
+        self.num_evals = num_evals
         self.num_steps_per_eval = num_steps_per_eval
         self.batch_size = batch_size
         self.embedding_batch_size = embedding_batch_size

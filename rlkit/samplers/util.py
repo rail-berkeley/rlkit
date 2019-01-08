@@ -1,7 +1,7 @@
 import numpy as np
 
 
-def rollout(env, agent, max_path_length=np.inf, animated=False):
+def rollout(env, agent, max_path_length=np.inf, animated=False, is_online=False):
     """
     The following value for the following keys will be a 2D array, with the
     first dimension corresponding to the time dimension.
@@ -20,6 +20,7 @@ def rollout(env, agent, max_path_length=np.inf, animated=False):
     :param agent:
     :param max_path_length:
     :param animated:
+    :param is_online: if True, update the task embedding after each transition
     :return:
     """
     observations = []
@@ -36,6 +37,8 @@ def rollout(env, agent, max_path_length=np.inf, animated=False):
     while path_length < max_path_length:
         a, agent_info = agent.get_action(o)
         next_o, r, d, env_info = env.step(a)
+        if is_online:
+            agent.update_context([o, a, r, next_o, d])
         observations.append(o)
         rewards.append(r)
         terminals.append(d)

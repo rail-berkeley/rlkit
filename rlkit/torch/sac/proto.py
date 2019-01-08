@@ -18,6 +18,7 @@ class ProtoAgent(nn.Module):
                  use_ib=False,
                  det_z=False,
                  tau=1e-2,
+                 reward_scale=1.0,
                  **kwaargs
     ):
         super().__init__()
@@ -27,6 +28,7 @@ class ProtoAgent(nn.Module):
         self.use_ib = use_ib
         self.det_z = det_z
         self.tau = tau
+        self.reward_scale = reward_scale
 
         # initialize task embedding to zero
         # (task, latent dim)
@@ -35,7 +37,18 @@ class ProtoAgent(nn.Module):
         self.register_buffer('num_z', torch.zeros(1))
 
     def clear_z(self):
+        # TODO in IB case, should be set to prior
         self.z.zero_()
+
+    def update_context(self, inputs):
+        ''' update task embedding with a single transition '''
+        # TODO there should be one generic method for preparing data for the encoder!!!
+        o, a, r, no, d = inputs
+        o = ptu.from_numpy(o[None, None, ...])
+        r = ptu.from_numpy(np.array([r])[None, None, ...])
+        r = r / self.reward_scale
+        data = torch.cat([o, r], dim=2)
+        self.update_z(data)
 
     def embed(self,  in_):
         '''

@@ -58,5 +58,16 @@ class SimpleReplayBuffer(ReplayBuffer):
             next_observations=self._next_obs[indices],
         )
 
+    def random_padded_batch(self, batch_size):
+        '''
+        batch front-padded with zeros
+        number of zeros sampled uniformly [0, batch_size]
+        '''
+        batch = self.random_batch(batch_size)
+        num_replace = np.random.randint(0, batch_size)
+        for k in batch.keys():
+            batch[k][:num_replace] = 0
+        return batch
+
     def num_steps_can_sample(self):
         return self._size

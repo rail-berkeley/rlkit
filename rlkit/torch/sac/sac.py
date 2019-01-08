@@ -242,10 +242,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             ))
 
     def sample_z_from_prior(self):
-        if self.use_information_bottleneck:
-            return np.random.normal(size=self.latent_dim)
-        else:
-            return np.zeros(self.latent_dim)
+        self.policy.clear_z()
 
     def sample_z_from_posterior(self, idx, eval_task=False):
         batch = self.get_encoding_batch(idx=idx, eval_task=eval_task)

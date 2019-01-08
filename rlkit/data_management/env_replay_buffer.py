@@ -38,8 +38,12 @@ class MultiTaskReplayBuffer(object):
     def terminate_episode(self, task):
         self.task_buffers[task].terminate_episode()
 
-    def random_batch(self, task, batch_size):
-        return self.task_buffers[task].random_batch(batch_size)
+    def random_batch(self, task, batch_size, padded=False):
+        if padded:
+            batch = self.task_buffers[task].random_padded_batch(batch_size)
+        else:
+            batch = self.task_buffers[task].random_batch(batch_size)
+        return batch
 
     def num_steps_can_sample(self, task):
         return self.task_buffers[task].num_steps_can_sample()

@@ -32,28 +32,28 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
     # Get a batch from the separate encoding replay buffer.
     def get_encoding_batch(self, idx=None, eval_task=False):
+        # n.b. if eval is online, training should match the distribution of context lengths
+        is_online = (self.eval_embedding_source == 'online')
         if idx is None:
             idx = self.task_idx
         if eval_task:
-            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size)
+            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size, padded=is_online)
         else:
-            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size)
+            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size, padded=is_online)
         return np_to_pytorch_batch(batch)
 
     # TODO: this whole function might be rewritten
-    def obtain_eval_paths(self, idx, eval_task=False, z=None, deterministic=False):
+    def obtain_eval_paths(self, idx, eval_task=False, deterministic=False):
+        ''' collect paths with fixed task embedding '''
         # TODO: collect context tuples from replay buffer to match training stats
-        if z is None:
-            if eval_task:
-                print('eval_enc_replay_buffer size, task {}'.format(idx),
-                      self.eval_enc_replay_buffer.task_buffers[idx].size())
-            else:
-                print('enc_replay_buffer size, task {}'.format(idx), self.enc_replay_buffer.task_buffers[idx].size())
+        is_online = (self.eval_embedding_source == 'online')
+        self.policy.clear_z()
+        if not is_online:
             self.sample_z_from_posterior(idx, eval_task=eval_task)
 
         print('task encoding ', self.policy.z)
 
-        test_paths = self.eval_sampler.obtain_samples(deterministic=deterministic)
+        test_paths = self.eval_sampler.obtain_samples(deterministic=deterministic, is_online=is_online)
         return test_paths
 
     @property
@@ -141,7 +141,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             self.eval_sampler.env.reset_task(idx)
 
             goal = self.eval_sampler.env._goal
-            print('enc_replay_buffer.task_buffers[idx]._size', self.enc_replay_buffer.task_buffers[idx]._size)
+            print('task {} encoder RB size'.format(idx), self.enc_replay_buffer.task_buffers[idx]._size)
 
             # collects final evaluation trajectories
             test_paths = self.obtain_eval_paths(idx, eval_task=False, deterministic=True)
@@ -183,23 +183,18 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             print('Task:', idx)
             self.eval_sampler.env.reset_task(idx)
 
-            # TODO: Add parameters for eval steps
-
-            # collects data fo computing embedding if needed
-            if self.eval_embedding_source == 'initial_pool':
+            # collect data fo computing embedding if needed
+            if self.eval_embedding_source in ['online', 'initial_pool']:
                 pass
             elif self.eval_embedding_source == 'online_exploration_trajectories':
                 self.eval_enc_replay_buffer.task_buffers[idx].clear()
-                # resamples using current policy, conditioned on prior
+                # task embedding sampled from prior and held fixed
                 self.collect_data_sampling_from_prior(num_samples=self.num_steps_per_task,
                                                       resample_z_every_n=self.max_path_length,
                                                       eval_task=True)
             elif self.eval_embedding_source == 'online_on_policy_trajectories':
-                # Clear the encoding replay buffer, so at eval time
-                # we are computing z only from trajectories from the current epoch.
-
                 self.eval_enc_replay_buffer.task_buffers[idx].clear()
-
+                # half the data from z sampled from prior, the other half from z sampled from posterior
                 self.collect_data_online(idx=idx,
                                          num_samples=self.num_steps_per_task,
                                          eval_task=True)
@@ -210,9 +205,12 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             else:
                 raise Exception("Invalid option for computing eval embedding")
 
-            goal = self.eval_sampler.env._goal
-            test_paths = self.obtain_eval_paths(idx, eval_task=True, deterministic=self.eval_deterministic)
+            # TODO: Add parameters for eval steps
+            test_paths = []
+            for _ in range(self.num_evals):
+                test_paths += self.obtain_eval_paths(idx, eval_task=True, deterministic=self.eval_deterministic)
             # TODO incorporate into proper logging
+            goal = self.eval_sampler.env._goal
             for path in test_paths:
                 path['goal'] = goal
 
