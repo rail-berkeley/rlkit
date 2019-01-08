@@ -11,7 +11,7 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import np_ify, torch_ify
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import MetaTorchRLAlgorithm
-from rlkit.torch.sac.proto import ProtoNet
+from rlkit.torch.sac.proto import ProtoAgent
 
 
 class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
@@ -49,7 +49,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             **kwargs
         )
         deterministic_embedding=False
-        self.proto_net = ProtoNet(latent_dim, nets, reparam=reparameterize, use_ib=use_information_bottleneck, det_z=deterministic_embedding, tau=soft_target_tau)
+        self.proto_net = ProtoAgent(latent_dim, nets, reparam=reparameterize, use_ib=use_information_bottleneck, det_z=deterministic_embedding, tau=soft_target_tau)
         self.soft_target_tau = soft_target_tau
         self.policy_mean_reg_weight = policy_mean_reg_weight
         self.policy_std_reg_weight = policy_std_reg_weight
@@ -253,12 +253,13 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         obs = batch['observations'][None, ...]
         rewards = batch['rewards'][None, ...]
         in_ = self.prepare_encoder_data(obs, rewards)
-        z = self.proto_net.embed(in_)[0]
+        self.proto_net.update_z(in_)
+        z = self.proto_net.z[0]
         return np_ify(z)
 
     @property
     def networks(self):
-        return self.proto_net.networks
+        return self.proto_net.networks + [self.proto_net]
 
     def get_epoch_snapshot(self, epoch):
         snapshot = super().get_epoch_snapshot(epoch)

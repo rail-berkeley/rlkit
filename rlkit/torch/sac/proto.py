@@ -1,13 +1,14 @@
 import numpy as np
 
 import torch
+from torch import Tensor
 from torch import nn as nn
 import torch.nn.functional as F
 
 import rlkit.torch.pytorch_util as ptu
 
 
-class ProtoNet(nn.Module):
+class ProtoAgent(nn.Module):
 
     def __init__(self,
                  latent_dim,
@@ -24,6 +25,33 @@ class ProtoNet(nn.Module):
         self.use_ib = use_ib
         self.det_z = det_z
         self.tau = tau
+
+        # initialize task embedding to zero
+        # (task, latent dim)
+        self.register_buffer('z', torch.zeros(1, latent_dim))
+
+    def clear_z(self):
+        self.z.zero_()
+
+    def update_z(self, in_):
+        '''
+        compute latent task embedding from data
+
+        if using info bottleneck, embedding is sampled from a
+        gaussian distribution whose parameters are predicted
+        '''
+        z = self.z
+        # in_ should be (num_tasks x batch x feat)
+        t, b, f = in_.size()
+        in_ = in_.view(t * b, f)
+
+        # compute embedding per task
+        new_z = self.task_enc(in_).view(t, b, -1)
+        new_z = torch.unbind(new_z, dim=0)
+
+        # TODO incremental update
+        new_z = [torch.mean(zs, dim=0, keepdim=True) for zs in new_z]
+        z = torch.cat(new_z)
 
     def _product_of_gaussians(mus, sigmas):
         '''
@@ -46,48 +74,18 @@ class ProtoNet(nn.Module):
         ptu.soft_update_from_to(self.vf, self.target_vf, self.tau)
 
     def forward(self, obs, actions, next_obs, enc_data, obs_enc):
-        task_z = self.embed(enc_data)
-        return self.infer(obs, actions, next_obs, obs_enc, task_z)
-
-    def embed(self, in_):
-        '''
-        compute latent task embedding from data
-
-        if using info bottleneck, embedding is sampled from a
-        gaussian distribution whose parameters are predicted
-        '''
-        # TODO: implement incremental task encoding by making task_z a class member
-        # in_ should be (num_tasks x batch x feat)
-        t, b, f = in_.size()
-        in_ = in_.view(t * b, f)
-
-        # compute embedding per task
-        embeddings = self.task_enc(in_).view(t, b, -1)
-        embeddings = torch.unbind(embeddings, dim=0)
-
-        # TODO info bottleneck (WIP) need KL loss
-        '''
-        if self.use_ib:
-            mus = [e[:, :self.latent_dim] for e in embeddings]
-            sigmas = [F.softplus(e[:, self.latent_dim:]) for e in embeddings]
-            z_params = [_mean_of_gaussians(m, s) for m, s in zip(mus, sigmas)]
-            if not self.det_z:
-                z_dists = [torch.Distributions.Normal(m, s) for m, s in z_params]
-                task_z = [d.sample() for d in z_dists]
-            else:
-                task_z = [p[0] for p in z_params]
-        '''
-        task_z = [torch.mean(e, dim=0) for e in embeddings]
-
-        return task_z
+        self.update_z(enc_data)
+        return self.infer(obs, actions, next_obs, obs_enc)
 
 
-    def infer(self, obs, actions, next_obs, obs_enc, task_z):
+    def infer(self, obs, actions, next_obs, obs_enc):
         '''
         compute predictions of SAC networks for update
 
         regularize encoder with reward prediction from latent task embedding
         '''
+
+        task_z = self.z
 
         # auxiliary reward regression
         rf_z = [z.repeat(obs_enc.size(1), 1) for z in task_z]
