@@ -75,8 +75,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=list(tasks[:-10]),
-        eval_tasks=list(tasks[-10:]),
+        train_tasks=list(tasks[:-20]),
+        eval_tasks=list(tasks[-20:]),
         nets=[agent, task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
@@ -94,18 +94,19 @@ def main(gpu, docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=100,
+            n_tasks=120,
             randomize_tasks=True,
         ),
         algo_params=dict(
-            meta_batch=1,
+            meta_batch=16,
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=10 * max_path_length,
             num_train_steps_per_itr=1000,
             num_evals=5, # number of evals with separate task encodings
-            num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
+            num_steps_per_eval=3 * max_path_length,  # num transitions to eval on
             batch_size=256,  # to compute training grads from
+            embedding_batch_size=60,
             max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
@@ -117,17 +118,18 @@ def main(gpu, docker):
             reparameterize=True,
             use_information_bottleneck=False,  # only supports False for now
 
-            train_embedding_source='posterior_only',
+            train_embedding_source='online_exploration_trajectories',
             # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
-            eval_embedding_source='initial_pool',
+            #eval_embedding_source='online',
+            eval_embedding_source='online_exploration_trajectories',
         ),
         net_size=300,
         use_gpu=True,
         gpu_id=gpu,
     )
 
-    exp_name = 'proto-sac-point-mass-16z-TEST'
+    exp_name = 'proto-sac-16z-exp'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='point-mass', base_log_dir=log_dir)
