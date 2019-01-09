@@ -92,9 +92,9 @@ class ProtoAgent(nn.Module):
 
     def get_action(self, obs, deterministic=False):
         ''' sample action from the policy, conditioned on the task embedding '''
-        # TODO this numpy business is stupid, there's no reason to copy to the CPU
-        z = np_ify(self.z)
-        in_ = np.concatenate([obs[None], z], axis=1)
+        z = self.z
+        obs = ptu.from_numpy(obs[None])
+        in_ = torch.cat([obs, z], dim=1)
         return self.policy.get_action(in_, deterministic=deterministic)
 
     def set_num_steps_total(self, n):

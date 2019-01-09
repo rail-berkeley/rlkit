@@ -6,6 +6,7 @@ from rlkit.core.util import Wrapper
 from rlkit.policies.base import ExplorationPolicy, Policy
 from rlkit.torch.distributions import TanhNormal
 from rlkit.torch.networks import Mlp
+from rlkit.torch.core import np_ify
 
 
 LOG_SIG_MAX = 2
@@ -62,12 +63,14 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             self.log_std = np.log(std)
             assert LOG_SIG_MIN <= self.log_std <= LOG_SIG_MAX
 
-    def get_action(self, obs_np, deterministic=False):
-        actions = self.get_actions(obs_np, deterministic=deterministic)
+    def get_action(self, obs, deterministic=False):
+        actions = self.get_actions(obs, deterministic=deterministic)
         return actions[0, :], {}
 
-    def get_actions(self, obs_np, deterministic=False):
-        return self.eval_np(obs_np, deterministic=deterministic)[0]
+    @torch.no_grad()
+    def get_actions(self, obs, deterministic=False):
+        outputs = self.forward(obs, deterministic=deterministic)[0]
+        return np_ify(outputs)
 
     def forward(
             self,
