@@ -123,6 +123,7 @@ def main(gpu, docker):
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             #eval_embedding_source='online',
             eval_embedding_source='online_exploration_trajectories',
+            shuffle_task_data=True, # encoder data ordered or shuffled
         ),
         net_size=300,
         use_gpu=True,

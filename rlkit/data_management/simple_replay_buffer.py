@@ -48,8 +48,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         if self._size < self._max_replay_buffer_size:
             self._size += 1
 
-    def random_batch(self, batch_size):
-        indices = np.random.randint(0, self._size, batch_size)
+    def sample_data(self, indices):
         return dict(
             observations=self._observations[indices],
             actions=self._actions[indices],
@@ -58,16 +57,17 @@ class SimpleReplayBuffer(ReplayBuffer):
             next_observations=self._next_obs[indices],
         )
 
-    def random_padded_batch(self, batch_size):
-        '''
-        batch front-padded with zeros
-        number of zeros sampled uniformly [0, batch_size]
-        '''
-        batch = self.random_batch(batch_size)
-        num_replace = np.random.randint(0, batch_size)
-        for k in batch.keys():
-            batch[k][:num_replace] = 0
-        return batch
+    def random_batch(self, batch_size):
+        ''' batch of unordered transitions '''
+        indices = np.random.randint(0, self._size, batch_size)
+        return self.sample_data(indices)
+
+    def random_sequence(self, batch_size):
+        ''' batch of transitions in order '''
+        # TODO should it always start at beginning of episode?
+        idx = int(np.random.randint(0, self._size - batch_size, 1))
+        indices = list(range(idx, idx + batch_size))
+        return self.sample_data(indices)
 
     def num_steps_can_sample(self):
         return self._size

@@ -13,12 +13,13 @@ from rlkit.core import logger, eval_util
 
 
 class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
-    def __init__(self, *args, render_eval_paths=False, plotter=None, output_dir=None, **kwargs):
+    def __init__(self, *args, render_eval_paths=False, plotter=None, output_dir=None, recurrent=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_statistics = None
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
         self.output_dir = output_dir
+        self.recurrent = recurrent
 
     def cuda(self):
         for net in self.networks:
@@ -34,12 +35,14 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
     def get_encoding_batch(self, idx=None, eval_task=False):
         # n.b. if eval is online, training should match the distribution of context lengths
         is_online = (self.eval_embedding_source == 'online')
+        # n.b. if using sequence model for encoder, samples should be ordered
+        is_seq = (self.recurrent)
         if idx is None:
             idx = self.task_idx
         if eval_task:
-            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size, padded=is_online)
+            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size, sequence=is_seq, padded=is_online)
         else:
-            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size, padded=is_online)
+            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size, sequence=is_seq, padded=is_online)
         return np_to_pytorch_batch(batch)
 
     # TODO: this whole function might be rewritten
