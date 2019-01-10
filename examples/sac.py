@@ -11,7 +11,7 @@ from rlkit.envs.point_mass import PointEnv
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.sac.policies import TanhGaussianPolicy
-from rlkit.torch.networks import FlattenMlp
+from rlkit.torch.networks import FlattenMlp, MlpEncoder, RecurrentEncoder
 from rlkit.torch.sac.sac import ProtoSoftActorCritic
 from rlkit.torch.sac.proto import ProtoAgent
 import rlkit.torch.pytorch_util as ptu
@@ -34,7 +34,9 @@ def experiment(variant):
 
     net_size = variant['net_size']
     # start with linear task encoding
-    task_enc = FlattenMlp(
+    recurrent = variant['algo_params']['recurrent']
+    encoder_model = RecurrentEncoder if recurrent else MlpEncoder
+    task_enc = encoder_model(
             hidden_sizes=[200, 200, 200], # deeper net + higher dim space generalize better
             input_size=obs_dim + reward_dim,
             output_size=task_enc_output_dim,
@@ -107,6 +109,7 @@ def main(gpu, docker):
             num_steps_per_eval=3 * max_path_length,  # num transitions to eval on
             batch_size=256,  # to compute training grads from
             embedding_batch_size=60,
+            embedding_mini_batch_size=60,
             max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
@@ -123,14 +126,14 @@ def main(gpu, docker):
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
             #eval_embedding_source='online',
             eval_embedding_source='online_exploration_trajectories',
-            shuffle_task_data=True, # encoder data ordered or shuffled
+            recurrent=True, # recurrent or averaging encoder
         ),
         net_size=300,
         use_gpu=True,
         gpu_id=gpu,
     )
 
-    exp_name = 'proto-sac-16z-exp'
+    exp_name = 'proto-sac-16z-exp-refactor'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='point-mass', base_log_dir=log_dir)
