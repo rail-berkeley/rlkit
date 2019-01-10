@@ -122,7 +122,7 @@ def main(gpu, docker):
     exp_name = 'proto-sac-point-mass-16z-TEST'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
-    experiment_log_dir = setup_logger(exp_name, variant=variant, base_log_dir=log_dir)
+    experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='point-mass', base_log_dir=log_dir)
 
     # creates directories for pickle outputs of trajectories (point mass)
     pickle_dir = experiment_log_dir + '/eval_trajectories'

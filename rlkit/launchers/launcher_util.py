@@ -194,12 +194,12 @@ def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
     Creates and returns a unique log directory.
 
     :param exp_prefix: name of log directory
-    :param exp_id: ignored, see exp_prefix
+    :param exp_id: name of experiment category (e.g. the env)
     :return:
     """
     if base_log_dir is None:
         base_log_dir = config.LOCAL_LOG_DIR
-    log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"))
+    log_dir = osp.join(base_log_dir, exp_id, exp_prefix.replace("_", "-"))
     # don't overwrite existing data unless you're sure
     if osp.isdir(log_dir):
         click.confirm(click.style("{} already exists. Do you want to "
