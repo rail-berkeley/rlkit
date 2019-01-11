@@ -34,8 +34,7 @@ class ProtoAgent(nn.Module):
 
     def clear_z(self, num_tasks=1):
         # TODO in IB case, should be set to prior
-        self.z.new(num_tasks, self.latent_dim)
-        self.z.zero_()
+        self.z = self.z.new_full((num_tasks, self.latent_dim), 0)
         self.task_enc.reset(num_tasks) # clear hidden state in recurrent case
 
     def detach_z(self):

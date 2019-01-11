@@ -179,8 +179,7 @@ class RecurrentEncoder(FlattenMlp):
             return output
 
     def reset(self, num_tasks=1):
-        self.hidden.new(num_tasks, 1, self.hidden_dim)
-        self.hidden.zero_()
+        self.hidden = self.hidden.new_full((1, num_tasks, self.hidden_dim), 0)
 
 
 
