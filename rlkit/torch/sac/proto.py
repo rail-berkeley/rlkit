@@ -14,21 +14,16 @@ class ProtoAgent(nn.Module):
     def __init__(self,
                  latent_dim,
                  nets,
-                 reparameterize=True,
-                 use_information_bottleneck=False,
-                 det_z=False, # TODO this does nothing
-                 soft_target_tau=1e-2,
-                 reward_scale=1.0,
                  **kwargs
     ):
         super().__init__()
         self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
         self.target_vf = self.vf.copy()
-        self.reparam = reparameterize
-        self.use_ib = use_information_bottleneck
-        self.det_z = det_z
-        self.tau = soft_target_tau
-        self.reward_scale = reward_scale
+        self.recurrent = kwargs['recurrent']
+        self.reparam = kwargs['reparameterize']
+        self.use_ib = kwargs['use_information_bottleneck']
+        self.tau = kwargs['soft_target_tau']
+        self.reward_scale = kwargs['reward_scale']
 
         # initialize task embedding to zero
         # (task, latent dim)
