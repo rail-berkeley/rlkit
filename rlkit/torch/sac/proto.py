@@ -18,6 +18,7 @@ class ProtoAgent(nn.Module):
     ):
         super().__init__()
         self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
+        self.latent_dim = latent_dim
         self.target_vf = self.vf.copy()
         self.recurrent = kwargs['recurrent']
         self.reparam = kwargs['reparameterize']
@@ -31,9 +32,16 @@ class ProtoAgent(nn.Module):
         # for incremental update, must keep track of number of datapoints accumulated
         self.register_buffer('num_z', torch.zeros(1))
 
-    def clear_z(self):
+    def clear_z(self, num_tasks=1):
         # TODO in IB case, should be set to prior
+        self.z.new(num_tasks, self.latent_dim)
         self.z.zero_()
+        self.task_enc.reset(num_tasks) # clear hidden state in recurrent case
+
+    def detach_z(self):
+        self.z = self.z.detach()
+        if self.recurrent:
+            self.task_enc.hidden = self.task_enc.hidden.detach()
 
     def update_context(self, inputs):
         ''' update task embedding with a single transition '''
@@ -45,45 +53,34 @@ class ProtoAgent(nn.Module):
         data = torch.cat([o, r], dim=2)
         self.update_z(data)
 
-    def embed(self,  in_):
-        '''
-        compute latent task embedding
-
-        if using info bottleneck, embedding is sampled from a
-        gaussian distribution whose parameters are predicted
-        '''
-        z = self.z
-
-        # in_ should be (num_tasks x batch x feat)
-        t, b, f = in_.size()
-        in_ = in_.view(t * b, f)
-
-        # compute embedding per task
-        new_z = self.task_enc(in_).view(t, b, -1)
-        new_z = torch.unbind(new_z, dim=0)
-        return new_z
-
     def set_z(self, in_):
         ''' compute latent task embedding only from this input data '''
-        self.clear_z()
-        new_z = self.embed(in_)
-        new_z = [torch.mean(zs, dim=0, keepdim=True) for zs in new_z]
-        self.z = torch.cat(new_z)
+        new_z = self.task_enc(in_)
+        new_z = new_z.view(in_.size(0), -1, self.latent_dim)
+        new_z = torch.mean(new_z, dim=1)
+        self.z = new_z
 
     def update_z(self, in_):
-        ''' update current task embedding by running mean '''
+        '''
+        update current task embedding
+         - by running mean for prototypical encoder
+         - by updating hidden state for recurrent encoder
+        '''
         z = self.z
         num_z = self.num_z
 
         # TODO this only works for single task (t == 1)
-        new_z = self.embed(in_)
-        if len(new_z) != 1:
+        new_z = self.task_enc(in_)
+        if new_z.size(0) != 1:
             raise Exception('incremental update for more than 1 task not supported')
-        new_z = new_z[0] # batch x feat
-        num_updates = new_z.size(0)
-        for i in range(num_updates):
-            num_z += 1
-            z += (new_z[i][None] - z) / num_z
+        if self.recurrent:
+            z = new_z
+        else:
+            new_z = new_z[0] # batch x feat
+            num_updates = new_z.size(0)
+            for i in range(num_updates):
+                num_z += 1
+                z += (new_z[i][None] - z) / num_z
 
     def get_action(self, obs, deterministic=False):
         ''' sample action from the policy, conditioned on the task embedding '''

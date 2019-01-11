@@ -123,7 +123,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         rewards = torch.cat(rewards, dim=0)
         next_obs = torch.cat(next_obs, dim=0)
         terms = torch.cat(terms, dim=0)
-        return obs, actions, rewards, next_obs, terms
+        return [obs, actions, rewards, next_obs, terms]
 
     def prepare_encoder_data(self, obs, rewards):
         ''' prepare task data for encoding '''
@@ -136,12 +136,31 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         return task_data
 
     def _do_training(self, indices):
+        print('do training')
+        mb_size = self.embedding_mini_batch_size
+        num_updates = self.embedding_batch_size // mb_size
+
+        batch = self.sample_data(indices, encoder=True)
+
+        # zero out context and hidden encoder state
+        self.policy.clear_z(num_tasks=len(indices))
+
+        for i in range(num_updates):
+            print('do update')
+            # TODO(KR) argh so ugly
+            mini_batch = [x[:, i * mb_size: i * mb_size + mb_size, :] for x in batch]
+            obs_enc, _, rewards_enc, _, _ = mini_batch
+            self._take_step(indices, obs_enc, rewards_enc)
+
+            # stop backprop
+            self.policy.detach_z()
+
+    def _take_step(self, indices, obs_enc, rewards_enc):
 
         num_tasks = len(indices)
 
         # data is (task, batch, feat)
         obs, actions, rewards, next_obs, terms = self.sample_data(indices)
-        obs_enc, actions_enc, rewards_enc, next_obs_enc, terms_enc = self.sample_data(indices, encoder=True)
         enc_data = self.prepare_encoder_data(obs_enc, rewards_enc)
 
         # run inference in networks
@@ -149,7 +168,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # auxiliary reward prediction from encoder states
-        rewards_enc_flat = rewards_enc.view(self.embedding_batch_size * num_tasks, -1)
+        rewards_enc_flat = rewards_enc.view(self.embedding_mini_batch_size * num_tasks, -1)
         rf_loss = 1. * self.rf_criterion(r_pred, rewards_enc_flat)
         self.rf_optimizer.zero_grad()
         self.context_optimizer.zero_grad()

@@ -28,6 +28,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             num_steps_per_eval=1000,
             batch_size=1024,
             embedding_batch_size=1024,
+            embedding_mini_batch_size=1024,
             max_path_length=1000,
             discount=0.99,
             replay_buffer_size=1000000,
@@ -55,6 +56,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param num_steps_per_eval: number of transitions to sample for evaluation
         :param batch_size: size of batches used to compute RL update
         :param embedding_batch_size: size of batches used to compute embedding
+        :param embedding_mini_batch_size: size of batch used for encoder update
         :param max_path_length: max episode length
         :param discount:
         :param replay_buffer_size: max replay buffer size
@@ -78,6 +80,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.num_steps_per_eval = num_steps_per_eval
         self.batch_size = batch_size
         self.embedding_batch_size = embedding_batch_size
+        self.embedding_mini_batch_size = embedding_mini_batch_size
         self.max_path_length = max_path_length
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
