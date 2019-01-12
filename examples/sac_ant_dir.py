@@ -111,6 +111,7 @@ def main(docker):
             use_information_bottleneck=False,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
             train_embedding_source='online_exploration_trajectories',
+            dump_eval_paths=False,
         ),
         net_size=300,
         use_gpu=True,

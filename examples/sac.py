@@ -129,6 +129,7 @@ def main(gpu, docker):
             #eval_embedding_source='online',
             eval_embedding_source='online_exploration_trajectories',
             recurrent=True, # recurrent or averaging encoder
+            dump_eval_paths=False,
         ),
         net_size=300,
         use_gpu=True,

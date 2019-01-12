@@ -14,11 +14,12 @@ from rlkit.core import logger, eval_util
 
 
 class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
-    def __init__(self, *args, render_eval_paths=False, plotter=None, output_dir=None, recurrent=False, **kwargs):
+    def __init__(self, *args, render_eval_paths=False, plotter=None, dump_eval_paths=False, output_dir=None, recurrent=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_statistics = None
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
+        self.dump_eval_paths = dump_eval_paths
         self.output_dir = output_dir
         self.recurrent = recurrent
 
@@ -123,8 +124,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         dprint('Task:', idx)
         self.env.reset_task(idx)
         paths = self.obtain_eval_paths(idx, eval_task=eval_task, deterministic=True)
-        # save the paths for visualization, TODO only good for point mass
-        logger.save_extra_data(paths, path='eval_trajectories/{}-task{}-epoch{}')
+        # save the paths for visualization, only useful for point mass
+        if self.dump_eval_paths:
+            logger.save_extra_data(paths, path='eval_trajectories/{}-task{}-epoch{}')
         # TODO incorporate into proper logging
         goal = self.env._goal
         for path in paths:
@@ -140,7 +142,6 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             self._exploration_paths, stat_prefix="Exploration_task{}".format(self.task_idx),
         )) # something is wrong with these exploration paths i'm pretty sure...
         average_returns = eval_util.get_average_returns(paths)
-        # TODO: add flag for disabling individual task logging info, since it's a lot of clutter
         self.eval_statistics['AverageReturn_{}_task{}'.format(split, self.task_idx)] = average_returns
         goal = self.env._goal
         dprint('GoalPosition_{}_task'.format(split))
