@@ -4,8 +4,14 @@ Common evaluation utilities.
 
 from collections import OrderedDict
 from numbers import Number
-
+import os
 import numpy as np
+
+
+def dprint(*args):
+    # hacky, but will do for now
+    if int(os.environ['DEBUG']) == 1:
+        print(args)
 
 
 def get_generic_path_information(paths, stat_prefix=''):

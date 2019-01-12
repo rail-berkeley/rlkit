@@ -136,7 +136,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         return task_data
 
     def _do_training(self, indices):
-        print('do training')
         mb_size = self.embedding_mini_batch_size
         num_updates = self.embedding_batch_size // mb_size
 
@@ -146,7 +145,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.policy.clear_z(num_tasks=len(indices))
 
         for i in range(num_updates):
-            print('do update')
             # TODO(KR) argh so ugly
             mini_batch = [x[:, i * mb_size: i * mb_size + mb_size, :] for x in batch]
             obs_enc, _, rewards_enc, _, _ = mini_batch

@@ -2,6 +2,7 @@
 Run Prototypical Soft Actor Critic on point mass.
 
 """
+import os
 import numpy as np
 import click
 import datetime
@@ -84,7 +85,7 @@ def experiment(variant):
         **variant['algo_params']
     )
     if ptu.gpu_enabled():
-        algorithm.cuda()
+        algorithm.to()
     algorithm.train()
 
 
@@ -142,6 +143,10 @@ def main(gpu, docker):
     pickle_dir = experiment_log_dir + '/eval_trajectories'
     pathlib.Path(pickle_dir).mkdir(parents=True, exist_ok=True)
     variant['algo_params']['output_dir'] = pickle_dir
+
+    # debugging triggers a lot of printing
+    DEBUG = 0
+    os.environ['DEBUG'] = str(DEBUG)
 
     experiment(variant)
 
