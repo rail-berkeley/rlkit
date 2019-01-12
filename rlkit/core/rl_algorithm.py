@@ -228,7 +228,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 self._n_train_steps_total += 1
             gt.stamp('train')
 
-            self.training_mode(False)
+            #self.training_mode(False)
 
             # eval
             self._try_to_eval(it_)
