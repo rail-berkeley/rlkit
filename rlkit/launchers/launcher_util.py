@@ -90,7 +90,7 @@ def run_experiment_here(
         variant=None,
         exp_id=0,
         seed=None,
-        use_gpu=True,
+        use_gpu=False,
         # Logger params:
         exp_prefix="default",
         snapshot_mode='last',
@@ -438,10 +438,10 @@ def run_experiment(
         skip_wait=False,
         # ec2 settings
         sync_interval=180,
-        region='us-east-1',
+        region='us-east-2',
         instance_type=None,
         spot_price=None,
-        verbose=False,
+        verbose=True,
         num_exps_per_instance=1,
         # sss settings
         time_in_mins=None,
@@ -565,7 +565,7 @@ def run_experiment(
                 ))
             except git.exc.InvalidGitRepositoryError:
                 pass
-    except ImportError:
+    except (ImportError, UnboundLocalError):
         git_infos = None
     run_experiment_kwargs = dict(
         exp_prefix=exp_prefix,
@@ -590,10 +590,10 @@ def run_experiment(
     """
 
     if mode == 'ec2' or mode == 'gcp':
-        if not ec2_okayed and not query_yes_no(
-                "{} costs money. Are you sure you want to run?".format(mode)
-        ):
-            sys.exit(1)
+        # if not ec2_okayed and not query_yes_no(
+        #         "{} costs money. Are you sure you want to run?".format(mode)
+        # ):
+        #     sys.exit(1)
         if not gpu_ec2_okayed and use_gpu:
             if not query_yes_no(
                     "{} is more expensive with GPUs. Confirm?".format(mode)
@@ -717,6 +717,7 @@ def run_experiment(
             gpu=use_gpu,
             aws_s3_path=aws_s3_path,
             num_exps=num_exps_per_instance,
+
             **mode_kwargs
         )
     elif mode == 'gcp':
