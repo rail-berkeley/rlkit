@@ -2,15 +2,12 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1124a77b-7bb0-4258-9858-1d0cb2005b86" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/rlkit.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/rlkit.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -19,7 +16,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547408542807" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547408765523" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
     <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_reach.coverage" NAME="her_td3_gym_fetch_reach Coverage Results" MODIFIED="1547303651154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
     <SUITE FILE_PATH="coverage/rlkit$rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547271457157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
     <SUITE FILE_PATH="coverage/rlkit$pointmass_rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547298887227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
@@ -71,11 +68,11 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="129">
-                  <caret line="66" column="34" selection-start-line="66" selection-end-line="67" />
+                <state relative-caret-position="100">
+                  <caret line="66" column="34" lean-forward="true" selection-start-line="66" selection-start-column="34" selection-end-line="66" selection-end-column="34" />
                 </state>
               </provider>
             </entry>
@@ -92,11 +89,11 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="false">
+          <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1035">
-                  <caret line="83" column="76" selection-start-line="83" selection-start-column="76" selection-end-line="83" selection-end-column="76" />
+                <state relative-caret-position="251">
+                  <caret line="91" column="26" selection-start-line="91" selection-start-column="26" selection-end-line="91" selection-end-column="26" />
                   <folding>
                     <element signature="e#299#309#0" expanded="true" />
                   </folding>
@@ -153,8 +150,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/rlkit/launchers/config_template.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="216">
-                  <caret line="122" column="27" lean-forward="true" selection-start-line="122" selection-start-column="27" selection-end-line="122" selection-end-column="27" />
+                <state relative-caret-position="137">
+                  <caret line="122" column="27" selection-start-line="122" selection-start-column="27" selection-end-line="122" selection-end-column="27" />
                   <folding>
                     <element signature="e#58#67#0" expanded="true" />
                   </folding>
@@ -270,10 +267,10 @@
         <option value="$PROJECT_DIR$/rlkit/torch/pytorch_util.py" />
         <option value="$PROJECT_DIR$/examples/rig/pointmass/rig.py" />
         <option value="$PROJECT_DIR$/rlkit/launchers/config.py" />
-        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" />
         <option value="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" />
         <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
         <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" />
       </list>
     </option>
   </component>
@@ -531,12 +528,12 @@
       <workItem from="1547297073617" duration="4977000" />
       <workItem from="1547364465361" duration="1566000" />
       <workItem from="1547384497303" duration="9729000" />
-      <workItem from="1547407985360" duration="694000" />
+      <workItem from="1547407985360" duration="777000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="44582000" />
+    <option name="totallyTimeSpent" value="44665000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="2560" height="977" extended-state="0" />
@@ -836,16 +833,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1035">
-          <caret line="83" column="76" selection-start-line="83" selection-start-column="76" selection-end-line="83" selection-end-column="76" />
-          <folding>
-            <element signature="e#299#309#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/examples/rig/pointmass/rig.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1170">
@@ -944,8 +931,8 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/launchers/config_template.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="216">
-          <caret line="122" column="27" lean-forward="true" selection-start-line="122" selection-start-column="27" selection-end-line="122" selection-end-column="27" />
+        <state relative-caret-position="137">
+          <caret line="122" column="27" selection-start-line="122" selection-start-column="27" selection-end-line="122" selection-end-column="27" />
           <folding>
             <element signature="e#58#67#0" expanded="true" />
           </folding>
@@ -954,8 +941,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="129">
-          <caret line="66" column="34" selection-start-line="66" selection-end-line="67" />
+        <state relative-caret-position="100">
+          <caret line="66" column="34" lean-forward="true" selection-start-line="66" selection-start-column="34" selection-end-line="66" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="251">
+          <caret line="91" column="26" selection-start-line="91" selection-start-column="26" selection-end-line="91" selection-end-column="26" />
+          <folding>
+            <element signature="e#299#309#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
