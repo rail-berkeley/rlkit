@@ -21,16 +21,18 @@ Some implemented algorithms:
     - [example script](examples/dqn_and_double_dqn.py)
     - [DQN paper](https://arxiv.org/pdf/1509.06461.pdf)
     - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
- - Soft Actor Critic (SAC)
-    - [example script](examples/sac.py)
+ - (Twin) Soft Actor Critic (SAC)
+    - [example script](examples/tsac.py)
     - [SAC paper](https://arxiv.org/abs/1801.01290)
     - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
+    - Includes the "min of Q" method and the entropy-constrained implementation
  - Twin Delayed Deep Determinstic Policy Gradient (TD3)
     - [example script](examples/td3.py)
     - [TD3 paper](https://arxiv.org/abs/1802.09477)
- - Twin Soft Actor Critic (Twin SAC)
-    - [example script](examples/tsac.py)
-    - Combination of SAC and TD3
+ - (Non-Twin/Old) Soft Actor Critic
+    - [example script](examples/sac.py)
+    - SAC without the "min of Q" method.
+    - The canonical SAC implementation is the twin version, listed earlier.
 
 To get started, checkout the example scripts, linked above.
 
