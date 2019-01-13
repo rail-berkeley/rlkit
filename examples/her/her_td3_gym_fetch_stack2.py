@@ -91,7 +91,7 @@ if __name__ == "__main__":
     run_experiment(
         experiment,
         exp_prefix="rlkit-her_td3_gym_fetch_stack2",
-        mode='ec2',
+        mode='local_docker',
         variant=variant,
         use_gpu=False,
         spot_price=.03,
