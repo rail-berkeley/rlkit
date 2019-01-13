@@ -69,6 +69,19 @@ The Anaconda env should be enough, but this docker image addresses some of the r
 The docker image supports GPU, but it should work without a GPU.
 To use a GPU with the image, you need to have [nvidia-docker installed](https://github.com/nvidia/nvidia-docker/wiki/Installation-(version-2.0)).
 
+## Using a GPU
+You can use a GPU by calling
+```
+import rlkit.torch.pytorch_util as ptu
+ptu.set_gpu_mode(True)
+```
+before launching the scripts.
+
+If you are using `doodad` (see below), simply use the `use_gpu` flag:
+```
+run_experiment(..., use_gpu=True)
+```
+
 ## Visualizing a policy and seeing results
 During training, the results will be saved to a file called under
 ```
