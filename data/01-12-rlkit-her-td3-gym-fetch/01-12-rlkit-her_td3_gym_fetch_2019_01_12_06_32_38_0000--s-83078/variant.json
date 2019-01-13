@@ -1,0 +1,19 @@
+{
+  "algo_kwargs": {
+    "batch_size": 128,
+    "discount": 0.99,
+    "max_path_length": 50,
+    "num_epochs": 100,
+    "num_steps_per_epoch": 1000,
+    "num_steps_per_eval": 1000
+  },
+  "exp_id": "0",
+  "exp_prefix": "01-12-rlkit-her_td3_gym_fetch",
+  "instance_type": "None",
+  "replay_buffer_kwargs": {
+    "fraction_goals_env_goals": 0.0,
+    "fraction_goals_rollout_goals": 0.2,
+    "max_size": 100000
+  },
+  "seed": "83078"
+}

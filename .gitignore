@@ -3,3 +3,4 @@
 **/*.pyc
 **/*.swp
 rlkit/launchers/config.py
+rlkit_venv/

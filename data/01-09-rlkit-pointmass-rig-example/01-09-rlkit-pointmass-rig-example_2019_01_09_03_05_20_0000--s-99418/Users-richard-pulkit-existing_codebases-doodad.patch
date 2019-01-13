@@ -1,0 +1,13 @@
+diff --git a/setup.py b/setup.py
+index e69de29..6914311 100644
+--- a/setup.py
++++ b/setup.py
+@@ -0,0 +1,7 @@
++from setuptools import setup
++
++setup(name='doodad',
++    version='0.0.1',
++    description="Doodad: easy setup of AWS EC2/S3",
++    install_requires=[],
++)
+\ No newline at end of file

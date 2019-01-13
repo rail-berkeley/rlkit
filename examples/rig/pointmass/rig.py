@@ -91,7 +91,9 @@ if __name__ == "__main__":
     run_experiment(
         grill_her_td3_full_experiment,
         exp_prefix='rlkit-pointmass-rig-example',
-        mode='here_no_doodad',
+        mode='local',
+        # mode='ec2',
         variant=variant,
-        # use_gpu=True,  # Turn on if you have a GPU
+        use_gpu=True,  # Turn on if you have a GPU
+        spot_price=.3,
     )

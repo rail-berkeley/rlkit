@@ -1,0 +1,38 @@
+2019-01-12 05:12:29.814314 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] --------------------------------------  ---------------
+2019-01-12 05:12:29.814767 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/epoch                                 0
+2019-01-12 05:12:29.815098 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/Log Prob                          -6395.36
+2019-01-12 05:12:29.815341 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/KL                                   20.5434
+2019-01-12 05:12:29.815615 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/loss                               6600.79
+2019-01-12 05:12:29.815892 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Mean      0.0518008
+2019-01-12 05:12:29.816148 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Std       0.0293335
+2019-01-12 05:12:29.816403 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Max       0.09326
+2019-01-12 05:12:29.816665 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Min       0.00837854
+2019-01-12 05:12:29.816956 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Mean           0.0709772
+2019-01-12 05:12:29.817224 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Std            0.076209
+2019-01-12 05:12:29.817488 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Max            0.864606
+2019-01-12 05:12:29.817759 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Min            8.89146e-09
+2019-01-12 05:12:29.818028 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of reconstruction                 0.0191763
+2019-01-12 05:12:29.818294 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/Log Prob                           -2476.93
+2019-01-12 05:12:29.818580 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/KL                                    11.2763
+2019-01-12 05:12:29.818905 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/loss                                2589.69
+2019-01-12 05:12:29.819295 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] beta                                       10
+2019-01-12 05:12:29.819574 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] --------------------------------------  ---------------
+2019-01-12 05:13:54.732237 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] --------------------------------------  ---------------
+2019-01-12 05:13:54.733224 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/epoch                                 1
+2019-01-12 05:13:54.733417 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/Log Prob                          -2338.16
+2019-01-12 05:13:54.733586 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/KL                                    8.57634
+2019-01-12 05:13:54.733822 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] train/loss                               2423.93
+2019-01-12 05:13:54.734073 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Mean      0.0296166
+2019-01-12 05:13:54.734432 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Std       0.0230776
+2019-01-12 05:13:54.734648 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Max       0.0629999
+2019-01-12 05:13:54.734858 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE improvement over random Min       7.65976e-05
+2019-01-12 05:13:54.735018 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Mean           0.0434082
+2019-01-12 05:13:54.735273 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Std            0.0777565
+2019-01-12 05:13:54.735429 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Max            0.973984
+2019-01-12 05:13:54.735563 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of random decoding Min            1.42109e-14
+2019-01-12 05:13:54.735773 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] debug/MSE of reconstruction                 0.0137916
+2019-01-12 05:13:54.735976 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/Log Prob                           -2220.6
+2019-01-12 05:13:54.736205 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/KL                                     6.88999
+2019-01-12 05:13:54.736408 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] test/loss                                2289.5
+2019-01-12 05:13:54.736638 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] beta                                       10
+2019-01-12 05:13:54.736843 PST | [01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757] --------------------------------------  ---------------

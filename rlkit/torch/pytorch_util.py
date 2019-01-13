@@ -44,7 +44,7 @@ def fanin_init_weights_like(tensor):
 GPU wrappers
 """
 
-_use_gpu = False
+_use_gpu = True
 device = None
 
 
@@ -54,6 +54,7 @@ def set_gpu_mode(mode, gpu_id=0):
     global _gpu_id
     _gpu_id = gpu_id
     _use_gpu = mode
+    print("Set GPU. _use_gpu = " + str(_use_gpu))
     device = torch.device("cuda:" + str(gpu_id) if _use_gpu else "cpu")
 
 

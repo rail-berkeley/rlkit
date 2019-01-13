@@ -1,0 +1,114 @@
+diff --git a/environment/docker/Dockerfile b/environment/docker/Dockerfile
+index 62a952c..d34988f 100644
+--- a/environment/docker/Dockerfile
++++ b/environment/docker/Dockerfile
+@@ -2,8 +2,7 @@
+ # on hosts with GPUs.
+ # The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
+ # If updating the base image, be sure to test on GPU since it has broken in the past.
+-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+-
++FROM nvidia/cuda@sha256:4df157f2afde1cb6077a191104ab134ed4b2fd62927f27b69d788e8e79a45fa1
+ 
+ RUN apt-get update -q \
+     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+@@ -54,17 +53,12 @@ COPY ./vendor/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+ 
+ RUN apt-get update && apt-get install -y libav-tools
+ 
+-# For some reason this works despite an error showing up...
+-RUN DEBIAN_FRONTEND=noninteractive apt-get -qy install nvidia-384; exit 0
+-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-384
+-
+-RUN mkdir /root/code
+-WORKDIR /root/code
+-
+ WORKDIR /mujoco_py
+ 
+ # For atari-py
+-RUN apt-get install -y zlib1g-dev swig cmake
++RUN apt-get install -y zlib1g-dev 
++RUN apt-get install -y swig 
++RUN apt-get install -y cmake
+ 
+ # Previous versions installed from a requirements.txt, but direct pip
+ # install seems cleaner
+@@ -97,3 +91,10 @@ RUN pip install joblib==0.9.4
+ RUN pip install opencv-python==3.4.0.12
+ RUN pip install torchvision==0.2.0
+ RUN pip install sk-video==1.1.10
++RUN pip install mujoco_py
++RUN pip install matplotlib
++RUN pip install pygame
++
++WORKDIR /root/multiworld
++ADD ./multiworld .
++RUN pip install -e .
+\ No newline at end of file
+diff --git a/examples/rig/pointmass/rig.py b/examples/rig/pointmass/rig.py
+index c0681e3..efe7285 100644
+--- a/examples/rig/pointmass/rig.py
++++ b/examples/rig/pointmass/rig.py
+@@ -91,7 +91,8 @@ if __name__ == "__main__":
+     run_experiment(
+         grill_her_td3_full_experiment,
+         exp_prefix='rlkit-pointmass-rig-example',
+-        mode='here_no_doodad',
++        mode='local_docker',
+         variant=variant,
+         # use_gpu=True,  # Turn on if you have a GPU
++        spot_price=.3,
+     )
+diff --git a/examples/rig/pusher/rig.py b/examples/rig/pusher/rig.py
+index 20ad932..161e8e4 100644
+--- a/examples/rig/pusher/rig.py
++++ b/examples/rig/pusher/rig.py
+@@ -82,7 +82,7 @@ if __name__ == "__main__":
+     run_experiment(
+         grill_her_td3_full_experiment,
+         exp_prefix='rlkit-pusher-rig-example',
+-        mode='here_no_doodad',
++        mode='local_docker',
+         variant=variant,
+         # use_gpu=True,  # Turn on if you have a GPU
+     )
+diff --git a/rlkit/launchers/launcher_util.py b/rlkit/launchers/launcher_util.py
+index d50eb71..46432b8 100644
+--- a/rlkit/launchers/launcher_util.py
++++ b/rlkit/launchers/launcher_util.py
+@@ -438,10 +438,10 @@ def run_experiment(
+         skip_wait=False,
+         # ec2 settings
+         sync_interval=180,
+-        region='us-east-1',
++        region='us-east-2',
+         instance_type=None,
+         spot_price=None,
+-        verbose=False,
++        verbose=True,
+         num_exps_per_instance=1,
+         # sss settings
+         time_in_mins=None,
+@@ -590,10 +590,10 @@ def run_experiment(
+     """
+ 
+     if mode == 'ec2' or mode == 'gcp':
+-        if not ec2_okayed and not query_yes_no(
+-                "{} costs money. Are you sure you want to run?".format(mode)
+-        ):
+-            sys.exit(1)
++        # if not ec2_okayed and not query_yes_no(
++        #         "{} costs money. Are you sure you want to run?".format(mode)
++        # ):
++        #     sys.exit(1)
+         if not gpu_ec2_okayed and use_gpu:
+             if not query_yes_no(
+                     "{} is more expensive with GPUs. Confirm?".format(mode)
+@@ -717,6 +717,7 @@ def run_experiment(
+             gpu=use_gpu,
+             aws_s3_path=aws_s3_path,
+             num_exps=num_exps_per_instance,
++
+             **mode_kwargs
+         )
+     elif mode == 'gcp':

@@ -2,8 +2,7 @@
 # on hosts with GPUs.
 # The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
 # If updating the base image, be sure to test on GPU since it has broken in the past.
-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
-
+FROM nvidia/cuda@sha256:4df157f2afde1cb6077a191104ab134ed4b2fd62927f27b69d788e8e79a45fa1
 
 RUN apt-get update -q \
     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
@@ -54,17 +53,12 @@ COPY ./vendor/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
 
 RUN apt-get update && apt-get install -y libav-tools
 
-# For some reason this works despite an error showing up...
-RUN DEBIAN_FRONTEND=noninteractive apt-get -qy install nvidia-384; exit 0
-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-384
-
-RUN mkdir /root/code
-WORKDIR /root/code
-
 WORKDIR /mujoco_py
 
 # For atari-py
-RUN apt-get install -y zlib1g-dev swig cmake
+RUN apt-get install -y zlib1g-dev 
+RUN apt-get install -y swig 
+RUN apt-get install -y cmake
 
 # Previous versions installed from a requirements.txt, but direct pip
 # install seems cleaner
@@ -97,3 +91,10 @@ RUN pip install joblib==0.9.4
 RUN pip install opencv-python==3.4.0.12
 RUN pip install torchvision==0.2.0
 RUN pip install sk-video==1.1.10
+RUN pip install mujoco_py
+RUN pip install matplotlib
+RUN pip install pygame
+
+WORKDIR /root/multiworld
+ADD ./multiworld .
+RUN pip install -e .

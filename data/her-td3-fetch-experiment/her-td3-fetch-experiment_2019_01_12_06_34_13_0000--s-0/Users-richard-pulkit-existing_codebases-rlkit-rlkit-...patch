@@ -1,0 +1,124 @@
+diff --git a/environment/docker/Dockerfile b/environment/docker/Dockerfile
+index 62a952c..d34988f 100644
+--- a/environment/docker/Dockerfile
++++ b/environment/docker/Dockerfile
+@@ -2,8 +2,7 @@
+ # on hosts with GPUs.
+ # The image below is a pinned version of nvidia/cuda:9.1-cudnn7-devel-ubuntu16.04 (from Jan 2018)
+ # If updating the base image, be sure to test on GPU since it has broken in the past.
+-FROM nvidia/cuda:9.0-cudnn7-devel-ubuntu16.04
+-
++FROM nvidia/cuda@sha256:4df157f2afde1cb6077a191104ab134ed4b2fd62927f27b69d788e8e79a45fa1
+ 
+ RUN apt-get update -q \
+     && DEBIAN_FRONTEND=noninteractive apt-get install -y \
+@@ -54,17 +53,12 @@ COPY ./vendor/10_nvidia.json /usr/share/glvnd/egl_vendor.d/10_nvidia.json
+ 
+ RUN apt-get update && apt-get install -y libav-tools
+ 
+-# For some reason this works despite an error showing up...
+-RUN DEBIAN_FRONTEND=noninteractive apt-get -qy install nvidia-384; exit 0
+-ENV LD_LIBRARY_PATH ${LD_LIBRARY_PATH}:/usr/lib/nvidia-384
+-
+-RUN mkdir /root/code
+-WORKDIR /root/code
+-
+ WORKDIR /mujoco_py
+ 
+ # For atari-py
+-RUN apt-get install -y zlib1g-dev swig cmake
++RUN apt-get install -y zlib1g-dev 
++RUN apt-get install -y swig 
++RUN apt-get install -y cmake
+ 
+ # Previous versions installed from a requirements.txt, but direct pip
+ # install seems cleaner
+@@ -97,3 +91,10 @@ RUN pip install joblib==0.9.4
+ RUN pip install opencv-python==3.4.0.12
+ RUN pip install torchvision==0.2.0
+ RUN pip install sk-video==1.1.10
++RUN pip install mujoco_py
++RUN pip install matplotlib
++RUN pip install pygame
++
++WORKDIR /root/multiworld
++ADD ./multiworld .
++RUN pip install -e .
+\ No newline at end of file
+diff --git a/examples/her/her_td3_gym_fetch_reach.py b/examples/her/her_td3_gym_fetch_reach.py
+index 1e4b01a..6674a87 100644
+--- a/examples/her/her_td3_gym_fetch_reach.py
++++ b/examples/her/her_td3_gym_fetch_reach.py
+@@ -20,6 +20,7 @@ from rlkit.launchers.launcher_util import setup_logger
+ from rlkit.torch.her.her import HerTd3
+ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+ 
++from rlkit.launchers.launcher_util import run_experiment
+ 
+ def experiment(variant):
+     env = gym.make('FetchReach-v1')
+@@ -85,4 +86,12 @@ if __name__ == "__main__":
+         ),
+     )
+     setup_logger('her-td3-fetch-experiment', variant=variant)
+-    experiment(variant)
++    # run_experiment(
++    #     experiment,
++    #     exp_prefix="rlkit-her_td3_gym_fetch",
++    #     mode='local',
++    #     variant=variant,
++    #     use_gpu=False,
++    #     spot_price=.03
++    # )
++    experiment(variant)
+\ No newline at end of file
+diff --git a/examples/rig/pointmass/rig.py b/examples/rig/pointmass/rig.py
+index c0681e3..9e60469 100644
+--- a/examples/rig/pointmass/rig.py
++++ b/examples/rig/pointmass/rig.py
+@@ -91,7 +91,9 @@ if __name__ == "__main__":
+     run_experiment(
+         grill_her_td3_full_experiment,
+         exp_prefix='rlkit-pointmass-rig-example',
+-        mode='here_no_doodad',
++        mode='local',
++        # mode='ec2',
+         variant=variant,
+-        # use_gpu=True,  # Turn on if you have a GPU
++        use_gpu=True,  # Turn on if you have a GPU
++        spot_price=.3,
+     )
+diff --git a/examples/rig/pusher/rig.py b/examples/rig/pusher/rig.py
+index 20ad932..161e8e4 100644
+--- a/examples/rig/pusher/rig.py
++++ b/examples/rig/pusher/rig.py
+@@ -82,7 +82,7 @@ if __name__ == "__main__":
+     run_experiment(
+         grill_her_td3_full_experiment,
+         exp_prefix='rlkit-pusher-rig-example',
+-        mode='here_no_doodad',
++        mode='local_docker',
+         variant=variant,
+         # use_gpu=True,  # Turn on if you have a GPU
+     )
+diff --git a/rlkit/torch/pytorch_util.py b/rlkit/torch/pytorch_util.py
+index bd8c2a3..9e964cc 100644
+--- a/rlkit/torch/pytorch_util.py
++++ b/rlkit/torch/pytorch_util.py
+@@ -44,7 +44,7 @@ def fanin_init_weights_like(tensor):
+ GPU wrappers
+ """
+ 
+-_use_gpu = False
++_use_gpu = True
+ device = None
+ 
+ 
+@@ -54,6 +54,7 @@ def set_gpu_mode(mode, gpu_id=0):
+     global _gpu_id
+     _gpu_id = gpu_id
+     _use_gpu = mode
++    print("Set GPU. _use_gpu = " + str(_use_gpu))
+     device = torch.device("cuda:" + str(gpu_id) if _use_gpu else "cpu")
+ 
+ 

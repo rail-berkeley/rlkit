@@ -13,7 +13,7 @@ from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
-    GaussianAndEpislonStrategy
+    GaussianAndEpsilonStrategy
 )
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerTd3
@@ -22,7 +22,7 @@ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
 
 def experiment(variant):
     env = gym.make('SawyerReachXYZEnv-v0')
-    es = GaussianAndEpislonStrategy(
+    es = GaussianAndEpsilonStrategy(
         action_space=env.action_space,
         max_sigma=.2,
         min_sigma=.2,  # constant sigma
