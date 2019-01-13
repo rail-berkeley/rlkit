@@ -119,6 +119,7 @@ def main(gpu, docker):
             vf_lr=3E-4,
             context_lr=3e-4,
             reward_scale=100.,
+            sparse_rewards=False,
             reparameterize=True,
             use_information_bottleneck=False,  # only supports False for now
 

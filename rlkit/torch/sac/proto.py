@@ -25,6 +25,7 @@ class ProtoAgent(nn.Module):
         self.use_ib = kwargs['use_information_bottleneck']
         self.tau = kwargs['soft_target_tau']
         self.reward_scale = kwargs['reward_scale']
+        self.sparse_rewards = kwargs['sparse_rewards']
 
         # initialize task embedding to zero
         # (task, latent dim)
@@ -46,9 +47,11 @@ class ProtoAgent(nn.Module):
         ''' update task embedding with a single transition '''
         # TODO there should be one generic method for preparing data for the encoder!!!
         o, a, r, no, d = inputs
+        if self.sparse_rewards:
+            r = (r < .2).astype(float)
+        r = r / self.reward_scale
         o = ptu.from_numpy(o[None, None, ...])
         r = ptu.from_numpy(np.array([r])[None, None, ...])
-        r = r / self.reward_scale
         data = torch.cat([o, r], dim=2)
         self.update_z(data)
 

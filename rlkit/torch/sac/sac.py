@@ -95,9 +95,9 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         )
 
     def dense_to_sparse(self, rewards):
-        rewards_np = rewards.data.numpy()
-        sparse_reward = (rewards_np < .2).astype(float)
-        return Tensor(sparse_reward)
+        # TODO this is hard-coded for point mass!
+        sparse_rewards = (rewards < .2).float()
+        return sparse_rewards
 
     def sample_data(self, indices, encoder=False):
         # sample from replay buffer for each task
