@@ -438,10 +438,10 @@ def run_experiment(
         skip_wait=False,
         # ec2 settings
         sync_interval=180,
-        region='us-east-2',
+        region='us-east-1',
         instance_type=None,
         spot_price=None,
-        verbose=True,
+        verbose=False,
         num_exps_per_instance=1,
         # sss settings
         time_in_mins=None,
@@ -590,10 +590,10 @@ def run_experiment(
     """
 
     if mode == 'ec2' or mode == 'gcp':
-        # if not ec2_okayed and not query_yes_no(
-        #         "{} costs money. Are you sure you want to run?".format(mode)
-        # ):
-        #     sys.exit(1)
+        if not ec2_okayed and not query_yes_no(
+                "{} costs money. Are you sure you want to run?".format(mode)
+        ):
+            sys.exit(1)
         if not gpu_ec2_okayed and use_gpu:
             if not query_yes_no(
                     "{} is more expensive with GPUs. Confirm?".format(mode)
