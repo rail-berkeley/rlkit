@@ -291,11 +291,12 @@ def setup_logger(
                 with open(osp.join(log_dir, diff_file_name), "w") as f:
                     f.write(code_diff + '\n')
             if code_diff_staged is not None and len(code_diff_staged) > 0:
-                try:
-                    f.write(code_diff_staged + '\n')
-                except UnicodeEncodeError as e:
-                    print(e)
-                    f.write(code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1') + '\n')
+                with open(osp.join(log_dir, diff_staged_file_name), "w") as f:
+                    try:
+                        f.write(code_diff_staged + '\n')
+                    except UnicodeEncodeError as e:
+                        print(e)
+                        f.write(code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1') + '\n')
             with open(osp.join(log_dir, "git_infos.txt"), "a") as f:
                 f.write("directory: {}\n".format(directory))
                 f.write("git hash: {}\n".format(commit_hash))
