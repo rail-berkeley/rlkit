@@ -17,6 +17,7 @@ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
 
 from rlkit.launchers.launcher_util import run_experiment
 
+import gym_fetch_stack
 
 def experiment(variant):
     env = gym.make('FetchStack2-v1')
@@ -53,12 +54,18 @@ def experiment(variant):
         **variant['replay_buffer_kwargs']
     )
     algorithm = HerTd3(
-        env=env,
-        qf1=qf1,
-        qf2=qf2,
-        policy=policy,
-        exploration_policy=exploration_policy,
-        replay_buffer=replay_buffer,
+        her_kwargs={"observation_key": "observation",
+                    "desired_goal_key": "desired_goal",
+
+        },
+        td3_kwargs={
+            "env": env,
+            "qf1": qf1,
+            "qf2": qf2,
+            "policy": policy,
+            "exploration_policy": exploration_policy,
+            "replay_buffer": replay_buffer
+        },
         **variant['algo_kwargs']
     )
     algorithm.to(ptu.device)
@@ -84,8 +91,9 @@ if __name__ == "__main__":
     run_experiment(
         experiment,
         exp_prefix="rlkit-her_td3_gym_fetch_stack2",
-        mode='local',
+        mode='ec2',
         variant=variant,
         use_gpu=False,
-        spot_price=.03
+        spot_price=.03,
+        region="us-east-2"
     )

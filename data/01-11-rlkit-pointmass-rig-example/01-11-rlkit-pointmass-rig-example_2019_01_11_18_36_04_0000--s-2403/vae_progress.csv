@@ -1,2 +1,0 @@
-test/KL,debug/MSE improvement over random Min,debug/MSE of random decoding Min,train/loss,beta,debug/MSE improvement over random Mean,train/KL,test/Log Prob,debug/MSE improvement over random Std,test/loss,debug/MSE of random decoding Mean,train/Log Prob,debug/MSE of reconstruction,debug/MSE of random decoding Std,debug/MSE improvement over random Max,debug/MSE of random decoding Max,train/epoch
-9.87483406067,-0.0156356,2.27374e-13,6658.71504639,10.0,0.0338129,23.1026299,-4079.81494141,0.0270314,4178.56318359,0.0806823,-6427.68875244,0.0468694,0.0911802,0.0659896,0.955904,0

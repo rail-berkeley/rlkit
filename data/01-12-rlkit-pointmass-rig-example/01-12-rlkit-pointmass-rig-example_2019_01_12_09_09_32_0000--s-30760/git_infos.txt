@@ -1,8 +1,0 @@
-directory: /Users/richard/pulkit/existing_codebases/rlkit/rlkit/..
-git hash: 97764b1cf15470056f3dc6ce85cf74441d2666c5
-git branch name: master
-
-directory: /Users/richard/pulkit/existing_codebases/doodad
-git hash: b0e9127ae7d04209d446ce518ae76b4696cc955e
-git branch name: master
-

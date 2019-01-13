@@ -1,1 +1,0 @@
-/Users/richard/pulkit/existing_codebases/rlkit/examples/rig/pointmass/rig.py

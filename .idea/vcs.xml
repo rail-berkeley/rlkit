@@ -3,5 +3,7 @@
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/environment/docker/multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/docker_fetchstack/multiworld" vcs="Git" />
   </component>
 </project>

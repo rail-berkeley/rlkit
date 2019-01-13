@@ -1,0 +1,843 @@
+diff --git a/.idea/vcs.xml b/.idea/vcs.xml
+index baf37aa..9e68525 100644
+--- a/.idea/vcs.xml
++++ b/.idea/vcs.xml
+@@ -3,5 +3,7 @@
+   <component name="VcsDirectoryMappings">
+     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+     <mapping directory="$PROJECT_DIR$/environment/docker/multiworld" vcs="Git" />
++    <mapping directory="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" vcs="Git" />
++    <mapping directory="$PROJECT_DIR$/environment/docker_fetchstack/multiworld" vcs="Git" />
+   </component>
+ </project>
+\ No newline at end of file
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+index 3acb2db..850c8b8 100644
+--- a/.idea/workspace.xml
++++ b/.idea/workspace.xml
+@@ -2,6 +2,202 @@
+ <project version="4">
+   <component name="ChangeListManager">
+     <list default="true" id="1124a77b-7bb0-4258-9858-1d0cb2005b86" name="Default Changelist" comment="">
++      <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/Users-richard-pulkit-existing_codebases-doodad.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/params.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/r0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/s0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-09-rlkit-pointmass-rig-example/01-09-rlkit-pointmass-rig-example_2019_01_09_03_05_20_0000--s-99418/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/Users-richard-pulkit-existing_codebases-doodad.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/params.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/r0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/s0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-11-rlkit-pointmass-rig-example/01-11-rlkit-pointmass-rig-example_2019_01_11_18_36_04_0000--s-2403/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-her-td3-gym-fetch/01-12-rlkit-her_td3_gym_fetch_2019_01_12_06_32_38_0000--s-83078/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/Users-richard-pulkit-existing_codebases-rlkit-rlkit-.._staged.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/params.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/r0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/s0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_11_11_0000--s-78757/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_05_16_58_0000--s-85412/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/Users-richard-pulkit-existing_codebases-doodad.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/Users-richard-pulkit-existing_codebases-rlkit-rlkit-.._staged.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/params.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r10.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r100.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r15.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r20.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r25.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r30.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r35.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r40.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r45.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r5.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r50.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r55.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r60.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r65.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r70.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r75.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r80.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r85.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r90.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/r95.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s10.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s100.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s15.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s20.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s25.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s30.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s35.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s40.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s45.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s5.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s50.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s55.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s60.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s65.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s70.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s75.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s80.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s85.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s90.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/s95.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/vae.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/video_0_env.mp4" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/video_0_vae.mp4" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/video_50_env.mp4" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_09_09_32_0000--s-30760/video_50_vae.mp4" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/Users-richard-pulkit-existing_codebases-rlkit-rlkit-.._staged.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/experiment.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/extra_data.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/params.pkl" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r10.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r15.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r20.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r25.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r30.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r35.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r40.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r45.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r5.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r50.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r55.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r60.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r65.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/r70.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s0.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s10.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s15.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s20.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s25.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s30.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s35.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s40.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s45.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s5.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s50.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s55.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s60.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s65.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/s70.png" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/script_name.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/vae_progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/01-12-rlkit-pointmass-rig-example/01-12-rlkit-pointmass-rig-example_2019_01_12_12_18_26_0000--s-4996/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-.._staged.patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_11_22_26_56_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_37_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_37_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_37_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_37_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_37_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_45_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_45_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_45_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_45_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_30_45_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_31_02_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_31_02_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_31_02_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_31_02_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_31_02_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_32_38_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_32_38_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_32_38_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_32_38_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_32_38_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_34_13_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_34_13_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_34_13_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_34_13_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_12_06_34_13_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_13_08_11_16_0000--s-0/Users-richard-pulkit-existing_codebases-rlkit-rlkit-...patch" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_13_08_11_16_0000--s-0/debug.log" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_13_08_11_16_0000--s-0/git_infos.txt" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_13_08_11_16_0000--s-0/progress.csv" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/data/her-td3-fetch-experiment/her-td3-fetch-experiment_2019_01_13_08_11_16_0000--s-0/variant.json" beforeDir="false" />
++      <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
++      <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" afterDir="false" />
+     </list>
+@@ -12,7 +208,7 @@
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+   <component name="CoverageDataManager">
+-    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547395874600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
++    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547404411633" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+     <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_reach.coverage" NAME="her_td3_gym_fetch_reach Coverage Results" MODIFIED="1547303651154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
+     <SUITE FILE_PATH="coverage/rlkit$rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547271457157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
+     <SUITE FILE_PATH="coverage/rlkit$pointmass_rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547298887227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
+@@ -22,21 +218,24 @@
+       <split-first>
+         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="285">
+-                  <caret line="19" column="38" selection-start-line="19" selection-start-column="35" selection-end-line="19" selection-end-column="38" />
++                <state relative-caret-position="825">
++                  <caret line="56" column="49" selection-start-line="56" selection-start-column="49" selection-end-line="56" selection-end-column="49" />
++                  <folding>
++                    <element signature="e#0#12#0" expanded="true" />
++                  </folding>
+                 </state>
+               </provider>
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="825">
+-                  <caret line="56" column="49" selection-start-line="56" selection-start-column="49" selection-end-line="56" selection-end-column="49" />
++                <state relative-caret-position="242">
++                  <caret line="339" column="22" selection-start-line="339" selection-start-column="22" selection-end-line="339" selection-end-column="22" />
+                   <folding>
+-                    <element signature="e#0#12#0" expanded="true" />
++                    <element signature="e#0#21#0" expanded="true" />
+                   </folding>
+                 </state>
+               </provider>
+@@ -73,11 +272,11 @@
+               </provider>
+             </entry>
+           </file>
+-          <file pinned="false" current-in-tab="true">
++          <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="321">
+-                  <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
++                <state relative-caret-position="77">
++                  <caret line="213" column="21" selection-start-line="213" selection-start-column="21" selection-end-line="213" selection-end-column="21" />
+                   <folding>
+                     <element signature="e#0#15#0" expanded="true" />
+                   </folding>
+@@ -85,11 +284,11 @@
+               </provider>
+             </entry>
+           </file>
+-          <file pinned="false" current-in-tab="false">
++          <file pinned="false" current-in-tab="true">
+             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="515">
+-                  <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
++                <state relative-caret-position="335">
++                  <caret line="83" column="76" selection-start-line="83" selection-start-column="76" selection-end-line="83" selection-end-column="76" />
+                   <folding>
+                     <element signature="e#299#309#0" expanded="true" />
+                   </folding>
+@@ -98,15 +297,6 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
+-              <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="1305">
+-                  <caret line="91" selection-start-line="91" selection-end-line="91" />
+-                </state>
+-              </provider>
+-            </entry>
+-          </file>
+-          <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/examples/rig/pointmass/rig.py">
+               <provider selected="true" editor-type-id="text-editor">
+                 <state relative-caret-position="275">
+@@ -119,12 +309,12 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/arg_parse.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="735">
+-                  <caret line="52" column="40" selection-start-line="52" selection-start-column="40" selection-end-line="52" selection-end-column="40" />
++                <state relative-caret-position="219">
++                  <caret line="147" column="35" selection-start-line="147" selection-start-column="35" selection-end-line="147" selection-end-column="35" />
+                   <folding>
+-                    <element signature="e#0#13#0" expanded="true" />
++                    <element signature="e#0#18#0" expanded="true" />
+                   </folding>
+                 </state>
+               </provider>
+@@ -137,8 +327,8 @@
+           <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="79">
+-                  <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
++                <state relative-caret-position="423">
++                  <caret line="69" column="1" selection-start-line="69" selection-start-column="1" selection-end-line="69" selection-end-column="1" />
+                 </state>
+               </provider>
+             </entry>
+@@ -146,8 +336,8 @@
+           <file pinned="false" current-in-tab="true">
+             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="515">
+-                  <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
++                <state relative-caret-position="455">
++                  <caret line="93" column="17" selection-start-line="93" selection-start-column="14" selection-end-line="93" selection-end-column="17" />
+                   <folding>
+                     <element signature="e#0#10#0" expanded="true" />
+                   </folding>
+@@ -156,34 +346,31 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
++            <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="345">
+-                  <caret line="23" selection-start-line="23" selection-end-line="23" />
+-                  <folding>
+-                    <element signature="e#0#13#0" expanded="true" />
+-                  </folding>
++                <state relative-caret-position="255">
++                  <caret line="17" selection-start-line="17" selection-end-line="17" />
+                 </state>
+               </provider>
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/base.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="-54">
+-                  <caret line="35" column="6" selection-start-line="35" selection-start-column="6" selection-end-line="35" selection-end-column="6" />
++                <state relative-caret-position="289">
++                  <caret line="204" column="34" selection-start-line="204" selection-start-column="30" selection-end-line="204" selection-end-column="34" />
++                  <folding>
++                    <element signature="e#0#10#0" expanded="true" />
++                  </folding>
+                 </state>
+               </provider>
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="1860">
+-                  <caret line="135" column="22" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="22" />
+-                  <folding>
+-                    <element signature="e#0#18#0" expanded="true" />
+-                  </folding>
++                <state relative-caret-position="165">
++                  <caret line="11" column="28" selection-start-line="11" selection-start-column="28" selection-end-line="11" selection-end-column="28" />
+                 </state>
+               </provider>
+             </entry>
+@@ -200,8 +387,8 @@
+           <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="705">
+-                  <caret line="58" column="22" selection-start-line="58" selection-start-column="16" selection-end-line="58" selection-end-column="22" />
++                <state relative-caret-position="-110">
++                  <caret line="23" column="37" selection-start-line="23" selection-start-column="20" selection-end-line="23" selection-end-column="37" />
+                   <folding>
+                     <element signature="e#299#309#0" expanded="true" />
+                   </folding>
+@@ -222,13 +409,6 @@
+   </component>
+   <component name="FindInProjectRecents">
+     <findStrings>
+-      <find>s3_base</find>
+-      <find>s3_log</find>
+-      <find>def launch</find>
+-      <find>AWS_S3_</find>
+-      <find>docker</find>
+-      <find>self.docker_image</find>
+-      <find>mode == 'local'</find>
+       <find>'local'</find>
+       <find>rlkit_gpu</find>
+       <find>DOCKER</find>
+@@ -252,6 +432,13 @@
+       <find>ptu</find>
+       <find>env</find>
+       <find>Point2DWallEnv</find>
++      <find>achieved</find>
++      <find>print(</find>
++      <find>:CPA:</find>
++      <find>LOCAL_</find>
++      <find>LOCAL_LOG_DIR</find>
++      <find>train_online</find>
++      <find>multiworld</find>
+     </findStrings>
+   </component>
+   <component name="Git.Settings">
+@@ -268,8 +455,8 @@
+         <option value="$PROJECT_DIR$/rlkit/launchers/config.py" />
+         <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" />
+         <option value="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" />
+-        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+         <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
++        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+       </list>
+     </option>
+   </component>
+@@ -294,6 +481,17 @@
+             <path>
+               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+               <item name="rlkit" type="462c0819:PsiDirectoryNode" />
++              <item name="data" type="462c0819:PsiDirectoryNode" />
++            </path>
++            <path>
++              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
++              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
++              <item name="data" type="462c0819:PsiDirectoryNode" />
++              <item name="01-13-rlkit-her-td3-gym-fetch-stack2" type="462c0819:PsiDirectoryNode" />
++            </path>
++            <path>
++              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
++              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+               <item name="docs" type="462c0819:PsiDirectoryNode" />
+             </path>
+             <path>
+@@ -424,7 +622,7 @@
+         <env name="PYTHONUNBUFFERED" value="1" />
+       </envs>
+       <option name="SDK_HOME" value="" />
+-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/her" />
++      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
+       <option name="IS_MODULE_SDK" value="true" />
+       <option name="ADD_CONTENT_ROOTS" value="true" />
+       <option name="ADD_SOURCE_ROOTS" value="true" />
+@@ -504,32 +702,31 @@
+       <workItem from="1547281214890" duration="10868000" />
+       <workItem from="1547297073617" duration="4977000" />
+       <workItem from="1547364465361" duration="1566000" />
+-      <workItem from="1547384497303" duration="3158000" />
++      <workItem from="1547384497303" duration="8690000" />
+     </task>
+     <servers />
+   </component>
+   <component name="TimeTrackingManager">
+-    <option name="totallyTimeSpent" value="36295000" />
++    <option name="totallyTimeSpent" value="41827000" />
+   </component>
+   <component name="ToolWindowManager">
+     <frame x="0" y="23" width="2560" height="977" extended-state="0" />
+-    <editor active="true" />
+     <layout>
+-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.111199364" />
++      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.29189834" />
+       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+       <window_info id="Favorites" order="2" side_tool="true" />
+       <window_info anchor="bottom" id="Message" order="0" />
+-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49928468" weight="0.32765958" />
+-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6449563" visible="true" weight="0.259887" />
+-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4985694" weight="0.26666668" />
++      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4980143" weight="0.32655367" />
++      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.6425735" visible="true" weight="0.259887" />
++      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.8482923" weight="0.53672314" />
+       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+       <window_info anchor="bottom" id="TODO" order="6" />
+       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.49960285" weight="0.3299435" />
+       <window_info anchor="bottom" id="Version Control" order="8" />
+       <window_info anchor="bottom" id="Database Changes" order="9" />
+-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.35504368" side_tool="true" visible="true" weight="0.259887" />
+-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4992057" weight="0.32768363" />
++      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.35742652" side_tool="true" visible="true" weight="0.259887" />
++      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4988086" weight="0.32768363" />
+       <window_info anchor="bottom" id="Python Console" order="12" />
+       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+@@ -579,6 +776,16 @@
+           <line>48</line>
+           <option name="timeStamp" value="25" />
+         </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py</url>
++          <line>155</line>
++          <option name="timeStamp" value="30" />
++        </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py</url>
++          <line>295</line>
++          <option name="timeStamp" value="31" />
++        </line-breakpoint>
+       </breakpoints>
+     </breakpoint-manager>
+     <watches-manager>
+@@ -590,37 +797,47 @@
+   <component name="debuggerHistoryManager">
+     <expressions id="evaluateCodeFragment">
+       <expression>
+-        <expression-string>args[&quot;run_experiment_kwargs&quot;]</expression-string>
++        <expression-string>code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1')</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>args.keys()</expression-string>
++        <expression-string>code_diff_staged.encode('utf-8', 'surrogateescape').decode('utf-8')</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>args</expression-string>
++        <expression-string>code_diff_staged</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>type(args)</expression-string>
++        <expression-string>git_infos</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>print(args)</expression-string>
++        <expression-string>args[&quot;run_experiment_kwargs&quot;]</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>config</expression-string>
++        <expression-string>args.keys()</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+       <expression>
+-        <expression-string>self.aws_s3_path</expression-string>
++        <expression-string>args</expression-string>
++        <language-id>Python</language-id>
++        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
++      </expression>
++      <expression>
++        <expression-string>type(args)</expression-string>
++        <language-id>Python</language-id>
++        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
++      </expression>
++      <expression>
++        <expression-string>print(args)</expression-string>
+         <language-id>Python</language-id>
+         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+       </expression>
+@@ -715,13 +932,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="285">
+-          <caret line="19" column="38" selection-start-line="19" selection-start-column="35" selection-end-line="19" selection-end-column="38" />
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="825">
+@@ -750,13 +960,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="1305">
+-          <caret line="91" selection-start-line="91" selection-end-line="91" />
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/../doodad/doodad/arg_parse.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="735">
+@@ -767,16 +970,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="1860">
+-          <caret line="135" column="22" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="22" />
+-          <folding>
+-            <element signature="e#0#18#0" expanded="true" />
+-          </folding>
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/torch/td3/td3.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="45">
+@@ -784,16 +977,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="705">
+-          <caret line="58" column="22" selection-start-line="58" selection-start-column="16" selection-end-line="58" selection-end-column="22" />
+-          <folding>
+-            <element signature="e#299#309#0" expanded="true" />
+-          </folding>
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/scripts/run_experiment_from_doodad.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="15">
+@@ -814,6 +997,34 @@
+         </state>
+       </provider>
+     </entry>
++    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="195">
++          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="515">
++          <caret line="91" selection-start-line="91" selection-end-line="91" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="165">
++          <caret line="11" column="28" selection-start-line="11" selection-start-column="28" selection-end-line="11" selection-end-column="28" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/state_based_goal_experiments.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="182">
++          <caret line="83" column="16" selection-start-line="83" selection-start-column="16" selection-end-line="83" selection-end-column="16" />
++        </state>
++      </provider>
++    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/base.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="-54">
+@@ -831,46 +1042,86 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="79">
+-          <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
++        <state relative-caret-position="242">
++          <caret line="339" column="22" selection-start-line="339" selection-start-column="22" selection-end-line="339" selection-end-column="22" />
++          <folding>
++            <element signature="e#0#21#0" expanded="true" />
++          </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
++    <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="195">
+-          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
++        <state relative-caret-position="219">
++          <caret line="147" column="35" selection-start-line="147" selection-start-column="35" selection-end-line="147" selection-end-column="35" />
++          <folding>
++            <element signature="e#0#18#0" expanded="true" />
++          </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
++    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="515">
+-          <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
++        <state relative-caret-position="255">
++          <caret line="17" selection-start-line="17" selection-end-line="17" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="77">
++          <caret line="213" column="21" selection-start-line="213" selection-start-column="21" selection-end-line="213" selection-end-column="21" />
++          <folding>
++            <element signature="e#0#15#0" expanded="true" />
++          </folding>
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="289">
++          <caret line="204" column="34" selection-start-line="204" selection-start-column="30" selection-end-line="204" selection-end-column="34" />
+           <folding>
+             <element signature="e#0#10#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+     </entry>
++    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="-110">
++          <caret line="23" column="37" selection-start-line="23" selection-start-column="20" selection-end-line="23" selection-end-column="37" />
++          <folding>
++            <element signature="e#299#309#0" expanded="true" />
++          </folding>
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="423">
++          <caret line="69" column="1" selection-start-line="69" selection-start-column="1" selection-end-line="69" selection-end-column="1" />
++        </state>
++      </provider>
++    </entry>
+     <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="515">
+-          <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
++        <state relative-caret-position="335">
++          <caret line="83" column="76" selection-start-line="83" selection-start-column="76" selection-end-line="83" selection-end-column="76" />
+           <folding>
+             <element signature="e#299#309#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
++    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="321">
+-          <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
++        <state relative-caret-position="455">
++          <caret line="93" column="17" selection-start-line="93" selection-start-column="14" selection-end-line="93" selection-end-column="17" />
+           <folding>
+-            <element signature="e#0#15#0" expanded="true" />
++            <element signature="e#0#10#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+diff --git a/examples/her/her_td3_gym_fetch_stack2.py b/examples/her/her_td3_gym_fetch_stack2.py
+index e4d2a18..e49e79b 100644
+--- a/examples/her/her_td3_gym_fetch_stack2.py
++++ b/examples/her/her_td3_gym_fetch_stack2.py
+@@ -17,6 +17,7 @@ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+ 
+ from rlkit.launchers.launcher_util import run_experiment
+ 
++import gym_fetch_stack
+ 
+ def experiment(variant):
+     env = gym.make('FetchStack2-v1')
+@@ -53,12 +54,18 @@ def experiment(variant):
+         **variant['replay_buffer_kwargs']
+     )
+     algorithm = HerTd3(
+-        env=env,
+-        qf1=qf1,
+-        qf2=qf2,
+-        policy=policy,
+-        exploration_policy=exploration_policy,
+-        replay_buffer=replay_buffer,
++        her_kwargs={"observation_key": "observation",
++                    "desired_goal_key": "desired_goal",
++
++        },
++        td3_kwargs={
++            "env": env,
++            "qf1": qf1,
++            "qf2": qf2,
++            "policy": policy,
++            "exploration_policy": exploration_policy,
++            "replay_buffer": replay_buffer
++        },
+         **variant['algo_kwargs']
+     )
+     algorithm.to(ptu.device)
+@@ -84,7 +91,7 @@ if __name__ == "__main__":
+     run_experiment(
+         experiment,
+         exp_prefix="rlkit-her_td3_gym_fetch_stack2",
+-        mode='local',
++        mode='ec2',
+         variant=variant,
+         use_gpu=False,
+         spot_price=.03
+diff --git a/rlkit/launchers/launcher_util.py b/rlkit/launchers/launcher_util.py
+index f08745f..376ba94 100644
+--- a/rlkit/launchers/launcher_util.py
++++ b/rlkit/launchers/launcher_util.py
+@@ -292,7 +292,10 @@ def setup_logger(
+                     f.write(code_diff + '\n')
+             if code_diff_staged is not None and len(code_diff_staged) > 0:
+                 with open(osp.join(log_dir, diff_staged_file_name), "w") as f:
+-                    f.write(code_diff_staged + '\n')
++                    try:
++                        f.write(code_diff_staged + '\n')
++                    except UnicodeEncodeError as e:
++                        f.write(code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1') + '\n')
+             with open(osp.join(log_dir, "git_infos.txt"), "a") as f:
+                 f.write("directory: {}\n".format(directory))
+                 f.write("git hash: {}\n".format(commit_hash))

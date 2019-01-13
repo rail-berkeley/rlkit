@@ -1,0 +1,526 @@
+diff --git a/.idea/workspace.xml b/.idea/workspace.xml
+index 3acb2db..dea8b40 100644
+--- a/.idea/workspace.xml
++++ b/.idea/workspace.xml
+@@ -2,8 +2,8 @@
+ <project version="4">
+   <component name="ChangeListManager">
+     <list default="true" id="1124a77b-7bb0-4258-9858-1d0cb2005b86" name="Default Changelist" comment="">
++      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+       <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" afterDir="false" />
+     </list>
+     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
+     <option name="SHOW_DIALOG" value="false" />
+@@ -12,7 +12,7 @@
+     <option name="LAST_RESOLUTION" value="IGNORE" />
+   </component>
+   <component name="CoverageDataManager">
+-    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547395874600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
++    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547399098466" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
+     <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_reach.coverage" NAME="her_td3_gym_fetch_reach Coverage Results" MODIFIED="1547303651154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
+     <SUITE FILE_PATH="coverage/rlkit$rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547271457157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
+     <SUITE FILE_PATH="coverage/rlkit$pointmass_rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547298887227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
+@@ -22,21 +22,24 @@
+       <split-first>
+         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="285">
+-                  <caret line="19" column="38" selection-start-line="19" selection-start-column="35" selection-end-line="19" selection-end-column="38" />
++                <state relative-caret-position="825">
++                  <caret line="56" column="49" selection-start-line="56" selection-start-column="49" selection-end-line="56" selection-end-column="49" />
++                  <folding>
++                    <element signature="e#0#12#0" expanded="true" />
++                  </folding>
+                 </state>
+               </provider>
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="825">
+-                  <caret line="56" column="49" selection-start-line="56" selection-start-column="49" selection-end-line="56" selection-end-column="49" />
++                <state relative-caret-position="242">
++                  <caret line="339" column="22" selection-start-line="339" selection-start-column="22" selection-end-line="339" selection-end-column="22" />
+                   <folding>
+-                    <element signature="e#0#12#0" expanded="true" />
++                    <element signature="e#0#21#0" expanded="true" />
+                   </folding>
+                 </state>
+               </provider>
+@@ -76,8 +79,8 @@
+           <file pinned="false" current-in-tab="true">
+             <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="321">
+-                  <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
++                <state relative-caret-position="199">
++                  <caret line="584" selection-start-line="584" selection-end-line="584" />
+                   <folding>
+                     <element signature="e#0#15#0" expanded="true" />
+                   </folding>
+@@ -98,15 +101,6 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
+-              <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="1305">
+-                  <caret line="91" selection-start-line="91" selection-end-line="91" />
+-                </state>
+-              </provider>
+-            </entry>
+-          </file>
+-          <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/examples/rig/pointmass/rig.py">
+               <provider selected="true" editor-type-id="text-editor">
+                 <state relative-caret-position="275">
+@@ -119,12 +113,12 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/arg_parse.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="735">
+-                  <caret line="52" column="40" selection-start-line="52" selection-start-column="40" selection-end-line="52" selection-end-column="40" />
++                <state relative-caret-position="219">
++                  <caret line="147" column="35" selection-start-line="147" selection-start-column="35" selection-end-line="147" selection-end-column="35" />
+                   <folding>
+-                    <element signature="e#0#13#0" expanded="true" />
++                    <element signature="e#0#18#0" expanded="true" />
+                   </folding>
+                 </state>
+               </provider>
+@@ -137,17 +131,17 @@
+           <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="79">
+-                  <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
++                <state relative-caret-position="180">
++                  <caret line="14" column="13" selection-start-line="14" selection-end-line="14" selection-end-column="13" />
+                 </state>
+               </provider>
+             </entry>
+           </file>
+-          <file pinned="false" current-in-tab="true">
++          <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="515">
+-                  <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
++                <state relative-caret-position="119">
++                  <caret line="71" selection-start-line="71" selection-end-line="71" />
+                   <folding>
+                     <element signature="e#0#10#0" expanded="true" />
+                   </folding>
+@@ -156,34 +150,31 @@
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
++            <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="345">
+-                  <caret line="23" selection-start-line="23" selection-end-line="23" />
+-                  <folding>
+-                    <element signature="e#0#13#0" expanded="true" />
+-                  </folding>
++                <state relative-caret-position="255">
++                  <caret line="17" selection-start-line="17" selection-end-line="17" />
+                 </state>
+               </provider>
+             </entry>
+           </file>
+-          <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/base.py">
++          <file pinned="false" current-in-tab="true">
++            <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="-54">
+-                  <caret line="35" column="6" selection-start-line="35" selection-start-column="6" selection-end-line="35" selection-end-column="6" />
++                <state relative-caret-position="127">
++                  <caret line="197" column="8" selection-start-line="197" selection-start-column="8" selection-end-line="197" selection-end-column="8" />
++                  <folding>
++                    <element signature="e#0#10#0" expanded="true" />
++                  </folding>
+                 </state>
+               </provider>
+             </entry>
+           </file>
+           <file pinned="false" current-in-tab="false">
+-            <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
++            <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="1860">
+-                  <caret line="135" column="22" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="22" />
+-                  <folding>
+-                    <element signature="e#0#18#0" expanded="true" />
+-                  </folding>
++                <state relative-caret-position="165">
++                  <caret line="11" column="28" selection-start-line="11" selection-start-column="28" selection-end-line="11" selection-end-column="28" />
+                 </state>
+               </provider>
+             </entry>
+@@ -200,8 +191,8 @@
+           <file pinned="false" current-in-tab="false">
+             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
+               <provider selected="true" editor-type-id="text-editor">
+-                <state relative-caret-position="705">
+-                  <caret line="58" column="22" selection-start-line="58" selection-start-column="16" selection-end-line="58" selection-end-column="22" />
++                <state>
++                  <caret column="3" selection-start-column="3" selection-end-column="3" />
+                   <folding>
+                     <element signature="e#299#309#0" expanded="true" />
+                   </folding>
+@@ -222,12 +213,6 @@
+   </component>
+   <component name="FindInProjectRecents">
+     <findStrings>
+-      <find>s3_base</find>
+-      <find>s3_log</find>
+-      <find>def launch</find>
+-      <find>AWS_S3_</find>
+-      <find>docker</find>
+-      <find>self.docker_image</find>
+       <find>mode == 'local'</find>
+       <find>'local'</find>
+       <find>rlkit_gpu</find>
+@@ -252,6 +237,12 @@
+       <find>ptu</find>
+       <find>env</find>
+       <find>Point2DWallEnv</find>
++      <find>achieved</find>
++      <find>print(</find>
++      <find>:CPA:</find>
++      <find>LOCAL_</find>
++      <find>LOCAL_LOG_DIR</find>
++      <find>train_online</find>
+     </findStrings>
+   </component>
+   <component name="Git.Settings">
+@@ -268,8 +259,8 @@
+         <option value="$PROJECT_DIR$/rlkit/launchers/config.py" />
+         <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" />
+         <option value="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" />
+-        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+         <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
++        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+       </list>
+     </option>
+   </component>
+@@ -294,6 +285,17 @@
+             <path>
+               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+               <item name="rlkit" type="462c0819:PsiDirectoryNode" />
++              <item name="data" type="462c0819:PsiDirectoryNode" />
++            </path>
++            <path>
++              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
++              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
++              <item name="data" type="462c0819:PsiDirectoryNode" />
++              <item name="01-13-rlkit-her-td3-gym-fetch-stack2" type="462c0819:PsiDirectoryNode" />
++            </path>
++            <path>
++              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
++              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+               <item name="docs" type="462c0819:PsiDirectoryNode" />
+             </path>
+             <path>
+@@ -504,32 +506,32 @@
+       <workItem from="1547281214890" duration="10868000" />
+       <workItem from="1547297073617" duration="4977000" />
+       <workItem from="1547364465361" duration="1566000" />
+-      <workItem from="1547384497303" duration="3158000" />
++      <workItem from="1547384497303" duration="5578000" />
+     </task>
+     <servers />
+   </component>
+   <component name="TimeTrackingManager">
+-    <option name="totallyTimeSpent" value="36295000" />
++    <option name="totallyTimeSpent" value="38715000" />
+   </component>
+   <component name="ToolWindowManager">
+     <frame x="0" y="23" width="2560" height="977" extended-state="0" />
+     <editor active="true" />
+     <layout>
+-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.111199364" />
++      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.14813344" />
+       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
+       <window_info id="Favorites" order="2" side_tool="true" />
+       <window_info anchor="bottom" id="Message" order="0" />
+-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49928468" weight="0.32765958" />
+-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6449563" visible="true" weight="0.259887" />
+-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4985694" weight="0.26666668" />
++      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4980143" weight="0.32655367" />
++      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.64336777" weight="0.259887" />
++      <window_info active="true" anchor="bottom" id="Debug" order="3" sideWeight="0.49761716" visible="true" weight="0.26666668" />
+       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
+       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
+       <window_info anchor="bottom" id="TODO" order="6" />
+       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.49960285" weight="0.3299435" />
+       <window_info anchor="bottom" id="Version Control" order="8" />
+       <window_info anchor="bottom" id="Database Changes" order="9" />
+-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.35504368" side_tool="true" visible="true" weight="0.259887" />
+-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4992057" weight="0.32768363" />
++      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5023828" side_tool="true" visible="true" weight="0.26666668" />
++      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4988086" weight="0.32768363" />
+       <window_info anchor="bottom" id="Python Console" order="12" />
+       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
+       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
+@@ -579,6 +581,11 @@
+           <line>48</line>
+           <option name="timeStamp" value="25" />
+         </line-breakpoint>
++        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
++          <url>file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py</url>
++          <line>155</line>
++          <option name="timeStamp" value="30" />
++        </line-breakpoint>
+       </breakpoints>
+     </breakpoint-manager>
+     <watches-manager>
+@@ -715,13 +722,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="285">
+-          <caret line="19" column="38" selection-start-line="19" selection-start-column="35" selection-end-line="19" selection-end-column="38" />
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="825">
+@@ -750,13 +750,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="1305">
+-          <caret line="91" selection-start-line="91" selection-end-line="91" />
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/../doodad/doodad/arg_parse.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="735">
+@@ -767,16 +760,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="1860">
+-          <caret line="135" column="22" selection-start-line="135" selection-start-column="12" selection-end-line="135" selection-end-column="22" />
+-          <folding>
+-            <element signature="e#0#18#0" expanded="true" />
+-          </folding>
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/torch/td3/td3.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="45">
+@@ -784,16 +767,6 @@
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
+-      <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="705">
+-          <caret line="58" column="22" selection-start-line="58" selection-start-column="16" selection-end-line="58" selection-end-column="22" />
+-          <folding>
+-            <element signature="e#299#309#0" expanded="true" />
+-          </folding>
+-        </state>
+-      </provider>
+-    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/scripts/run_experiment_from_doodad.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="15">
+@@ -814,6 +787,44 @@
+         </state>
+       </provider>
+     </entry>
++    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="195">
++          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="515">
++          <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
++          <folding>
++            <element signature="e#299#309#0" expanded="true" />
++          </folding>
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="515">
++          <caret line="91" selection-start-line="91" selection-end-line="91" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="165">
++          <caret line="11" column="28" selection-start-line="11" selection-start-column="28" selection-end-line="11" selection-end-column="28" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/state_based_goal_experiments.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="182">
++          <caret line="83" column="16" selection-start-line="83" selection-start-column="16" selection-end-line="83" selection-end-column="16" />
++        </state>
++      </provider>
++    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/base.py">
+       <provider selected="true" editor-type-id="text-editor">
+         <state relative-caret-position="-54">
+@@ -831,46 +842,76 @@
+         </state>
+       </provider>
+     </entry>
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="242">
++          <caret line="339" column="22" selection-start-line="339" selection-start-column="22" selection-end-line="339" selection-end-column="22" />
++          <folding>
++            <element signature="e#0#21#0" expanded="true" />
++          </folding>
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state>
++          <caret column="3" selection-start-column="3" selection-end-column="3" />
++          <folding>
++            <element signature="e#299#309#0" expanded="true" />
++          </folding>
++        </state>
++      </provider>
++    </entry>
+     <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="79">
+-          <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
++        <state relative-caret-position="180">
++          <caret line="14" column="13" selection-start-line="14" selection-end-line="14" selection-end-column="13" />
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
++    <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="195">
+-          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
++        <state relative-caret-position="219">
++          <caret line="147" column="35" selection-start-line="147" selection-start-column="35" selection-end-line="147" selection-end-column="35" />
++          <folding>
++            <element signature="e#0#18#0" expanded="true" />
++          </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
++    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="515">
+-          <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
++        <state relative-caret-position="199">
++          <caret line="584" selection-start-line="584" selection-end-line="584" />
+           <folding>
+-            <element signature="e#0#10#0" expanded="true" />
++            <element signature="e#0#15#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
++    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="515">
+-          <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
++        <state relative-caret-position="255">
++          <caret line="17" selection-start-line="17" selection-end-line="17" />
++        </state>
++      </provider>
++    </entry>
++    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
++      <provider selected="true" editor-type-id="text-editor">
++        <state relative-caret-position="119">
++          <caret line="71" selection-start-line="71" selection-end-line="71" />
+           <folding>
+-            <element signature="e#299#309#0" expanded="true" />
++            <element signature="e#0#10#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+     </entry>
+-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
++    <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
+       <provider selected="true" editor-type-id="text-editor">
+-        <state relative-caret-position="321">
+-          <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
++        <state relative-caret-position="127">
++          <caret line="197" column="8" selection-start-line="197" selection-start-column="8" selection-end-line="197" selection-end-column="8" />
+           <folding>
+-            <element signature="e#0#15#0" expanded="true" />
++            <element signature="e#0#10#0" expanded="true" />
+           </folding>
+         </state>
+       </provider>
+diff --git a/examples/her/her_td3_gym_fetch_stack2.py b/examples/her/her_td3_gym_fetch_stack2.py
+index e4d2a18..f7492f6 100644
+--- a/examples/her/her_td3_gym_fetch_stack2.py
++++ b/examples/her/her_td3_gym_fetch_stack2.py
+@@ -17,6 +17,7 @@ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+ 
+ from rlkit.launchers.launcher_util import run_experiment
+ 
++import gym_fetch_stack
+ 
+ def experiment(variant):
+     env = gym.make('FetchStack2-v1')
+@@ -53,12 +54,18 @@ def experiment(variant):
+         **variant['replay_buffer_kwargs']
+     )
+     algorithm = HerTd3(
+-        env=env,
+-        qf1=qf1,
+-        qf2=qf2,
+-        policy=policy,
+-        exploration_policy=exploration_policy,
+-        replay_buffer=replay_buffer,
++        her_kwargs={"observation_key": "observation",
++                    "desired_goal_key": "desired_goal",
++
++        },
++        td3_kwargs={
++            "env": env,
++            "qf1": qf1,
++            "qf2": qf2,
++            "policy": policy,
++            "exploration_policy": exploration_policy,
++            "replay_buffer": replay_buffer
++        },
+         **variant['algo_kwargs']
+     )
+     algorithm.to(ptu.device)
