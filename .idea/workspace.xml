@@ -2,123 +2,8 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1124a77b-7bb0-4258-9858-1d0cb2005b86" name="Default Changelist" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/LICENSE" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/HER.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/RIG.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/TDMs.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/goal_based_envs.md" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/images/FetchReach-v1_HER-TD3.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/images/SawyerReachXYZEnv-v0_HER-TD3.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker/Dockerfile" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker/vendor/10_nvidia.json" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker/vendor/Xdummy" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker/vendor/Xdummy-entrypoint" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/linux-cpu-env.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/linux-gpu-env.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/mac-env.yml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/ddpg.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/doodad/ec2_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/doodad/gcp_example.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/dqn_and_double_dqn.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/rig/pointmass/oracle.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/rig/pointmass/rig.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/rig/pusher/oracle.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/rig/pusher/rig.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/sac.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/td3.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/tdm/ant_position.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/tdm/ant_position_and_velocity.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/tdm/cheetah.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/tsac.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/eval_util.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/logging.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/rl_algorithm.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/serializable.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/tabulate.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/env_replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/normalizer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/obs_dict_replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/path_builder.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/data_management/simple_replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/ant.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/assets/low_gear_ratio_ant.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/assets/reacher_7dof.xml" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/mujoco_env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/vae_wrapper.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/wrappers.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/base.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/epsilon_greedy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_strategy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/exploration_strategies/ou_strategy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/config_template.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/rig_experiments.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/state_based_goal_experiments.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/policies/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/policies/argmax.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/policies/base.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/policies/simple.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/pythonplusplus.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/samplers/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/samplers/in_place.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/samplers/rollout_functions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/samplers/util.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/conv_networks.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/core.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/data_management/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/data_management/normalizer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/ddpg/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/ddpg/ddpg.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/distributions.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/dqn/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/dqn/double_dqn.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/dqn/dqn.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/her/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/her/her.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/her/her_replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/modules.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/networks.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/pytorch_util.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/policies.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/sac.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/sac/twin_sac.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/td3/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/td3/td3.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/base.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/envs/__init__.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/envs/ant_env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/envs/half_cheetah_env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/envs/multitask_env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/envs/reacher_7dof_env.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/her_replay_buffer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/networks.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/sampling.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/tdm/tdm.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/torch_rl_algorithm.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/vae/conv_vae.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/vae/vae_base.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/vae/vae_trainer.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/util/hyperparameter.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/util/io.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/util/video.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/run_experiment_from_doodad.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/sim_goal_conditioned_policy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/sim_policy.py" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/sim_tdm_policy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -127,6 +12,7 @@
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="CoverageDataManager">
+    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547395874600" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
     <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_reach.coverage" NAME="her_td3_gym_fetch_reach Coverage Results" MODIFIED="1547303651154" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
     <SUITE FILE_PATH="coverage/rlkit$rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547271457157" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
     <SUITE FILE_PATH="coverage/rlkit$pointmass_rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547298887227" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pointmass" />
@@ -187,11 +73,11 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="false">
+          <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="6090">
-                  <caret line="423" column="4" selection-start-line="423" selection-start-column="4" selection-end-line="423" selection-end-column="4" />
+                <state relative-caret-position="321">
+                  <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
                   <folding>
                     <element signature="e#0#15#0" expanded="true" />
                   </folding>
@@ -199,11 +85,11 @@
               </provider>
             </entry>
           </file>
-          <file pinned="false" current-in-tab="true">
+          <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="1380">
-                  <caret line="92" column="23" selection-start-line="92" selection-start-column="16" selection-end-line="92" selection-end-column="23" />
+                <state relative-caret-position="515">
+                  <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
                   <folding>
                     <element signature="e#299#309#0" expanded="true" />
                   </folding>
@@ -248,11 +134,23 @@
       </split-first>
       <split-second>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="79">
+                  <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
+                </state>
+              </provider>
+            </entry>
+          </file>
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="105">
-                  <caret line="7" column="1" lean-forward="true" selection-start-line="7" selection-start-column="1" selection-end-line="7" selection-end-column="1" />
+                <state relative-caret-position="515">
+                  <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
+                  <folding>
+                    <element signature="e#0#10#0" expanded="true" />
+                  </folding>
                 </state>
               </provider>
             </entry>
@@ -261,7 +159,7 @@
             <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
               <provider selected="true" editor-type-id="text-editor">
                 <state relative-caret-position="345">
-                  <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+                  <caret line="23" selection-start-line="23" selection-end-line="23" />
                   <folding>
                     <element signature="e#0#13#0" expanded="true" />
                   </folding>
@@ -365,13 +263,13 @@
         <option value="$PROJECT_DIR$/examples/rig/pusher/rig.py" />
         <option value="$PROJECT_DIR$/../doodad/doodad/mode.py" />
         <option value="$PROJECT_DIR$/../doodad/doodad/arg_parse.py" />
-        <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
         <option value="$PROJECT_DIR$/rlkit/torch/pytorch_util.py" />
         <option value="$PROJECT_DIR$/examples/rig/pointmass/rig.py" />
         <option value="$PROJECT_DIR$/rlkit/launchers/config.py" />
         <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" />
-        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
         <option value="$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" />
+        <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+        <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
       </list>
     </option>
   </component>
@@ -392,6 +290,16 @@
             <path>
               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
               <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+              <item name="docs" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+              <item name="environment" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
@@ -485,7 +393,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="Python.her_td3_gym_fetch_reach">
+  <component name="RunManager" selected="Python.her_td3_gym_fetch_stack2">
     <configuration name="her_td3_gym_fetch_reach" type="PythonConfigurationType" factoryName="Python" nameIsGenerated="true">
       <module name="rlkit" />
       <option name="INTERPRETER_OPTIONS" value="" />
@@ -503,6 +411,28 @@
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="true" />
+      <option name="MODULE_MODE" value="false" />
+      <option name="REDIRECT_INPUT" value="false" />
+      <option name="INPUT_FILE" value="" />
+      <method v="2" />
+    </configuration>
+    <configuration name="her_td3_gym_fetch_stack2" type="PythonConfigurationType" factoryName="Python" temporary="true">
+      <module name="rlkit" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="PARENT_ENVS" value="true" />
+      <envs>
+        <env name="PYTHONUNBUFFERED" value="1" />
+      </envs>
+      <option name="SDK_HOME" value="" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/her" />
+      <option name="IS_MODULE_SDK" value="true" />
+      <option name="ADD_CONTENT_ROOTS" value="true" />
+      <option name="ADD_SOURCE_ROOTS" value="true" />
+      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
+      <option name="PARAMETERS" value="" />
+      <option name="SHOW_COMMAND_LINE" value="false" />
+      <option name="EMULATE_TERMINAL" value="false" />
       <option name="MODULE_MODE" value="false" />
       <option name="REDIRECT_INPUT" value="false" />
       <option name="INPUT_FILE" value="" />
@@ -548,9 +478,11 @@
       <item itemvalue="Docker.docker/Dockerfile" />
       <item itemvalue="Python.her_td3_gym_fetch_reach" />
       <item itemvalue="Python.pointmass/rig" />
+      <item itemvalue="Python.her_td3_gym_fetch_stack2" />
     </list>
     <recent_temporary>
       <list>
+        <item itemvalue="Python.her_td3_gym_fetch_stack2" />
         <item itemvalue="Python.pointmass/rig" />
         <item itemvalue="Docker.docker/Dockerfile" />
       </list>
@@ -572,12 +504,12 @@
       <workItem from="1547281214890" duration="10868000" />
       <workItem from="1547297073617" duration="4977000" />
       <workItem from="1547364465361" duration="1566000" />
-      <workItem from="1547384497303" duration="2953000" />
+      <workItem from="1547384497303" duration="3158000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="36090000" />
+    <option name="totallyTimeSpent" value="36295000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="2560" height="977" extended-state="0" />
@@ -588,7 +520,7 @@
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
       <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49928468" weight="0.32765958" />
-      <window_info anchor="bottom" id="Run" order="2" sideWeight="0.64535344" weight="0.26101694" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.6449563" visible="true" weight="0.259887" />
       <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.4985694" weight="0.26666668" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
@@ -596,8 +528,8 @@
       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.49960285" weight="0.3299435" />
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.5007943" side_tool="true" visible="true" weight="0.32768363" />
-      <window_info active="true" anchor="bottom" id="Terminal" order="11" sideWeight="0.4992057" visible="true" weight="0.32768363" />
+      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.35504368" side_tool="true" visible="true" weight="0.259887" />
+      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4992057" weight="0.32768363" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
@@ -783,13 +715,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="810">
-          <caret line="56" column="17" selection-start-line="56" selection-start-column="17" selection-end-line="56" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="285">
@@ -814,13 +739,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/../doodad/doodad/mode.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="1200">
@@ -828,16 +746,6 @@
           <folding>
             <element signature="e#5280#8250#0" />
             <element signature="e#8272#8342#0" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6090">
-          <caret line="423" column="4" selection-start-line="423" selection-start-column="4" selection-end-line="423" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
           </folding>
         </state>
       </provider>
@@ -906,16 +814,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1380">
-          <caret line="92" column="23" selection-start-line="92" selection-start-column="16" selection-end-line="92" selection-end-column="23" />
-          <folding>
-            <element signature="e#299#309#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/base.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-54">
@@ -926,17 +824,54 @@
     <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="345">
-          <caret line="23" lean-forward="true" selection-start-line="23" selection-end-line="23" />
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
           <folding>
             <element signature="e#0#13#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="79">
+          <caret line="51" column="41" selection-start-line="51" selection-start-column="41" selection-end-line="51" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="195">
+          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="105">
-          <caret line="7" column="1" lean-forward="true" selection-start-line="7" selection-start-column="1" selection-end-line="7" selection-end-column="1" />
+        <state relative-caret-position="515">
+          <caret line="90" column="5" selection-start-line="90" selection-start-column="5" selection-end-line="90" selection-end-column="5" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="515">
+          <caret line="95" column="5" selection-start-line="71" selection-end-line="95" selection-end-column="5" />
+          <folding>
+            <element signature="e#299#309#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="321">
+          <caret line="568" column="24" lean-forward="true" selection-start-line="568" selection-start-column="24" selection-end-line="568" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>

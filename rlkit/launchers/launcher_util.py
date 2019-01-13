@@ -565,7 +565,7 @@ def run_experiment(
                 ))
             except git.exc.InvalidGitRepositoryError:
                 pass
-    except ImportError:
+    except (ImportError, UnboundLocalError):
         git_infos = None
     run_experiment_kwargs = dict(
         exp_prefix=exp_prefix,

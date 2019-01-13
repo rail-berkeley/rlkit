@@ -1,0 +1,4 @@
+directory: /Users/richard/pulkit/existing_codebases/rlkit/rlkit/..
+git hash: 052a5c8f6afd0bfbce0a40f8124c934af464f916
+git branch name: master
+
