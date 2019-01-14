@@ -98,8 +98,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=context_lr,
         )
 
-        self.softplus = torch.nn.Softplus()
-
     def dense_to_sparse(self, rewards):
         # TODO this is hard-coded for point mass!
         sparse_rewards = (rewards < .2).float()

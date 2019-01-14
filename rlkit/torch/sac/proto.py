@@ -86,7 +86,7 @@ class ProtoAgent(nn.Module):
     def information_bottleneck(self, z):
         # assume input and output to be task x batch x feat
         mu = z[..., :self.latent_dim]
-        sigma = z[..., self.latent_dim:]
+        sigma = F.softplus(z[..., self.latent_dim:])
         z_params = [_product_of_gaussians(m, s) for m, s in zip(torch.unbind(mu), torch.unbind(sigma))]
         if not self.det_z:
             z_dists = [torch.distributions.Normal(m, s) for m, s in z_params]
@@ -151,7 +151,7 @@ class ProtoAgent(nn.Module):
         ptu.soft_update_from_to(self.vf, self.target_vf, self.tau)
 
     def forward(self, obs, actions, next_obs, enc_data, obs_enc):
-        kl_div_sum = self.set_z(enc_data)
+        self.set_z(enc_data)
         return self.infer(obs, actions, next_obs, obs_enc)
 
     def infer(self, obs, actions, next_obs, obs_enc):
