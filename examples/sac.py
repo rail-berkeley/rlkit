@@ -109,8 +109,8 @@ def main(gpu, docker):
             num_evals=5, # number of evals with separate task encodings
             num_steps_per_eval=3 * max_path_length,  # num transitions to eval on
             batch_size=256,  # to compute training grads from
-            embedding_batch_size=60,
-            embedding_mini_batch_size=60,
+            embedding_batch_size=64,
+            embedding_mini_batch_size=64,
             max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
@@ -124,11 +124,9 @@ def main(gpu, docker):
             kl_lambda=1.,
             rf_loss_scale=1.,
             use_information_bottleneck=True,
-
             train_embedding_source='online_exploration_trajectories',
             # embedding_source should be chosen from
             # {'initial_pool', 'online_exploration_trajectories', 'online_on_policy_trajectories'}
-            #eval_embedding_source='online',
             eval_embedding_source='online_exploration_trajectories',
             recurrent=False, # recurrent or averaging encoder
             dump_eval_paths=False,
@@ -138,7 +136,7 @@ def main(gpu, docker):
         gpu_id=gpu,
     )
 
-    exp_name = 'proto-sac-avg-ib'
+    exp_name = 'proto-sac-ib-avg'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='point-mass', base_log_dir=log_dir)

@@ -114,18 +114,21 @@ def main(gpu, docker):
             vf_lr=3E-4,
             context_lr=3e-4,
             reward_scale=5.,
+            sparse_rewards=False,
             reparameterize=True,
-            use_information_bottleneck=False,
+            kl_lambda=1.,
+            rf_loss_scale=1.,
+            use_information_bottleneck=True,
             train_embedding_source='online_exploration_trajectories',
             eval_embedding_source='online_exploration_trajectories',
-            recurrent=True, # recurrent or averaging encoder
+            recurrent=False, # recurrent or averaging encoder
             dump_eval_paths=False,
         ),
         net_size=300,
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-recurrent-ep1000'
+    exp_name = 'proto-sac-ib-avg'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='half-cheetah-dir', base_log_dir=log_dir)
