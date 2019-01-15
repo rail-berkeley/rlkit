@@ -44,6 +44,7 @@ class HER(TorchRLAlgorithm):
             self,
             observation_key=None,
             desired_goal_key=None,
+            render=False,
     ):
         self.observation_key = observation_key
         self.desired_goal_key = desired_goal_key

@@ -87,7 +87,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         self.discount = discount
         self.replay_buffer_size = replay_buffer_size
         self.reward_scale = reward_scale
-        self.render = render
+        self.render = False
         self.collection_mode = collection_mode
         self.save_replay_buffer = save_replay_buffer
         self.save_algorithm = save_algorithm
@@ -425,7 +425,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :return:
         """
         if self.render:
-            self.training_env.render(close=True)
+            self.training_env.close()
         data_to_save = dict(
             epoch=epoch,
         )

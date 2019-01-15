@@ -1,6 +1,7 @@
 import os
 from os import path
 
+print("Trying mujoco_py import")
 import mujoco_py
 import numpy as np
 from gym.envs.mujoco import mujoco_env

@@ -286,6 +286,8 @@ def train_vae(variant, return_data=False):
 
 
 def grill_her_td3_experiment(variant):
+    print("variant ")
+    print(variant)
     env = get_envs(variant)
     es = get_exploration_strategy(variant, env)
 

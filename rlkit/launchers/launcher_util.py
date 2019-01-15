@@ -16,6 +16,8 @@ from rlkit.core import logger
 from rlkit.launchers import config
 from rlkit.torch.pytorch_util import set_gpu_mode
 import rlkit.pythonplusplus as ppp
+# print("importing gym fetch stack")
+# import gym_fetch_stack # (this line is causing the mujoco import error)
 
 GitInfo = namedtuple(
     'GitInfo',
@@ -102,6 +104,8 @@ def run_experiment_here(
         log_dir=None,
         **setup_logger_kwargs
 ):
+    import faulthandler
+    faulthandler.enable()
     """
     Run an experiment locally without any serialization.
 
@@ -163,6 +167,8 @@ def run_experiment_here(
         ),
         actual_log_dir
     )
+    # print("variant: \n")
+    # print(variant)
     return experiment_function(variant)
 
 
@@ -400,24 +406,24 @@ try:
     import doodad.mount as mount
     from doodad.utils import REPO_DIR
     CODE_MOUNTS = [
-        mount.MountLocal(local_dir=REPO_DIR, pythonpath=True),
+        mount.MountLocal(local_dir=REPO_DIR, pythonpath=True, filter_dir=['rlkit_venv', 'data', 'environment']),
     ]
     for code_dir in config.CODE_DIRS_TO_MOUNT:
-        CODE_MOUNTS.append(mount.MountLocal(local_dir=code_dir, pythonpath=True))
+        CODE_MOUNTS.append(mount.MountLocal(local_dir=code_dir, pythonpath=True, filter_dir=['rlkit_venv', 'data', 'environment']))
 
     NON_CODE_MOUNTS = []
     for non_code_mapping in config.DIR_AND_MOUNT_POINT_MAPPINGS:
-        NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping))
+        NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping, filter_dir=['rlkit_venv', 'data', 'environment']))
 
     SSS_CODE_MOUNTS = []
     SSS_NON_CODE_MOUNTS = []
     if hasattr(config, 'SSS_DIR_AND_MOUNT_POINT_MAPPINGS'):
         for non_code_mapping in config.SSS_DIR_AND_MOUNT_POINT_MAPPINGS:
-            SSS_NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping))
+            SSS_NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping, filter_dir=['rlkit_venv', 'data', 'environment']))
     if hasattr(config, 'SSS_CODE_DIRS_TO_MOUNT'):
         for code_dir in config.SSS_CODE_DIRS_TO_MOUNT:
             SSS_CODE_MOUNTS.append(
-                mount.MountLocal(local_dir=code_dir, pythonpath=True)
+                mount.MountLocal(local_dir=code_dir, pythonpath=True, filter_dir=['rlkit_venv', 'data', 'environment'])
             )
 except ImportError:
     print("doodad not detected")

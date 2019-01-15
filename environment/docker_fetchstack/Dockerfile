@@ -95,10 +95,10 @@ RUN pip install mujoco_py
 RUN pip install matplotlib
 RUN pip install pygame
 
-WORKDIR /root/multiworld
-ADD ./multiworld .
-RUN pip install -e .
-
 WORKDIR /root/gym_fetch_stack_multiworld
 ADD ./gym_fetch_stack_multiworld .
+RUN pip install -e .
+
+WORKDIR /root/multiworld
+ADD ./multiworld .
 RUN pip install -e .
