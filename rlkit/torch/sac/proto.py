@@ -165,7 +165,7 @@ class ProtoAgent(nn.Module):
         # auxiliary reward regression
         rf_z = [z.repeat(obs_enc.size(1), 1) for z in task_z]
         rf_z = torch.cat(rf_z, dim=0)
-        r = self.rf(obs_enc.view(obs_enc.size(0) * obs_enc.size(1), -1), rf_z)
+        r = self.rf(obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), rf_z)
 
         t, b, _ = obs.size()
         obs = obs.view(t * b, -1)
