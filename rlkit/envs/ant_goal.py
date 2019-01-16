@@ -1,0 +1,45 @@
+import numpy as np
+from rlkit.envs.ant_multitask_base import MultitaskAntEnv
+
+# Copy task structure from https://github.com/jonasrothfuss/ProMP/blob/master/meta_policy_search/envs/mujoco_envs/ant_rand_goal.py
+class AntDirEnv(MultitaskAntEnv):
+    def __init__(self, task={}, n_tasks=2, **kwargs):
+        super(AntDirEnv, self).__init__(task, n_tasks, **kwargs)
+
+    def step(self, action):
+        self.do_simulation(action, self.frame_skip)
+        torso_xyz_after = np.array(self.get_body_com("torso"))
+        forward_reward = np.dot((torso_velocity[:2]/self.dt), direct)
+
+         goal_reward = -np.sum(np.abs(xposafter[:2] - self.goal_pos)) # make it happy, not suicidal
+
+
+        ctrl_cost = .1 * np.square(action).sum()
+        contact_cost = 0.5 * 1e-3 * np.sum(
+            np.square(np.clip(self.sim.data.cfrc_ext, -1, 1)))
+        survive_reward = 0.0
+        reward = goal_reward - ctrl_cost - contact_cost + survive_reward
+        state = self.state_vector()
+        done = False
+        ob = self._get_obs()
+        return ob, reward, done, dict(
+            reward_forward=forward_reward,
+            reward_ctrl=-ctrl_cost,
+            reward_contact=-contact_cost,
+            reward_survive=survive_reward,
+            torso_velocity=torso_velocity,
+        )
+
+    def sample_tasks(self, num_tasks):
+        a = np.random.random(num_tasks) * 2 * np.pi
+        r = 3 * np.random.random(num_tasks) ** 0.5
+        goals = np.stack((r * np.cos(a), r * np.sin(a)), axis=-1)
+        tasks = [{'goal': goal} for goal in goals]
+        return tasks
+
+    def _get_obs(self):
+        return np.concatenate([
+            self.sim.data.qpos.flat,
+            self.sim.data.qvel.flat,
+            np.clip(self.sim.data.cfrc_ext, -1, 1).flat,
+        ])

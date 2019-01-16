@@ -9,7 +9,7 @@ class AntEnv(MujocoEnv):
         if use_low_gear_ratio:
             xml_path = 'low_gear_ratio_ant.xml'
         else:
-            xml_path = 'normal_gear_ratio_ant.xml'
+            xml_path = 'ant.xml'
         super().__init__(
             xml_path,
             frame_skip=5,
@@ -41,6 +41,8 @@ class AntEnv(MujocoEnv):
         )
 
     def _get_obs(self):
+        # this is gym ant obs, should use rllab?
+        # if position is needed, override this in subclasses
         return np.concatenate([
             self.sim.data.qpos.flat[2:],
             self.sim.data.qvel.flat,
