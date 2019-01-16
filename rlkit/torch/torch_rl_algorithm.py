@@ -159,8 +159,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         for idx in self.train_tasks:
             dprint('task {} encoder RB size'.format(idx), self.enc_replay_buffer.task_buffers[idx]._size)
             paths = self.collect_paths(idx, eval_task=False)
-            self.log_statistics(paths, split='train')
-            train_avg_returns.append(self.eval_statistics['AverageReturn_{}_task{}'.format('train', idx)])
+            train_avg_returns.append(eval_util.get_average_returns(paths))
 
         ### test tasks
         dprint('evaluating on {} test tasks'.format(len(self.eval_tasks)))
@@ -193,8 +192,13 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             test_paths = []
             for _ in range(self.num_evals):
                 test_paths += self.collect_paths(idx, eval_task=True)
-            self.log_statistics(test_paths, split='test')
-            test_avg_returns.append(self.eval_statistics['AverageReturn_{}_task{}'.format('test', idx)])
+
+            z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
+            z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
+            self.eval_statistics['Z mean eval'] = z_mean
+            self.eval_statistics['Z variance eval'] = z_sig
+
+            test_avg_returns.append(eval_util.get_average_returns(test_paths))
 
             # TODO(KR) what does this do
             if hasattr(self.env, "log_diagnostics"):
@@ -208,6 +212,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
         for key, value in self.eval_statistics.items():
             logger.record_tabular(key, value)
+        self.eval_statistics = None
 
         if self.render_eval_paths:
             self.env.render_paths(test_paths)

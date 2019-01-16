@@ -170,6 +170,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # KL constraint on z if probabilistic
+        self.context_optimizer.zero_grad()
         if self.use_information_bottleneck:
             kl_div = self.policy.compute_kl_div()
             kl_loss = self.kl_lambda * kl_div
@@ -179,7 +180,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         rewards_enc_flat = rewards_enc.view(self.embedding_mini_batch_size * num_tasks, -1)
         rf_loss = self.rf_loss_scale * self.rf_criterion(r_pred, rewards_enc_flat)
         self.rf_optimizer.zero_grad()
-        self.context_optimizer.zero_grad()
         rf_loss.backward(retain_graph=True)
         self.rf_optimizer.step()
 
@@ -236,7 +236,14 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         if self.eval_statistics is None:
             # eval should set this to None.
             # this way, these statistics are only computed for one batch.
+            # TODO this is kind of annoying and higher variance, why not just average
+            # across all the train steps?
             self.eval_statistics = OrderedDict()
+            z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
+            z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
+            self.eval_statistics['Z mean train'] = z_mean
+            self.eval_statistics['Z variance train'] = z_sig
+
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
             self.eval_statistics['RF Loss'] = np.mean(ptu.get_numpy(rf_loss))
@@ -245,6 +252,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             ))
             if self.use_information_bottleneck:
                 self.eval_statistics['KL Divergence'] = ptu.get_numpy(kl_div)
+                self.eval_statistics['KL Loss'] = ptu.get_numpy(kl_loss)
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Q Predictions',
                 ptu.get_numpy(q1_pred),

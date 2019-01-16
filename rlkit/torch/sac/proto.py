@@ -9,11 +9,10 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import np_ify, torch_ify
 
 
-def _product_of_gaussians(mus, sigmas):
+def _product_of_gaussians(mus, sigmas_squared):
     '''
     compute mu, sigma of product of gaussians
     '''
-    sigmas_squared = sigmas ** 2
     sigma_squared = 1. / torch.sum(torch.reciprocal(sigmas_squared), dim=0)
     mu = sigma_squared * torch.sum(mus / sigmas_squared, dim=0)
     return mu, torch.sqrt(sigma_squared)
@@ -86,8 +85,8 @@ class ProtoAgent(nn.Module):
     def information_bottleneck(self, z):
         # assume input and output to be task x batch x feat
         mu = z[..., :self.latent_dim]
-        sigma = F.softplus(z[..., self.latent_dim:])
-        z_params = [_product_of_gaussians(m, s) for m, s in zip(torch.unbind(mu), torch.unbind(sigma))]
+        sigma_squared = F.softplus(z[..., self.latent_dim:])
+        z_params = [_product_of_gaussians(m, s) for m, s in zip(torch.unbind(mu), torch.unbind(sigma_squared))]
         if not self.det_z:
             z_dists = [torch.distributions.Normal(m, s) for m, s in z_params]
             self.z_dists = z_dists
