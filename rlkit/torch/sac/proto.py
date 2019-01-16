@@ -79,6 +79,8 @@ class ProtoAgent(nn.Module):
         r = r / self.reward_scale
         o = ptu.from_numpy(o[None, None, ...])
         r = ptu.from_numpy(np.array([r])[None, None, ...])
+        # TODO: we can make this a bit more efficient by simply storing the natural params of the current posterior and add the new sample to update
+        # then in the info bottleneck, we compute the the normal after computing the mean/variance from the natural params stored
         data = torch.cat([o, r], dim=2)
         self.update_z(data)
 
