@@ -3,6 +3,15 @@ import numpy as np
 import os
 
 
+def sparsify_rewards(r):
+    thresh = -0.01
+    if torch.is_tensor(r):
+        r = (r > thresh).float()
+    else:
+        r = (r > thresh).astype(np.float32)
+    return r
+
+
 def soft_update_from_to(source, target, tau):
     for target_param, param in zip(target.parameters(), source.parameters()):
         target_param.data.copy_(

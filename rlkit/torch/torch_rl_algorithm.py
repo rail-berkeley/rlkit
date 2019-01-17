@@ -77,6 +77,9 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         dprint('task encoding ', self.policy.z)
 
         test_paths = self.eval_sampler.obtain_samples(deterministic=deterministic, is_online=is_online)
+        if self.sparse_rewards:
+            for p in test_paths:
+                p['rewards'] = ptu.sparsify_rewards(p['rewards'])
         return test_paths
 
 

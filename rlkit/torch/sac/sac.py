@@ -98,11 +98,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             lr=context_lr,
         )
 
-    def dense_to_sparse(self, rewards):
-        # TODO this is hard-coded for point mass!
-        sparse_rewards = (rewards < .2).float()
-        return sparse_rewards
-
     def sample_data(self, indices, encoder=False):
         # sample from replay buffer for each task
         # TODO(KR) this is ugly af
@@ -134,7 +129,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # for now we embed only observations and rewards
         # assume obs and rewards are (task, batch, feat)
         if self.sparse_rewards:
-            rewards = self.dense_to_sparse(rewards)
+            rewards = ptu.sparsify_rewards(rewards)
         rewards = rewards / self.reward_scale
         task_data = torch.cat([obs, act, rewards], dim=2)
         return task_data

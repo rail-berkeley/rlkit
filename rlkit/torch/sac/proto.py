@@ -76,7 +76,7 @@ class ProtoAgent(nn.Module):
         # TODO there should be one generic method for preparing data for the encoder!!!
         o, a, r, no, d = inputs
         if self.sparse_rewards:
-            r = (r < .2).astype(float)
+            r = ptu.sparsify_rewards(r)
         r = r / self.reward_scale
         o = ptu.from_numpy(o[None, None, ...])
         a = ptu.from_numpy(o[None, None, ...])
