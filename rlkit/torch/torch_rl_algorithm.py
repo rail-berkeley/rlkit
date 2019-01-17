@@ -122,18 +122,23 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         average_inference_returns = [eval_util.get_average_returns(paths) for paths in all_inference_paths]
         self.eval_statistics['AverageInferenceReturns_test_task{}'.format(idx)] = average_inference_returns
 
-    def collect_paths(self, idx, eval_task=False):
+    def collect_paths(self, idx, epoch, eval_task=False):
         self.task_idx = idx
         dprint('Task:', idx)
         self.env.reset_task(idx)
-        paths = self.obtain_eval_paths(idx, eval_task=eval_task, deterministic=True)
-        # save the paths for visualization, only useful for point mass
-        if self.dump_eval_paths:
-            logger.save_extra_data(paths, path='eval_trajectories/{}-task{}-epoch{}')
-        # TODO incorporate into proper logging
+        num_evals = self.num_evals
+
+        paths = []
+        for _ in range(num_evals):
+            paths += self.obtain_eval_paths(idx, eval_task=eval_task, deterministic=True)
         goal = self.env._goal
         for path in paths:
             path['goal'] = goal # goal
+
+        # save the paths for visualization, only useful for point mass
+        if self.dump_eval_paths:
+            split = 'test' if eval_task else 'train'
+            logger.save_extra_data(paths, path='eval_trajectories/{}-task{}-epoch{}'.format(split, idx, epoch))
         return paths
 
     def log_statistics(self, paths, split=''):
@@ -157,11 +162,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         self.eval_statistics = statistics
 
         ### train tasks
-        dprint('evaluating on {} train tasks')
+        dprint('evaluating on {} train tasks'.format(len(self.train_tasks)))
         train_avg_returns = []
         for idx in self.train_tasks:
             dprint('task {} encoder RB size'.format(idx), self.enc_replay_buffer.task_buffers[idx]._size)
-            paths = self.collect_paths(idx, eval_task=False)
+            paths = self.collect_paths(idx, epoch, eval_task=False)
             train_avg_returns.append(eval_util.get_average_returns(paths))
 
         ### test tasks
@@ -192,9 +197,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
                 raise Exception("Invalid option for computing eval embedding")
 
             dprint('task {} encoder RB size'.format(idx), self.eval_enc_replay_buffer.task_buffers[idx]._size)
-            test_paths = []
-            for _ in range(self.num_evals):
-                test_paths += self.collect_paths(idx, eval_task=True)
+            test_paths = self.collect_paths(idx, epoch, eval_task=True)
 
             test_avg_returns.append(eval_util.get_average_returns(test_paths))
 
