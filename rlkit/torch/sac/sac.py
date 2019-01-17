@@ -244,6 +244,8 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
                 z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
                 self.eval_statistics['Z mean train'] = z_mean
                 self.eval_statistics['Z variance train'] = z_sig
+                self.eval_statistics['KL Divergence'] = ptu.get_numpy(kl_div)
+                self.eval_statistics['KL Loss'] = ptu.get_numpy(kl_loss)
 
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
@@ -251,9 +253,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
                 policy_loss
             ))
-            if self.use_information_bottleneck:
-                self.eval_statistics['KL Divergence'] = ptu.get_numpy(kl_div)
-                self.eval_statistics['KL Loss'] = ptu.get_numpy(kl_loss)
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Q Predictions',
                 ptu.get_numpy(q1_pred),
