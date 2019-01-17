@@ -2,58 +2,272 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="1124a77b-7bb0-4258-9858-1d0cb2005b86" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/examples/rig/pusher/mujoco_test.py" afterDir="false" />
       <change afterPath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/__init__.py" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/scripts/__init__.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/rlkit.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/rlkit.iml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/scripts/download_s3.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/vcs.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/Dockerfile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/stack1.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/launch_tools.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad/doodad/mode.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/misc.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/__init__.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/envs.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.gitignore" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/vcs.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/LICENSE" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/README.md" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/db.db" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/vendor/10_nvidia.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/vendor/Xdummy" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker/vendor/Xdummy-entrypoint" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/vendor/10_nvidia.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/vendor/Xdummy" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_fetchstack/vendor/Xdummy-entrypoint" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/mujoco-py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/vendor/10_nvidia.json" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/vendor/Xdummy" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_mjpy/vendor/Xdummy-entrypoint" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/linux-cpu-env.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/linux-gpu-env.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/local_docker/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/local_docker/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/local_docker/linux-cpu-env.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/mac-env.yml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/requirements.txt" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/ddpg.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/doodad/ec2_example.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/doodad/gcp_example.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/dqn_and_double_dqn.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_reach.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_multiworld_sawyer_reach.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/rig/pointmass/oracle.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/rig/pointmass/rig.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/rig/pusher/mujoco_test.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/rig/pusher/oracle.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/rig/pusher/rig.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/sac.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/td3.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/tdm/ant_position.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/tdm/ant_position_and_velocity.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/tdm/cheetah.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/tsac.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/eval_util.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/logging.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/rl_algorithm.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/serializable.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/core/tabulate.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/env_replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/normalizer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/obs_dict_replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/path_builder.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/data_management/simple_replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/ant.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/assets/low_gear_ratio_ant.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/assets/reacher_7dof.xml" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/mujoco_env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/vae_wrapper.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/envs/wrappers.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/epsilon_greedy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/gaussian_strategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/exploration_strategies/ou_strategy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/config_template.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/launcher_util.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/rig_experiments.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/state_based_goal_experiments.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/policies/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/policies/argmax.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/policies/base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/policies/simple.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/pythonplusplus.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/samplers/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/samplers/in_place.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/samplers/rollout_functions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/samplers/util.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/scripts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/conv_networks.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/core.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/data_management/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/data_management/normalizer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/ddpg/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/ddpg/ddpg.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/distributions.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/dqn/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/dqn/double_dqn.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/dqn/dqn.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/her/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/her/her.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/her/her_replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/modules.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/networks.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/pytorch_util.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/sac/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/sac/policies.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/sac/sac.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/sac/twin_sac.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/td3/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/td3/td3.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/envs/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/envs/ant_env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/envs/half_cheetah_env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/envs/multitask_env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/envs/reacher_7dof_env.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/her_replay_buffer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/networks.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/sampling.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/tdm/tdm.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/torch_rl_algorithm.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/vae/conv_vae.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/vae/vae_base.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/vae/vae_trainer.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/util/hyperparameter.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/util/io.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/util/video.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/__init__.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/run_experiment_from_doodad.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/sim_goal_conditioned_policy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/sim_policy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/sim_tdm_policy.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/scripts/test_mjp.py" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/dendenmjpy/rlkit/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/Dockerfile" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/copycontext.sh" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_fetchstack/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/Dockerfile" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/Dockerfile" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/assets/fetch/tmp.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/gym_fetch_stack/robot_env.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/random_test.py" beforeDir="false" afterPath="$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/gym_fetch_stack_multiworld/random_test.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/examples/rig/pointmass/rig.py" beforeDir="false" afterPath="$PROJECT_DIR$/examples/rig/pointmass/rig.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/core/rl_algorithm.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/core/rl_algorithm.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/envs/mujoco_env.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/envs/mujoco_env.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/launchers/rig_experiments.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/launchers/rig_experiments.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/scripts/__init__.py" beforeDir="false" afterPath="$PROJECT_DIR$/dummy.conf" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/scripts/run_experiment_from_doodad.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/run_experiment_from_doodad.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/scripts/sim_goal_conditioned_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/sim_goal_conditioned_policy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/scripts/sim_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/sim_policy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/scripts/sim_tdm_policy.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/sim_tdm_policy.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/her/her.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/her/her.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rlkit/torch/her/her_replay_buffer.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit/torch/her/her_replay_buffer.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/dockerfiles/curiosity-jcwleo-dockerstuff/monsterkong-randomensemble/helperpnbs/inspect_hd5.ipynb" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/dockerfiles/curiosity-jcwleo-dockerstuff/monsterkong-randomensemble/helperpnbs/inspect_hd5.ipynb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/dockerfiles/curiosity-jcwleo-dockerstuff/monsterkong-randomensemble/monsterkong_randomensemble/envs.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/dockerfiles/curiosity-jcwleo-dockerstuff/monsterkong-randomensemble/monsterkong_randomensemble/envs.py" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/setup.py" beforeDir="false" afterPath="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/setup.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" beforeDir="false" afterPath="$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/.idea/gym_fetch_stack.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
@@ -64,23 +278,39 @@
   </component>
   <component name="CoverageDataManager">
     <SUITE FILE_PATH="coverage/rlkit$run_experiment_from_doodad.coverage" NAME="run_experiment_from_doodad Coverage Results" MODIFIED="1547418870275" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
-    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547593825792" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_stack2.coverage" NAME="her_td3_gym_fetch_stack2 Coverage Results" MODIFIED="1547715723083" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
     <SUITE FILE_PATH="coverage/rlkit$pusher_rig.coverage" NAME="pusher/rig Coverage Results" MODIFIED="1547437913042" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pusher" />
     <SUITE FILE_PATH="coverage/rlkit$her_td3_gym_fetch_reach.coverage" NAME="her_td3_gym_fetch_reach Coverage Results" MODIFIED="1547546969557" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/her" />
     <SUITE FILE_PATH="coverage/rlkit$rig.coverage" NAME="pusher/rig Coverage Results" MODIFIED="1547426028142" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pusher" />
+    <SUITE FILE_PATH="coverage/rlkit$download_s3.coverage" NAME="retrieve_s3 Coverage Results" MODIFIED="1547714437577" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/scripts" />
     <SUITE FILE_PATH="coverage/rlkit$pointmass_rig.coverage" NAME="pointmass/rig Coverage Results" MODIFIED="1547441138286" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/" />
+    <SUITE FILE_PATH="coverage/rlkit$retroeve_her_td3_gym_fetch_stack2.coverage" NAME="retrieve FetchStack1_v1 Coverage Results" MODIFIED="1547708697398" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$" />
     <SUITE FILE_PATH="coverage/rlkit$mujoco_test.coverage" NAME="mujoco_test Coverage Results" MODIFIED="1547438222339" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/examples/rig/pusher" />
     <SUITE FILE_PATH="coverage/rlkit$rig_experiments.coverage" NAME="rig_experiments Coverage Results" MODIFIED="1547437893941" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/rlkit/launchers" />
   </component>
+  <component name="DatabaseView">
+    <option name="SHOW_INTERMEDIATE" value="true" />
+    <option name="GROUP_DATA_SOURCES" value="true" />
+    <option name="GROUP_SCHEMA" value="true" />
+    <option name="GROUP_CONTENTS" value="false" />
+    <option name="SORT_POSITIONED" value="false" />
+    <option name="SHOW_EMPTY_GROUPS" value="false" />
+    <option name="AUTO_SCROLL_FROM_SOURCE" value="false" />
+    <option name="HIDDEN_KINDS">
+      <set />
+    </option>
+    <expand />
+    <select />
+  </component>
   <component name="FileEditorManager">
-    <splitter split-orientation="horizontal" split-proportion="0.32683983">
+    <splitter split-orientation="horizontal" split-proportion="0.18675996">
       <split-first>
         <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/environment/docker/Dockerfile">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="-45">
-                  <caret line="66" column="30" selection-start-line="66" selection-start-column="30" selection-end-line="66" selection-end-column="30" />
+                <state relative-caret-position="128">
+                  <caret line="77" column="27" selection-start-line="77" selection-start-column="27" selection-end-line="77" selection-end-column="27" />
                 </state>
               </provider>
             </entry>
@@ -158,8 +388,8 @@
           <file pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="173">
-                  <caret line="158" column="18" selection-start-line="158" selection-start-column="18" selection-end-line="158" selection-end-column="18" />
+                <state relative-caret-position="272">
+                  <caret line="184" column="27" selection-start-line="184" selection-start-column="27" selection-end-line="184" selection-end-column="27" />
                   <folding>
                     <element signature="e#0#11#0" expanded="true" />
                   </folding>
@@ -168,81 +398,94 @@
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/dummy.conf">
-              <provider selected="true" editor-type-id="text-editor" />
+            <entry file="file://$PROJECT_DIR$/rlkit/data_management/obs_dict_replay_buffer.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="146">
+                  <caret line="27" column="40" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="40" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/her/her_replay_buffer.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="75">
+                  <caret line="5" column="21" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="28" />
+                  <folding>
+                    <element signature="e#0#18#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="165">
+                  <caret line="14" selection-start-line="14" selection-end-line="14" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/s3_files/01-16-FetchStack1-v1_2019_01_17_04_30_51_0000--s-3927/variant.json">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="390">
+                  <caret line="26" column="39" selection-start-line="26" selection-start-column="38" selection-end-line="26" selection-end-column="39" />
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="257">
+                  <caret line="137" column="20" selection-start-line="137" selection-start-column="14" selection-end-line="137" selection-end-column="20" />
+                  <folding>
+                    <element signature="e#0#18#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/rlkit/torch/td3/td3.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="264">
+                  <caret line="37" column="20" selection-start-line="37" selection-start-column="14" selection-end-line="37" selection-end-column="20" />
+                  <folding>
+                    <element signature="e#0#35#0" expanded="true" />
+                  </folding>
+                </state>
+              </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
             <entry file="file://$PROJECT_DIR$/rlkit/torch/torch_rl_algorithm.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="75">
-                  <caret line="12" selection-start-line="12" selection-end-line="12" />
+                <state relative-caret-position="-229">
+                  <caret line="10" column="34" selection-start-line="10" selection-start-column="23" selection-end-line="10" selection-end-column="34" />
                 </state>
               </provider>
             </entry>
           </file>
           <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/rlkit/data_management/obs_dict_replay_buffer.py">
+            <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="331">
-                  <caret line="228" selection-start-line="228" selection-end-line="228" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/rlkit/torch/tdm/envs/ant_env.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="331">
-                  <caret line="42" column="8" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/mount.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="181">
-                  <caret line="46" column="23" selection-start-line="46" selection-start-column="13" selection-end-line="46" selection-end-column="23" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="119">
-                  <caret line="45" column="44" selection-start-line="45" selection-start-column="33" selection-end-line="45" selection-end-column="44" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/../doodad/doodad/mode.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="255">
-                  <caret line="318" selection-start-line="318" selection-end-line="318" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$USER_HOME$/anaconda3/lib/python3.6/configparser.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="127">
-                  <caret line="693" selection-start-line="693" selection-end-line="693" />
-                </state>
-              </provider>
-            </entry>
-          </file>
-          <file pinned="false" current-in-tab="false">
-            <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
-              <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="195">
-                  <caret line="837" selection-start-line="837" selection-end-line="837" />
+                <state relative-caret-position="37">
+                  <caret line="15" selection-start-line="15" selection-end-line="15" />
                   <folding>
-                    <element signature="e#0#15#0" expanded="true" />
+                    <element signature="e#0#10#0" expanded="true" />
                   </folding>
+                </state>
+              </provider>
+            </entry>
+          </file>
+          <file pinned="false" current-in-tab="false">
+            <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/gym/envs/registration.py">
+              <provider selected="true" editor-type-id="text-editor">
+                <state relative-caret-position="114">
+                  <caret line="152" selection-start-line="152" selection-end-line="152" />
                 </state>
               </provider>
             </entry>
@@ -260,36 +503,36 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>goal</find>
-      <find>train</find>
-      <find>h</find>
-      <find>achieved_goal</find>
-      <find>get_batch</find>
-      <find>handle_step</find>
-      <find>relabel</find>
-      <find>def train</find>
-      <find>add_path</find>
-      <find>relabeling</find>
-      <find>self._top =</find>
-      <find>self._top</find>
-      <find>self.replay</find>
-      <find>self.env</find>
-      <find>_idx_to_future_obs_idx</find>
-      <find>env =</find>
-      <find>self.train</find>
-      <find>def train(</find>
-      <find>num_steps_b</find>
-      <find>min_num_steps_before_training=4000</find>
-      <find>do_training</find>
-      <find>def _reset_</find>
-      <find>rlkit.config</find>
-      <find>DIR_AND_MOUNT_POINT_MAPPINGS</find>
       <find>exp_prefix</find>
       <find>&quot;%s_%s_%04d</find>
       <find>now.strftime('%Y_%m_%d</find>
       <find>c4.4x</find>
       <find>'data'</find>
       <find>'data',</find>
+      <find>dendenmjpy</find>
+      <find>algorithm.</find>
+      <find>monitor</find>
+      <find>take_step_in</find>
+      <find>save_video</find>
+      <find>video</find>
+      <find>&quot;local&quot;</find>
+      <find>worker</find>
+      <find>num_envs</find>
+      <find>Exploration Rewards</find>
+      <find>progress.csv</find>
+      <find>self._tabular_outputs</find>
+      <find>log</find>
+      <find>relabeling</find>
+      <find>RelabelingReplayBuffer</find>
+      <find>Relabeling</find>
+      <find>FetchS</find>
+      <find>self.replay</find>
+      <find>self.replay_buffer</find>
+      <find>replay_buffer</find>
+      <find>kwargs</find>
+      <find>replay_buffer_kwargs</find>
+      <find>fetchstack</find>
+      <find>env_id</find>
     </findStrings>
     <dirStrings>
       <dir>$PROJECT_DIR$/rlkit/torch</dir>
@@ -325,11 +568,14 @@
         <option value="$PROJECT_DIR$/rlkit/launchers/config.py" />
         <option value="$PROJECT_DIR$/rlkit/launchers/launcher_util.py" />
         <option value="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py" />
+        <option value="$PROJECT_DIR$/.gitignore" />
+        <option value="$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/retrieve_s3.py" />
+        <option value="$PROJECT_DIR$/scripts/download_s3.py" />
         <option value="$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py" />
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="y" value="23" />
     <option name="width" value="2560" />
     <option name="height" value="977" />
@@ -350,7 +596,17 @@
             <path>
               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
               <item name="rlkit" type="462c0819:PsiDirectoryNode" />
-              <item name="rlkit_venv" type="462c0819:PsiDirectoryNode" />
+              <item name="examples" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+              <item name="s3_files" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
+              <item name="rlkit" type="462c0819:PsiDirectoryNode" />
+              <item name="scripts" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="rlkit" type="b2602c69:ProjectViewProjectNode" />
@@ -373,20 +629,20 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path.stuck_in_default_project" value="undefined stuck path" />
     <property name="nodejs_npm_path_reset_for_default_project" value="true" />
-    <property name="settings.editor.selected.configurable" value="preferences.keymap" />
+    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
   </component>
   <component name="PyDebuggerOptionsProvider">
     <option name="mySupportQtDebugging" value="false" />
   </component>
   <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages" />
+      <recent name="$PROJECT_DIR$/rlkit" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$" />
       <recent name="$PROJECT_DIR$/examples/her" />
       <recent name="$PROJECT_DIR$/rlkit/launchers" />
-    </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages" />
-      <recent name="$PROJECT_DIR$/rlkit" />
     </key>
   </component>
   <component name="RunDashboard">
@@ -447,7 +703,7 @@
       <option name="INPUT_FILE" value="" />
       <method v="2" />
     </configuration>
-    <configuration name="mujoco_test" type="PythonConfigurationType" factoryName="Python" temporary="true">
+    <configuration name="retrieve_s3" type="PythonConfigurationType" factoryName="Python" temporary="true">
       <module name="rlkit" />
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -455,78 +711,12 @@
         <env name="PYTHONUNBUFFERED" value="1" />
       </envs>
       <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/rig/pusher" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/scripts" />
       <option name="IS_MODULE_SDK" value="true" />
       <option name="ADD_CONTENT_ROOTS" value="true" />
       <option name="ADD_SOURCE_ROOTS" value="true" />
       <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/rig/pusher/mujoco_test.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="false" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pointmass/rig" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="rlkit" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/rig/pointmass/rig.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="true" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="pusher/rig" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="rlkit" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/examples/rig/pusher" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/examples/rig/pusher/rig.py" />
-      <option name="PARAMETERS" value="" />
-      <option name="SHOW_COMMAND_LINE" value="false" />
-      <option name="EMULATE_TERMINAL" value="true" />
-      <option name="MODULE_MODE" value="false" />
-      <option name="REDIRECT_INPUT" value="false" />
-      <option name="INPUT_FILE" value="" />
-      <method v="2" />
-    </configuration>
-    <configuration name="rig_experiments" type="PythonConfigurationType" factoryName="Python" temporary="true">
-      <module name="rlkit" />
-      <option name="INTERPRETER_OPTIONS" value="" />
-      <option name="PARENT_ENVS" value="true" />
-      <envs>
-        <env name="PYTHONUNBUFFERED" value="1" />
-      </envs>
-      <option name="SDK_HOME" value="" />
-      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/rlkit/launchers" />
-      <option name="IS_MODULE_SDK" value="true" />
-      <option name="ADD_CONTENT_ROOTS" value="true" />
-      <option name="ADD_SOURCE_ROOTS" value="true" />
-      <EXTENSION ID="PythonCoverageRunConfigurationExtension" runner="coverage.py" />
-      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/rlkit/launchers/rig_experiments.py" />
+      <option name="SCRIPT_NAME" value="$PROJECT_DIR$/scripts/download_s3.py" />
       <option name="PARAMETERS" value="" />
       <option name="SHOW_COMMAND_LINE" value="false" />
       <option name="EMULATE_TERMINAL" value="false" />
@@ -658,19 +848,13 @@
       <item itemvalue="Docker.fetch stack2 docker (1)" />
       <item itemvalue="Python.her_td3_gym_fetch_reach" />
       <item itemvalue="Python.run_experiment_from_doodad" />
-      <item itemvalue="Python.pointmass/rig" />
       <item itemvalue="Python.her_td3_gym_fetch_stack2" />
-      <item itemvalue="Python.pusher/rig" />
-      <item itemvalue="Python.rig_experiments" />
-      <item itemvalue="Python.mujoco_test" />
+      <item itemvalue="Python.retrieve_s3" />
     </list>
     <recent_temporary>
       <list>
         <item itemvalue="Python.her_td3_gym_fetch_stack2" />
-        <item itemvalue="Python.pointmass/rig" />
-        <item itemvalue="Python.mujoco_test" />
-        <item itemvalue="Python.pusher/rig" />
-        <item itemvalue="Python.rig_experiments" />
+        <item itemvalue="Python.retrieve_s3" />
       </list>
     </recent_temporary>
   </component>
@@ -700,38 +884,38 @@
       <workItem from="1547549646876" duration="17002000" />
       <workItem from="1547584305263" duration="2322000" />
       <workItem from="1547587071841" duration="1227000" />
-      <workItem from="1547588624242" duration="2633000" />
+      <workItem from="1547588624242" duration="5631000" />
+      <workItem from="1547667004537" duration="22895000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="110763000" />
+    <option name="totallyTimeSpent" value="136656000" />
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="2560" height="977" extended-state="0" />
-    <editor active="true" />
+    <frame x="0" y="23" width="2560" height="977" extended-state="6" />
     <layout>
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.2660842" />
+      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.30897537" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info id="Favorites" order="2" side_tool="true" />
       <window_info anchor="bottom" id="Message" order="0" />
-      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.4960286" weight="0.32655367" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.8788721" visible="true" weight="0.34124294" />
-      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.8387609" weight="0.5355932" />
+      <window_info anchor="bottom" id="Find" order="1" sideWeight="0.49563146" weight="0.32655367" />
+      <window_info active="true" anchor="bottom" id="Run" order="2" sideWeight="0.872915" visible="true" weight="0.34124294" />
+      <window_info anchor="bottom" id="Debug" order="3" sideWeight="0.8363781" weight="0.3717514" />
       <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
       <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Docker" order="7" sideWeight="0.49722" weight="0.3299435" />
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Database Changes" order="9" />
-      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.12112788" side_tool="true" visible="true" weight="0.34124294" />
-      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.49563146" weight="0.32768363" />
+      <window_info anchor="bottom" id="Event Log" order="10" sideWeight="0.12708499" side_tool="true" visible="true" weight="0.34124294" />
+      <window_info anchor="bottom" id="Terminal" order="11" sideWeight="0.4912629" weight="0.32768363" />
       <window_info anchor="bottom" id="Python Console" order="12" />
       <window_info anchor="right" id="Commander" internal_type="SLIDING" order="0" type="SLIDING" weight="0.4" />
       <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="SciView" order="3" />
-      <window_info anchor="right" id="Database" order="4" />
+      <window_info anchor="right" id="Database" order="4" visible="true" weight="0.0548054" />
     </layout>
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -777,7 +961,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py</url>
-          <line>127</line>
+          <line>146</line>
           <option name="timeStamp" value="51" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -816,7 +1000,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py</url>
-          <line>173</line>
+          <line>197</line>
           <option name="timeStamp" value="71" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -835,18 +1019,13 @@
           <option name="timeStamp" value="79" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
-          <url>file://$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py</url>
-          <line>183</line>
-          <option name="timeStamp" value="80" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py</url>
           <line>407</line>
           <option name="timeStamp" value="81" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py</url>
-          <line>166</line>
+          <line>187</line>
           <option name="timeStamp" value="83" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
@@ -859,6 +1038,31 @@
           <line>835</line>
           <option name="timeStamp" value="86" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py</url>
+          <line>202</line>
+          <option name="timeStamp" value="87" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py</url>
+          <line>809</line>
+          <option name="timeStamp" value="88" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/rlkit/torch/her/her.py</url>
+          <line>139</line>
+          <option name="timeStamp" value="94" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/rlkit/torch/td3/td3.py</url>
+          <line>20</line>
+          <option name="timeStamp" value="98" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py</url>
+          <line>19</line>
+          <option name="timeStamp" value="99" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
@@ -869,6 +1073,36 @@
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="evaluateCodeFragment">
+      <expression>
+        <expression-string>self.replay_buffer</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>self.</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>env.action_space</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>env</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>self._tabular_outputs</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
+      <expression>
+        <expression-string>self.env</expression-string>
+        <language-id>Python</language-id>
+        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
+      </expression>
       <expression>
         <expression-string>&quot;python&quot; in subcmd</expression-string>
         <language-id>Python</language-id>
@@ -881,36 +1115,6 @@
       </expression>
       <expression>
         <expression-string>import gym_fetch_stack</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1')</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>code_diff_staged.encode('utf-8', 'surrogateescape').decode('utf-8')</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>code_diff_staged</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>git_infos</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>args[&quot;run_experiment_kwargs&quot;]</expression-string>
-        <language-id>Python</language-id>
-        <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
-      </expression>
-      <expression>
-        <expression-string>args.keys()</expression-string>
         <language-id>Python</language-id>
         <evaluation-mode>CODE_FRAGMENT</evaluation-mode>
       </expression>
@@ -936,248 +1140,6 @@
     </expressions>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/rlkit/torch/pytorch_util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="825">
-          <caret line="56" column="49" selection-start-line="56" selection-start-column="49" selection-end-line="56" selection-end-column="49" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/envs/vae_wrapper.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="4905">
-          <caret line="341" column="11" selection-start-line="341" selection-start-column="8" selection-end-line="341" selection-end-column="18" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/doodad/ec2_example.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="19" column="13" selection-start-line="19" selection-start-column="13" selection-end-line="19" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$APPLICATION_HOME_DIR$/helpers/pydev/_pydev_imps/_pydev_execfile.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="17" selection-start-line="17" selection-end-line="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/mujoco_py/builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="102" column="23" selection-start-line="102" selection-start-column="23" selection-end-line="102" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/arg_parse.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="735">
-          <caret line="52" column="40" selection-start-line="52" selection-start-column="40" selection-end-line="52" selection-end-column="40" />
-          <folding>
-            <element signature="e#0#13#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="390">
-          <caret line="26" column="18" selection-start-line="26" selection-start-column="4" selection-end-line="26" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/state_based_goal_experiments.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1110">
-          <caret line="93" column="53" selection-start-line="93" selection-start-column="30" selection-end-line="93" selection-end-column="53" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/core/logging.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2625">
-          <caret line="189" column="8" selection-start-line="189" selection-start-column="8" selection-end-line="189" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="32" column="29" selection-start-line="32" selection-start-column="29" selection-end-line="32" selection-end-column="29" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/rig/pointmass/rig.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <caret column="57" selection-start-column="43" selection-end-column="57" />
-          <folding>
-            <marker date="1547441135000" expanded="true" signature="531:1059" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1050">
-          <caret line="74" column="23" selection-start-line="74" selection-start-column="9" selection-end-line="74" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environment/docker_mjpy/mujoco-py/mujoco_py/builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7200">
-          <caret line="502" column="7" selection-start-line="502" selection-end-line="502" selection-end-column="7" />
-          <folding>
-            <element signature="e#0#16#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/envs/mujoco_env.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="30">
-          <caret line="3" column="30" selection-start-line="3" selection-start-column="30" selection-end-line="3" selection-end-column="30" />
-          <folding>
-            <element signature="e#0#9#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/sim_tdm_policy.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="5" selection-start-line="5" selection-end-line="5" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_reach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="450">
-          <caret line="30" column="19" selection-start-line="30" selection-start-column="19" selection-end-line="30" selection-end-column="19" />
-          <folding>
-            <element signature="e#299#309#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/her/her_td3_multiworld_sawyer_reach.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="345">
-          <caret line="23" column="37" selection-start-line="23" selection-start-column="37" selection-end-line="23" selection-end-column="37" />
-          <folding>
-            <element signature="e#299#309#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config_template.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="178">
-          <caret line="122" column="27" selection-start-line="122" selection-start-column="27" selection-end-line="122" selection-end-column="27" />
-          <folding>
-            <element signature="e#58#67#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/run_experiment_from_doodad.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="413">
-          <caret line="48" column="31" selection-start-line="48" selection-start-column="31" selection-end-line="48" selection-end-column="31" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/utils.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="213">
-          <caret line="27" selection-start-line="27" selection-end-line="27" />
-          <folding>
-            <element signature="e#0#14#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/gtimer/__init__.py">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/data_management/path_builder.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="495">
-          <caret line="33" column="8" selection-start-line="33" selection-start-column="8" selection-end-line="33" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/data_management/simple_replay_buffer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="315">
-          <caret line="23" column="17" selection-start-line="23" selection-start-column="13" selection-end-line="23" selection-end-column="17" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/data_management/env_replay_buffer.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-84">
-          <caret line="9" column="15" selection-start-line="9" selection-start-column="12" selection-end-line="9" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7005">
-          <caret line="479" column="8" selection-start-line="479" selection-start-column="8" selection-end-line="479" selection-end-column="8" />
-          <folding>
-            <element signature="e#0#10#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/tdm/ant_position.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="60">
-          <caret line="14" column="39" selection-start-line="14" selection-start-column="27" selection-end-line="14" selection-end-column="39" />
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/tdm/ant_position_and_velocity.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/tdm/cheetah.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/examples/rig/pusher/rig.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1200">
-          <caret line="82" column="37" selection-start-line="82" selection-start-column="8" selection-end-line="82" selection-end-column="37" />
-          <folding>
-            <element signature="e#0#71#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/examples/rig/pusher/mujoco_test.py">
       <provider selected="true" editor-type-id="text-editor">
         <state>
@@ -1194,30 +1156,281 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/../../infra/chickaboomboom/databaseinterface.py">
+    <entry file="file://$PROJECT_DIR$/.gitignore">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="90">
-          <caret line="11" column="49" selection-start-line="11" selection-start-column="49" selection-end-line="11" selection-end-column="49" />
+        <state relative-caret-position="105">
+          <caret line="7" column="9" selection-start-line="7" selection-start-column="9" selection-end-line="7" selection-end-column="9" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/dummy.conf">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/torch/tdm/envs/ant_env.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="480">
+          <caret line="42" column="8" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../doodad/doodad/mount.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="645">
+          <caret line="46" column="23" selection-start-line="46" selection-start-column="13" selection-end-line="46" selection-end-column="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="600">
+          <caret line="45" column="44" selection-start-line="45" selection-start-column="33" selection-end-line="45" selection-end-column="44" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../doodad/doodad/mode.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="4665">
+          <caret line="318" selection-start-line="318" selection-end-line="318" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.6/configparser.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="10275">
+          <caret line="693" selection-start-line="693" selection-end-line="693" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../../infra/chickaboomboom/retrieve_s3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state>
           <folding>
-            <element signature="e#0#14#0" expanded="true" />
+            <element signature="e#0#10#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/retrieve_s3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="105">
+          <caret line="7" column="24" selection-start-line="7" selection-start-column="24" selection-end-line="7" selection-end-column="24" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="467">
+          <caret line="64" column="41" selection-start-line="64" selection-start-column="41" selection-end-line="64" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/her_td3_gym_fetch_stack2/2/variant.json">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="375">
+          <caret line="25" column="22" lean-forward="true" selection-start-line="25" selection-start-column="22" selection-end-line="25" selection-end-column="22" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/her_td3_gym_fetch_stack2/4/variant.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/her_td3_gym_fetch_stack2/4/script_name.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/her_td3_gym_fetch_stack2/4/progress.csv">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-4243" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/pip/_vendor/distlib/_backport/shutil.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="356">
+          <caret line="261" column="17" selection-start-line="261" selection-start-column="17" selection-end-line="261" selection-end-column="17" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environment/docker/Dockerfile">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="128">
+          <caret line="77" column="27" selection-start-line="77" selection-start-column="27" selection-end-line="77" selection-end-column="27" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/samplers/rollout_functions.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/state_based_goal_experiments.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="320">
+          <caret line="99" column="40" selection-start-line="99" selection-start-column="21" selection-end-line="99" selection-end-column="40" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environment/docker/multiworld/multiworld/envs/mujoco/sawyer_xyz/sawyer_push_and_reach_env.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="5872">
+          <caret line="406" column="8" selection-start-line="406" selection-start-column="8" selection-end-line="406" selection-end-column="8" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/../../gym_envs/new_envs/gym_fetch_stack_multiworld/gym_fetch_stack/fetch_stack_env.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2700">
-          <caret line="183" column="26" selection-start-line="183" selection-start-column="17" selection-end-line="183" selection-end-column="26" />
+        <state relative-caret-position="120">
+          <caret line="183" selection-start-line="183" selection-end-line="183" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/rig_experiments.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="333">
+          <caret line="523" column="26" selection-start-line="523" selection-start-column="16" selection-end-line="523" selection-end-column="26" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/util/video.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="154">
+          <caret line="44" column="40" selection-start-line="44" selection-start-column="24" selection-end-line="44" selection-end-column="40" />
+          <folding>
+            <element signature="e#0#9#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/her_td3_gym_fetch_stack2/4/debug.log">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-75942" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../multiworld/multiworld/core/image_env.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-1432">
+          <caret line="143" column="54" selection-start-line="143" selection-start-column="41" selection-end-line="143" selection-end-column="54" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/FetchStack1_v1/6/stdout_i-0a6e392e7af959a2b.log">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-17937" />
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/FetchStack1_v1/6/01-16-FetchStack1-v1_2019_01_17_04_30_51_0000--s-3927/progress.csv">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/01-16-FetchStack1-v1/01-16-FetchStack1-v1_2019_01_17_04_24_48_0000--s-88590/debug.log">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/../doodad/doodad/launch_tools.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="93">
+          <caret line="50" selection-start-line="50" selection-end-line="50" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/FetchStack1_v1/6/01-16-FetchStack1-v1_2019_01_17_04_30_51_0000--s-3927/variant.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/scripts/download_s3.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="93" selection-start-line="3" selection-start-column="93" selection-end-line="3" selection-end-column="93" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/ray/scripts/scripts.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="185">
+          <caret line="55" column="21" selection-start-line="55" selection-start-column="21" selection-end-line="55" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/data/01-16-FetchStack1-v1/01-16-FetchStack1-v1_2019_01_17_04_24_48_0000--s-88590/progress.csv">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/launchers/launcher_util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="549">
+          <caret line="272" column="33" selection-start-line="272" selection-start-column="15" selection-end-line="272" selection-end-column="33" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/01-16-FetchStack1-v1_2019_01_17_04_30_51_0000--s-3927/script_name.txt">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$USER_HOME$/anaconda3/lib/python3.6/logging/__init__.py">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/pip/_vendor/urllib3/poolmanager.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="45">
+          <caret line="3" column="14" selection-start-line="3" selection-start-column="7" selection-end-line="3" selection-end-column="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/s3_files/01-16-FetchStack1-v1_2019_01_17_05_39_16_0000--s-79466/variant.json">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="7017">
+          <caret line="853" column="33" selection-start-line="853" selection-start-column="33" selection-end-line="853" selection-end-column="33" />
+          <folding>
+            <element signature="e#0#15#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/core/logging.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="112">
+          <caret line="123" selection-start-line="123" selection-end-line="123" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/site-packages/gym/envs/registration.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="114">
+          <caret line="152" selection-start-line="152" selection-end-line="152" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/exploration_strategies/gaussian_and_epsilon_strategy.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="165">
+          <caret line="14" selection-start-line="14" selection-end-line="14" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/torch/torch_rl_algorithm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-229">
+          <caret line="10" column="34" selection-start-line="10" selection-start-column="23" selection-end-line="10" selection-end-column="34" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/rlkit/core/rl_algorithm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="37">
+          <caret line="15" selection-start-line="15" selection-end-line="15" />
+          <folding>
+            <element signature="e#0#10#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/torch/td3/td3.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="990">
-          <caret line="75" column="30" selection-start-line="75" selection-start-column="21" selection-end-line="75" selection-end-column="30" />
+        <state relative-caret-position="264">
+          <caret line="37" column="20" selection-start-line="37" selection-start-column="14" selection-end-line="37" selection-end-column="20" />
           <folding>
             <element signature="e#0#35#0" expanded="true" />
           </folding>
@@ -1226,18 +1439,18 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="990">
-          <caret line="77" selection-start-line="77" selection-end-line="77" />
+        <state relative-caret-position="257">
+          <caret line="137" column="20" selection-start-line="137" selection-start-column="14" selection-end-line="137" selection-end-column="20" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/torch/her/her_replay_buffer.py">
+    <entry file="file://$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/rlkit/torch/her/her_replay_buffer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1830">
-          <caret line="124" column="29" selection-start-line="122" selection-end-line="124" selection-end-column="29" />
+        <state relative-caret-position="75">
+          <caret line="5" column="21" selection-start-line="5" selection-start-column="6" selection-end-line="5" selection-end-column="28" />
           <folding>
             <element signature="e#0#18#0" expanded="true" />
           </folding>
@@ -1246,108 +1459,22 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/rlkit/data_management/obs_dict_replay_buffer.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="331">
-          <caret line="228" selection-start-line="228" selection-end-line="228" />
+        <state relative-caret-position="146">
+          <caret line="27" column="40" selection-start-line="27" selection-start-column="12" selection-end-line="27" selection-end-column="40" />
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/scripts/run_experiment_from_doodad.py">
+    <entry file="file://$PROJECT_DIR$/s3_files/01-16-FetchStack1-v1_2019_01_17_04_30_51_0000--s-3927/variant.json">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="383">
-          <caret line="46" column="27" selection-start-line="46" selection-start-column="8" selection-end-line="46" selection-end-column="27" />
-          <folding>
-            <element signature="e#0#19#0" expanded="true" />
-          </folding>
+        <state relative-caret-position="390">
+          <caret line="26" column="39" selection-start-line="26" selection-start-column="38" selection-end-line="26" selection-end-column="39" />
         </state>
       </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/scripts/test_mjp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="16" selection-start-line="1" selection-start-column="16" selection-end-line="1" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/scripts/test_mjp.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="15">
-          <caret line="1" column="16" selection-start-line="1" selection-start-column="16" selection-end-line="1" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/environment/docker/Dockerfile">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-45">
-          <caret line="66" column="30" selection-start-line="66" selection-start-column="30" selection-end-line="66" selection-end-column="30" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/torch/torch_rl_algorithm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="75">
-          <caret line="12" selection-start-line="12" selection-end-line="12" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="132">
-          <caret line="34" column="31" selection-start-line="34" selection-start-column="31" selection-end-line="34" selection-end-column="31" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/torch/tdm/envs/ant_env.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="331">
-          <caret line="42" column="8" selection-start-line="42" selection-start-column="8" selection-end-line="42" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit/launchers/launcher_util.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="195">
-          <caret line="837" selection-start-line="837" selection-end-line="837" />
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/mode.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="255">
-          <caret line="318" selection-start-line="318" selection-end-line="318" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$USER_HOME$/anaconda3/lib/python3.6/configparser.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="127">
-          <caret line="693" selection-start-line="693" selection-end-line="693" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/rlkit_venv/lib/python3.6/chickaboomboom/databaseinterface.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="119">
-          <caret line="45" column="44" selection-start-line="45" selection-start-column="33" selection-end-line="45" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/../doodad/doodad/mount.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="181">
-          <caret line="46" column="23" selection-start-line="46" selection-start-column="13" selection-end-line="46" selection-end-column="23" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/dummy.conf">
-      <provider selected="true" editor-type-id="text-editor" />
     </entry>
     <entry file="file://$PROJECT_DIR$/examples/her/her_td3_gym_fetch_stack2.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="173">
-          <caret line="158" column="18" selection-start-line="158" selection-start-column="18" selection-end-line="158" selection-end-column="18" />
+        <state relative-caret-position="272">
+          <caret line="184" column="27" selection-start-line="184" selection-start-column="27" selection-end-line="184" selection-end-column="27" />
           <folding>
             <element signature="e#0#11#0" expanded="true" />
           </folding>

@@ -21,6 +21,8 @@ from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
 
 from rlkit.launchers.launcher_util import run_experiment
 
+from rlkit.launchers.rig_experiments import get_video_save_func
+
 import rlkit.samplers.rollout_functions as rf
 from rlkit.launchers.launcher_util import run_experiment_here
 
@@ -32,10 +34,12 @@ def experiment(variant):
     except ImportError as e:
         print(e)
     print("trying to import gym fetch stack")
-    import gym_fetch_stack
+    try:
+        import gym_fetch_stack
+    except ImportError as e:
+        print(e)
 
-    env = gym.make("FetchStack2-v1")
-    # env = None
+    env = gym.make(variant['env_id'])
     es = GaussianAndEpsilonStrategy(
         action_space=env.action_space,
         max_sigma=.2,
@@ -124,6 +128,21 @@ def experiment(variant):
     )
 
 
+    # if variant.get("save_video", True):
+    #     rollout_function = rf.create_rollout_function(
+    #         rf.multitask_rollout,
+    #         max_path_length=algorithm.max_path_length,
+    #         observation_key=algorithm.observation_key,
+    #         desired_goal_key=algorithm.desired_goal_key,
+    #     )
+    #     video_func = get_video_save_func(
+    #         rollout_function,
+    #         env,
+    #         algorithm.eval_policy,
+    #         variant,
+    #     )
+    #     algorithm.post_epoch_funcs.append(video_func)
+
     algorithm.to(ptu.device)
     algorithm.train()
 
@@ -147,29 +166,34 @@ if __name__ == "__main__":
         ),
         replay_buffer_kwargs=dict(
             max_size=100000,
-            fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
+            fraction_goals_rollout_goals=1.0,  # equal to k = 4 in HER paper
             fraction_goals_env_goals=0.0,
         ),
         algorithm='HER',
         render='False',
         save_video='True',
+        do_state_exp="True",
+        env_id="FetchReach-v0",
     )
     # setup_logger('her-td3-fetch-experiment', variant=variant)
     import subprocess
-    exp_prefix = "her_td3_gym_fetch_stack2"
+    exp_prefix = variant['env_id']
     run_experiment(
         experiment,
         exp_prefix=exp_prefix,
         region="us-east-2",
-        mode='ec2',
+        mode='local_docker',
         variant=variant,
         use_gpu=False,
-        spot_price=.03,
+        spot_price=.3,
     )
-    dbi = DatabaseInterface("db.db")
-    dbi.insert("dummy.conf", s3_base_dir=config.AWS_S3_PATH + "/" + time.strftime("%m-%d") + "-" + exp_prefix,
-               table_name=exp_prefix)
-    dbi.close()
+    # dbi = DatabaseInterface("db.db")
+    # s3_base_dir = config.AWS_S3_PATH + "/" + time.strftime("%m-%d") + "-" + exp_prefix.replace("_", "-")
+    # print("s3 base dir: " + str(s3_base_dir))
+    # dbi.insert("dummy.conf", s3_base_dir=s3_base_dir,
+    #
+    #            table_name=exp_prefix.replace("-", "_"))
+    # dbi.close()
 
     # run_experiment_here(
     #     experiment,

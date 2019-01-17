@@ -5,3 +5,4 @@ data/
 **/*.swp
 rlkit/launchers/config.py
 rlkit_venv/
+s3_files/

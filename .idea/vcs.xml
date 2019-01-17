@@ -2,6 +2,21 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/doodad" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/doodad" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit/environment/dendenmjpy/rlkit" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/environment/docker/multiworld" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/environment/docker_dendenmjpy/doodad" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/environment/docker_dendenmjpy/gym_fetch_stack_multiworld" vcs="Git" />

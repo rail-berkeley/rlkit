@@ -39,15 +39,10 @@ RUN pip install matplotlib
 
 RUN pip install torch
 
+ARG CACHEBUST=1 
+
 WORKDIR /root/gym_fetch_stack_multiworld
 ADD ./gym_fetch_stack_multiworld .
 RUN pip install -e .
 
 RUN python -c "import mujoco_py"
-WORKDIR /root/doodad
-ADD ./doodad .
-RUN pip install -e .
-
-WORKDIR /root/rlkit
-ADD ./rlkit .
-RUN pip install -e .
