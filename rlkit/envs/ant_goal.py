@@ -2,9 +2,9 @@ import numpy as np
 from rlkit.envs.ant_multitask_base import MultitaskAntEnv
 
 # Copy task structure from https://github.com/jonasrothfuss/ProMP/blob/master/meta_policy_search/envs/mujoco_envs/ant_rand_goal.py
-class AntDirEnv(MultitaskAntEnv):
+class AntGoalEnv(MultitaskAntEnv):
     def __init__(self, task={}, n_tasks=2, **kwargs):
-        super(AntDirEnv, self).__init__(task, n_tasks, **kwargs)
+        super(AntGoalEnv, self).__init__(task, n_tasks, **kwargs)
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
