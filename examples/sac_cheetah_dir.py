@@ -92,7 +92,7 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    max_path_length = 1000
+    max_path_length = 100
     # noinspection PyTypeChecker
     variant = dict(
         algo_params=dict(
@@ -104,8 +104,8 @@ def main(gpu, docker):
             num_evals=3, # number of evals with separate task encodings
             num_steps_per_eval=10 * max_path_length,
             batch_size=256, # to compute training grads from
-            embedding_batch_size=1000,
-            embedding_mini_batch_size=100,
+            embedding_batch_size=256,
+            embedding_mini_batch_size=256,
             max_path_length=max_path_length,
             discount=0.99,
             soft_target_tau=0.005,
@@ -116,7 +116,7 @@ def main(gpu, docker):
             reward_scale=5.,
             sparse_rewards=False,
             reparameterize=True,
-            kl_lambda=1.,
+            kl_lambda=.1,
             rf_loss_scale=1.,
             use_information_bottleneck=True,
             train_embedding_source='online_exploration_trajectories',

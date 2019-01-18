@@ -26,7 +26,7 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     task_params = variant['task_params']
-    env = NormalizedBoxEnv(AntDirEnv(n_tasks=task_params['n_tasks'], forward_backward=task_params['forward_backward'], use_low_gear_ratio=False))
+    env = NormalizedBoxEnv(AntDirEnv(n_tasks=task_params['n_tasks'], forward_backward=task_params['forward_backward'], use_low_gear_ratio=task_params['low_gear']))
     ptu.set_gpu_mode(variant['use_gpu'], variant['gpu_id'])
 
     tasks = env.get_all_task_idx()
@@ -104,13 +104,14 @@ def main(gpu, docker):
             n_tasks=2, # 20 works pretty well
             forward_backward=True,
             randomize_tasks=True,
+            low_gear=False,
         ),
         algo_params=dict(
-            meta_batch=16,
+            meta_batch=4,
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=2000,
+            num_train_steps_per_itr=1000,
             num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
             batch_size=256, # to compute training grads from
             max_path_length=max_path_length,
@@ -123,7 +124,7 @@ def main(gpu, docker):
             reward_scale=5.,
             sparse_rewards=False,
             reparameterize=True,
-            kl_lambda=1.,
+            kl_lambda=.01,
             rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
@@ -135,7 +136,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ant-dir-ib-avg'
+    exp_name = 'proto-sac-ant-fb-ib-normal-gear'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-forward-backward', base_log_dir=log_dir)
