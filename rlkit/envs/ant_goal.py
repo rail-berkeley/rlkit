@@ -8,11 +8,9 @@ class AntGoalEnv(MultitaskAntEnv):
 
     def step(self, action):
         self.do_simulation(action, self.frame_skip)
-        torso_xyz_after = np.array(self.get_body_com("torso"))
-        forward_reward = np.dot((torso_velocity[:2]/self.dt), direct)
+        xposafter = np.array(self.get_body_com("torso"))
 
-         goal_reward = -np.sum(np.abs(xposafter[:2] - self.goal_pos)) # make it happy, not suicidal
-
+        goal_reward = -np.sum(np.abs(xposafter[:2] - self._goal)) # make it happy, not suicidal
 
         ctrl_cost = .1 * np.square(action).sum()
         contact_cost = 0.5 * 1e-3 * np.sum(
@@ -23,11 +21,10 @@ class AntGoalEnv(MultitaskAntEnv):
         done = False
         ob = self._get_obs()
         return ob, reward, done, dict(
-            reward_forward=forward_reward,
+            goal_forward=goal_reward,
             reward_ctrl=-ctrl_cost,
             reward_contact=-contact_cost,
             reward_survive=survive_reward,
-            torso_velocity=torso_velocity,
         )
 
     def sample_tasks(self, num_tasks):

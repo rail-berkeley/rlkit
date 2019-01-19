@@ -95,7 +95,7 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    max_path_length = 100
+    max_path_length = 200
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
@@ -108,7 +108,7 @@ def main(gpu, docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=2000,
+            num_train_steps_per_itr=4000,
             num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             embedding_batch_size=256,
             embedding_mini_batch_size=256,
@@ -120,10 +120,10 @@ def main(gpu, docker):
             qf_lr=3E-4,
             vf_lr=3E-4,
             context_lr=3e-4,
-            reward_scale=5.,
+            reward_scale=10.,
             sparse_rewards=False,
             reparameterize=True,
-            kl_lambda=0.,
+            kl_lambda=0.01,
             rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
@@ -135,10 +135,10 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ant-dir-ib-gym-env'
+    exp_name = 'proto-sac-ant-goal2'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
-    experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-dir', base_log_dir=log_dir)
+    experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-goal', base_log_dir=log_dir)
 
     # creates directories for pickle outputs of trajectories (point mass)
     pickle_dir = experiment_log_dir + '/eval_trajectories'
