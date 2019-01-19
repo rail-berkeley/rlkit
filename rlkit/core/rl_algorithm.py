@@ -321,7 +321,6 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             next_ob, raw_reward, terminal, env_info = (
                 self.env.step(action)
             )
-            self._n_env_steps_total += 1
             reward = raw_reward * self.reward_scale
             terminal = np.array([terminal])
             reward = np.array([reward])
@@ -343,6 +342,8 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             else:
                 self.train_obs = next_ob
 
+        if not eval_task:
+            self._n_env_steps_total += num_samples
             gt.stamp('sample')
 
     def _try_to_eval(self, epoch):

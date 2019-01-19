@@ -111,8 +111,8 @@ def main(gpu, docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=1000,
-            num_steps_per_eval=10 * max_path_length,  # num transitions to eval on
+            num_train_steps_per_itr=2000,
+            num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             batch_size=256, # to compute training grads from
             max_path_length=max_path_length,
             discount=0.99,
