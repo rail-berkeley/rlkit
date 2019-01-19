@@ -193,10 +193,11 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
             for _ in range(self.num_evals):
                 test_paths += self.collect_paths(idx, eval_task=True)
 
-            z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
-            z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
-            self.eval_statistics['Z mean eval'] = z_mean
-            self.eval_statistics['Z variance eval'] = z_sig
+            if self.use_information_bottleneck:
+                z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
+                z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
+                self.eval_statistics['Z mean eval'] = z_mean
+                self.eval_statistics['Z variance eval'] = z_sig
 
             test_avg_returns.append(eval_util.get_average_returns(test_paths))
 

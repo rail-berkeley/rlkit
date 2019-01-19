@@ -239,10 +239,11 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             # TODO this is kind of annoying and higher variance, why not just average
             # across all the train steps?
             self.eval_statistics = OrderedDict()
-            z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
-            z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
-            self.eval_statistics['Z mean train'] = z_mean
-            self.eval_statistics['Z variance train'] = z_sig
+            if self.use_information_bottleneck:
+                z_mean = np.mean(np.abs(ptu.get_numpy(self.policy.z_dists[0].mean)))
+                z_sig = np.mean(ptu.get_numpy(self.policy.z_dists[0].variance))
+                self.eval_statistics['Z mean train'] = z_mean
+                self.eval_statistics['Z variance train'] = z_sig
 
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
