@@ -112,6 +112,7 @@ def main(gpu, docker):
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
             num_train_steps_per_itr=2000,
+            num_evals=2,
             num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             embedding_batch_size=256,
             embedding_mini_batch_size=256,
