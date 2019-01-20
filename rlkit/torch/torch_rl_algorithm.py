@@ -126,7 +126,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         self.task_idx = idx
         dprint('Task:', idx)
         self.env.reset_task(idx)
-        num_evals = self.num_evals
+        if eval_task:
+            num_evals = self.num_evals
+        else: 
+            num_evals = 1
 
         paths = []
         for _ in range(num_evals):
