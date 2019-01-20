@@ -92,16 +92,16 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    max_path_length = 100
+    max_path_length = 200
     # noinspection PyTypeChecker
     variant = dict(
         algo_params=dict(
-            meta_batch=16,
+            meta_batch=4,
             num_iterations=500, # meta-train epochs
             num_tasks_sample=5,
             num_steps_per_task=5 * max_path_length,
-            num_train_steps_per_itr=1000,
-            num_evals=2, # number of evals with separate task encodings
+            num_train_steps_per_itr=2000,
+            num_evals=4, # number of evals with separate task encodings
             num_steps_per_eval=2 * max_path_length,
             batch_size=256, # to compute training grads from
             embedding_batch_size=256,
@@ -128,7 +128,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ib-avg'
+    exp_name = 'no-rf-ablation/cheetah-dir'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='half-cheetah-dir', base_log_dir=log_dir)

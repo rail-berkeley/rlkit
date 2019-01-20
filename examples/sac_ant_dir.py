@@ -97,7 +97,7 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    max_path_length = 100
+    max_path_length = 200
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
@@ -139,7 +139,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ant-dir-ib'
+    exp_name = 'no-rf-ablation/ant-dir'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-dir', base_log_dir=log_dir)

@@ -79,8 +79,8 @@ def experiment(variant):
 
     algorithm = ProtoSoftActorCritic(
         env=env,
-        train_tasks=tasks[:-10],
-        eval_tasks=tasks[-10:],
+        train_tasks=tasks[:-30],
+        eval_tasks=tasks[-30:],
         nets=[agent, task_enc, policy, qf1, qf2, vf, rf],
         latent_dim=latent_dim,
         **variant['algo_params']
@@ -93,11 +93,11 @@ def experiment(variant):
 @click.argument('gpu', default=0)
 @click.option('--docker', default=0)
 def main(gpu, docker):
-    max_path_length = 100
+    max_path_length = 200
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=50,
+            n_tasks=130,
             randomize_tasks=True,
         ),
         algo_params=dict(
@@ -105,7 +105,7 @@ def main(gpu, docker):
             num_iterations=500, # meta-train epochs
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=1000,
+            num_train_steps_per_itr=2000,
             num_evals=2, # number of evals with separate task encodings
             num_steps_per_eval=2 * max_path_length,
             batch_size=256, # to compute training grads from
@@ -133,7 +133,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ib-avg'
+    exp_name = 'no-rf-ablation/cheetah-vel'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='half-cheetah-vel', base_log_dir=log_dir)
