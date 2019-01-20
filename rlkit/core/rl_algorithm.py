@@ -172,9 +172,10 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 for idx in self.train_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20,
+                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 10,
                                                           resample_z_every_n=self.max_path_length,
                                                           eval_task=False)
+                """
                 for idx in self.eval_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
@@ -182,6 +183,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                     self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20,
                                                           resample_z_every_n=self.max_path_length,
                                                           eval_task=True)
+                """
 
             # Sample data from train tasks.
             for i in range(self.num_tasks_sample):
