@@ -79,10 +79,11 @@ class ProtoAgent(nn.Module):
             r = (r < .2).astype(float)
         r = r / self.reward_scale
         o = ptu.from_numpy(o[None, None, ...])
+        a = ptu.from_numpy(o[None, None, ...])
         r = ptu.from_numpy(np.array([r])[None, None, ...])
         # TODO: we can make this a bit more efficient by simply storing the natural params of the current posterior and add the new sample to update
         # then in the info bottleneck, we compute the the normal after computing the mean/variance from the natural params stored
-        data = torch.cat([o, r], dim=2)
+        data = torch.cat([o, a, r], dim=2)
         self.update_z(data)
 
     def information_bottleneck(self, z):
@@ -152,11 +153,11 @@ class ProtoAgent(nn.Module):
     def _update_target_network(self):
         ptu.soft_update_from_to(self.vf, self.target_vf, self.tau)
 
-    def forward(self, obs, actions, next_obs, enc_data, obs_enc):
+    def forward(self, obs, actions, next_obs, enc_data, obs_enc, act_enc):
         self.set_z(enc_data)
-        return self.infer(obs, actions, next_obs, obs_enc)
+        return self.infer(obs, actions, next_obs, obs_enc, act_enc)
 
-    def infer(self, obs, actions, next_obs, obs_enc):
+    def infer(self, obs, actions, next_obs, obs_enc, act_enc):
         '''
         compute predictions of SAC networks for update
 
@@ -168,7 +169,9 @@ class ProtoAgent(nn.Module):
         # auxiliary reward regression
         rf_z = [z.repeat(obs_enc.size(1), 1) for z in task_z]
         rf_z = torch.cat(rf_z, dim=0)
-        r = self.rf(obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), rf_z)
+        r = self.rf(obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), 
+                obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), 
+                rf_z)
 
         t, b, _ = obs.size()
         obs = obs.view(t * b, -1)

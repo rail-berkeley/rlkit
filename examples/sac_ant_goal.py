@@ -41,7 +41,7 @@ def experiment(variant):
     encoder_model = RecurrentEncoder if recurrent else MlpEncoder
     task_enc = encoder_model(
             hidden_sizes=[200, 200, 200], # deeper net + higher dim space generalize better
-            input_size=obs_dim + reward_dim,
+            input_size=obs_dim + action_dim + reward_dim,
             output_size=task_enc_output_dim,
     )
     qf1 = FlattenMlp(
@@ -68,7 +68,7 @@ def experiment(variant):
 
     rf = FlattenMlp(
         hidden_sizes=[net_size, net_size, net_size],
-        input_size=obs_dim + latent_dim,
+        input_size=obs_dim + action_dim + latent_dim,
         output_size=1
     )
 
@@ -135,7 +135,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ant-goal2'
+    exp_name = 'proto-sac-ant-goal-ib'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-goal', base_log_dir=log_dir)
