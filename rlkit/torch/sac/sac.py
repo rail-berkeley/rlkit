@@ -174,9 +174,9 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # auxiliary reward prediction from encoder states
         rewards_enc_flat = rewards_enc.contiguous().view(self.embedding_mini_batch_size * num_tasks, -1)
         rf_loss = self.rf_loss_scale * self.rf_criterion(r_pred, rewards_enc_flat)
-        self.rf_optimizer.zero_grad()
-        rf_loss.backward(retain_graph=True)
-        self.rf_optimizer.step()
+        # self.rf_optimizer.zero_grad()
+        # rf_loss.backward(retain_graph=True)
+        # self.rf_optimizer.step()
 
         # qf and encoder update (note encoder does not get grads from policy or vf)
         self.qf1_optimizer.zero_grad()
