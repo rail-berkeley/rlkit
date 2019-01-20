@@ -170,7 +170,7 @@ class ProtoAgent(nn.Module):
         rf_z = [z.repeat(obs_enc.size(1), 1) for z in task_z]
         rf_z = torch.cat(rf_z, dim=0)
         r = self.rf(obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), 
-                obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), 
+                act_enc.contiguous().view(act_enc.size(0) * act_enc.size(1), -1), 
                 rf_z)
 
         t, b, _ = obs.size()
