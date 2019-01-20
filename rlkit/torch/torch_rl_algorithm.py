@@ -49,16 +49,14 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
     def get_encoding_batch(self, idx=None, eval_task=False):
         ''' get a batch from the separate encoding replay buffer '''
-        # n.b. if eval is online, training should match the distribution of context lengths
+        # n.b. if eval is online, training should sample trajectories rather than unordered batches to better match statistics
         is_online = (self.eval_embedding_source == 'online')
-        # n.b. if using sequence model for encoder, samples should be ordered
-        is_seq = (self.recurrent)
         if idx is None:
             idx = self.task_idx
         if eval_task:
-            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size, sequence=is_seq, padded=is_online)
+            batch = self.eval_enc_replay_buffer.random_batch(idx, self.embedding_batch_size, trajs=is_online)
         else:
-            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size, sequence=is_seq, padded=is_online)
+            batch = self.enc_replay_buffer.random_batch(idx, self.embedding_batch_size, trajs=is_online)
         return np_to_pytorch_batch(batch)
 
     ##### Eval stuff #####

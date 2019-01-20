@@ -21,8 +21,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._rewards = np.zeros((max_replay_buffer_size, 1))
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros((max_replay_buffer_size, 1), dtype='uint8')
-        self._top = 0
-        self._size = 0
+        self.clear()
 
     def add_sample(self, observation, action, reward, terminal,
                    next_observation, **kwargs):
@@ -34,7 +33,10 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._advance()
 
     def terminate_episode(self):
-        pass
+        # store the episode beginning once the episode is over
+        # n.b. allows last episode to loop but whatever
+        self._episode_starts.append(self._cur_episode_start)
+        self._cur_episode_start = self._top
 
     def size(self):
         return self._size
@@ -42,6 +44,8 @@ class SimpleReplayBuffer(ReplayBuffer):
     def clear(self):
         self._top = 0
         self._size = 0
+        self._episode_starts = []
+        self._cur_episode_start = 0
 
     def _advance(self):
         self._top = (self._top + 1) % self._max_replay_buffer_size
@@ -62,11 +66,20 @@ class SimpleReplayBuffer(ReplayBuffer):
         indices = np.random.randint(0, self._size, batch_size)
         return self.sample_data(indices)
 
-    def random_sequence(self, batch_size):
-        ''' batch of transitions in order '''
-        # TODO should it always start at beginning of episode?
-        idx = int(np.random.randint(0, self._size - batch_size, 1))
-        indices = list(range(idx, idx + batch_size))
+    def random_trajs(self, batch_size):
+        ''' batch of trajectories '''
+        # take random trajectories until we have enough
+        # TODO hack to not deal with wrapping episodes, just don't take the last one
+        shuffled_starts = np.random.permutation(self._episode_starts[:-1])
+        i = 0
+        indices = []
+        while len(indices) < batch_size:
+            start = shuffled_starts[i]
+            pos_idx = self._episode_starts.index(start)
+            indices += list(range(start, self._episode_starts[pos_idx + 1]))
+            i += 1
+        # cut off the last traj if needed to respect batch size
+        indices = indices[:batch_size]
         return self.sample_data(indices)
 
     def num_steps_can_sample(self):
