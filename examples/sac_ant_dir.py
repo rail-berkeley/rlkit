@@ -111,7 +111,7 @@ def main(gpu, docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=2000,
+            num_train_steps_per_itr=4000,
             num_evals=2,
             num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             embedding_batch_size=256,
@@ -139,7 +139,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'no-rf-ablation/ant-dir'
+    exp_name = 'no-rf-final/ant-dir/{}'.format(gpu)
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-dir', base_log_dir=log_dir)
