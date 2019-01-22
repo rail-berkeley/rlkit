@@ -35,3 +35,4 @@ class MultitaskAntEnv(AntEnv):
     def reset_task(self, idx):
         self._task = self.tasks[idx]
         self._goal = self._task['goal'] # assume parameterization of task by single vector
+        self.reset()

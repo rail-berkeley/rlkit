@@ -1,5 +1,5 @@
 """
-Run Prototypical Soft Actor Critic on HalfCheetahEnv.
+Run Prototypical Soft Actor Critic on HumanoidDir.
 
 """
 import numpy as np
@@ -8,7 +8,7 @@ import datetime
 import pathlib
 import os
 
-from rlkit.envs.ant_goal import AntGoalEnv
+from rlkit.envs.humanoid_dir import HumanoidDirEnv
 
 from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
@@ -24,7 +24,7 @@ def datetimestamp(divider=''):
 
 def experiment(variant):
     task_params = variant['task_params']
-    env = NormalizedBoxEnv(AntGoalEnv(n_tasks=task_params['n_tasks'], use_low_gear_ratio=task_params['low_gear']))
+    env = NormalizedBoxEnv(HumanoidDirEnv(n_tasks=task_params['n_tasks']))
     ptu.set_gpu_mode(variant['use_gpu'], variant['gpu_id'])
 
     tasks = env.get_all_task_idx()
@@ -99,7 +99,8 @@ def main(gpu, docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=180, # 20 works pretty well
+            n_tasks=130, # 20 works pretty well
+            forward_backward=False,
             randomize_tasks=True,
             low_gear=False,
         ),
@@ -108,7 +109,7 @@ def main(gpu, docker):
             num_iterations=10000,
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
-            num_train_steps_per_itr=2000,
+            num_train_steps_per_itr=4000,
             num_evals=2,
             num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             embedding_batch_size=256,
@@ -124,7 +125,7 @@ def main(gpu, docker):
             reward_scale=5.,
             sparse_rewards=False,
             reparameterize=True,
-            kl_lambda=1.,
+            kl_lambda=.1,
             rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
@@ -136,10 +137,10 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'proto-sac-ant-goal-more-goal'
+    exp_name = 'proto-sac-humanoid-dir-ib'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
-    experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-goal', base_log_dir=log_dir)
+    experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='humanoid-dir', base_log_dir=log_dir)
 
     # creates directories for pickle outputs of trajectories (point mass)
     pickle_dir = experiment_log_dir + '/eval_trajectories'
