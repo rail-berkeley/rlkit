@@ -101,7 +101,7 @@ def main(gpu, docker):
     # noinspection PyTypeChecker
     variant = dict(
         task_params=dict(
-            n_tasks=130, # 20 works pretty well
+            n_tasks=180, # 20 works pretty well
             forward_backward=False,
             randomize_tasks=True,
             low_gear=False,
@@ -127,7 +127,7 @@ def main(gpu, docker):
             reward_scale=5.,
             sparse_rewards=False,
             reparameterize=True,
-            kl_lambda=.1,
+            kl_lambda=1.,
             rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
