@@ -161,14 +161,6 @@ class HerSac(HER, SoftActorCritic):
             self.replay_buffer, ObsDictRelabelingBuffer
         )
 
-    def get_eval_action(self, observation, goal):
-        if self.observation_key:
-            observation = observation[self.observation_key]
-        if self.desired_goal_key:
-            goal = goal[self.desired_goal_key]
-        new_obs = np.hstack((observation, goal))
-        return self.policy.get_action(new_obs, deterministic=True)
-
 
 class HerDdpg(HER, DDPG):
     def __init__(
@@ -202,11 +194,3 @@ class HerTwinSAC(HER, TwinSAC):
         ) or isinstance(
             self.replay_buffer, ObsDictRelabelingBuffer
         )
-
-    def get_eval_action(self, observation, goal):
-        if self.observation_key:
-            observation = observation[self.observation_key]
-        if self.desired_goal_key:
-            goal = goal[self.desired_goal_key]
-        new_obs = np.hstack((observation, goal))
-        return self.policy.get_action(new_obs, deterministic=True)
