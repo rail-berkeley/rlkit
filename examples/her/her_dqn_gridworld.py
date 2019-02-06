@@ -25,7 +25,6 @@ def experiment(variant):
 
     obs_dim = env.observation_space.spaces['observation'].low.size
     goal_dim = env.observation_space.spaces['desired_goal'].low.size
-    #import pdb; pdb.set_trace()
     action_dim = env.action_space.n
     qf1 = FlattenMlp(
         input_size=obs_dim + goal_dim,
@@ -46,7 +45,6 @@ def experiment(variant):
         dqn_kwargs = dict(
             env=env,
             qf=qf1,
-            #policy = policy,
         ),
         replay_buffer=replay_buffer,
         **variant['algo_kwargs']
