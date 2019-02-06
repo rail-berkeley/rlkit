@@ -95,8 +95,6 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         # Then self._next_obs[j] is a valid next observation for observation i
         self._idx_to_future_obs_idx = [None] * max_size
 
-        #if isinstance(self.env.action_space, Discrete):
-        #    raise NotImplementedError("TODO. See issue 28.")
 
     def add_sample(self, observation, action, reward, terminal,
                    next_observation, **kwargs):
