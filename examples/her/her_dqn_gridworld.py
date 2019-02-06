@@ -17,7 +17,7 @@ from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerDQN
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
-import rlkit.envs
+import multiworld.envs.gridworlds
 
 
 def experiment(variant):
