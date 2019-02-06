@@ -66,8 +66,10 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         self.observation_key = observation_key
         self.desired_goal_key = desired_goal_key
         self.achieved_goal_key = achieved_goal_key
-
-        self._action_dim = env.action_space.low.size
+        if isinstance(self.env.action_space, Discrete):
+            self._action_dim = env.action_space.n
+        else:
+            self._action_dim = env.action_space.low.size
         self._actions = np.zeros((max_size, self._action_dim))
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros((max_size, 1), dtype='uint8')
@@ -93,8 +95,8 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         # Then self._next_obs[j] is a valid next observation for observation i
         self._idx_to_future_obs_idx = [None] * max_size
 
-        if isinstance(self.env.action_space, Discrete):
-            raise NotImplementedError("TODO. See issue 28.")
+        #if isinstance(self.env.action_space, Discrete):
+        #    raise NotImplementedError("TODO. See issue 28.")
 
     def add_sample(self, observation, action, reward, terminal,
                    next_observation, **kwargs):
@@ -115,6 +117,8 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         path_len = len(rewards)
 
         actions = flatten_n(actions)
+        if isinstance(self.env.action_space, Discrete):
+            actions = np.eye(self._action_dim)[actions].reshape((-1, self._action_dim))
         obs = flatten_dict(obs, self.ob_keys_to_save + self.internal_keys)
         next_obs = flatten_dict(next_obs,
                                 self.ob_keys_to_save + self.internal_keys)
