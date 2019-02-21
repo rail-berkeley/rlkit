@@ -70,5 +70,6 @@ if __name__ == "__main__":
             replay_buffer_size=int(1E6),
         ),
     )
+    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     setup_logger('name-of-td3-experiment', variant=variant)
     experiment(variant)

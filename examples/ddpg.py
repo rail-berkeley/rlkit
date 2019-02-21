@@ -63,5 +63,6 @@ if __name__ == "__main__":
             policy_learning_rate=1e-4,
         ),
     )
+    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     setup_logger('name-of-experiment', variant=variant)
     experiment(variant)
