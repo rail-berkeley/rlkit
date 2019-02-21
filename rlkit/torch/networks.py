@@ -10,7 +10,7 @@ from torch.nn import functional as F
 from rlkit.policies.base import Policy
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
-from rlkit.torch.data_management.normalizer import TorchFixedNormalizer
+from rlkit.torch.data_management.normalizer import TorchFixedNormalizer, TorchNormalizer, CompositeNormalizer
 from rlkit.torch.modules import LayerNorm
 
 
@@ -89,6 +89,49 @@ class FlattenMlp(Mlp):
         return super().forward(flat_inputs, **kwargs)
 
 
+class QNormalizedFlattenMlp(FlattenMlp):
+    def __init__(
+            self,
+            *args,
+            composite_normalizer: CompositeNormalizer = None,
+            **kwargs
+    ):
+        self.save_init_params(locals())
+        super().__init__(*args, **kwargs)
+        assert composite_normalizer is not None
+        self.composite_normalizer = composite_normalizer
+
+    def forward(
+            self,
+            observations,
+            actions,
+            return_preactivations=False):
+        obs, _ = self.composite_normalizer.normalize_all(observations, None)
+        flat_input = torch.cat((obs, actions), dim=1)
+        return super().forward(flat_input, return_preactivations=return_preactivations)
+
+
+class VNormalizedFlattenMlp(FlattenMlp):
+    def __init__(
+            self,
+            *args,
+            composite_normalizer: CompositeNormalizer = None,
+            **kwargs
+    ):
+        self.save_init_params(locals())
+        super().__init__(*args, **kwargs)
+        assert composite_normalizer is not None
+        self.composite_normalizer = composite_normalizer
+
+    def forward(
+            self,
+            observations,
+            return_preactivations=False):
+        obs, _ = self.composite_normalizer.normalize_all(observations, None)
+        flat_input = obs
+        return super().forward(flat_input, return_preactivations=return_preactivations)
+
+
 class MlpPolicy(Mlp, Policy):
     """
     A simpler interface for creating policies.
@@ -117,6 +160,24 @@ class MlpPolicy(Mlp, Policy):
         return self.eval_np(obs)
 
 
+class CompositeNormalizedMlpPolicy(MlpPolicy):
+    def __init__(
+            self,
+            *args,
+            composite_normalizer: CompositeNormalizer = None,
+            **kwargs
+    ):
+        assert composite_normalizer is not None
+        self.save_init_params(locals())
+        super().__init__(*args, **kwargs)
+        self.composite_normalizer = composite_normalizer
+
+    def forward(self, obs, **kwargs):
+        if self.composite_normalizer:
+            obs, _ = self.composite_normalizer.normalize_all(obs, None)
+            return super().forward(obs, **kwargs)
+
+
 class TanhMlpPolicy(MlpPolicy):
     """
     A helper class since most policies have a tanh output activation.
@@ -124,3 +185,4 @@ class TanhMlpPolicy(MlpPolicy):
     def __init__(self, *args, **kwargs):
         self.save_init_params(locals())
         super().__init__(*args, output_activation=torch.tanh, **kwargs)
+

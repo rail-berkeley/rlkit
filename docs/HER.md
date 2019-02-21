@@ -2,17 +2,22 @@
 Some notes on the implementation of
 [Hindsight Experience Replay](https://arxiv.org/abs/1707.01495).
 ## Expected Results
-If you run the [Fetch example](examples/her/her_td3_gym_fetch_reach.py), then
+If you run the [Fetch reach example](examples/her/her_td3_gym_fetch_reach.py), then
  you should get results like this:
- ![Fetch HER results](images/FetchReach-v1_HER-TD3.png)
- 
+ ![Fetch HER Reach results](images/FetchReach-v1_HER-TD3.png)
+
+If you run the [Fetch pick and place example](eaxmples/her/her_td3_gym_fetch_pnp.py), then you should get results like this: ![Fetch HER PNP results](images/FetchPickAndPlace-v1_HER-TD3.png)
+
 If you run the [Sawyer example](examples/her/her_td3_multiworld_sawyer_reach.py)
 , then you should get results like this:
  ![Sawyer HER results](images/SawyerReachXYZEnv-v0_HER-TD3.png)
- 
+
+As you can see, HER-TD3 tends to have high variance, so make sure to run
+multiple seeds if you would like to reproduce these results.
 Note that these examples use HER combined with TD3, and not DDPG.
-TD3 is a new method that came out after the HER paper, and it seems to work 
+TD3 is a new method that came out after the HER paper, and it seems to work
 better than DDPG.
+These plots are generated using [viskit](https://github.com/vitchyr/viskit).
 
 ## Goal-based environments and `ObsDictRelabelingBuffer`
 [See here.](goal_based_envs.md)

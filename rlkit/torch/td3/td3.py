@@ -34,7 +34,9 @@ class TD3(TorchRLAlgorithm):
             tau=0.005,
             qf_criterion=None,
             optimizer_class=optim.Adam,
-
+            policy_preactivation_loss=True,
+            policy_preactivation_coefficient=1.0,
+            clip_q=True,
             **kwargs
     ):
         super().__init__(
@@ -71,6 +73,9 @@ class TD3(TorchRLAlgorithm):
             self.policy.parameters(),
             lr=policy_learning_rate,
         )
+        self.clip_q = clip_q
+        self.policy_preactivation_penalty = policy_preactivation_loss
+        self.policy_preactivation_coefficient = policy_preactivation_coefficient
 
     def _do_training(self):
         batch = self.get_batch()
@@ -99,6 +104,14 @@ class TD3(TorchRLAlgorithm):
         target_q1_values = self.target_qf1(next_obs, noisy_next_actions)
         target_q2_values = self.target_qf2(next_obs, noisy_next_actions)
         target_q_values = torch.min(target_q1_values, target_q2_values)
+
+        if self.clip_q:
+            target_q_values = torch.clamp(
+                target_q_values,
+                -1/(1-self.discount),
+                0
+            )
+
         q_target = rewards + (1. - terminals) * self.discount * target_q_values
         q_target = q_target.detach()
 
@@ -123,9 +136,12 @@ class TD3(TorchRLAlgorithm):
 
         policy_actions = policy_loss = None
         if self._n_train_steps_total % self.policy_and_target_update_period == 0:
-            policy_actions = self.policy(obs)
+            policy_actions, policy_preactivations = self.policy(obs, return_preactivations=True)
             q_output = self.qf1(obs, policy_actions)
+
             policy_loss = - q_output.mean()
+            if self.policy_preactivation_penalty:
+                policy_loss += self.policy_preactivation_coefficient * (policy_preactivations ** 2).mean()
 
             self.policy_optimizer.zero_grad()
             policy_loss.backward()
