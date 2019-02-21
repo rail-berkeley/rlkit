@@ -120,9 +120,6 @@ class RelabelingReplayBuffer(EnvReplayBuffer):
                 next_obs_i = int(np.random.randint(0, num_options))
             next_obs_idxs.append(possible_next_obs_idxs[next_obs_i])
         next_obs_idxs = np.array(next_obs_idxs)
-        print("self.env")
-        print(self.env)
-        print(type(self.env))
         resampled_goals = self.env.convert_obs_to_goals(
             self._next_obs[next_obs_idxs]
         )

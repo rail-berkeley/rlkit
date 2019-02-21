@@ -1,15 +1,12 @@
 import doodad as dd
 import torch.multiprocessing as mp
-import faulthandler
 
 from rlkit.launchers.launcher_util import run_experiment_here
 
 if __name__ == "__main__":
-    faulthandler.enable()
     import matplotlib
     matplotlib.use('agg')
 
-    print("set fork")
     mp.set_start_method('forkserver')
     args_dict = dd.get_args()
     method_call = args_dict['method_call']
@@ -56,11 +53,6 @@ if __name__ == "__main__":
             **run_experiment_kwargs
         )
     else:
-        # print("re kwargs")
-        # print(run_experiment_kwargs)
-        # print('run experiment from doodad / import mujoco')
-        # import mujoco_py
-        # print("import success")
         run_experiment_here(
             method_call,
             log_dir=output_dir,

@@ -1,0 +1,29 @@
+name: rlkit
+channels:
+- kne  # for pybox2d
+- pytorch
+- anaconda  # for mkl
+dependencies:
+- cython
+- ipython  # technically unnecessary
+- joblib=0.9.4
+- lockfile
+- mako=1.0.6=py35_0
+- matplotlib=2.0.2=np111py35_0
+- mkl=2018.0.2  # Need to add explicit dependence for pytorch
+- numba=0.35.0=np111py35_0
+- numpy=1.11.3
+- path.py=10.3.1=py35_0
+- pybox2d=2.3.1post2=py35_0
+- python=3.5.2
+- python-dateutil=2.6.1=py35_0
+- pytorch=0.4.1
+- scipy=1.0.1
+- patchelf
+- pip:
+  - cloudpickle==0.5.2
+  - gym[all]==0.10.5
+  - gitpython==2.1.7
+  - gtimer==1.0.0b5
+  - pygame==1.9.2
+  - ipdb  # technically unnecessary

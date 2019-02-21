@@ -77,8 +77,7 @@ if __name__ == "__main__":
             save_period=5,
         ),
 
-        # env_class=Point2DWallEnv,
-        env_id="FetchReach-v1",
+        env_class=Point2DWallEnv,
         env_kwargs=dict(
             render_onscreen=False,
             ball_radius=1,
@@ -92,10 +91,7 @@ if __name__ == "__main__":
     run_experiment(
         grill_her_td3_full_experiment,
         exp_prefix='rlkit-pointmass-rig-example',
-        # mode='local_docker',
-        region="us-east-2",
-        mode='local',
+        mode='here_no_doodad',
         variant=variant,
-        use_gpu=False,  # Turn on if you have a GPU
-        spot_price=.3,
+        use_gpu=True,  # Turn on if you have a GPU
     )

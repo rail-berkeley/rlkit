@@ -82,7 +82,7 @@ RUN pip install pytest-instafail==0.3.0
 RUN pip install scipy>=0.18.0
 RUN pip install sphinx
 RUN pip install sphinx_rtd_theme
-RUN pip instgit all numpydoc
+RUN pip install numpydoc
 RUN pip install cloudpickle==0.5.2
 RUN pip install cached-property==1.3.1
 RUN pip install gym[all]==0.10.5
