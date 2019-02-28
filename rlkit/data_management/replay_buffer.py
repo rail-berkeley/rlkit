@@ -7,8 +7,8 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def add_sample(self, observation, action, reward, next_observation,
-                   terminal, **kwargs):
+    def add_sample(self, observation, action, reward, terminal,
+                   next_observation, **kwargs):
         """
         Add a transition tuple.
         """
