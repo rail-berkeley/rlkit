@@ -9,6 +9,7 @@ from rlkit.torch.her.her_replay_buffer import RelabelingReplayBuffer
 from rlkit.torch.sac.sac import SoftActorCritic
 from rlkit.torch.sac.twin_sac import TwinSAC
 from rlkit.torch.td3.td3 import TD3
+from rlkit.torch.dqn.dqn import DQN
 from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
 
 
@@ -189,6 +190,22 @@ class HerTwinSAC(HER, TwinSAC):
     ):
         HER.__init__(self, **her_kwargs)
         TwinSAC.__init__(self, *args, **kwargs, **tsac_kwargs)
+        assert isinstance(
+            self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
+        )
+
+class HerDQN(HER, DQN):
+    def __init__(
+            self,
+            *args,
+            her_kwargs,
+            dqn_kwargs,
+            **kwargs
+    ):
+        HER.__init__(self, **her_kwargs)
+        DQN.__init__(self, *args, **kwargs, **dqn_kwargs)
         assert isinstance(
             self.replay_buffer, RelabelingReplayBuffer
         ) or isinstance(
