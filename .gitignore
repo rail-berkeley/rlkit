@@ -1,9 +1,6 @@
-.idea/
 data/
 */*/mjkey.txt
 **/.DS_STORE
 **/*.pyc
 **/*.swp
 rlkit/launchers/config.py
-rlkit_venv/
-s3_files/
