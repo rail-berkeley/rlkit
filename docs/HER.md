@@ -2,9 +2,12 @@
 Some notes on the implementation of
 [Hindsight Experience Replay](https://arxiv.org/abs/1707.01495).
 ## Expected Results
-If you run the [Fetch example](examples/her/her_td3_gym_fetch_reach.py), then
+If you run the [Fetch reach example](examples/her/her_td3_gym_fetch_reach.py), then
  you should get results like this:
- ![Fetch HER results](images/FetchReach-v1_HER-TD3.png)
+ ![Fetch HER Reach results](images/FetchReach-v1_HER-TD3.png)
+
+If you run the [Fetch pick and place example](eaxmples/her/her_td3_gym_fetch_pnp.py), then you should get results like this: ![Fetch HER PNP results](images/FetchPickAndPlace-v1_HER-TD3.png)
+
 
 If you run the [Sawyer example](examples/her/her_td3_multiworld_sawyer_reach.py)
 , then you should get results like this:

@@ -425,7 +425,7 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
         :return:
         """
         if self.render:
-            self.training_env.render(close=True)
+            self.training_env.close()
         data_to_save = dict(
             epoch=epoch,
         )

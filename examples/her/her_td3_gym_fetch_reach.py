@@ -14,16 +14,17 @@ from rlkit.exploration_strategies.base import (
     PolicyWrappedWithExplorationStrategy
 )
 from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
-    GaussianAndEpislonStrategy
+    GaussianAndEpsilonStrategy
 )
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.her.her import HerTd3
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
 
+from rlkit.launchers.launcher_util import run_experiment
 
 def experiment(variant):
     env = gym.make('FetchReach-v1')
-    es = GaussianAndEpislonStrategy(
+    es = GaussianAndEpsilonStrategy(
         action_space=env.action_space,
         max_sigma=.2,
         min_sigma=.2,  # constant sigma
@@ -91,4 +92,11 @@ if __name__ == "__main__":
         ),
     )
     setup_logger('her-td3-fetch-experiment', variant=variant)
-    experiment(variant)
+    run_experiment(
+        experiment,
+        exp_prefix="rlkit-her_td3_gym_fetch",
+        mode='local_docker',
+        variant=variant,
+        use_gpu=False,
+        spot_price=.03
+    )

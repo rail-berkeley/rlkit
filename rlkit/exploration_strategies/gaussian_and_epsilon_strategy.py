@@ -4,7 +4,7 @@ from rlkit.core.serializable import Serializable
 import numpy as np
 
 
-class GaussianAndEpislonStrategy(RawExplorationStrategy, Serializable):
+class GaussianAndEpsilonStrategy(RawExplorationStrategy, Serializable):
     """
     With probability epsilon, take a completely random action.
     with probability 1-epsilon, add Gaussian noise to the action taken by a
