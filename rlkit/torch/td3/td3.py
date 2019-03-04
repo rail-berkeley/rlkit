@@ -36,7 +36,6 @@ class TD3(TorchRLAlgorithm):
             optimizer_class=optim.Adam,
             policy_preactivation_loss=True,
             policy_preactivation_coefficient=1.0,
-            clip_q=True,
             **kwargs
     ):
         super().__init__(
@@ -73,7 +72,6 @@ class TD3(TorchRLAlgorithm):
             self.policy.parameters(),
             lr=policy_learning_rate,
         )
-        self.clip_q = clip_q
         self.policy_preactivation_penalty = policy_preactivation_loss
         self.policy_preactivation_coefficient = policy_preactivation_coefficient
 
@@ -104,13 +102,6 @@ class TD3(TorchRLAlgorithm):
         target_q1_values = self.target_qf1(next_obs, noisy_next_actions)
         target_q2_values = self.target_qf2(next_obs, noisy_next_actions)
         target_q_values = torch.min(target_q1_values, target_q2_values)
-
-        if self.clip_q:
-            target_q_values = torch.clamp(
-                target_q_values,
-                -1/(1-self.discount),
-                0
-            )
 
         q_target = rewards + (1. - terminals) * self.discount * target_q_values
         q_target = q_target.detach()
