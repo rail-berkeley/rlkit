@@ -1,9 +1,3 @@
-"""
-Run Prototypical Soft Actor Critic on HalfCheetahEnv.
-
-"""
-import numpy as np
-import click
 import datetime
 import pathlib
 import os
@@ -68,15 +62,9 @@ def experiment(variant):
         action_dim=action_dim,
     )
 
-    rf = FlattenMlp(
-        hidden_sizes=[net_size, net_size, net_size],
-        input_size=obs_dim + action_dim + latent_dim,
-        output_size=1
-    )
-
     agent = ProtoAgent(
         latent_dim,
-        [task_enc, policy, qf1, qf2, vf, rf],
+        [task_enc, policy, qf1, qf2, vf],
         **variant['algo_params']
     )
 
@@ -84,7 +72,7 @@ def experiment(variant):
         env=env,
         train_tasks=list(tasks),
         eval_tasks=list(tasks),
-        nets=[agent, task_enc, policy, qf1, qf2, vf, rf],
+        nets=[agent, task_enc, policy, qf1, qf2, vf],
         latent_dim=latent_dim,
         **variant['algo_params']
     )
@@ -112,7 +100,7 @@ def main(gpu, docker):
             num_tasks_sample=5,
             num_steps_per_task=2 * max_path_length,
             num_train_steps_per_itr=4000,
-            num_evals=4, 
+            num_evals=4,
             num_steps_per_eval=2 * max_path_length,  # num transitions to eval on
             embedding_batch_size=256,
             embedding_mini_batch_size=256,
@@ -128,7 +116,6 @@ def main(gpu, docker):
             sparse_rewards=False,
             reparameterize=True,
             kl_lambda=.1,
-            rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
             train_embedding_source='online_exploration_trajectories',
@@ -139,7 +126,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'no-rf-final/ant-fb/{}'.format(gpu)
+    exp_name = 'pearl'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-forward-backward', base_log_dir=log_dir)

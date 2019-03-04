@@ -29,7 +29,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             vf_lr=1e-3,
             context_lr=1e-3,
             kl_lambda=1.,
-            rf_loss_scale=1.,
             policy_mean_reg_weight=1e-3,
             policy_std_reg_weight=1e-3,
             policy_pre_activation_weight=0.,
@@ -61,12 +60,10 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         self.latent_dim = latent_dim
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
-        self.rf_criterion = nn.MSELoss()
         self.vib_criterion = nn.MSELoss()
         self.l2_reg_criterion = nn.MSELoss()
         self.eval_statistics = None
         self.kl_lambda = kl_lambda
-        self.rf_loss_scale = rf_loss_scale
 
         self.reparameterize = reparameterize
         self.use_information_bottleneck = use_information_bottleneck
@@ -91,10 +88,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         )
         self.context_optimizer = optimizer_class(
             self.policy.task_enc.parameters(),
-            lr=context_lr,
-        )
-        self.rf_optimizer = optimizer_class(
-            self.policy.rf.parameters(),
             lr=context_lr,
         )
 
@@ -130,7 +123,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         # assume obs and rewards are (task, batch, feat)
         if self.sparse_rewards:
             rewards = ptu.sparsify_rewards(rewards)
-        rewards = rewards / self.reward_scale
         task_data = torch.cat([obs, act, rewards], dim=2)
         return task_data
 
@@ -161,7 +153,7 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         enc_data = self.prepare_encoder_data(obs_enc, act_enc, rewards_enc)
 
         # run inference in networks
-        r_pred, q1_pred, q2_pred, v_pred, policy_outputs, target_v_values, task_z = self.policy(obs, actions, next_obs, enc_data, obs_enc, act_enc)
+        q1_pred, q2_pred, v_pred, policy_outputs, target_v_values, task_z = self.policy(obs, actions, next_obs, enc_data, obs_enc, act_enc)
         new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
 
         # KL constraint on z if probabilistic
@@ -171,17 +163,12 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             kl_loss = self.kl_lambda * kl_div
             kl_loss.backward(retain_graph=True)
 
-        # auxiliary reward prediction from encoder states
-        rewards_enc_flat = rewards_enc.contiguous().view(self.embedding_mini_batch_size * num_tasks, -1)
-        rf_loss = self.rf_loss_scale * self.rf_criterion(r_pred, rewards_enc_flat)
-        # self.rf_optimizer.zero_grad()
-        # rf_loss.backward(retain_graph=True)
-        # self.rf_optimizer.step()
-
         # qf and encoder update (note encoder does not get grads from policy or vf)
         self.qf1_optimizer.zero_grad()
         self.qf2_optimizer.zero_grad()
         rewards_flat = rewards.view(self.batch_size * num_tasks, -1)
+        # scale rewards for Bellman update
+        rewards_flat = rewards_flat * self.reward_scale
         terms_flat = terms.view(self.batch_size * num_tasks, -1)
         q_target = rewards_flat + (1. - terms_flat) * self.discount * target_v_values
         qf_loss = torch.mean((q1_pred - q_target) ** 2) + torch.mean((q2_pred - q_target) ** 2)
@@ -244,7 +231,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
 
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
-            self.eval_statistics['RF Loss'] = np.mean(ptu.get_numpy(rf_loss))
             self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
                 policy_loss
             ))
@@ -255,10 +241,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             self.eval_statistics.update(create_stats_ordered_dict(
                 'V Predictions',
                 ptu.get_numpy(v_pred),
-            ))
-            self.eval_statistics.update(create_stats_ordered_dict(
-                'R Predictions',
-                ptu.get_numpy(r_pred)
             ))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Log Pis',
@@ -295,7 +277,6 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
             qf2=self.policy.qf2,
             policy=self.policy.policy,
             vf=self.policy.vf,
-            rf=self.policy.rf,
             target_vf=self.policy.target_vf,
             task_enc=self.policy.task_enc,
         )

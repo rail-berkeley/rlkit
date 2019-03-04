@@ -66,15 +66,9 @@ def experiment(variant):
         action_dim=action_dim,
     )
 
-    rf = FlattenMlp(
-        hidden_sizes=[net_size, net_size, net_size],
-        input_size=obs_dim + action_dim + latent_dim,
-        output_size=1
-    )
-
     agent = ProtoAgent(
         latent_dim,
-        [task_enc, policy, qf1, qf2, vf, rf],
+        [task_enc, policy, qf1, qf2, vf],
         **variant['algo_params']
     )
 
@@ -82,7 +76,7 @@ def experiment(variant):
         env=env,
         train_tasks=list(tasks[:-30]),
         eval_tasks=list(tasks[-30:]),
-        nets=[agent, task_enc, policy, qf1, qf2, vf, rf],
+        nets=[agent, task_enc, policy, qf1, qf2, vf],
         latent_dim=latent_dim,
         **variant['algo_params']
     )
@@ -125,7 +119,6 @@ def main(gpu, docker):
             sparse_rewards=False,
             reparameterize=True,
             kl_lambda=1.,
-            rf_loss_scale=1.,
             use_information_bottleneck=True,  # only supports False for now
             eval_embedding_source='online_exploration_trajectories',
             train_embedding_source='online_exploration_trajectories',
@@ -136,7 +129,7 @@ def main(gpu, docker):
         use_gpu=True,
         gpu_id=gpu,
     )
-    exp_name = 'no-rf-test/ant-goal/{}'.format(gpu)
+    exp_name = 'pearl'
 
     log_dir = '/mounts/output' if docker == 1 else 'output'
     experiment_log_dir = setup_logger(exp_name, variant=variant, exp_id='ant-goal', base_log_dir=log_dir)

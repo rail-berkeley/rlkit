@@ -37,7 +37,7 @@ class ProtoAgent(nn.Module):
     ):
         super().__init__()
         self.latent_dim = latent_dim
-        self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.rf = nets
+        self.task_enc, self.policy, self.qf1, self.qf2, self.vf = nets
         self.target_vf = self.vf.copy()
         self.recurrent = kwargs['recurrent']
         self.reparam = kwargs['reparameterize']
@@ -77,7 +77,6 @@ class ProtoAgent(nn.Module):
         o, a, r, no, d = inputs
         if self.sparse_rewards:
             r = ptu.sparsify_rewards(r)
-        r = r / self.reward_scale
         o = ptu.from_numpy(o[None, None, ...])
         a = ptu.from_numpy(o[None, None, ...])
         r = ptu.from_numpy(np.array([r])[None, None, ...])
@@ -166,13 +165,6 @@ class ProtoAgent(nn.Module):
 
         task_z = self.z
 
-        # auxiliary reward regression
-        rf_z = [z.repeat(obs_enc.size(1), 1) for z in task_z]
-        rf_z = torch.cat(rf_z, dim=0)
-        r = self.rf(obs_enc.contiguous().view(obs_enc.size(0) * obs_enc.size(1), -1), 
-                act_enc.contiguous().view(act_enc.size(0) * act_enc.size(1), -1), 
-                rf_z)
-
         t, b, _ = obs.size()
         obs = obs.view(t * b, -1)
         actions = actions.view(t * b, -1)
@@ -194,7 +186,7 @@ class ProtoAgent(nn.Module):
         with torch.no_grad():
             target_v_values = self.target_vf(next_obs, task_z)
 
-        return r, q1, q2, v, policy_outputs, target_v_values, task_z
+        return q1, q2, v, policy_outputs, target_v_values, task_z
 
     def min_q(self, obs, actions, task_z):
         t, b, _ = obs.size()
@@ -207,7 +199,7 @@ class ProtoAgent(nn.Module):
 
     @property
     def networks(self):
-        return [self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.target_vf, self.rf]
+        return [self.task_enc, self.policy, self.qf1, self.qf2, self.vf, self.target_vf]
 
 
 
