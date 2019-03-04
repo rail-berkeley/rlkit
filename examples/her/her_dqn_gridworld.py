@@ -1,75 +1,52 @@
 """
-This should results in an average return of ~3000 by the end of training.
+This should results in an average return of -20 by the end of training.
 
-Usually hits 3000 around epoch 80-100. Within a see, the performance will be
-a bit noisy from one epoch to the next (occasionally dips dow to ~2000).
-
+Usually hits -30 around epoch 50.
 Note that one epoch = 5k steps, so 200 epochs = 1 million steps.
 """
 import gym
-import multiworld.envs.mujoco  # Trigger env registration
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
-from rlkit.exploration_strategies.base import \
+from rlkit.exploration_strategies.base import (
     PolicyWrappedWithExplorationStrategy
+)
 from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
     GaussianAndEpislonStrategy
 )
 from rlkit.launchers.launcher_util import setup_logger
-from rlkit.torch.her.her import HerTd3
+from rlkit.torch.her.her import HerDQN
 from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+import multiworld.envs.gridworlds
 
 
 def experiment(variant):
-    env = gym.make('SawyerReachXYZEnv-v0')
-    es = GaussianAndEpislonStrategy(
-        action_space=env.action_space,
-        max_sigma=.2,
-        min_sigma=.2,  # constant sigma
-        epsilon=.3,
-    )
+    env = gym.make('GoalGridworld-v0')
+
     obs_dim = env.observation_space.spaces['observation'].low.size
     goal_dim = env.observation_space.spaces['desired_goal'].low.size
-    action_dim = env.action_space.low.size
+    action_dim = env.action_space.n
     qf1 = FlattenMlp(
-        input_size=obs_dim + goal_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[400, 300],
-    )
-    qf2 = FlattenMlp(
-        input_size=obs_dim + goal_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[400, 300],
-    )
-    policy = TanhMlpPolicy(
         input_size=obs_dim + goal_dim,
         output_size=action_dim,
         hidden_sizes=[400, 300],
     )
-    exploration_policy = PolicyWrappedWithExplorationStrategy(
-        exploration_strategy=es,
-        policy=policy,
-    )
+
+
     replay_buffer = ObsDictRelabelingBuffer(
         env=env,
-        achieved_goal_key='state_achieved_goal',
-        desired_goal_key='state_desired_goal',
         **variant['replay_buffer_kwargs']
     )
-    algorithm = HerTd3(
-        replay_buffer=replay_buffer,
+    algorithm = HerDQN(
         her_kwargs=dict(
             observation_key='observation',
             desired_goal_key='desired_goal'
         ),
-        td3_kwargs = dict(
+        dqn_kwargs = dict(
             env=env,
-            qf1=qf1,
-            qf2=qf2,
-            policy=policy,
-            exploration_policy=exploration_policy
+            qf=qf1,
         ),
+        replay_buffer=replay_buffer,
         **variant['algo_kwargs']
     )
     algorithm.to(ptu.device)
@@ -88,9 +65,9 @@ if __name__ == "__main__":
         ),
         replay_buffer_kwargs=dict(
             max_size=100000,
-            fraction_goals_rollout_goals=0.2,
+            fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
             fraction_goals_env_goals=0.0,
         ),
     )
-    setup_logger('her-td3-sawyer-experiment', variant=variant)
+    setup_logger('her-dqn-gridworld-experiment', variant=variant)
     experiment(variant)

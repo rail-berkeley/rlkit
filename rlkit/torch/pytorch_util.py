@@ -75,24 +75,43 @@ def from_numpy(*args, **kwargs):
 
 
 def get_numpy(tensor):
-    # not sure if I should do detach or not here
     return tensor.to('cpu').detach().numpy()
 
 
-def zeros(*sizes, **kwargs):
-    return torch.zeros(*sizes, **kwargs).to(device)
+def ones(*sizes, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.ones(*sizes, **kwargs, device=torch_device)
 
 
-def ones(*sizes, **kwargs):
-    return torch.ones(*sizes, **kwargs).to(device)
+def ones_like(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.ones_like(*args, **kwargs, device=torch_device)
 
 
-def randn(*args, **kwargs):
-    return torch.randn(*args, **kwargs).to(device)
+def randn(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.randn(*args, **kwargs, device=torch_device)
 
 
-def zeros_like(*args, **kwargs):
-    return torch.zeros_like(*args, **kwargs).to(device)
+def zeros(*sizes, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.zeros(*sizes, **kwargs, device=torch_device)
+
+
+def zeros_like(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.zeros_like(*args, **kwargs, device=torch_device)
+
+
+def tensor(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.tensor(*args, **kwargs, device=torch_device)
 
 
 def normal(*args, **kwargs):

@@ -153,13 +153,13 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
 
     def train_online(self, start_epoch=0):
         self._current_path_builder = PathBuilder()
-        observation = self._start_new_rollout()
         for epoch in gt.timed_for(
                 range(start_epoch, self.num_epochs),
                 save_itrs=True,
         ):
             self._start_epoch(epoch)
             set_to_train_mode(self.training_env)
+            observation = self._start_new_rollout()
             for _ in range(self.num_env_steps_per_epoch):
                 observation = self._take_step_in_env(observation)
                 gt.stamp('sample')
@@ -174,13 +174,13 @@ class RLAlgorithm(metaclass=abc.ABCMeta):
 
     def train_batch(self, start_epoch):
         self._current_path_builder = PathBuilder()
-        observation = self._start_new_rollout()
         for epoch in gt.timed_for(
                 range(start_epoch, self.num_epochs),
                 save_itrs=True,
         ):
             self._start_epoch(epoch)
             set_to_train_mode(self.training_env)
+            observation = self._start_new_rollout()
             # This implementation is rather naive. If you want to (e.g.)
             # parallelize data collection, this would be the place to do it.
             for _ in range(self.num_env_steps_per_epoch):

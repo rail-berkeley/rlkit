@@ -9,6 +9,7 @@ from rlkit.torch.her.her_replay_buffer import RelabelingReplayBuffer
 from rlkit.torch.sac.sac import SoftActorCritic
 from rlkit.torch.sac.twin_sac import TwinSAC
 from rlkit.torch.td3.td3 import TD3
+from rlkit.torch.dqn.dqn import DQN
 from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
 
 
@@ -161,14 +162,6 @@ class HerSac(HER, SoftActorCritic):
             self.replay_buffer, ObsDictRelabelingBuffer
         )
 
-    def get_eval_action(self, observation, goal):
-        if self.observation_key:
-            observation = observation[self.observation_key]
-        if self.desired_goal_key:
-            goal = goal[self.desired_goal_key]
-        new_obs = np.hstack((observation, goal))
-        return self.policy.get_action(new_obs, deterministic=True)
-
 
 class HerDdpg(HER, DDPG):
     def __init__(
@@ -203,10 +196,18 @@ class HerTwinSAC(HER, TwinSAC):
             self.replay_buffer, ObsDictRelabelingBuffer
         )
 
-    def get_eval_action(self, observation, goal):
-        if self.observation_key:
-            observation = observation[self.observation_key]
-        if self.desired_goal_key:
-            goal = goal[self.desired_goal_key]
-        new_obs = np.hstack((observation, goal))
-        return self.policy.get_action(new_obs, deterministic=True)
+class HerDQN(HER, DQN):
+    def __init__(
+            self,
+            *args,
+            her_kwargs,
+            dqn_kwargs,
+            **kwargs
+    ):
+        HER.__init__(self, **her_kwargs)
+        DQN.__init__(self, *args, **kwargs, **dqn_kwargs)
+        assert isinstance(
+            self.replay_buffer, RelabelingReplayBuffer
+        ) or isinstance(
+            self.replay_buffer, ObsDictRelabelingBuffer
+        )

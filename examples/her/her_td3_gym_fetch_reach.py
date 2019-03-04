@@ -56,11 +56,17 @@ def experiment(variant):
         **variant['replay_buffer_kwargs']
     )
     algorithm = HerTd3(
-        env=env,
-        qf1=qf1,
-        qf2=qf2,
-        policy=policy,
-        exploration_policy=exploration_policy,
+        her_kwargs=dict(
+            observation_key='observation',
+            desired_goal_key='desired_goal'
+        ),
+        td3_kwargs = dict(
+            env=env,
+            qf1=qf1,
+            qf2=qf2,
+            policy=policy,
+            exploration_policy=exploration_policy
+        ),
         replay_buffer=replay_buffer,
         **variant['algo_kwargs']
     )

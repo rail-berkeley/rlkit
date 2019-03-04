@@ -10,8 +10,9 @@ import rlkit
 If you're going to rename this directory and use EC2, then change
 `doodad.mount.MountLocal.filter_dir`
 """
-rlkit_dir = os.path.dirname(rlkit.__file__)
-LOCAL_LOG_DIR = join(rlkit_dir, os.pardir, 'data')
+# The directory of the project, not source
+rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
+LOCAL_LOG_DIR = join(rlkit_project_dir, 'data')
 
 """
 ********************************************************************************
@@ -31,7 +32,7 @@ ignoring most of these things and only using them on an as-needed basis.
 General doodad settings.
 """
 CODE_DIRS_TO_MOUNT = [
-    join(rlkit_dir, os.pardir),
+    rlkit_project_dir,
     # '/home/user/python/module/one', Add more paths as needed
 ]
 DIR_AND_MOUNT_POINT_MAPPINGS = [
@@ -41,7 +42,7 @@ DIR_AND_MOUNT_POINT_MAPPINGS = [
     ),
 ]
 RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
-    join(rlkit_dir, 'scripts', 'run_experiment_from_doodad.py')
+    join(rlkit_project_dir, 'scripts', 'run_experiment_from_doodad.py')
     # '/home/user/path/to/rlkit/scripts/run_experiment_from_doodad.py'
 )
 """

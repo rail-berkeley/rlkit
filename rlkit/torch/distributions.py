@@ -1,5 +1,6 @@
 import torch
 from torch.distributions import Distribution, Normal
+import rlkit.torch.pytorch_util as ptu
 
 
 class TanhNormal(Distribution):
@@ -64,8 +65,8 @@ class TanhNormal(Distribution):
             self.normal_mean +
             self.normal_std *
             Normal(
-                torch.zeros(self.normal_mean.size()),
-                torch.ones(self.normal_std.size())
+                ptu.zeros(self.normal_mean.size()),
+                ptu.ones(self.normal_std.size())
             ).sample()
         )
         z.requires_grad_()
