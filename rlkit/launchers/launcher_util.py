@@ -189,7 +189,16 @@ def create_exp_name(exp_prefix, exp_id=0, seed=0):
     return "%s_%s_%04d--s-%d" % (exp_prefix, timestamp, exp_id, seed)
 
 
-def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
+def create_simple_exp_name():
+    """
+    Create a unique experiment name with a timestamp
+    """
+    now = datetime.datetime.now(dateutil.tz.tzlocal())
+    timestamp = now.strftime('%Y_%m_%d_%H_%M_%S')
+    return timestamp
+
+
+def create_log_dir(exp_prefix, exp_id=None, seed=0, base_log_dir=None):
     """
     Creates and returns a unique log directory.
 
@@ -199,13 +208,10 @@ def create_log_dir(exp_prefix, exp_id=0, seed=0, base_log_dir=None):
     """
     if base_log_dir is None:
         base_log_dir = config.LOCAL_LOG_DIR
-    log_dir = osp.join(base_log_dir, exp_id, exp_prefix.replace("_", "-"))
-    # don't overwrite existing data unless you're sure
-    if osp.isdir(log_dir):
-        click.confirm(click.style("{} already exists. Do you want to "
-            "obliterate it and continue?".format(log_dir), fg='red'),
-            abort=True)
-        shutil.rmtree(log_dir)
+    exp_name = exp_id
+    if exp_name is None:
+        exp_name = create_simple_exp_name()
+    log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
     os.makedirs(log_dir, exist_ok=True)
     return log_dir
 

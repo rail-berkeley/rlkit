@@ -2,7 +2,10 @@ import numpy as np
 from gym import spaces
 from gym import Env
 
+from . import register_env
 
+
+@register_env('point-robot')
 class PointEnv(Env):
     """
     point mass on a 2-D plane

@@ -14,13 +14,12 @@ from rlkit.core import logger, eval_util
 
 
 class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
-    def __init__(self, *args, render_eval_paths=False, plotter=None, dump_eval_paths=False, output_dir=None, recurrent=False, **kwargs):
+    def __init__(self, *args, render_eval_paths=False, plotter=None, dump_eval_paths=False, recurrent=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.eval_statistics = None
         self.render_eval_paths = render_eval_paths
         self.plotter = plotter
         self.dump_eval_paths = dump_eval_paths
-        self.output_dir = output_dir
         self.recurrent = recurrent
 
     ###### Torch stuff #####
@@ -110,6 +109,10 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
 
         # save evaluation rollouts for vis
         # all paths
+        # NOTE: output_dir is no longer necessary, should use logger.save_extra_data
+        output_dir = '.'
+        if self.dump_eval_paths:
+            logger.save_extra_data(paths, path='eval_trajectories/task{}-epoch{}'.format(idx, epoch))
         with open(self.output_dir +
                   "/proto-sac-point-mass-fb-16z-init-task{}-{}.pkl".format(idx, epoch), 'wb+') as f:
             pickle.dump(all_init_paths, f, pickle.HIGHEST_PROTOCOL)
@@ -126,7 +129,7 @@ class MetaTorchRLAlgorithm(MetaRLAlgorithm, metaclass=abc.ABCMeta):
         self.env.reset_task(idx)
         if eval_task:
             num_evals = self.num_evals
-        else: 
+        else:
             num_evals = 1
 
         paths = []

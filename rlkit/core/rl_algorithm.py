@@ -22,6 +22,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
             meta_batch=64,
             num_iterations=100,
             num_train_steps_per_itr=1000,
+            num_initial_steps=100,
             num_tasks_sample=100,
             num_steps_per_task=100,
             num_evals=10,
@@ -50,6 +51,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         :param meta_batch: number of tasks used for meta-update
         :param num_iterations: number of meta-updates taken
         :param num_train_steps_per_itr: number of meta-updates performed per iteration
+        :param num_initial_steps: number of transitions to collect per task before training starts
         :param num_tasks_sample: number of train tasks to sample to collect data for
         :param num_steps_per_task: number of transitions to collect per task
         :param num_evals: number of independent evaluation runs, with separate task encodings
@@ -74,6 +76,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
         self.meta_batch = meta_batch
         self.num_iterations = num_iterations
         self.num_train_steps_per_itr = num_train_steps_per_itr
+        self.num_initial_steps = num_initial_steps
         self.num_tasks_sample = num_tasks_sample
         self.num_steps_per_task = num_steps_per_task
         self.num_evals = num_evals
@@ -172,18 +175,9 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
                 for idx in self.train_tasks:
                     self.task_idx = idx
                     self.env.reset_task(idx)
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 10,
+                    self.collect_data_sampling_from_prior(num_samples=self.num_initial_steps,
                                                           resample_z_every_n=self.max_path_length,
                                                           eval_task=False)
-                """
-                for idx in self.eval_tasks:
-                    self.task_idx = idx
-                    self.env.reset_task(idx)
-                    # TODO: make number of initial trajectories a parameter
-                    self.collect_data_sampling_from_prior(num_samples=self.max_path_length * 20,
-                                                          resample_z_every_n=self.max_path_length,
-                                                          eval_task=True)
-                """
 
             # Sample data from train tasks.
             for i in range(self.num_tasks_sample):
