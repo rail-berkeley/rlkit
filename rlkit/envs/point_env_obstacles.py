@@ -15,7 +15,7 @@ class PointEnvObstacles(Env):
 
         if randomize_tasks:
             goals = [[np.random.uniform(-1., 1.), np.random.uniform(-1., 1.)] for _ in directions]
-            obstacles = = [[np.random.uniform(-1., 1., 2) for o in obstacle] for _ in directions]
+            obstacles = [[np.random.uniform(-1., 1., 2) for o in obstacle] for _ in directions]
 
             # goals = [1 * np.random.uniform(-1., 1., 2) for _ in directions]
         else:
@@ -86,7 +86,7 @@ class PointEnvObstacles(Env):
     def _handle_obstacles(self, new_s):
         for center in self.obstacle_centers:
             # obstacles are a self.radius ball around (a,b)
-            dist = np.linalg.norm(new_s - center) 
+            dist = np.linalg.norm(new_s - center)
             assert dist > 0
             if dist > self.obstacle_radius:
                 return center + (new_s - center) / dist * self.obstacle_radius
