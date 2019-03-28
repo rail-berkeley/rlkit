@@ -5,6 +5,7 @@ Launcher for experiments with PEARL
 import os
 import pathlib
 import numpy as np
+import torch
 
 from rlkit.envs import ENVS
 from rlkit.envs.wrappers import NormalizedBoxEnv
@@ -63,7 +64,6 @@ def experiment(variant):
         [task_enc, policy, qf1, qf2, vf],
         **variant['algo_params']
     )
-
     algorithm = ProtoSoftActorCritic(
         env=env,
         train_tasks=list(tasks[:variant['n_train_tasks']]),
@@ -72,6 +72,17 @@ def experiment(variant):
         latent_dim=latent_dim,
         **variant['algo_params']
     )
+
+    # optionally load pre-trained weights
+    if variant['path_to_weights'] is not None:
+        path = variant['path_to_weights']
+        task_enc.load_state_dict(torch.load(os.path.join(path, 'task_enc.pth')))
+        qf1.load_state_dict(torch.load(os.path.join(path, 'qf1.pth')))
+        qf2.load_state_dict(torch.load(os.path.join(path, 'qf2.pth')))
+        vf.load_state_dict(torch.load(os.path.join(path, 'vf.pth')))
+        # TODO hacky, revisit after model refactor
+        algorithm.networks[-2].load_state_dict(torch.load(os.path.join(path, 'target_vf.pth')))
+        policy.load_state_dict(torch.load(os.path.join(path, 'policy.pth')))
 
     # optional GPU mode
     ptu.set_gpu_mode(variant['util_params']['use_gpu'], variant['util_params']['gpu_id'])

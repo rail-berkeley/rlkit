@@ -271,13 +271,13 @@ class ProtoSoftActorCritic(MetaTorchRLAlgorithm):
         return self.policy.networks + [self.policy]
 
     def get_epoch_snapshot(self, epoch):
-        snapshot = super().get_epoch_snapshot(epoch)
-        snapshot.update(
-            qf1=self.policy.qf1,
-            qf2=self.policy.qf2,
-            policy=self.policy.policy,
-            vf=self.policy.vf,
-            target_vf=self.policy.target_vf,
-            task_enc=self.policy.task_enc,
+        # NOTE: overriding parent method which also optionally saves the env
+        snapshot = OrderedDict(
+            qf1=self.policy.qf1.state_dict(),
+            qf2=self.policy.qf2.state_dict(),
+            policy=self.policy.policy.state_dict(),
+            vf=self.policy.vf.state_dict(),
+            target_vf=self.policy.target_vf.state_dict(),
+            task_enc=self.policy.task_enc.state_dict(),
         )
         return snapshot

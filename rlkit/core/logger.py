@@ -17,6 +17,7 @@ import json
 import pickle
 import base64
 import errno
+import torch
 
 from rlkit.core.tabulate import tabulate
 
@@ -248,26 +249,36 @@ def pop_prefix():
     global _prefix_str
     _prefix_str = ''.join(_prefixes)
 
+def save_weights(weights, names):
+    ''' save network weights to given paths '''
+    # NOTE: breaking abstraction by adding torch dependence here
+    for w, n in zip(weights, names):
+        torch.save(w, n)
 
-def save_itr_params(itr, params):
+def save_itr_params(itr, params_dict):
+    ''' snapshot model parameters '''
+    # NOTE: assumes dict is ordered, should fix someday
+    names = params_dict.keys()
+    params = params_dict.values()
     if _snapshot_dir:
         if _snapshot_mode == 'all':
-            file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
-            joblib.dump(params, file_name, compress=3)
+            # save for every training iteration
+            file_names = [osp.join(_snapshot_dir, n + '_itr_%d.pth' % itr) for n in names]
+            save_weights(params, file_names)
         elif _snapshot_mode == 'last':
             # override previous params
-            file_name = osp.join(_snapshot_dir, 'params.pkl')
-            joblib.dump(params, file_name, compress=3)
+            file_names = [osp.join(_snapshot_dir, n + '.pth') for n in names]
+            save_weights(params, file_names)
         elif _snapshot_mode == "gap":
             if itr % _snapshot_gap == 0:
-                file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
-                joblib.dump(params, file_name, compress=3)
+                file_names = [osp.join(_snapshot_dir, n + '_itr_%d.pth' % itr) for n in names]
+                save_weights(params, file_names)
         elif _snapshot_mode == "gap_and_last":
             if itr % _snapshot_gap == 0:
-                file_name = osp.join(_snapshot_dir, 'itr_%d.pkl' % itr)
-                joblib.dump(params, file_name, compress=3)
-            file_name = osp.join(_snapshot_dir, 'params.pkl')
-            joblib.dump(params, file_name, compress=3)
+                file_names = [osp.join(_snapshot_dir, n + '_itr_%d.pth' % itr) for n in names]
+                save_weights(params, file_names)
+            file_names = [osp.join(_snapshot_dir, n + '.pth') for n in names]
+            save_weights(params, file_names)
         elif _snapshot_mode == 'none':
             pass
         else:
