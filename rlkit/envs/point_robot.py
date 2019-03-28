@@ -31,7 +31,7 @@ class PointEnv(Env):
             goals = [g / 10. for g in goals]
         self.goals = goals
 
-        self._goal = self.reset_goal(self.goals[0])
+        self._goal = self.goals[0]
         self.reset_model()
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
