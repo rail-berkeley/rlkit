@@ -8,20 +8,16 @@ from . import register_env
 @register_env('point-robot')
 class PointEnv(Env):
     """
-    point mass on a 2-D plane
-    two tasks: move to (-1, -1) or move to (1,1)
+    point robot on a 2-D plane
+    tasks (equivalent to goals here) sampled from the unit square
     """
 
-    def __init__(self, task={'direction': 1}, randomize_tasks=False, n_tasks=2):
-        # directions = [-1, 0, 1, 2, 3, 4, 5, 6]
-        directions = list(range(n_tasks))
+    def __init__(self, randomize_tasks=False, n_tasks=2):
 
         if randomize_tasks:
-            goals = [[np.random.uniform(-1., 1.), np.random.uniform(-1., 1.)] for _ in directions]
-
-            # goals = [1 * np.random.uniform(-1., 1., 2) for _ in directions]
+            goals = [[np.random.uniform(-1., 1.), np.random.uniform(-1., 1.)] for _ in range(n_tasks)]
         else:
-            # add more goals in n_tasks > 7
+            # some hand-coded goals for debugging
             goals = [np.array([10, -10]),
                      np.array([10, 10]),
                      np.array([-10, 10]),
@@ -32,45 +28,23 @@ class PointEnv(Env):
                      np.array([0, 4]),
                      np.array([-6, 9])
                      ]
+            goals = [g / 10. for g in goals]
         self.goals = goals
 
-        self.tasks = [{'direction': direction} for direction in directions]
-        self._task = task
-        self._goal = self.reset_goal(task.get('direction', 1))
+        self._goal = self.reset_goal(self.goals[0])
         self.reset_model()
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(2,))
         self.action_space = spaces.Box(low=-0.1, high=0.1, shape=(2,))
 
     def reset_task(self, idx):
-        self._task = self.tasks[idx]
-        self._goal = self.reset_goal(self._task['direction'])
+        self._goal = self.goals[idx]
         self.reset()
 
-    def reset_goal(self, direction):
-        return self.goals[direction]
-        """
-        if direction == 6:
-            return np.array([-6., 9.]) # 1,1 and -1,-1 originally
-        if direction == 5:
-            return np.array([0., 4.]) # 1,1 and -1,-1 originally
-        if direction == 4:
-            return np.array([7., 2.]) # 1,1 and -1,-1 originally
-        if direction == 2:
-            return np.array([-10., -10.]) # 1,1 and -1,-1 originally
-        elif direction == 1:
-            return np.array([5, 10]) # 1,1 and -1,-1 originally
-        elif direction == 0:
-            return np.array([10, -10])
-        elif direction == 3:
-            return np.array([0., 0.])
-        else:
-            return np.array([-10, 0])
-        """
-
     def get_all_task_idx(self):
-        return range(len(self.tasks))
+        return range(len(self.goals))
 
     def reset_model(self):
+        # reset to a random location on the unit square
         self._state = np.random.uniform(-1., 1., size=(2,))
         return self._get_obs()
 
