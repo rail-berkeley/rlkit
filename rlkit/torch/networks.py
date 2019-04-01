@@ -9,7 +9,7 @@ from torch.nn import functional as F
 
 from rlkit.policies.base import Policy
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.core import PyTorchModule
+from rlkit.torch.core import eval_np
 from rlkit.torch.data_management.normalizer import TorchFixedNormalizer
 from rlkit.torch.modules import LayerNorm
 
@@ -18,7 +18,7 @@ def identity(x):
     return x
 
 
-class Mlp(PyTorchModule):
+class Mlp(nn.Module):
     def __init__(
             self,
             hidden_sizes,
@@ -32,7 +32,6 @@ class Mlp(PyTorchModule):
             layer_norm=False,
             layer_norm_kwargs=None,
     ):
-        self.save_init_params(locals())
         super().__init__()
 
         if layer_norm_kwargs is None:
@@ -100,7 +99,6 @@ class MlpPolicy(Mlp, Policy):
             obs_normalizer: TorchFixedNormalizer = None,
             **kwargs
     ):
-        self.save_init_params(locals())
         super().__init__(*args, **kwargs)
         self.obs_normalizer = obs_normalizer
 
@@ -114,7 +112,7 @@ class MlpPolicy(Mlp, Policy):
         return actions[0, :], {}
 
     def get_actions(self, obs):
-        return self.eval_np(obs)
+        return eval_np(self, obs)
 
 
 class TanhMlpPolicy(MlpPolicy):
@@ -122,5 +120,4 @@ class TanhMlpPolicy(MlpPolicy):
     A helper class since most policies have a tanh output activation.
     """
     def __init__(self, *args, **kwargs):
-        self.save_init_params(locals())
         super().__init__(*args, output_activation=torch.tanh, **kwargs)

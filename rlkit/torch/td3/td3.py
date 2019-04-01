@@ -7,26 +7,28 @@ from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
+from rlkit.torch.core import np_to_pytorch_batch
+from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 
-class TD3(TorchRLAlgorithm):
+class TD3Trainer(TorchTrainer):
     """
     Twin Delayed Deep Deterministic policy gradients
-
-    https://arxiv.org/abs/1802.09477
     """
 
     def __init__(
             self,
-            env,
+            policy,
             qf1,
             qf2,
-            policy,
-            exploration_policy,
-
+            target_qf1,
+            target_qf2,
+            target_policy,
             target_policy_noise=0.2,
             target_policy_noise_clip=0.5,
+
+            discount=0.99,
+            reward_scale=1.0,
 
             policy_learning_rate=1e-3,
             qf_learning_rate=1e-3,
@@ -34,31 +36,25 @@ class TD3(TorchRLAlgorithm):
             tau=0.005,
             qf_criterion=None,
             optimizer_class=optim.Adam,
-
-            **kwargs
     ):
-        super().__init__(
-            env,
-            exploration_policy,
-            eval_policy=policy,
-            **kwargs
-        )
         if qf_criterion is None:
             qf_criterion = nn.MSELoss()
         self.qf1 = qf1
         self.qf2 = qf2
         self.policy = policy
-
+        self.target_policy = target_policy
+        self.target_qf1 = target_qf1
+        self.target_qf2 = target_qf2
         self.target_policy_noise = target_policy_noise
         self.target_policy_noise_clip = target_policy_noise_clip
+
+        self.discount = discount
+        self.reward_scale = reward_scale
 
         self.policy_and_target_update_period = policy_and_target_update_period
         self.tau = tau
         self.qf_criterion = qf_criterion
 
-        self.target_policy = policy.copy()
-        self.target_qf1 = self.qf1.copy()
-        self.target_qf2 = self.qf2.copy()
         self.qf1_optimizer = optimizer_class(
             self.qf1.parameters(),
             lr=qf_learning_rate,
@@ -72,8 +68,12 @@ class TD3(TorchRLAlgorithm):
             lr=policy_learning_rate,
         )
 
-    def _do_training(self):
-        batch = self.get_batch()
+        self.eval_statistics = OrderedDict()
+        self._n_train_steps_total = 0
+        self._need_to_update_eval_statistics = True
+
+    def train(self, np_batch):
+        batch = np_to_pytorch_batch(np_batch)
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
@@ -85,10 +85,7 @@ class TD3(TorchRLAlgorithm):
         """
 
         next_actions = self.target_policy(next_obs)
-        noise = torch.normal(
-            torch.zeros_like(next_actions),
-            self.target_policy_noise,
-        )
+        noise = ptu.randn(next_actions.shape) * self.target_policy_noise
         noise = torch.clamp(
             noise,
             -self.target_policy_noise_clip,
@@ -99,7 +96,7 @@ class TD3(TorchRLAlgorithm):
         target_q1_values = self.target_qf1(next_obs, noisy_next_actions)
         target_q2_values = self.target_qf2(next_obs, noisy_next_actions)
         target_q_values = torch.min(target_q1_values, target_q2_values)
-        q_target = rewards + (1. - terminals) * self.discount * target_q_values
+        q_target = self.reward_scale * rewards + (1. - terminals) * self.discount * target_q_values
         q_target = q_target.detach()
 
         q1_pred = self.qf1(obs, actions)
@@ -135,11 +132,8 @@ class TD3(TorchRLAlgorithm):
             ptu.soft_update_from_to(self.qf1, self.target_qf1, self.tau)
             ptu.soft_update_from_to(self.qf2, self.target_qf2, self.tau)
 
-        """
-        Save some statistics for eval using just one batch.
-        """
-        if self.need_to_update_eval_statistics:
-            self.need_to_update_eval_statistics = False
+        if self._need_to_update_eval_statistics:
+            self._need_to_update_eval_statistics = False
             if policy_loss is None:
                 policy_actions = self.policy(obs)
                 q_output = self.qf1(obs, policy_actions)
@@ -174,18 +168,13 @@ class TD3(TorchRLAlgorithm):
                 'Policy Action',
                 ptu.get_numpy(policy_actions),
             ))
+        self._n_train_steps_total += 1
 
-    def get_epoch_snapshot(self, epoch):
-        snapshot = super().get_epoch_snapshot(epoch)
-        snapshot.update(
-            qf1=self.qf1,
-            qf2=self.qf2,
-            policy=self.eval_policy,
-            trained_policy=self.policy,
-            target_policy=self.target_policy,
-            exploration_policy=self.exploration_policy,
-        )
-        return snapshot
+    def get_diagnostics(self):
+        return self.eval_statistics
+
+    def end_epoch(self, epoch):
+        self._need_to_update_eval_statistics = True
 
     @property
     def networks(self):
@@ -197,3 +186,11 @@ class TD3(TorchRLAlgorithm):
             self.target_qf1,
             self.target_qf2,
         ]
+
+    def get_snapshot(self):
+        return dict(
+            qf1=self.qf1,
+            qf2=self.qf2,
+            trained_policy=self.policy,
+            target_policy=self.target_policy,
+        )

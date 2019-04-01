@@ -29,6 +29,7 @@ def get_generic_path_information(paths, stat_prefix=''):
         'Actions', actions, stat_prefix=stat_prefix
     ))
     statistics['Num Paths'] = len(paths)
+    statistics[stat_prefix + 'Average Returns'] = get_average_returns(paths)
 
     return statistics
 
@@ -45,7 +46,7 @@ def create_stats_ordered_dict(
         always_show_all_stats=True,
         exclude_max_min=False,
 ):
-    if stat_prefix is not None:
+    if stat_prefix is not None and len(stat_prefix) > 0:
         name = "{} {}".format(stat_prefix, name)
     if isinstance(data, Number):
         return OrderedDict({name: data})

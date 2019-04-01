@@ -1,11 +1,18 @@
+from collections import OrderedDict
+
 import numpy as np
 
 from rlkit.data_management.replay_buffer import ReplayBuffer
 
 
 class SimpleReplayBuffer(ReplayBuffer):
+
     def __init__(
-            self, max_replay_buffer_size, observation_dim, action_dim,
+        self,
+        max_replay_buffer_size,
+        observation_dim,
+        action_dim,
+        env_info_sizes,
     ):
         self._observation_dim = observation_dim
         self._action_dim = action_dim
@@ -21,16 +28,26 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._rewards = np.zeros((max_replay_buffer_size, 1))
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros((max_replay_buffer_size, 1), dtype='uint8')
+        # Define self._env_infos[key][i] to be the return value of env_info[key]
+        # at time i
+        self._env_infos = {}
+        for key, size in env_info_sizes.items():
+            self._env_infos[key] = np.zeros((max_replay_buffer_size, size))
+        self._env_info_keys = env_info_sizes.keys()
+
         self._top = 0
         self._size = 0
 
-    def add_sample(self, observation, action, reward, terminal,
-                   next_observation, **kwargs):
+    def add_sample(self, observation, action, reward, next_observation,
+                   terminal, env_info, **kwargs):
         self._observations[self._top] = observation
         self._actions[self._top] = action
         self._rewards[self._top] = reward
         self._terminals[self._top] = terminal
         self._next_obs[self._top] = next_observation
+
+        for key in self._env_info_keys:
+            self._env_infos[key][self._top] = env_info[key]
         self._advance()
 
     def terminate_episode(self):
@@ -43,13 +60,34 @@ class SimpleReplayBuffer(ReplayBuffer):
 
     def random_batch(self, batch_size):
         indices = np.random.randint(0, self._size, batch_size)
-        return dict(
+        batch = dict(
             observations=self._observations[indices],
             actions=self._actions[indices],
             rewards=self._rewards[indices],
             terminals=self._terminals[indices],
             next_observations=self._next_obs[indices],
         )
+        for key in self._env_info_keys:
+            assert key not in batch.keys()
+            batch[key] = self._env_infos[key][indices]
+        return batch
+
+    def rebuild_env_info_dict(self, idx):
+        return {
+            key: self._env_infos[key][idx]
+            for key in self._env_info_keys
+        }
+
+    def batch_env_info_dict(self, indices):
+        return {
+            key: self._env_infos[key][indices]
+            for key in self._env_info_keys
+        }
 
     def num_steps_can_sample(self):
         return self._size
+
+    def get_diagnostics(self):
+        return OrderedDict([
+            ('size', self._size)
+        ])

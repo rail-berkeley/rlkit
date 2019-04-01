@@ -7,8 +7,8 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
     """
 
     @abc.abstractmethod
-    def add_sample(self, observation, action, reward, terminal,
-                   next_observation, **kwargs):
+    def add_sample(self, observation, action, reward, next_observation,
+                   terminal, **kwargs):
         """
         Add a transition tuple.
         """
@@ -40,7 +40,7 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
         NOTE: You should NOT call "terminate_episode" after calling add_path.
         It's assumed that this function handles the episode termination.
 
-        :param path: Dict like one outputted by rlkit.samplers.util.rollout
+        :param path: Dict like one outputted by rlkit.samplers.rollout_function
         """
         for i, (
                 obs,
@@ -60,15 +60,19 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
             path["env_infos"],
         )):
             self.add_sample(
-                obs,
-                action,
-                reward,
-                next_obs,
-                terminal,
+                observation=obs,
+                action=action,
+                reward=reward,
+                next_observation=next_obs,
+                terminal=terminal,
                 agent_info=agent_info,
                 env_info=env_info,
             )
         self.terminate_episode()
+
+    def add_paths(self, paths):
+        for path in paths:
+            self.add_path(path)
 
     @abc.abstractmethod
     def random_batch(self, batch_size):
@@ -78,3 +82,13 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
         :return:
         """
         pass
+
+    def get_diagnostics(self):
+        return {}
+
+    def get_snapshot(self):
+        return {}
+
+    def end_epoch(self, epoch):
+        return
+

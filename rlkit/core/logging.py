@@ -3,19 +3,18 @@ Based on rllab's logger.
 
 https://github.com/rll/rllab
 """
-import csv
-import datetime
-import errno
-import json
+from enum import Enum
+from contextlib import contextmanager
+import numpy as np
 import os
 import os.path as osp
-import pickle
 import sys
-from contextlib import contextmanager
-from enum import Enum
-
+import datetime
 import dateutil.tz
-import numpy as np
+import csv
+import json
+import pickle
+import errno
 
 from rlkit.core.tabulate import tabulate
 
@@ -121,19 +120,15 @@ class Logger(object):
     def add_tabular_output(self, file_name, relative_to_snapshot_dir=False):
         if relative_to_snapshot_dir:
             file_name = osp.join(self._snapshot_dir, file_name)
-        self._add_output(file_name, self._tabular_outputs,
-                         self._tabular_fds,
+        self._add_output(file_name, self._tabular_outputs, self._tabular_fds,
                          mode='w')
 
-    def remove_tabular_output(self, file_name,
-                              relative_to_snapshot_dir=False):
+    def remove_tabular_output(self, file_name, relative_to_snapshot_dir=False):
         if relative_to_snapshot_dir:
             file_name = osp.join(self._snapshot_dir, file_name)
         if self._tabular_fds[file_name] in self._tabular_header_written:
-            self._tabular_header_written.remove(
-                self._tabular_fds[file_name])
-        self._remove_output(file_name, self._tabular_outputs,
-                            self._tabular_fds)
+            self._tabular_header_written.remove(self._tabular_fds[file_name])
+        self._remove_output(file_name, self._tabular_outputs, self._tabular_fds)
 
     def set_snapshot_dir(self, dir_name):
         self._snapshot_dir = dir_name
@@ -176,8 +171,15 @@ class Logger(object):
             sys.stdout.flush()
 
     def record_tabular(self, key, val):
-        self._tabular.append(
-            (self._tabular_prefix_str + str(key), str(val)))
+        self._tabular.append((self._tabular_prefix_str + str(key), str(val)))
+
+    def record_dict(self, d, prefix=None):
+        if prefix is not None:
+            self.push_tabular_prefix(prefix)
+        for k, v in d.items():
+            self.record_tabular(k, v)
+        if prefix is not None:
+            self.pop_tabular_prefix()
 
     def push_tabular_prefix(self, key):
         self._tabular_prefixes.append(key)
@@ -187,8 +189,7 @@ class Logger(object):
         del self._tabular_prefixes[-1]
         self._tabular_prefix_str = ''.join(self._tabular_prefixes)
 
-    def save_extra_data(self, data, file_name='extra_data.pkl',
-                        mode='joblib'):
+    def save_extra_data(self, data, file_name='extra_data.pkl', mode='joblib'):
         """
         Data saved here will always override the last entry
 
@@ -227,8 +228,7 @@ class Logger(object):
     def log_variant(self, log_file, variant_data):
         mkdir_p(os.path.dirname(log_file))
         with open(log_file, "w") as f:
-            json.dump(variant_data, f, indent=2, sort_keys=True,
-                      cls=MyEncoder)
+            json.dump(variant_data, f, indent=2, sort_keys=True, cls=MyEncoder)
 
     def record_tabular_misc_stat(self, key, values, placement='back'):
         if placement == 'front':
@@ -238,11 +238,9 @@ class Logger(object):
             prefix = key
             suffix = ""
         if len(values) > 0:
-            self.record_tabular(prefix + "Average" + suffix,
-                                np.average(values))
+            self.record_tabular(prefix + "Average" + suffix, np.average(values))
             self.record_tabular(prefix + "Std" + suffix, np.std(values))
-            self.record_tabular(prefix + "Median" + suffix,
-                                np.median(values))
+            self.record_tabular(prefix + "Median" + suffix, np.median(values))
             self.record_tabular(prefix + "Min" + suffix, np.min(values))
             self.record_tabular(prefix + "Max" + suffix, np.max(values))
         else:
@@ -265,8 +263,7 @@ class Logger(object):
             # This assumes that the keys in each iteration won't change!
             for tabular_fd in list(self._tabular_fds.values()):
                 writer = csv.DictWriter(tabular_fd,
-                                        fieldnames=list(
-                                            tabular_dict.keys()))
+                                        fieldnames=list(tabular_dict.keys()))
                 if wh or (
                         wh is None and tabular_fd not in self._tabular_header_written):
                     writer.writeheader()
@@ -290,13 +287,11 @@ class Logger(object):
                 pickle.dump(params, open(file_name, "wb"))
             elif self._snapshot_mode == "gap":
                 if itr % self._snapshot_gap == 0:
-                    file_name = osp.join(self._snapshot_dir,
-                                         'itr_%d.pkl' % itr)
+                    file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
                     pickle.dump(params, open(file_name, "wb"))
             elif self._snapshot_mode == "gap_and_last":
                 if itr % self._snapshot_gap == 0:
-                    file_name = osp.join(self._snapshot_dir,
-                                         'itr_%d.pkl' % itr)
+                    file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
                     pickle.dump(params, open(file_name, "wb"))
                 file_name = osp.join(self._snapshot_dir, 'params.pkl')
                 pickle.dump(params, open(file_name, "wb"))
@@ -307,3 +302,4 @@ class Logger(object):
 
 
 logger = Logger()
+

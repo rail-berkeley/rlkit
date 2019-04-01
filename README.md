@@ -4,39 +4,55 @@ Reinforcement learning framework and algorithms implemented in PyTorch.
 Some implemented algorithms:
  - Reinforcement Learning with Imagined Goals (RIG)
     - [example script](examples/rig/pusher/rig.py)
-    - [RIG paper](https://arxiv.org/abs/1807.04742)
+    - [paper](https://arxiv.org/abs/1807.04742)
     - [Documentation](docs/RIG.md)
  - Temporal Difference Models (TDMs)
     - [example script](examples/tdm/cheetah.py)
-    - [TDM paper](https://arxiv.org/abs/1802.09081)
+    - [paper](https://arxiv.org/abs/1802.09081)
     - [Documentation](docs/TDMs.md)
  - Hindsight Experience Replay (HER)
-    - [example script](examples/her/her_td3_gym_fetch_reach.py)
-    - [HER paper](https://arxiv.org/abs/1707.01495)
+    - [example script](examples/her/her_sac_gym_fetch_reach.py)
+    - [paper](https://arxiv.org/abs/1707.01495)
     - [Documentation](docs/HER.md)
  - Deep Deterministic Policy Gradient (DDPG)
     - [example script](examples/ddpg.py)
-    - [DDPG paper](https://arxiv.org/pdf/1509.02971.pdf)
+    - [paper](https://arxiv.org/pdf/1509.02971.pdf)
  - (Double) Deep Q-Network (DQN)
     - [example script](examples/dqn_and_double_dqn.py)
-    - [DQN paper](https://arxiv.org/pdf/1509.06461.pdf)
+    - [paper](https://arxiv.org/pdf/1509.06461.pdf)
     - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
- - (Twin) Soft Actor Critic (SAC)
+ - Soft Actor Critic (SAC)
     - [example script](examples/tsac.py)
-    - [SAC paper](https://arxiv.org/abs/1801.01290)
+    - [original paper](https://arxiv.org/abs/1801.01290) and [updated 
+    version](https://arxiv.org/abs/1812.05905)
     - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
-    - Includes the "min of Q" method and the entropy-constrained implementation
+    - Includes the "min of Q" method, the entropy-constrained implementation,
+     reparameterization trick, and numerical tanh-Normal Jacbian calcuation.
  - Twin Delayed Deep Determinstic Policy Gradient (TD3)
     - [example script](examples/td3.py)
-    - [TD3 paper](https://arxiv.org/abs/1802.09477)
- - (Non-Twin/Old) Soft Actor Critic
-    - [example script](examples/sac.py)
-    - SAC without the "min of Q" method.
-    - The canonical SAC implementation is the twin version, listed earlier.
+    - [paper](https://arxiv.org/abs/1802.09477)
 
 To get started, checkout the example scripts, linked above.
 
 ## What's New
+### Version 0.2
+The initial release for 0.2 has the following major changes:
+ - Remove `Serializable` class and use default pickle scheme.
+ - Remove `PyTorchModule` class and use native `torch.nn.Module` directly.
+ - Switch to batch-style training rather than online training.
+   - Makes code more amenable to parallelization.
+   - Implementing the online-version is straightforward.
+ - Refactor training code to be its own object, rather than being integrated 
+ inside of `RLAlgorithm`.
+ - Refactor sampling code to be its own object, rather than being integrated
+ inside of `RLAlgorithm`.
+ - Update Soft Actor Critic to more closely match TensorFlow implementation:
+   - Rename `TwinSAC` to just `SAC`.
+   - Only have Q networks.
+   - Remove unnecessary policy regualization terms.
+   - Use numerically stable Jacobian computation.
+
+### Version 0.1
 12/04/2018
  - Add RIG implementation
 

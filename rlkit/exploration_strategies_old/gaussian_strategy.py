@@ -1,8 +1,9 @@
 from rlkit.exploration_strategies.base import RawExplorationStrategy
+from rlkit.core.serializable import Serializable
 import numpy as np
 
 
-class GaussianStrategy(RawExplorationStrategy):
+class GaussianStrategy(RawExplorationStrategy, Serializable):
     """
     This strategy adds Gaussian noise to the action taken by the deterministic policy.
 
@@ -11,6 +12,7 @@ class GaussianStrategy(RawExplorationStrategy):
     def __init__(self, action_space, max_sigma=1.0, min_sigma=None,
                  decay_period=1000000):
         assert len(action_space.shape) == 1
+        Serializable.quick_init(self, locals())
         self._max_sigma = max_sigma
         if min_sigma is None:
             min_sigma = max_sigma
@@ -27,4 +29,4 @@ class GaussianStrategy(RawExplorationStrategy):
             action + np.random.normal(size=len(action)) * sigma,
             self._action_space.low,
             self._action_space.high,
-        )
+            )

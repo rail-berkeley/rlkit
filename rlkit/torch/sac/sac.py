@@ -1,63 +1,50 @@
 from collections import OrderedDict
 
 import numpy as np
+import torch
 import torch.optim as optim
 from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
-from rlkit.torch.sac.policies import MakeDeterministic
+from rlkit.torch.core import np_to_pytorch_batch
+from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 
-class SoftActorCritic(TorchRLAlgorithm):
+class SACTrainer(TorchTrainer):
     def __init__(
             self,
             env,
             policy,
-            qf,
-            vf,
+            qf1,
+            qf2,
+            target_qf1,
+            target_qf2,
+
+            discount=0.99,
+            reward_scale=1.0,
 
             policy_lr=1e-3,
             qf_lr=1e-3,
-            vf_lr=1e-3,
-            policy_mean_reg_weight=1e-3,
-            policy_std_reg_weight=1e-3,
-            policy_pre_activation_weight=0.,
             optimizer_class=optim.Adam,
 
-            train_policy_with_reparameterization=True,
             soft_target_tau=1e-2,
+            target_update_period=1,
             plotter=None,
             render_eval_paths=False,
-            eval_deterministic=True,
 
             use_automatic_entropy_tuning=True,
             target_entropy=None,
-            **kwargs
     ):
-        if eval_deterministic:
-            eval_policy = MakeDeterministic(policy)
-        else:
-            eval_policy = policy
-        super().__init__(
-            env=env,
-            exploration_policy=policy,
-            eval_policy=eval_policy,
-            **kwargs
-        )
+        self.env = env
         self.policy = policy
-        self.qf = qf
-        self.vf = vf
-        self.train_policy_with_reparameterization = (
-            train_policy_with_reparameterization
-        )
+        self.qf1 = qf1
+        self.qf2 = qf2
+        self.target_qf1 = target_qf1
+        self.target_qf2 = target_qf2
         self.soft_target_tau = soft_target_tau
-        self.policy_mean_reg_weight = policy_mean_reg_weight
-        self.policy_std_reg_weight = policy_std_reg_weight
-        self.policy_pre_activation_weight = policy_pre_activation_weight
-        self.plotter = plotter
-        self.render_eval_paths = render_eval_paths
+        self.target_update_period = target_update_period
+
         self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
             if target_entropy:
@@ -70,7 +57,9 @@ class SoftActorCritic(TorchRLAlgorithm):
                 lr=policy_lr,
             )
 
-        self.target_vf = vf.copy()
+        self.plotter = plotter
+        self.render_eval_paths = render_eval_paths
+
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
 
@@ -78,112 +67,122 @@ class SoftActorCritic(TorchRLAlgorithm):
             self.policy.parameters(),
             lr=policy_lr,
         )
-        self.qf_optimizer = optimizer_class(
-            self.qf.parameters(),
+        self.qf1_optimizer = optimizer_class(
+            self.qf1.parameters(),
             lr=qf_lr,
         )
-        self.vf_optimizer = optimizer_class(
-            self.vf.parameters(),
-            lr=vf_lr,
+        self.qf2_optimizer = optimizer_class(
+            self.qf2.parameters(),
+            lr=qf_lr,
         )
 
-    def _do_training(self):
-        batch = self.get_batch()
+        self.discount = discount
+        self.reward_scale = reward_scale
+        self.eval_statistics = OrderedDict()
+        self._n_train_steps_total = 0
+        self._need_to_update_eval_statistics = True
+
+    def train(self, np_batch):
+        batch = np_to_pytorch_batch(np_batch)
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
         actions = batch['actions']
         next_obs = batch['next_observations']
 
-        q_pred = self.qf(obs, actions)
-        v_pred = self.vf(obs)
+        q1_pred = self.qf1(obs, actions)
+        q2_pred = self.qf2(obs, actions)
         # Make sure policy accounts for squashing functions like tanh correctly!
-        policy_outputs = self.policy(
-                obs,
-                reparameterize=self.train_policy_with_reparameterization,
-                return_log_prob=True,
+        new_next_actions, *_ = self.policy(
+            next_obs, reparameterize=True, return_log_prob=True,
         )
-        new_actions, policy_mean, policy_log_std, log_pi = policy_outputs[:4]
+
+        """
+        QF Loss
+        """
+        target_q_values = torch.min(
+            self.target_qf1(next_obs, new_next_actions),
+            self.target_qf2(next_obs, new_next_actions),
+        )
+        q_target = self.reward_scale * rewards + (1. - terminals) * self.discount * target_q_values
+        qf1_loss = self.qf_criterion(q1_pred, q_target.detach())
+        qf2_loss = self.qf_criterion(q2_pred, q_target.detach())
+
+        """
+        Policy and Alpha Loss
+        """
+        new_obs_actions, policy_mean, policy_log_std, log_pi, *_ = self.policy(
+            obs, reparameterize=True, return_log_prob=True,
+        )
         if self.use_automatic_entropy_tuning:
-            """
-            Alpha Loss
-            """
             alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
             self.alpha_optimizer.zero_grad()
             alpha_loss.backward()
             self.alpha_optimizer.step()
             alpha = self.log_alpha.exp()
         else:
-            alpha = 1
             alpha_loss = 0
+            alpha = 1
 
-        """
-        QF Loss
-        """
-        target_v_values = self.target_vf(next_obs)
-        q_target = rewards + (1. - terminals) * self.discount * target_v_values
-        qf_loss = self.qf_criterion(q_pred, q_target.detach())
-
-        """
-        VF Loss
-        """
-        q_new_actions = self.qf(obs, new_actions)
-        v_target = q_new_actions - alpha*log_pi
-        vf_loss = self.vf_criterion(v_pred, v_target.detach())
-
-        """
-        Policy Loss
-        """
-        if self.train_policy_with_reparameterization:
-            policy_loss = (alpha*log_pi - q_new_actions).mean()
-        else:
-            log_policy_target = q_new_actions - v_pred
-            policy_loss = (
-                log_pi * (alpha*log_pi - log_policy_target).detach()
-            ).mean()
-        mean_reg_loss = self.policy_mean_reg_weight * (policy_mean**2).mean()
-        std_reg_loss = self.policy_std_reg_weight * (policy_log_std**2).mean()
-        pre_tanh_value = policy_outputs[-1]
-        pre_activation_reg_loss = self.policy_pre_activation_weight * (
-            (pre_tanh_value**2).sum(dim=1).mean()
+        q_new_actions = torch.min(
+            self.qf1(obs, new_obs_actions),
+            self.qf2(obs, new_obs_actions),
         )
-        policy_reg_loss = mean_reg_loss + std_reg_loss + pre_activation_reg_loss
-        policy_loss = policy_loss + policy_reg_loss
+        policy_loss = (alpha*log_pi - q_new_actions).mean()
 
         """
         Update networks
         """
-        self.qf_optimizer.zero_grad()
-        qf_loss.backward()
-        self.qf_optimizer.step()
+        self.qf1_optimizer.zero_grad()
+        qf1_loss.backward()
+        self.qf1_optimizer.step()
 
-        self.vf_optimizer.zero_grad()
-        vf_loss.backward()
-        self.vf_optimizer.step()
+        self.qf2_optimizer.zero_grad()
+        qf2_loss.backward()
+        self.qf2_optimizer.step()
 
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
         self.policy_optimizer.step()
 
-        self._update_target_network()
+        """
+        Soft Updates
+        """
+        if self._n_train_steps_total % self.target_update_period == 0:
+            ptu.soft_update_from_to(
+                self.qf1, self.target_qf1, self.soft_target_tau
+            )
+            ptu.soft_update_from_to(
+                self.qf2, self.target_qf2, self.soft_target_tau
+            )
 
         """
-        Save some statistics for eval using just one batch.
+        Save some statistics for eval
         """
-        if self.need_to_update_eval_statistics:
-            self.need_to_update_eval_statistics = False
-            self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
-            self.eval_statistics['VF Loss'] = np.mean(ptu.get_numpy(vf_loss))
+        if self._need_to_update_eval_statistics:
+            self._need_to_update_eval_statistics = False
+            """
+            Eval should set this to None.
+            This way, these statistics are only computed for one batch.
+            """
+            policy_loss = (log_pi - q_new_actions).mean()
+
+            self.eval_statistics['QF1 Loss'] = np.mean(ptu.get_numpy(qf1_loss))
+            self.eval_statistics['QF2 Loss'] = np.mean(ptu.get_numpy(qf2_loss))
             self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
                 policy_loss
             ))
             self.eval_statistics.update(create_stats_ordered_dict(
-                'Q Predictions',
-                ptu.get_numpy(q_pred),
+                'Q1 Predictions',
+                ptu.get_numpy(q1_pred),
             ))
             self.eval_statistics.update(create_stats_ordered_dict(
-                'V Predictions',
-                ptu.get_numpy(v_pred),
+                'Q2 Predictions',
+                ptu.get_numpy(q2_pred),
+            ))
+            self.eval_statistics.update(create_stats_ordered_dict(
+                'Q Targets',
+                ptu.get_numpy(q_target),
             ))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Log Pis',
@@ -200,25 +199,30 @@ class SoftActorCritic(TorchRLAlgorithm):
             if self.use_automatic_entropy_tuning:
                 self.eval_statistics['Alpha'] = alpha.item()
                 self.eval_statistics['Alpha Loss'] = alpha_loss.item()
+        self._n_train_steps_total += 1
+
+    def get_diagnostics(self):
+        return self.eval_statistics
+
+    def end_epoch(self, epoch):
+        self._need_to_update_eval_statistics = True
 
     @property
     def networks(self):
         return [
             self.policy,
-            self.qf,
-            self.vf,
-            self.target_vf,
+            self.qf1,
+            self.qf2,
+            self.target_qf1,
+            self.target_qf2,
         ]
 
-    def _update_target_network(self):
-        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
-
-    def get_epoch_snapshot(self, epoch):
-        snapshot = super().get_epoch_snapshot(epoch)
-        snapshot.update(
-            qf=self.qf,
+    def get_snapshot(self):
+        return dict(
             policy=self.policy,
-            vf=self.vf,
-            target_vf=self.target_vf,
+            qf1=self.qf1,
+            qf2=self.qf2,
+            target_qf1=self.qf1,
+            target_qf2=self.qf2,
         )
-        return snapshot
+

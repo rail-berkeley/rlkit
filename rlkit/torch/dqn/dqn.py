@@ -6,70 +6,43 @@ import torch.optim as optim
 from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.exploration_strategies.base import (
-    PolicyWrappedWithExplorationStrategy
-)
-from rlkit.exploration_strategies.epsilon_greedy import EpsilonGreedy
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.policies.argmax import ArgmaxDiscretePolicy
-from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
+from rlkit.torch.core import np_to_pytorch_batch
+from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 
-class DQN(TorchRLAlgorithm):
+class DQNTrainer(TorchTrainer):
     def __init__(
             self,
-            env,
             qf,
-            policy=None,
+            target_qf,
             learning_rate=1e-3,
-            use_hard_updates=False,
-            hard_update_period=1000,
-            tau=0.001,
-            epsilon=0.1,
+            soft_target_tau=1e-3,
+            target_update_period=1,
             qf_criterion=None,
-            **kwargs
-    ):
-        """
 
-        :param env: Env.
-        :param qf: QFunction. Maps from state to action Q-values.
-        :param learning_rate: Learning rate for qf. Adam is used.
-        :param use_hard_updates: Use a hard rather than soft update.
-        :param hard_update_period: How many gradient steps before copying the
-        parameters over. Used if `use_hard_updates` is True.
-        :param tau: Soft target tau to update target QF. Used if
-        `use_hard_updates` is False.
-        :param epsilon: Probability of taking a random action.
-        :param kwargs: kwargs to pass onto TorchRLAlgorithm
-        """
-        exploration_strategy = EpsilonGreedy(
-            action_space=env.action_space,
-            prob_random_action=epsilon,
-        )
-        self.policy = policy or ArgmaxDiscretePolicy(qf)
-        exploration_policy = PolicyWrappedWithExplorationStrategy(
-            exploration_strategy=exploration_strategy,
-            policy=self.policy,
-        )
-        super().__init__(
-            env, exploration_policy, eval_policy=self.policy, **kwargs
-        )
+            discount=0.99,
+            reward_scale=1.0,
+    ):
         self.qf = qf
-        self.target_qf = self.qf.copy()
+        self.target_qf = target_qf
         self.learning_rate = learning_rate
-        self.use_hard_updates = use_hard_updates
-        self.hard_update_period = hard_update_period
-        self.tau = tau
+        self.soft_target_tau = soft_target_tau
+        self.target_update_period = target_update_period
         self.qf_optimizer = optim.Adam(
             self.qf.parameters(),
             lr=self.learning_rate,
         )
+        self.discount = discount
+        self.reward_scale = reward_scale
         self.qf_criterion = qf_criterion or nn.MSELoss()
+        self.eval_statistics = OrderedDict()
+        self._n_train_steps_total = 0
+        self._need_to_update_eval_statistics = True
 
-
-    def _do_training(self):
-        batch = self.get_batch()
-        rewards = batch['rewards']
+    def train(self, np_batch):
+        batch = np_to_pytorch_batch(np_batch)
+        rewards = batch['rewards'] * self.reward_scale
         terminals = batch['terminals']
         obs = batch['observations']
         actions = batch['actions']
@@ -94,36 +67,31 @@ class DQN(TorchRLAlgorithm):
         self.qf_optimizer.zero_grad()
         qf_loss.backward()
         self.qf_optimizer.step()
-        self._update_target_network()
+
+        """
+        Soft Updates
+        """
+        if self._n_train_steps_total % self.target_update_period == 0:
+            ptu.soft_update_from_to(
+                self.qf, self.target_qf, self.soft_target_tau
+            )
 
         """
         Save some statistics for eval using just one batch.
         """
-        if self.need_to_update_eval_statistics:
-            self.need_to_update_eval_statistics = False
+        if self._need_to_update_eval_statistics:
+            self._need_to_update_eval_statistics = False
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Y Predictions',
                 ptu.get_numpy(y_pred),
             ))
 
-    def _update_target_network(self):
-        if self.use_hard_updates:
-            if self._n_train_steps_total % self.hard_update_period == 0:
-                ptu.copy_model_params_from_to(self.qf, self.target_qf)
-        else:
-            ptu.soft_update_from_to(self.qf, self.target_qf, self.tau)
+    def get_diagnostics(self):
+        return self.eval_statistics
 
-    def offline_evaluate(self, epoch):
-        raise NotImplementedError()
-
-    def get_epoch_snapshot(self, epoch):
-        snapshot = super().get_epoch_snapshot(epoch)
-        snapshot.update(
-            exploration_policy=self.exploration_policy,
-            policy=self.policy,
-        )
-        return snapshot
+    def end_epoch(self, epoch):
+        self._need_to_update_eval_statistics = True
 
     @property
     def networks(self):
@@ -131,3 +99,9 @@ class DQN(TorchRLAlgorithm):
             self.qf,
             self.target_qf,
         ]
+
+    def get_snapshot(self):
+        return dict(
+            qf=self.qf,
+            target_qf=self.target_qf,
+        )

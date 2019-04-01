@@ -2,14 +2,14 @@
 Torch argmax policy
 """
 import numpy as np
+from torch import nn
+
 import rlkit.torch.pytorch_util as ptu
-from rlkit.policies.base import SerializablePolicy
-from rlkit.torch.core import PyTorchModule
+from rlkit.policies.base import Policy
 
 
-class ArgmaxDiscretePolicy(PyTorchModule, SerializablePolicy):
+class ArgmaxDiscretePolicy(nn.Module, Policy):
     def __init__(self, qf):
-        self.save_init_params(locals())
         super().__init__()
         self.qf = qf
 

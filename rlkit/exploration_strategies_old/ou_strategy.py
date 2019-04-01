@@ -2,9 +2,10 @@ import numpy as np
 import numpy.random as nr
 
 from rlkit.exploration_strategies.base import RawExplorationStrategy
+from rlkit.core.serializable import Serializable
 
 
-class OUStrategy(RawExplorationStrategy):
+class OUStrategy(RawExplorationStrategy, Serializable):
     """
     This strategy implements the Ornstein-Uhlenbeck process, which adds
     time-correlated noise to the actions taken by the deterministic policy.
@@ -24,6 +25,7 @@ class OUStrategy(RawExplorationStrategy):
             min_sigma=None,
             decay_period=100000,
     ):
+        Serializable.quick_init(self, locals())
         if min_sigma is None:
             min_sigma = max_sigma
         self.mu = mu

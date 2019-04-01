@@ -1,6 +1,8 @@
-import numpy as np
+from gym.spaces import Discrete
+
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
-from gym.spaces import Box, Discrete, Tuple
+from rlkit.envs.env_utils import get_dim
+import numpy as np
 
 
 class EnvReplayBuffer(SimpleReplayBuffer):
@@ -8,6 +10,7 @@ class EnvReplayBuffer(SimpleReplayBuffer):
             self,
             max_replay_buffer_size,
             env,
+            env_info_sizes=None
     ):
         """
         :param max_replay_buffer_size:
@@ -16,30 +19,32 @@ class EnvReplayBuffer(SimpleReplayBuffer):
         self.env = env
         self._ob_space = env.observation_space
         self._action_space = env.action_space
+
+        if env_info_sizes is None:
+            if hasattr(env, 'info_sizes'):
+                env_info_sizes = env.info_sizes
+            else:
+                env_info_sizes = dict()
+
         super().__init__(
             max_replay_buffer_size=max_replay_buffer_size,
             observation_dim=get_dim(self._ob_space),
             action_dim=get_dim(self._action_space),
+            env_info_sizes=env_info_sizes
         )
 
     def add_sample(self, observation, action, reward, terminal,
-            next_observation, **kwargs):
-
+                   next_observation, **kwargs):
         if isinstance(self._action_space, Discrete):
-            action = np.eye(self._action_space.n)[action]
-        super(EnvReplayBuffer, self).add_sample(
-                observation, action, reward, terminal, 
-                next_observation, **kwargs)
-
-
-def get_dim(space):
-    if isinstance(space, Box):
-        return space.low.size
-    elif isinstance(space, Discrete):
-        return space.n
-    elif isinstance(space, Tuple):
-        return sum(get_dim(subspace) for subspace in space.spaces)
-    elif hasattr(space, 'flat_dim'):
-        return space.flat_dim
-    else:
-        raise TypeError("Unknown space: {}".format(space))
+            new_action = np.zeros(self._action_dim)
+            new_action[action] = 1
+        else:
+            new_action = action
+        return super().add_sample(
+            observation=observation,
+            action=new_action,
+            reward=reward,
+            next_observation=next_observation,
+            terminal=terminal,
+            **kwargs
+        )

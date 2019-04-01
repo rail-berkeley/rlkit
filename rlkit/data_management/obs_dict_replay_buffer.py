@@ -10,7 +10,6 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         - OpenAI Gym GoalEnv environments. https://blog.openai.com/ingredients-for-robotics-research/
         - multiworld MultitaskEnv. https://github.com/vitchyr/multiworld/
 
-
     Implementation details:
      - Only add_path is implemented.
      - Image observations are presumed to start with the 'image_' prefix
@@ -28,32 +27,24 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
             fraction_goals_rollout_goals=1.0,
             fraction_goals_env_goals=0.0,
             internal_keys=None,
+            goal_keys=None,
             observation_key='observation',
-            achieved_goal_key='achieved_goal',
             desired_goal_key='desired_goal',
+            achieved_goal_key='achieved_goal',
     ):
-        """
-
-        :param max_size:
-        :param env:
-        :param fraction_goals_rollout_goals: Default, no her.
-        :param fraction_goals_env_goals: What fraction of goals are sampled
-        "from the environment" assuming that the environment has a "sample
-        goal" method. The remaining resampled goals are resampled using the
-        "future" strategy, described in Hindsight Experience Replay.
-        :param internal_keys: Extra keys in the observation dictoary to save.
-        Mostly for debugging.
-        :param observation_key:
-        :param desired_goal_key:
-        :param achieved_goal_key:
-        """
         if internal_keys is None:
             internal_keys = []
         self.internal_keys = internal_keys
+        if goal_keys is None:
+            goal_keys = []
+        if desired_goal_key not in goal_keys:
+            goal_keys.append(desired_goal_key)
+        self.goal_keys = goal_keys
         assert isinstance(env.observation_space, Dict)
-        assert fraction_goals_env_goals >= 0
-        assert fraction_goals_rollout_goals >= 0
-        assert fraction_goals_env_goals + fraction_goals_rollout_goals <= 1.0
+        assert 0 <= fraction_goals_rollout_goals
+        assert 0 <= fraction_goals_env_goals
+        assert 0 <= fraction_goals_rollout_goals + fraction_goals_env_goals
+        assert fraction_goals_rollout_goals + fraction_goals_env_goals <= 1
         self.max_size = max_size
         self.env = env
         self.fraction_goals_rollout_goals = fraction_goals_rollout_goals
@@ -70,6 +61,7 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
             self._action_dim = env.action_space.n
         else:
             self._action_dim = env.action_space.low.size
+
         self._actions = np.zeros((max_size, self._action_dim))
         # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros((max_size, 1), dtype='uint8')
@@ -95,7 +87,6 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         # Then self._next_obs[j] is a valid next observation for observation i
         self._idx_to_future_obs_idx = [None] * max_size
 
-
     def add_sample(self, observation, action, reward, terminal,
                    next_observation, **kwargs):
         raise NotImplementedError("Only use add_path")
@@ -118,8 +109,7 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         if isinstance(self.env.action_space, Discrete):
             actions = np.eye(self._action_dim)[actions].reshape((-1, self._action_dim))
         obs = flatten_dict(obs, self.ob_keys_to_save + self.internal_keys)
-        next_obs = flatten_dict(next_obs,
-                                self.ob_keys_to_save + self.internal_keys)
+        next_obs = flatten_dict(next_obs, self.ob_keys_to_save + self.internal_keys)
         obs = preprocess_obs_dict(obs)
         next_obs = preprocess_obs_dict(next_obs)
 
@@ -146,8 +136,7 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
                 self._terminals[buffer_slice] = terminals[path_slice]
                 for key in self.ob_keys_to_save + self.internal_keys:
                     self._obs[key][buffer_slice] = obs[key][path_slice]
-                    self._next_obs[key][buffer_slice] = next_obs[key][
-                        path_slice]
+                    self._next_obs[key][buffer_slice] = next_obs[key][path_slice]
             # Pointers from before the wrap
             for i in range(self._top, self.max_size):
                 self._idx_to_future_obs_idx[i] = np.hstack((
@@ -183,8 +172,8 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         indices = self._sample_indices(batch_size)
         resampled_goals = self._next_obs[self.desired_goal_key][indices]
 
-        num_rollout_goals = int(batch_size * self.fraction_goals_rollout_goals)
         num_env_goals = int(batch_size * self.fraction_goals_env_goals)
+        num_rollout_goals = int(batch_size * self.fraction_goals_rollout_goals)
         num_future_goals = batch_size - (num_env_goals + num_rollout_goals)
         new_obs_dict = self._batch_obs_dict(indices)
         new_next_obs_dict = self._batch_next_obs_dict(indices)
@@ -196,19 +185,30 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
             resampled_goals[num_rollout_goals:last_env_goal_idx] = (
                 env_goals[self.desired_goal_key]
             )
+            for goal_key in self.goal_keys:
+                new_obs_dict[goal_key][num_rollout_goals:last_env_goal_idx] = \
+                    env_goals[goal_key]
+                new_next_obs_dict[goal_key][
+                num_rollout_goals:last_env_goal_idx] = \
+                    env_goals[goal_key]
         if num_future_goals > 0:
             future_obs_idxs = []
             for i in indices[-num_future_goals:]:
                 possible_future_obs_idxs = self._idx_to_future_obs_idx[i]
-                # This is generally faster than random.choice.
-                # Makes you wonder what random.choice is doing...
+                # This is generally faster than random.choice. Makes you wonder what
+                # random.choice is doing
                 num_options = len(possible_future_obs_idxs)
                 next_obs_i = int(np.random.randint(0, num_options))
                 future_obs_idxs.append(possible_future_obs_idxs[next_obs_i])
             future_obs_idxs = np.array(future_obs_idxs)
-            resampled_goals[-num_future_goals:] = (
-                self._next_obs[self.achieved_goal_key][future_obs_idxs]
-            )
+            resampled_goals[-num_future_goals:] = self._next_obs[
+                self.achieved_goal_key
+            ][future_obs_idxs]
+            for goal_key in self.goal_keys:
+                new_obs_dict[goal_key][-num_future_goals:] = \
+                    self._next_obs[goal_key][future_obs_idxs]
+                new_next_obs_dict[goal_key][-num_future_goals:] = \
+                    self._next_obs[goal_key][future_obs_idxs]
 
         new_obs_dict[self.desired_goal_key] = resampled_goals
         new_next_obs_dict[self.desired_goal_key] = resampled_goals
@@ -224,6 +224,7 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
 
         https://github.com/vitchyr/multiworld
         """
+
         if hasattr(self.env, 'compute_rewards'):
             new_rewards = self.env.compute_rewards(
                 new_actions,

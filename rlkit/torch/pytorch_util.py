@@ -66,8 +66,10 @@ def set_device(gpu_id):
 
 
 # noinspection PyPep8Naming
-def FloatTensor(*args, **kwargs):
-    return torch.FloatTensor(*args, **kwargs).to(device)
+def FloatTensor(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.FloatTensor(*args, **kwargs, device=torch_device)
 
 
 def from_numpy(*args, **kwargs):
@@ -76,6 +78,12 @@ def from_numpy(*args, **kwargs):
 
 def get_numpy(tensor):
     return tensor.to('cpu').detach().numpy()
+
+
+def zeros(*sizes, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.zeros(*sizes, **kwargs, device=torch_device)
 
 
 def ones(*sizes, torch_device=None, **kwargs):
@@ -94,12 +102,6 @@ def randn(*args, torch_device=None, **kwargs):
     if torch_device is None:
         torch_device = device
     return torch.randn(*args, **kwargs, device=torch_device)
-
-
-def zeros(*sizes, torch_device=None, **kwargs):
-    if torch_device is None:
-        torch_device = device
-    return torch.zeros(*sizes, **kwargs, device=torch_device)
 
 
 def zeros_like(*args, torch_device=None, **kwargs):

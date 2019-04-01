@@ -3,6 +3,7 @@ import torch
 from torch import nn as nn
 
 from rlkit.policies.base import ExplorationPolicy, Policy
+from rlkit.torch.core import eval_np
 from rlkit.torch.distributions import TanhNormal
 from rlkit.torch.networks import Mlp
 
@@ -38,7 +39,6 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
             init_w=1e-3,
             **kwargs
     ):
-        self.save_init_params(locals())
         super().__init__(
             hidden_sizes,
             input_size=obs_dim,
@@ -64,7 +64,7 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         return actions[0, :], {}
 
     def get_actions(self, obs_np, deterministic=False):
-        return self.eval_np(obs_np, deterministic=deterministic)[0]
+        return eval_np(self, obs_np, deterministic=deterministic)[0]
 
     def forward(
             self,
@@ -131,7 +131,3 @@ class MakeDeterministic(Policy):
     def get_action(self, observation):
         return self.stochastic_policy.get_action(observation,
                                                  deterministic=True)
-
-    def get_actions(self, observations):
-        return self.stochastic_policy.get_actions(observations,
-                                                  deterministic=True)
