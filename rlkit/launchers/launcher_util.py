@@ -480,8 +480,8 @@ def run_experiment(
     :param prepend_date_to_exp_prefix: If False, do not prepend the date to
     the experiment directory.
     :param use_gpu:
-    :param snapshot_mode: See core.logging.logger
-    :param snapshot_gap: See core.logging.logger
+    :param snapshot_mode: See railrl.core.logging.logger
+    :param snapshot_gap: See railrl.core.logging.logger
     :param base_log_dir: Will over
     :param sync_interval: How often to sync s3 data (in seconds).
     :param local_input_dir_to_mount_point_dict: Dictionary for doodad.
@@ -710,8 +710,8 @@ def run_experiment(
             instance_type=instance_type,
             spot_price=spot_price,
             s3_log_prefix=exp_prefix,
-            # Ask Vitchyr from an explanation, but basically we
-            # will start just making the sub-directories within rlkit rather
+            # Ask Vitchyr or Steven from an explanation, but basically we
+            # will start just making the sub-directories within railrl rather
             # than relying on doodad to do that.
             s3_log_name="",
             gpu=use_gpu,

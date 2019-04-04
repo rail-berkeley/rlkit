@@ -1,7 +1,33 @@
 # rlkit
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
-Some implemented algorithms:
+Implemented algorithms in v0.2 (Documentation WIP):
+ - Skew-Fit:
+    - [example script](examples/skewfit/sawyer_door.py)
+    - [paper](https://arxiv.org/abs/1903.03698)
+ - Reinforcement Learning with Imagined Goals (RIG)
+    - Special case of Skew-Fit: set power = 0
+    - [paper](https://arxiv.org/abs/1807.04742)
+ - Hindsight Experience Replay (HER)
+    - [example script](examples/her/her_sac_gym_fetch_reach.py)
+    - [paper](https://arxiv.org/abs/1707.01495)
+    - [Documentation](docs/HER.md)
+ - (Double) Deep Q-Network (DQN)
+    - [example script](examples/dqn_and_double_dqn.py)
+    - [paper](https://arxiv.org/pdf/1509.06461.pdf)
+    - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
+ - Soft Actor Critic (SAC)
+    - [example script](examples/sac.py)
+    - [original paper](https://arxiv.org/abs/1801.01290) and [updated
+    version](https://arxiv.org/abs/1812.05905)
+    - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
+    - Includes the "min of Q" method, the entropy-constrained implementation,
+     reparameterization trick, and numerical tanh-Normal Jacbian calcuation.
+ - Twin Delayed Deep Determinstic Policy Gradient (TD3)
+    - [example script](examples/td3.py)
+    - [paper](https://arxiv.org/abs/1802.09477)
+
+Some implemented algorithms in v0.1.2 (checkout tag):
  - Reinforcement Learning with Imagined Goals (RIG)
     - [example script](examples/rig/pusher/rig.py)
     - [paper](https://arxiv.org/abs/1807.04742)
@@ -23,7 +49,7 @@ Some implemented algorithms:
     - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
  - Soft Actor Critic (SAC)
     - [example script](examples/tsac.py)
-    - [original paper](https://arxiv.org/abs/1801.01290) and [updated 
+    - [original paper](https://arxiv.org/abs/1801.01290) and [updated
     version](https://arxiv.org/abs/1812.05905)
     - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
     - Includes the "min of Q" method, the entropy-constrained implementation,

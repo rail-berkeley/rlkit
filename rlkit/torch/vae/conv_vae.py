@@ -156,7 +156,6 @@ class ConvVAE(GaussianLatentVAE):
         :param min_variance:
         :param hidden_init:
         """
-        self.save_init_params(locals())
         super().__init__(representation_size)
         if min_variance is None:
             self.log_min_variance = None

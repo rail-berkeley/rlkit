@@ -46,6 +46,7 @@ GPU wrappers
 
 _use_gpu = False
 device = None
+_gpu_id = 0
 
 
 def set_gpu_mode(mode, gpu_id=0):
