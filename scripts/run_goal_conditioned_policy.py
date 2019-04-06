@@ -8,21 +8,18 @@ from rlkit.envs.vae_wrapper import VAEWrappedEnv
 
 
 def simulate_policy(args):
-    if args.pause:
-        import ipdb; ipdb.set_trace()
     data = pickle.load(open(args.file, "rb"))
-    policy = data['policy']
-    env = data['env']
+    policy = data['evaluation/policy']
+    env = data['evaluation/env']
     print("Policy and environment loaded")
     if args.gpu:
         ptu.set_gpu_mode(True)
         policy.to(ptu.device)
-    if isinstance(env, VAEWrappedEnv):
+    if isinstance(env, VAEWrappedEnv) and hasattr(env, 'mode'):
         env.mode(args.mode)
     if args.enable_render or hasattr(env, 'enable_render'):
         # some environments need to be reconfigured for visualization
         env.enable_render()
-    policy.train(False)
     paths = []
     while True:
         paths.append(multitask_rollout(
@@ -53,9 +50,7 @@ if __name__ == "__main__":
     parser.add_argument('--mode', default='video_env', type=str,
                         help='env mode')
     parser.add_argument('--gpu', action='store_true')
-    parser.add_argument('--pause', action='store_true')
     parser.add_argument('--enable_render', action='store_true')
-    parser.add_argument('--multitaskpause', action='store_true')
     parser.add_argument('--hide', action='store_true')
     args = parser.parse_args()
 

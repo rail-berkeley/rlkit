@@ -1,5 +1,4 @@
 from rlkit.samplers.util import rollout
-from rlkit.torch.core import PyTorchModule
 from rlkit.torch.pytorch_util import set_gpu_mode
 import argparse
 import joblib
@@ -11,14 +10,12 @@ filename = str(uuid.uuid4())
 
 def simulate_policy(args):
     data = joblib.load(args.file)
-    policy = data['policy']
-    env = data['env']
+    policy = data['evaluation/policy']
+    env = data['evaluation/env']
     print("Policy loaded")
     if args.gpu:
         set_gpu_mode(True)
         policy.cuda()
-    if isinstance(policy, PyTorchModule):
-        policy.train(False)
     while True:
         path = rollout(
             env,

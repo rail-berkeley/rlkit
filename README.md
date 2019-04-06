@@ -121,7 +121,7 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>
  - inside this folder, you should see a file called `params.pkl`. To visualize a policy, run
 
 ```
-(rlkit) $ python scripts/sim_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+(rlkit) $ python scripts/run_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
 If you have rllab installed, you can also visualize the results
@@ -144,14 +144,10 @@ python viskit/viskit/frontend.py LOCAL_LOG_DIR/<exp_prefix>/
 ```
 This `viskit` repo also has a few extra nice features, like plotting multiple Y-axis values at once, figure-splitting on multiple keys, and being able to filter hyperparametrs out.
 
-## Visualizing a TDM/HER policy
-To visualize a TDM policy, run
+## Visualizing a goal-conditioned policy
+To visualize a goal-conditioned policy, run
 ```
-(rlkit) $ python scripts/sim_tdm_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
-```
-To visualize a HER policy, run
-```
-(rlkit) $ python scripts/sim_goal_conditioned_policy.py
+(rlkit) $ python scripts/run_goal_conditioned_policy.py
 LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
 
