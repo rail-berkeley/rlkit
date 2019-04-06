@@ -41,9 +41,8 @@ def dump_video(
         l = []
         for d in path['full_observations']:
             if is_vae_env:
-                recon = np.clip(
-                    env._reconstruct_img(d['image_observation']), 0, 1
-                )
+                recon = np.clip(env._reconstruct_img(d['image_observation']), 0,
+                                1)
             else:
                 recon = d['image_observation']
             l.append(
@@ -72,16 +71,22 @@ def dump_video(
         if do_timer:
             print(i, time.time() - start)
 
+    frames = np.array(frames, dtype=np.uint8)
+    path_length = frames.size // (
+            N * (H + 2 * pad_length) * (W + 2 * pad_length) * num_channels
+    )
     frames = np.array(frames, dtype=np.uint8).reshape(
-        (N, horizon + 1, H + 2 * pad_length, W + 2 * pad_length, num_channels))
+        (N, path_length, H + 2 * pad_length, W + 2 * pad_length, num_channels)
+    )
     f1 = []
     for k1 in range(columns):
         f2 = []
         for k2 in range(rows):
             k = k1 * rows + k2
-            f2.append(frames[k:k + 1, :, :, :, :].
-                      reshape((horizon + 1, H + 2 * pad_length,
-                               W + 2 * pad_length, num_channels)))
+            f2.append(frames[k:k + 1, :, :, :, :].reshape(
+                (path_length, H + 2 * pad_length, W + 2 * pad_length,
+                 num_channels)
+            ))
         f1.append(np.concatenate(f2, axis=1))
     outputdata = np.concatenate(f1, axis=2)
     skvideo.io.vwrite(filename, outputdata)
