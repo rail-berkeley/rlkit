@@ -1,13 +1,18 @@
 # rlkit
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
-Implemented algorithms in v0.2 (Documentation WIP):
- - Skew-Fit:
+Implemented algorithms:
+ - Skew-Fit
     - [example script](examples/skewfit/sawyer_door.py)
     - [paper](https://arxiv.org/abs/1903.03698)
+    - [Documentation](examples/skewfit/sawyer_door.py)
  - Reinforcement Learning with Imagined Goals (RIG)
     - Special case of Skew-Fit: set power = 0
     - [paper](https://arxiv.org/abs/1807.04742)
+ - Temporal Difference Models (TDMs)
+    - Only implemented in v0.1.2-. See Legacy Documentation section below.
+    - [paper](https://arxiv.org/abs/1802.09081)
+    - [Documentation](docs/TDMs.md)
  - Hindsight Experience Replay (HER)
     - [example script](examples/her/her_sac_gym_fetch_reach.py)
     - [paper](https://arxiv.org/abs/1707.01495)
@@ -27,41 +32,13 @@ Implemented algorithms in v0.2 (Documentation WIP):
     - [example script](examples/td3.py)
     - [paper](https://arxiv.org/abs/1802.09477)
 
-Some implemented algorithms in v0.1.2 (checkout tag):
- - Reinforcement Learning with Imagined Goals (RIG)
-    - [example script](examples/rig/pusher/rig.py)
-    - [paper](https://arxiv.org/abs/1807.04742)
-    - [Documentation](docs/RIG.md)
- - Temporal Difference Models (TDMs)
-    - [example script](examples/tdm/cheetah.py)
-    - [paper](https://arxiv.org/abs/1802.09081)
-    - [Documentation](docs/TDMs.md)
- - Hindsight Experience Replay (HER)
-    - [example script](examples/her/her_sac_gym_fetch_reach.py)
-    - [paper](https://arxiv.org/abs/1707.01495)
-    - [Documentation](docs/HER.md)
- - Deep Deterministic Policy Gradient (DDPG)
-    - [example script](examples/ddpg.py)
-    - [paper](https://arxiv.org/pdf/1509.02971.pdf)
- - (Double) Deep Q-Network (DQN)
-    - [example script](examples/dqn_and_double_dqn.py)
-    - [paper](https://arxiv.org/pdf/1509.06461.pdf)
-    - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
- - Soft Actor Critic (SAC)
-    - [example script](examples/tsac.py)
-    - [original paper](https://arxiv.org/abs/1801.01290) and [updated
-    version](https://arxiv.org/abs/1812.05905)
-    - [TensorFlow implementation from author](https://github.com/rail-berkeley/softlearning)
-    - Includes the "min of Q" method, the entropy-constrained implementation,
-     reparameterization trick, and numerical tanh-Normal Jacbian calcuation.
- - Twin Delayed Deep Determinstic Policy Gradient (TD3)
-    - [example script](examples/td3.py)
-    - [paper](https://arxiv.org/abs/1802.09477)
-
 To get started, checkout the example scripts, linked above.
 
 ## What's New
 ### Version 0.2
+
+#### 04/05/2019
+
 The initial release for 0.2 has the following major changes:
  - Remove `Serializable` class and use default pickle scheme.
  - Remove `PyTorchModule` class and use native `torch.nn.Module` directly.
@@ -72,21 +49,28 @@ The initial release for 0.2 has the following major changes:
  inside of `RLAlgorithm`.
  - Refactor sampling code to be its own object, rather than being integrated
  inside of `RLAlgorithm`.
- - Update Soft Actor Critic to more closely match TensorFlow implementation:
+ - Implement [Skew-Fit: 
+State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698),
+a method for performing goal-directed exploration to maximize the entropy of 
+visited states.
+ - Update soft actor-critic to more closely match TensorFlow implementation:
    - Rename `TwinSAC` to just `SAC`.
    - Only have Q networks.
    - Remove unnecessary policy regualization terms.
    - Use numerically stable Jacobian computation.
 
+Overall, the refactors are intended to make the code more modular and 
+readable than the previous versions.
+
 ### Version 0.1
-12/04/2018
+#### 12/04/2018
  - Add RIG implementation
 
-12/03/2018
+#### 12/03/2018
  - Add HER implementation
  - Add doodad support
 
-10/16/2018
+#### 10/16/2018
  - Upgraded to PyTorch v0.4
  - Added Twin Soft Actor Critic Implementation
  - Various small refactor (e.g. logger, evaluate code)
@@ -202,6 +186,11 @@ The serialization and logger code are basically a carbon copy of the rllab versi
 
 The Dockerfile is based on the [OpenAI mujoco-py Dockerfile](https://github.com/openai/mujoco-py/blob/master/Dockerfile).
 
-## TODOs
- - Include policy-gradient algorithms.
- - Include model-based algorithms.
+## TODOs/Pull-Request requests
+ - Implement policy-gradient algorithms.
+ - Implement model-based algorithms.
+
+# Legacy Code (v0.1.2)
+For Temporal Difference Models (TDMs) and the original implementation of 
+Reinforcement Learning with Imagined Goals (RIG), do
+`git checkout tags/v0.1.2`.

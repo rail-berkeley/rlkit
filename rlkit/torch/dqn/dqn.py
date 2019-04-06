@@ -62,7 +62,7 @@ class DQNTrainer(TorchTrainer):
         qf_loss = self.qf_criterion(y_pred, y_target)
 
         """
-        Update networks
+        Soft target network updates
         """
         self.qf_optimizer.zero_grad()
         qf_loss.backward()

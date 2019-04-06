@@ -1,16 +1,15 @@
-from collections import OrderedDict
-
 import numpy as np
 import torch
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.dqn.dqn import DQN
+from rlkit.torch.core import np_to_pytorch_batch
+from rlkit.torch.dqn.dqn import DQNTrainer
 
 
-class DoubleDQN(DQN):
-    def _do_training(self):
-        batch = self.get_batch(training=True)
+class DoubleDQNTrainer(DQNTrainer):
+    def train(self, np_batch):
+        batch = np_to_pytorch_batch(np_batch)
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
@@ -39,13 +38,20 @@ class DoubleDQN(DQN):
         self.qf_optimizer.zero_grad()
         qf_loss.backward()
         self.qf_optimizer.step()
-        self._update_target_network()
+
+        """
+        Soft target network updates
+        """
+        if self._n_train_steps_total % self.target_update_period == 0:
+            ptu.soft_update_from_to(
+                self.qf, self.target_qf, self.soft_target_tau
+            )
 
         """
         Save some statistics for eval using just one batch.
         """
-        if self.need_to_update_eval_statistics:
-            self.need_to_update_eval_statistics = False
+        if self._need_to_update_eval_statistics:
+            self._need_to_update_eval_statistics = False
             self.eval_statistics['QF Loss'] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics.update(create_stats_ordered_dict(
                 'Y Predictions',

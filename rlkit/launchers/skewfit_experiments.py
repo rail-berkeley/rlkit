@@ -19,19 +19,19 @@ from rlkit.util.video import dump_video
 
 
 def skewfit_full_experiment(variant):
-    variant['grill_variant']['save_vae_data'] = True
+    variant['skewfit_variant']['save_vae_data'] = True
     full_experiment_variant_preprocess(variant)
     train_vae_and_update_variant(variant)
-    grill_her_twin_sac_experiment_online_vae(variant['grill_variant'])
+    skewfit_experiment(variant['skewfit_variant'])
 
 
 def full_experiment_variant_preprocess(variant):
     train_vae_variant = variant['train_vae_variant']
-    grill_variant = variant['grill_variant']
+    skewfit_variant = variant['skewfit_variant']
     if 'env_id' in variant:
         assert 'env_class' not in variant
         env_id = variant['env_id']
-        grill_variant['env_id'] = env_id
+        skewfit_variant['env_id'] = env_id
         train_vae_variant['generate_vae_dataset_kwargs']['env_id'] = env_id
     else:
         env_class = variant['env_class']
@@ -42,8 +42,8 @@ def full_experiment_variant_preprocess(variant):
         train_vae_variant['generate_vae_dataset_kwargs']['env_kwargs'] = (
             env_kwargs
         )
-        grill_variant['env_class'] = env_class
-        grill_variant['env_kwargs'] = env_kwargs
+        skewfit_variant['env_class'] = env_class
+        skewfit_variant['env_kwargs'] = env_kwargs
     init_camera = variant.get('init_camera', None)
     imsize = variant.get('imsize', 84)
     train_vae_variant['generate_vae_dataset_kwargs']['init_camera'] = (
@@ -51,15 +51,15 @@ def full_experiment_variant_preprocess(variant):
     )
     train_vae_variant['generate_vae_dataset_kwargs']['imsize'] = imsize
     train_vae_variant['imsize'] = imsize
-    grill_variant['imsize'] = imsize
-    grill_variant['init_camera'] = init_camera
+    skewfit_variant['imsize'] = imsize
+    skewfit_variant['init_camera'] = init_camera
 
 
 def train_vae_and_update_variant(variant):
     from rlkit.core import logger
-    grill_variant = variant['grill_variant']
+    skewfit_variant = variant['skewfit_variant']
     train_vae_variant = variant['train_vae_variant']
-    if grill_variant.get('vae_path', None) is None:
+    if skewfit_variant.get('vae_path', None) is None:
         logger.remove_tabular_output(
             'progress.csv', relative_to_snapshot_dir=True
         )
@@ -68,9 +68,9 @@ def train_vae_and_update_variant(variant):
         )
         vae, vae_train_data, vae_test_data = train_vae(train_vae_variant,
                                                        return_data=True)
-        if grill_variant.get('save_vae_data', False):
-            grill_variant['vae_train_data'] = vae_train_data
-            grill_variant['vae_test_data'] = vae_test_data
+        if skewfit_variant.get('save_vae_data', False):
+            skewfit_variant['vae_train_data'] = vae_train_data
+            skewfit_variant['vae_test_data'] = vae_test_data
         logger.save_extra_data(vae, 'vae.pkl', mode='pickle')
         logger.remove_tabular_output(
             'vae_progress.csv',
@@ -80,14 +80,14 @@ def train_vae_and_update_variant(variant):
             'progress.csv',
             relative_to_snapshot_dir=True,
         )
-        grill_variant['vae_path'] = vae  # just pass the VAE directly
+        skewfit_variant['vae_path'] = vae  # just pass the VAE directly
     else:
-        if grill_variant.get('save_vae_data', False):
+        if skewfit_variant.get('save_vae_data', False):
             vae_train_data, vae_test_data, info = generate_vae_dataset(
                 train_vae_variant['generate_vae_dataset_kwargs']
             )
-            grill_variant['vae_train_data'] = vae_train_data
-            grill_variant['vae_test_data'] = vae_test_data
+            skewfit_variant['vae_train_data'] = vae_train_data
+            skewfit_variant['vae_test_data'] = vae_test_data
 
 
 def train_vae(variant, return_data=False):
@@ -433,14 +433,14 @@ def get_exploration_strategy(variant, env):
     return es
 
 
-def grill_preprocess_variant(variant):
+def skewfit_preprocess_variant(variant):
     if variant.get("do_state_exp", False):
         variant['observation_key'] = 'state_observation'
         variant['desired_goal_key'] = 'state_desired_goal'
         variant['achieved_goal_key'] = 'state_acheived_goal'
 
 
-def grill_her_twin_sac_experiment_online_vae(variant):
+def skewfit_experiment(variant):
     import rlkit.torch.pytorch_util as ptu
     from rlkit.data_management.online_vae_replay_buffer import \
         OnlineVaeRelabelingBuffer
@@ -448,7 +448,7 @@ def grill_her_twin_sac_experiment_online_vae(variant):
     from rlkit.torch.sac.policies import TanhGaussianPolicy
     from rlkit.torch.vae.vae_trainer import ConvVAETrainer
 
-    grill_preprocess_variant(variant)
+    skewfit_preprocess_variant(variant)
     env = get_envs(variant)
 
     uniform_dataset_fn = variant.get('generate_uniform_dataset_fn', None)
