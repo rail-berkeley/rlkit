@@ -1,9 +1,7 @@
-import numpy as np
-
-from rlkit.policies.base import SerializablePolicy
+from rlkit.policies.base import Policy
 
 
-class RandomPolicy(SerializablePolicy):
+class RandomPolicy(Policy):
     """
     Policy that always outputs zero.
     """
