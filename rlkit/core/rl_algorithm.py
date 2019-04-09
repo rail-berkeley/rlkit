@@ -63,6 +63,7 @@ class BatchRLAlgorithm(object):
             init_expl_paths = self.expl_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.min_num_steps_before_training,
+                discard_incomplete_paths=False,
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
@@ -74,6 +75,7 @@ class BatchRLAlgorithm(object):
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.num_eval_steps_per_epoch,
+                discard_incomplete_paths=True,
             )
             gt.stamp('evaluation sampling')
 
@@ -81,6 +83,7 @@ class BatchRLAlgorithm(object):
                 new_expl_paths = self.expl_data_collector.collect_new_paths(
                     self.max_path_length,
                     self.num_expl_steps_per_train_loop,
+                    discard_incomplete_paths=False,
                 )
                 gt.stamp('exploration sampling', unique=False)
 
@@ -93,6 +96,7 @@ class BatchRLAlgorithm(object):
                 gt.stamp('training', unique=False)
 
             self._end_epoch(epoch)
+
 
     def _end_epoch(self, epoch):
         snapshot = self._get_snapshot()

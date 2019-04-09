@@ -7,7 +7,12 @@ from rlkit.samplers.rollout_functions import rollout, multitask_rollout
 
 class PathCollector(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def collect_new_paths(self, max_path_length, num_steps):
+    def collect_new_paths(
+            self,
+            max_path_length,
+            num_steps,
+            discard_incomplete_paths,
+    ):
         pass
 
     @abc.abstractmethod
@@ -39,17 +44,28 @@ class MdpPathCollector(PathCollector):
         self._num_steps_total = 0
         self._num_paths_total = 0
 
-    def collect_new_paths(self, max_path_length, num_steps):
+    def collect_new_paths(
+            self,
+            max_path_length,
+            num_steps,
+            discard_incomplete_paths,
+    ):
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
+            max_path_length_this_loop = min(  # Do not go over num_steps
+                max_path_length,
+                num_steps - num_steps_collected,
+            )
+            if (
+                    max_path_length_this_loop != max_path_length and
+                    discard_incomplete_paths
+            ):
+                break
             path = rollout(
                 self._env,
                 self._policy,
-                max_path_length=min(  # Do not go over num_steps
-                    max_path_length,
-                    num_steps - num_steps_collected,
-                ),
+                max_path_length=max_path_length_this_loop,
             )
             num_steps_collected += len(path['actions'])
             paths.append(path)
@@ -96,17 +112,28 @@ class GoalConditionedPathCollector(PathCollector):
         self._num_steps_total = 0
         self._num_paths_total = 0
 
-    def collect_new_paths(self, max_path_length, num_steps):
+    def collect_new_paths(
+            self,
+            max_path_length,
+            num_steps,
+            discard_incomplete_paths,
+    ):
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
+            max_path_length_this_loop = min(  # Do not go over num_steps
+                max_path_length,
+                num_steps - num_steps_collected,
+                )
+            if (
+                    max_path_length_this_loop != max_path_length and
+                    discard_incomplete_paths
+            ):
+                break
             path = multitask_rollout(
                 self._env,
                 self._policy,
-                max_path_length=min(  # Do not go over num_steps
-                    max_path_length,
-                    num_steps - num_steps_collected,
-                ),
+                max_path_length=max_path_length_this_loop,
                 observation_key=self._observation_key,
                 desired_goal_key=self._desired_goal_key,
                 return_dict_obs=True,
@@ -138,6 +165,7 @@ class GoalConditionedPathCollector(PathCollector):
             desired_goal_key=self._desired_goal_key,
         )
 
+
 class VAEWrappedEnvPathCollector(GoalConditionedPathCollector):
     def __init__(
             self,
@@ -151,7 +179,7 @@ class VAEWrappedEnvPathCollector(GoalConditionedPathCollector):
         self._goal_sampling_mode = goal_sampling_mode
         self._decode_goals = decode_goals
 
-    def collect_new_paths(self, max_path_length, num_steps):
+    def collect_new_paths(self, *args):
         self._env.goal_sampling_mode = self._goal_sampling_mode
         self._env.decode_goals = self._decode_goals
-        return super().collect_new_paths(max_path_length, num_steps)
+        return super().collect_new_paths(*args)

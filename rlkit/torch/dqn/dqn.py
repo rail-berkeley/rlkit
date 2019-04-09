@@ -7,7 +7,6 @@ from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 
@@ -40,8 +39,7 @@ class DQNTrainer(TorchTrainer):
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
 
-    def train(self, np_batch):
-        batch = np_to_pytorch_batch(np_batch)
+    def train_from_torch(self, batch):
         rewards = batch['rewards'] * self.reward_scale
         terminals = batch['terminals']
         obs = batch['observations']

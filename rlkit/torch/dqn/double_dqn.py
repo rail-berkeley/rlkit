@@ -3,13 +3,11 @@ import torch
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.torch.dqn.dqn import DQNTrainer
 
 
 class DoubleDQNTrainer(DQNTrainer):
-    def train(self, np_batch):
-        batch = np_to_pytorch_batch(np_batch)
+    def train_from_torch(self, batch):
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
