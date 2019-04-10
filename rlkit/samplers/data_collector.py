@@ -113,7 +113,7 @@ class MdpPathCollector(PathCollector):
         assert self.online_mode, 'Step-wise collection is only enabled in online mode.'
         paths = self._paths
         self._num_paths_total += len(paths)
-        self._num_steps_total += sum([ len(path['actions'] for path in paths]))
+        self._num_steps_total += sum([ len(path['actions']) for path in paths])
         self._epoch_paths.extend(paths)
         # clear paths
         self._paths = []
@@ -253,7 +253,7 @@ class GoalConditionedPathCollector(PathCollector):
         assert self.online_mode, 'Step-wise collection is only enabled in online mode.'
         paths = self._paths
         self._num_paths_total += len(paths)
-        self._num_steps_total += sum([ len(path['actions'] for path in paths]))
+        self._num_steps_total += sum([ len(path['actions']) for path in paths])
         self._epoch_paths.extend(paths)
         # clear paths
         self._paths = []
