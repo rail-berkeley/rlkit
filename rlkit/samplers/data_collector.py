@@ -9,7 +9,12 @@ from rlkit.samplers.rollout_functions import rollout, multitask_rollout
 
 class PathCollector(object, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def collect_new_paths(self, max_path_length, num_steps):
+    def collect_new_paths(
+            self,
+            max_path_length,
+            num_steps,
+            discard_incomplete_paths,
+    ):
         pass
 
     @abc.abstractmethod
