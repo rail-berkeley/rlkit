@@ -40,7 +40,7 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
         NOTE: You should NOT call "terminate_episode" after calling add_path.
         It's assumed that this function handles the episode termination.
 
-        :param path: Dict like one outputted by railrl.samplers.util.rollout
+        :param path: Dict like one outputted by rlkit.samplers.util.rollout
         """
         for i, (
                 obs,
