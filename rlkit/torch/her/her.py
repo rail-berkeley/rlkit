@@ -1,4 +1,4 @@
-import numpy as np
+import torch
 
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
@@ -7,19 +7,14 @@ class HERTrainer(TorchTrainer):
     def __init__(self, base_trainer: TorchTrainer):
         self._base_trainer = base_trainer
 
-    def train(self, data):
+    def train_from_torch(self, data):
         obs = data['observations']
         next_obs = data['next_observations']
         goals = data['resampled_goals']
-        data['observations'] = np.hstack((
-            obs,
-            goals
-        ))
-        data['next_observations'] = np.hstack((
-            next_obs,
-            goals,
-        ))
-        self._base_trainer.train(data)
+        import ipdb; ipdb.set_trace()
+        data['observations'] = torch.cat((obs, goals), dim=1)
+        data['next_observations'] = torch.cat((next_obs, goals), dim=1)
+        self._base_trainer.train_from_torch(data)
 
     def get_diagnostics(self):
         return self._base_trainer.get_diagnostics()
