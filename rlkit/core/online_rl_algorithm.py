@@ -2,6 +2,42 @@ import gtimer as gt
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
 
 class OnlineRLAlgorithm(BaseRLAlgorithm):
+    def __init__(
+            self,
+            trainer,
+            exploration_env,
+            evaluation_env,
+            exploration_data_collector: BaseCollector,
+            evaluation_data_collector: PathCollector,
+            replay_buffer: ReplayBuffer,
+            batch_size,
+            max_path_length,
+            num_epochs,
+            num_eval_steps_per_epoch,
+            num_expl_steps_per_train_loop,
+            num_trains_per_train_loop,
+            num_train_loops_per_epoch=1,
+            min_num_steps_before_training=0,
+    ):
+        super().__init__(self,
+                        trainer,
+                        exploration_env,
+                        evaluation_env,
+                        exploration_data_collector: BaseCollector,
+                        evaluation_data_collector: PathCollector,
+                        replay_buffer: ReplayBuffer,
+                        batch_size,
+                        max_path_length,
+                        num_epochs,
+                        num_eval_steps_per_epoch,
+                        num_expl_steps_per_train_loop,
+                        num_trains_per_train_loop,
+                        num_train_loops_per_epoch,
+                        min_num_steps_before_training,
+        )
+
+        assert self.num_trains_per_train_loop >= self.num_expl_steps_per_train_loop, \
+                    'Online training presumes num_trains_per_train_loop >= num_expl_steps_per_train_loop'
     def _train(self):
         self.training_mode(False)
         if self.min_num_steps_before_training > 0:
@@ -17,8 +53,6 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
 
             gt.stamp('initial exploration', unique=True)
 
-        assert self.num_trains_per_train_loop >= self.num_expl_steps_per_train_loop, \
-                    'Online training presumes num_trains_per_train_loop >= num_expl_steps_per_train_loop'
         num_trains_per_expl_step = self.num_trains_per_train_loop // self.num_expl_steps_per_train_loop
         for epoch in gt.timed_for(
                 range(self._start_epoch, self.num_epochs),
