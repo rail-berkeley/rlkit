@@ -4,7 +4,8 @@ import gtimer as gt
 
 from rlkit.core import logger, eval_util
 from rlkit.data_management.replay_buffer import ReplayBuffer
-from rlkit.samplers.data_collector import PathCollector
+from rlkit.samplers.path_collector import PathCollector
+from rlkit.samplers.step_collector import BaseCollector
 
 
 def _get_epoch_timings(epoch):
@@ -20,13 +21,13 @@ def _get_epoch_timings(epoch):
     return times
 
 
-class BatchRLAlgorithm(object):
+class BaseRLAlgorithm(object):
     def __init__(
             self,
             trainer,
             exploration_env,
             evaluation_env,
-            exploration_data_collector: PathCollector,
+            exploration_data_collector: BaseCollector,
             evaluation_data_collector: PathCollector,
             replay_buffer: ReplayBuffer,
             batch_size,
@@ -59,44 +60,10 @@ class BatchRLAlgorithm(object):
         self._train()
 
     def _train(self):
-        if self.min_num_steps_before_training > 0:
-            init_expl_paths = self.expl_data_collector.collect_new_paths(
-                self.max_path_length,
-                self.min_num_steps_before_training,
-                discard_incomplete_paths=False,
-            )
-            self.replay_buffer.add_paths(init_expl_paths)
-            self.expl_data_collector.end_epoch(-1)
-
-        for epoch in gt.timed_for(
-                range(self._start_epoch, self.num_epochs),
-                save_itrs=True,
-        ):
-            self.eval_data_collector.collect_new_paths(
-                self.max_path_length,
-                self.num_eval_steps_per_epoch,
-                discard_incomplete_paths=True,
-            )
-            gt.stamp('evaluation sampling')
-
-            for _ in range(self.num_train_loops_per_epoch):
-                new_expl_paths = self.expl_data_collector.collect_new_paths(
-                    self.max_path_length,
-                    self.num_expl_steps_per_train_loop,
-                    discard_incomplete_paths=False,
-                )
-                gt.stamp('exploration sampling', unique=False)
-
-                self.replay_buffer.add_paths(new_expl_paths)
-                gt.stamp('data storing', unique=False)
-
-                for _ in range(self.num_trains_per_train_loop):
-                    train_data = self.replay_buffer.random_batch(self.batch_size)
-                    self.trainer.train(train_data)
-                gt.stamp('training', unique=False)
-
-            self._end_epoch(epoch)
-
+        """
+        Train model.
+        """
+        raise NotImplementedError('_train must implemented by inherited class')
 
     def _end_epoch(self, epoch):
         snapshot = self._get_snapshot()
@@ -180,3 +147,10 @@ class BatchRLAlgorithm(object):
         logger.record_tabular('Epoch', epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
 
+    def training_mode(self, mode):
+        """
+        Set training mode to `mode`.
+        :param mode: If True, training will happen (e.g. set the dropout
+        probabilities to not all ones).
+        """
+        raise NotImplementedError('training_mode must implemented by inherited class')
