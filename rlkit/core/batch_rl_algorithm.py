@@ -1,7 +1,43 @@
 import gtimer as gt
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
+from rlkit.data_management.replay_buffer import ReplayBuffer
+from rlkit.samplers.data_collector import PathCollector
 
 class BatchRLAlgorithm(BaseRLAlgorithm):
+    def __init__(
+            self,
+            trainer,
+            exploration_env,
+            evaluation_env,
+            exploration_data_collector: PathCollector,
+            evaluation_data_collector: PathCollector,
+            replay_buffer: ReplayBuffer,
+            batch_size,
+            max_path_length,
+            num_epochs,
+            num_eval_steps_per_epoch,
+            num_expl_steps_per_train_loop,
+            num_trains_per_train_loop,
+            num_train_loops_per_epoch=1,
+            min_num_steps_before_training=0,
+    ):
+        super().__init__(self,
+                        trainer,
+                        exploration_env,
+                        evaluation_env,
+                        exploration_data_collector,
+                        evaluation_data_collector,
+                        replay_buffer,
+                        batch_size,
+                        max_path_length,
+                        num_epochs,
+                        num_eval_steps_per_epoch,
+                        num_expl_steps_per_train_loop,
+                        num_trains_per_train_loop,
+                        num_train_loops_per_epoch,
+                        min_num_steps_before_training,
+        )
+
     def _train(self):
         if self.min_num_steps_before_training > 0:
             init_expl_paths = self.expl_data_collector.collect_new_paths(

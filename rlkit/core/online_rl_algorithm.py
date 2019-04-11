@@ -1,5 +1,7 @@
 import gtimer as gt
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
+from rlkit.data_management.replay_buffer import ReplayBuffer
+from rlkit.samplers.data_collector import PathCollector, StepCollector, BaseCollector
 
 class OnlineRLAlgorithm(BaseRLAlgorithm):
     def __init__(
@@ -7,7 +9,7 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
             trainer,
             exploration_env,
             evaluation_env,
-            exploration_data_collector: BaseCollector,
+            exploration_data_collector: StepCollector,
             evaluation_data_collector: PathCollector,
             replay_buffer: ReplayBuffer,
             batch_size,
@@ -23,9 +25,9 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
                         trainer,
                         exploration_env,
                         evaluation_env,
-                        exploration_data_collector: BaseCollector,
-                        evaluation_data_collector: PathCollector,
-                        replay_buffer: ReplayBuffer,
+                        exploration_data_collector,
+                        evaluation_data_collector,
+                        replay_buffer,
                         batch_size,
                         max_path_length,
                         num_epochs,
@@ -41,13 +43,12 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
     def _train(self):
         self.training_mode(False)
         if self.min_num_steps_before_training > 0:
-            self.expl_data_collector.start_collection()
-            self.expl_data_collector.collect_new_step(
+            self.expl_data_collector.collect_new_steps(
                 self.max_path_length,
                 self.min_num_steps_before_training,
                 discard_incomplete_paths=False,
             )
-            init_expl_paths = self.expl_data_collector.end_collection()
+            init_expl_paths = self.expl_data_collector.get_epoch_paths()
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
 
@@ -65,10 +66,9 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
             )
             gt.stamp('evaluation sampling')
 
-            self.expl_data_collector.start_collection()
             for _ in range(self.num_train_loops_per_epoch):
                 for _ in range(self.num_expl_steps_per_train_loop):
-                    self.expl_data_collector.collect_new_step(
+                    self.expl_data_collector.collect_new_steps(
                         self.max_path_length,
                         1, # num steps
                         discard_incomplete_paths=False,
@@ -82,7 +82,7 @@ class OnlineRLAlgorithm(BaseRLAlgorithm):
                     gt.stamp('training', unique=False)
                     self.training_mode(False)
 
-            new_expl_paths = self.expl_data_collector.end_collection()
+            new_expl_paths = self.expl_data_collector.get_epoch_paths()
             self.replay_buffer.add_paths(new_expl_paths)
             gt.stamp('data storing', unique=False)
 

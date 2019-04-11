@@ -6,7 +6,6 @@ from rlkit.core import logger, eval_util
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import PathCollector, BaseCollector
 
-
 def _get_epoch_timings(epoch):
     times_itrs = gt.get_times().stamps.itrs
     times = OrderedDict()
@@ -18,7 +17,6 @@ def _get_epoch_timings(epoch):
     times['time/epoch (s)'] = epoch_time
     times['time/total (s)'] = gt.get_times().total
     return times
-
 
 class BaseRLAlgorithm(object):
     def __init__(

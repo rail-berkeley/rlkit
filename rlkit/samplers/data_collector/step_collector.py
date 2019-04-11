@@ -28,6 +28,7 @@ class MdpStepCollector(StepCollector):
 
     def end_epoch(self, epoch):
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
+        self._obs = None
 
     def get_diagnostics(self):
         path_lens = [len(path['actions']) for path in self._epoch_paths]
@@ -47,14 +48,8 @@ class MdpStepCollector(StepCollector):
             env=self._env,
             policy=self._policy,
         )
-    def start_collection(self):
-        self._start_new_rollout()
 
-    def end_collection(self):
-        epoch_paths = self.get_epoch_paths()
-        return epoch_paths
-
-    def collect_new_step(
+    def collect_new_steps(
             self,
             max_path_length,
             num_steps,
@@ -68,6 +63,8 @@ class MdpStepCollector(StepCollector):
             max_path_length,
             discard_incomplete_paths,
     ):
+        if self._obs is None: self._start_new_rollout()
+
         action, agent_info = self._policy.get_action(self._obs)
         next_ob, reward, terminal, env_info = (
             self._env.step(action)
@@ -139,6 +136,7 @@ class GoalConditionedStepCollector(StepCollector):
 
     def end_epoch(self, epoch):
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
+        self._obs = None
 
     def get_diagnostics(self):
         path_lens = [len(path['actions']) for path in self._epoch_paths]
@@ -168,7 +166,7 @@ class GoalConditionedStepCollector(StepCollector):
         epoch_paths = self.get_epoch_paths()
         return epoch_paths
 
-    def collect_new_step(
+    def collect_new_steps(
             self,
             max_path_length,
             num_steps,
