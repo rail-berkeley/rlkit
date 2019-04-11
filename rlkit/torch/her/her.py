@@ -27,4 +27,3 @@ class HERTrainer(TorchTrainer):
 
     def get_snapshot(self):
         return self._base_trainer.get_snapshot()
-
