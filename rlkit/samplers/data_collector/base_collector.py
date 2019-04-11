@@ -26,18 +26,10 @@ class PathCollector(BaseCollector, metaclass=abc.ABCMeta):
 
 class StepCollector(BaseCollector, metaclass=abc.ABCMeta):
     @abc.abstractmethod
-    def collect_new_step(
+    def collect_new_steps(
             self,
             max_path_length,
             num_steps,
             discard_incomplete_paths,
     ):
-        pass
-
-    @abc.abstractmethod
-    def start_collection(self):
-        pass
-
-    @abc.abstractmethod
-    def end_collection(self):
         pass
