@@ -198,7 +198,7 @@ class VAEWrappedEnvPathCollector(GoalConditionedPathCollector):
         self._goal_sampling_mode = goal_sampling_mode
         self._decode_goals = decode_goals
 
-    def collect_new_paths(self, *args):
+    def collect_new_paths(self, *args, **kwargs):
         self._env.goal_sampling_mode = self._goal_sampling_mode
         self._env.decode_goals = self._decode_goals
-        return super().collect_new_paths(*args)
+        return super().collect_new_paths(*args, **kwargs)
