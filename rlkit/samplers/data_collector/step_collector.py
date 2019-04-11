@@ -12,7 +12,7 @@ class MdpStepCollector(StepCollector):
             self,
             env,
             policy,
-            max_num_epoch_paths_saved=32,
+            max_num_epoch_paths_saved=None,
     ):
         self._env = env
         self._policy = policy
@@ -117,7 +117,7 @@ class GoalConditionedStepCollector(StepCollector):
             self,
             env,
             policy,
-            max_num_epoch_paths_saved=32,
+            max_num_epoch_paths_saved=None,
             observation_key='observation',
             desired_goal_key='desired_goal',
     ):
