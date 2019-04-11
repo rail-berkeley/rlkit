@@ -3,7 +3,8 @@ from collections import deque, OrderedDict
 from rlkit.envs.vae_wrapper import VAEWrappedEnv
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.samplers.rollout_functions import rollout, multitask_rollout
-from rlkit.samplers.data_collector.base_collector import PathCollector
+from rlkit.samplers.data_collector.base import PathCollector
+
 
 class MdpPathCollector(PathCollector):
     def __init__(
@@ -109,7 +110,7 @@ class GoalConditionedPathCollector(PathCollector):
             max_path_length_this_loop = min(  # Do not go over num_steps
                 max_path_length,
                 num_steps - num_steps_collected,
-                )
+            )
             path = multitask_rollout(
                 self._env,
                 self._policy,

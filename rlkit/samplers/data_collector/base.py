@@ -1,5 +1,6 @@
 import abc
 
+
 class BaseCollector(object, metaclass=abc.ABCMeta):
     def end_epoch(self, epoch):
         pass
@@ -14,6 +15,7 @@ class BaseCollector(object, metaclass=abc.ABCMeta):
     def get_epoch_paths(self):
         pass
 
+
 class PathCollector(BaseCollector, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def collect_new_paths(
@@ -23,6 +25,7 @@ class PathCollector(BaseCollector, metaclass=abc.ABCMeta):
             discard_incomplete_paths,
     ):
         pass
+
 
 class StepCollector(BaseCollector, metaclass=abc.ABCMeta):
     @abc.abstractmethod

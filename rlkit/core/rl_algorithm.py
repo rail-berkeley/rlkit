@@ -1,3 +1,4 @@
+import abc
 from collections import OrderedDict
 
 import gtimer as gt
@@ -6,7 +7,8 @@ from rlkit.core import logger, eval_util
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import PathCollector, BaseCollector
 
-def _get_epoch_timings(epoch):
+
+def _get_epoch_timings():
     times_itrs = gt.get_times().stamps.itrs
     times = OrderedDict()
     epoch_time = 0
@@ -18,7 +20,8 @@ def _get_epoch_timings(epoch):
     times['time/total (s)'] = gt.get_times().total
     return times
 
-class BaseRLAlgorithm(object):
+
+class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
     def __init__(
             self,
             trainer,
@@ -27,14 +30,6 @@ class BaseRLAlgorithm(object):
             exploration_data_collector: BaseCollector,
             evaluation_data_collector: PathCollector,
             replay_buffer: ReplayBuffer,
-            batch_size,
-            max_path_length,
-            num_epochs,
-            num_eval_steps_per_epoch,
-            num_expl_steps_per_train_loop,
-            num_trains_per_train_loop,
-            num_train_loops_per_epoch=1,
-            min_num_steps_before_training=0,
     ):
         self.trainer = trainer
         self.expl_env = exploration_env
@@ -42,14 +37,6 @@ class BaseRLAlgorithm(object):
         self.expl_data_collector = exploration_data_collector
         self.eval_data_collector = evaluation_data_collector
         self.replay_buffer = replay_buffer
-        self.batch_size = batch_size
-        self.max_path_length = max_path_length
-        self.num_epochs = num_epochs
-        self.num_eval_steps_per_epoch = num_eval_steps_per_epoch
-        self.num_trains_per_train_loop = num_trains_per_train_loop
-        self.num_train_loops_per_epoch = num_train_loops_per_epoch
-        self.num_expl_steps_per_train_loop = num_expl_steps_per_train_loop
-        self.min_num_steps_before_training = min_num_steps_before_training
         self._start_epoch = 0
 
         self.post_epoch_funcs = []
@@ -145,14 +132,15 @@ class BaseRLAlgorithm(object):
         Misc
         """
         gt.stamp('logging')
-        logger.record_dict(_get_epoch_timings(epoch))
+        logger.record_dict(_get_epoch_timings())
         logger.record_tabular('Epoch', epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
 
+    @abc.abstractmethod
     def training_mode(self, mode):
         """
         Set training mode to `mode`.
         :param mode: If True, training will happen (e.g. set the dropout
         probabilities to not all ones).
         """
-        raise NotImplementedError('training_mode must implemented by inherited class')
+        pass

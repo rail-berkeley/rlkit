@@ -7,7 +7,8 @@ from rlkit.core.online_rl_algorithm import OnlineRLAlgorithm
 from rlkit.core.trainer import Trainer
 from rlkit.torch.core import np_to_pytorch_batch
 
-class TorchOnlineRLAlgorithm(OnlineRLAlgorithm, metaclass=abc.ABCMeta):
+
+class TorchOnlineRLAlgorithm(OnlineRLAlgorithm):
     def to(self, device):
         for net in self.trainer.networks:
             net.to(device)
@@ -16,7 +17,8 @@ class TorchOnlineRLAlgorithm(OnlineRLAlgorithm, metaclass=abc.ABCMeta):
         for net in self.trainer.networks:
             net.train(mode)
 
-class TorchBatchRLAlgorithm(BatchRLAlgorithm, metaclass=abc.ABCMeta):
+
+class TorchBatchRLAlgorithm(BatchRLAlgorithm):
     def to(self, device):
         for net in self.trainer.networks:
             net.to(device)
