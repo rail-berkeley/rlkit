@@ -11,7 +11,6 @@ class HERTrainer(TorchTrainer):
         obs = data['observations']
         next_obs = data['next_observations']
         goals = data['resampled_goals']
-        import ipdb; ipdb.set_trace()
         data['observations'] = torch.cat((obs, goals), dim=1)
         data['next_observations'] = torch.cat((next_obs, goals), dim=1)
         self._base_trainer.train_from_torch(data)
