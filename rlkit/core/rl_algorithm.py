@@ -4,8 +4,7 @@ import gtimer as gt
 
 from rlkit.core import logger, eval_util
 from rlkit.data_management.replay_buffer import ReplayBuffer
-from rlkit.samplers.path_collector import PathCollector
-from rlkit.samplers.step_collector import BaseCollector
+from rlkit.samplers.data_collector import PathCollector, BaseCollector
 
 
 def _get_epoch_timings(epoch):
@@ -55,6 +54,8 @@ class BaseRLAlgorithm(object):
         self.min_num_steps_before_training = min_num_steps_before_training
         self._start_epoch = 0
 
+        self.post_epoch_funcs = []
+
     def train(self, start_epoch=0):
         self._start_epoch = start_epoch
         self._train()
@@ -75,6 +76,9 @@ class BaseRLAlgorithm(object):
         self.eval_data_collector.end_epoch(epoch)
         self.replay_buffer.end_epoch(epoch)
         self.trainer.end_epoch(epoch)
+
+        for post_epoch_func in self.post_epoch_funcs:
+            post_epoch_func(self, epoch)
 
     def _get_snapshot(self):
         snapshot = {}
