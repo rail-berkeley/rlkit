@@ -5,7 +5,7 @@ import gtimer as gt
 
 from rlkit.core import logger, eval_util
 from rlkit.data_management.replay_buffer import ReplayBuffer
-from rlkit.samplers.data_collector import BaseCollector
+from rlkit.samplers.data_collector import DataCollector
 
 
 def _get_epoch_timings():
@@ -27,8 +27,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             trainer,
             exploration_env,
             evaluation_env,
-            exploration_data_collector: BaseCollector,
-            evaluation_data_collector: BaseCollector,
+            exploration_data_collector: DataCollector,
+            evaluation_data_collector: DataCollector,
             replay_buffer: ReplayBuffer,
     ):
         self.trainer = trainer

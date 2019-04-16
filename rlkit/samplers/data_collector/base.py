@@ -1,7 +1,7 @@
 import abc
 
 
-class BaseCollector(object, metaclass=abc.ABCMeta):
+class DataCollector(object, metaclass=abc.ABCMeta):
     def end_epoch(self, epoch):
         pass
 
@@ -16,7 +16,7 @@ class BaseCollector(object, metaclass=abc.ABCMeta):
         pass
 
 
-class PathCollector(BaseCollector, metaclass=abc.ABCMeta):
+class PathCollector(DataCollector, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def collect_new_paths(
             self,
@@ -27,7 +27,7 @@ class PathCollector(BaseCollector, metaclass=abc.ABCMeta):
         pass
 
 
-class StepCollector(BaseCollector, metaclass=abc.ABCMeta):
+class StepCollector(DataCollector, metaclass=abc.ABCMeta):
     @abc.abstractmethod
     def collect_new_steps(
             self,
