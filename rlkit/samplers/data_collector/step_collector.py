@@ -13,11 +13,17 @@ class MdpStepCollector(StepCollector):
             env,
             policy,
             max_num_epoch_paths_saved=None,
+            render=False,
+            render_kwargs=None,
     ):
+        if render_kwargs is None:
+            render_kwargs = {}
         self._env = env
         self._policy = policy
         self._max_num_epoch_paths_saved = max_num_epoch_paths_saved
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
+        self._render = render
+        self._render_kwargs = render_kwargs
 
         self._num_steps_total = 0
         self._num_paths_total = 0
@@ -70,6 +76,8 @@ class MdpStepCollector(StepCollector):
         next_ob, reward, terminal, env_info = (
             self._env.step(action)
         )
+        if self._render:
+            self._env.render(**self._render_kwargs)
         terminal = np.array([terminal])
         reward = np.array([reward])
         # store path obs
@@ -118,13 +126,19 @@ class GoalConditionedStepCollector(StepCollector):
             env,
             policy,
             max_num_epoch_paths_saved=None,
+            render=False,
+            render_kwargs=None,
             observation_key='observation',
             desired_goal_key='desired_goal',
     ):
+        if render_kwargs is None:
+            render_kwargs = {}
         self._env = env
         self._policy = policy
         self._max_num_epoch_paths_saved = max_num_epoch_paths_saved
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
+        self._render = render
+        self._render_kwargs = render_kwargs
         self._observation_key = observation_key
         self._desired_goal_key = desired_goal_key
 
@@ -192,6 +206,8 @@ class GoalConditionedStepCollector(StepCollector):
         next_ob, reward, terminal, env_info = (
             self._env.step(action)
         )
+        if self._render:
+            self._env.render(**self._render_kwargs)
         terminal = np.array([terminal])
         reward = np.array([reward])
         # store path obs

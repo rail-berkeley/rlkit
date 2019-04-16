@@ -1,4 +1,4 @@
-from rlkit.samplers.util import rollout
+from rlkit.samplers.rollout_functions import rollout
 from rlkit.torch.pytorch_util import set_gpu_mode
 import argparse
 import joblib
@@ -21,7 +21,7 @@ def simulate_policy(args):
             env,
             policy,
             max_path_length=args.H,
-            animated=True,
+            render=True,
         )
         if hasattr(env, "log_diagnostics"):
             env.log_diagnostics([path])

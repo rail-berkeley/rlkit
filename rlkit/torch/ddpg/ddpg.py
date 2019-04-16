@@ -7,7 +7,7 @@ import rlkit.torch.pytorch_util as ptu
 import torch
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.policies.simple import RandomPolicy
-from rlkit.samplers.util import rollout
+from rlkit.samplers.rollout_functions import rollout
 from rlkit.torch.torch_rl_algorithm import TorchRLAlgorithm
 from rlkit.torch.data_management.normalizer import TorchFixedNormalizer
 from torch import nn as nn

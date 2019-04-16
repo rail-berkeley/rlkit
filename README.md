@@ -37,6 +37,11 @@ To get started, checkout the example scripts, linked above.
 ## What's New
 ### Version 0.2
 
+#### 04/05-15/2019
+ - Add rendering
+ - Fix SAC bug to account for future entropy (#41, #43)
+ - Add online algorithm mode (#42)
+
 #### 04/05/2019
 
 The initial release for 0.2 has the following major changes:

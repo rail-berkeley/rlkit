@@ -26,7 +26,7 @@ def simulate_policy(args):
             env,
             policy,
             max_path_length=args.H,
-            animated=not args.hide,
+            render=not args.hide,
             observation_key='observation',
             desired_goal_key='desired_goal',
         ))
