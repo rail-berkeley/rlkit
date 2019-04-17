@@ -35,9 +35,12 @@ CODE_DIRS_TO_MOUNT = [
     rlkit_project_dir,
     # '/home/user/python/module/one', Add more paths as needed
 ]
+
+HOME = os.getenv('HOME') if os.getenv('HOME') is not None else os.getenv("USERPROFILE")
+
 DIR_AND_MOUNT_POINT_MAPPINGS = [
     dict(
-        local_dir=join(os.getenv('HOME'), '.mujoco/'),
+        local_dir=join(HOME, '.mujoco/'),
         mount_point='/root/.mujoco',
     ),
 ]

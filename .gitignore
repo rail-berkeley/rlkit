@@ -3,3 +3,5 @@
 **/*.pyc
 **/*.swp
 rlkit/launchers/config.py
+
+\.idea/
