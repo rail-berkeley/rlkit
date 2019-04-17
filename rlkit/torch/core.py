@@ -37,6 +37,8 @@ def np_ify(tensor_or_other):
 
 
 def _elem_or_tuple_to_variable(elem_or_tuple):
+    if isinstance(elem_or_tuple, torch.Tensor):
+        return elem_or_tuple
     if isinstance(elem_or_tuple, tuple):
         return tuple(
             _elem_or_tuple_to_variable(e) for e in elem_or_tuple
@@ -52,10 +54,18 @@ def _filter_batch(np_batch):
             yield k, v
 
 
+def _if_not_ignore(elem):
+    if isinstance(elem, torch.Tensor):
+        return True
+    elif elem.dtype != np.dtype('O'):  # ignore object (e.g. dictionaries)
+        return True
+    return False
+
+
 def np_to_pytorch_batch(np_batch):
     return {
         k: _elem_or_tuple_to_variable(x)
         for k, x in _filter_batch(np_batch)
-        if x.dtype != np.dtype('O')  # ignore object (e.g. dictionaries)
+        if _if_not_ignore(x)
     }
 
