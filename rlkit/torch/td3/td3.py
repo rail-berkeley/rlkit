@@ -36,6 +36,7 @@ class TD3Trainer(TorchTrainer):
             qf_criterion=None,
             optimizer_class=optim.Adam,
     ):
+        super().__init__()
         if qf_criterion is None:
             qf_criterion = nn.MSELoss()
         self.qf1 = qf1

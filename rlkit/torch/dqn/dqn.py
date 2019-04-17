@@ -23,6 +23,7 @@ class DQNTrainer(TorchTrainer):
             discount=0.99,
             reward_scale=1.0,
     ):
+        super().__init__()
         self.qf = qf
         self.target_qf = target_qf
         self.learning_rate = learning_rate

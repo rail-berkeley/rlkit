@@ -35,6 +35,7 @@ class SACTrainer(TorchTrainer):
             use_automatic_entropy_tuning=True,
             target_entropy=None,
     ):
+        super().__init__()
         self.env = env
         self.policy = policy
         self.qf1 = qf1

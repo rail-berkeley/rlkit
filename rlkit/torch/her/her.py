@@ -5,6 +5,7 @@ from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 class HERTrainer(TorchTrainer):
     def __init__(self, base_trainer: TorchTrainer):
+        super().__init__()
         self._base_trainer = base_trainer
 
     def train_from_torch(self, data):

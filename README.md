@@ -37,7 +37,10 @@ To get started, checkout the example scripts, linked above.
 ## What's New
 ### Version 0.2
 
-#### 04/05-15/2019
+#### 04/16/2019
+ - Log how many train steps were called
+
+#### 04/05/2019-04/15/2019
  - Add rendering
  - Fix SAC bug to account for future entropy (#41, #43)
  - Add online algorithm mode (#42)
