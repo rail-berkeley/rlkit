@@ -7,6 +7,8 @@ from numbers import Number
 
 import numpy as np
 
+import rlkit.pythonplusplus as ppp
+
 
 def get_generic_path_information(paths, stat_prefix=''):
     """
@@ -31,6 +33,32 @@ def get_generic_path_information(paths, stat_prefix=''):
     statistics['Num Paths'] = len(paths)
     statistics[stat_prefix + 'Average Returns'] = get_average_returns(paths)
 
+    for info_key in ['env_infos', 'agent_infos']:
+        if info_key in paths[0]:
+            all_env_infos = [
+                ppp.list_of_dicts__to__dict_of_lists(p[info_key])
+                for p in paths
+            ]
+            for k in all_env_infos[0].keys():
+                final_ks = np.array([info[k][-1] for info in all_env_infos])
+                first_ks = np.array([info[k][0] for info in all_env_infos])
+                all_ks = np.concatenate([info[k] for info in all_env_infos])
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    final_ks,
+                    stat_prefix='{}/final/'.format(info_key),
+                ))
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    first_ks,
+                    stat_prefix='{}/initial/'.format(info_key),
+                ))
+                statistics.update(create_stats_ordered_dict(
+                    stat_prefix + k,
+                    all_ks,
+                    stat_prefix='{}/'.format(info_key),
+                ))
+
     return statistics
 
 
@@ -46,8 +74,8 @@ def create_stats_ordered_dict(
         always_show_all_stats=True,
         exclude_max_min=False,
 ):
-    if stat_prefix is not None and len(stat_prefix) > 0:
-        name = "{} {}".format(stat_prefix, name)
+    if stat_prefix is not None:
+        name = "{}{}".format(stat_prefix, name)
     if isinstance(data, Number):
         return OrderedDict({name: data})
 

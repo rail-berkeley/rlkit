@@ -39,6 +39,7 @@ To get started, checkout the example scripts, linked above.
 
 #### 04/16/2019
  - Log how many train steps were called
+ - Log `env_info` and `agent_info`.
 
 #### 04/05/2019-04/15/2019
  - Add rendering

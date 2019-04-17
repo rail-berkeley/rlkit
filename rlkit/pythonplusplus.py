@@ -144,6 +144,30 @@ def dict_of_list__to__list_of_dicts(dict, n_items):
     return new_dicts
 
 
+def list_of_dicts__to__dict_of_lists(lst):
+    """
+    ```
+    x = [
+        {'foo': 3, 'bar': 1},
+        {'foo': 4, 'bar': 2},
+        {'foo': 5, 'bar': 3},
+    ]
+    ppp.list_of_dicts__to__dict_of_lists(x)
+    # Output:
+    # {'foo': [3, 4, 5], 'bar': [1, 2, 3]}
+    ```
+    """
+    if len(lst) == 0:
+        return {}
+    keys = lst[0].keys()
+    output_dict = collections.defaultdict(list)
+    for d in lst:
+        assert set(d.keys()) == set(keys)
+        for k in keys:
+            output_dict[k].append(d[k])
+    return output_dict
+
+
 def safe_json(data):
     if data is None:
         return True
