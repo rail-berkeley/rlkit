@@ -7,7 +7,6 @@ a bit noisy from one epoch to the next (occasionally dips dow to ~2000).
 Note that one epoch = 5k steps, so 200 epochs = 1 million steps.
 """
 import gym
-import multiworld.envs.mujoco  # Trigger env registration
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
@@ -25,6 +24,8 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 def experiment(variant):
+    import multiworld
+    multiworld.register_all_envs()
     eval_env = gym.make('SawyerReachXYZEnv-v0')
     expl_env = gym.make('SawyerReachXYZEnv-v0')
     observation_key = 'state_observation'

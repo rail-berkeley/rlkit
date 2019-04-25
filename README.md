@@ -37,6 +37,9 @@ To get started, checkout the example scripts, linked above.
 ## What's New
 ### Version 0.2
 
+#### 04/25/2019
+ - Use new `multiworld` code that requires explicit environment registration.
+
 #### 04/16/2019
  - Log how many train steps were called
  - Log `env_info` and `agent_info`.
@@ -89,6 +92,7 @@ readable than the previous versions.
 ```
 cp rlkit/launchers/config_template.py rlkit/launchers/config.py
 ```
+
 2. Install and use the included Ananconda environment
 ```
 $ conda env create -f environment/[linux-cpu|linux-gpu|mac]-env.yml
@@ -98,6 +102,9 @@ $ source activate rlkit
 Choose the appropriate `.yml` file for your system.
 These Anaconda environments use MuJoCo 1.5 and gym 0.10.5.
 You'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
+
+3. If you plan on running the Skew-Fit experiments or the HER example with the
+Sawyer environment, then you need to install [multiworld](https://github.com/vitchyr/multiworld).
 
 DISCLAIMER: the mac environment has only been tested without a GPU.
 
@@ -190,6 +197,11 @@ A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rl
 The serialization and logger code are basically a carbon copy of the rllab versions.
 
 The Dockerfile is based on the [OpenAI mujoco-py Dockerfile](https://github.com/openai/mujoco-py/blob/master/Dockerfile).
+
+Other major collaborators and contributions:
+ - [Murtaza Dalal](https://github.com/mdalal2020)
+ - [Steven Lin](https://github.com/stevenlin1111)
+ - [Ashvin Nair](https://github.com/anair13)
 
 ## TODOs/Pull-Request requests
  - Implement policy-gradient algorithms.
