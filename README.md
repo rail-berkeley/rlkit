@@ -39,6 +39,7 @@ To get started, checkout the example scripts, linked above.
 
 #### 04/25/2019
  - Use new `multiworld` code that requires explicit environment registration.
+ - Make installation easier by adding `setup.py` and using default `conf.py`.
 
 #### 04/16/2019
  - Log how many train steps were called
@@ -88,12 +89,8 @@ readable than the previous versions.
  - Various small refactor (e.g. logger, evaluate code)
 
 ## Installation
-1. Copy `config_template.py` to `config.py`:
-```
-cp rlkit/launchers/config_template.py rlkit/launchers/config.py
-```
 
-2. Install and use the included Ananconda environment
+1. Install and use the included Ananconda environment
 ```
 $ conda env create -f environment/[linux-cpu|linux-gpu|mac]-env.yml
 $ source activate rlkit
@@ -103,8 +100,20 @@ Choose the appropriate `.yml` file for your system.
 These Anaconda environments use MuJoCo 1.5 and gym 0.10.5.
 You'll need to [get your own MuJoCo key](https://www.roboti.us/license.html) if you want to use MuJoCo.
 
-3. If you plan on running the Skew-Fit experiments or the HER example with the
-Sawyer environment, then you need to install [multiworld](https://github.com/vitchyr/multiworld).
+2. Add this repo directory to your `PYTHONPATH` environment variable or simply
+run:
+```
+pip install -e .
+```
+
+3. (Optional) Copy `conf.py` to `conf_private.py` and edit to override defaults:
+```
+cp rlkit/launchers/conf.py rlkit/launchers/conf_private.py
+```
+
+4. (Optional) If you plan on running the Skew-Fit experiments or the HER
+example with the Sawyer environment, then you need to install
+[multiworld](https://github.com/vitchyr/multiworld).
 
 DISCLAIMER: the mac environment has only been tested without a GPU.
 

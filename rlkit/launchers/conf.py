@@ -142,3 +142,8 @@ GCP_DEFAULT_KWARGS = dict(
         num_gpu=1,
     )
 )
+
+try:
+    from rlkit.launchers.conf_private import *
+except ImportError:
+    print("No personal conf_private.py found.")

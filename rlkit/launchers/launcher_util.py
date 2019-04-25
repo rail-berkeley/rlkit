@@ -13,7 +13,7 @@ import dateutil.tz
 import numpy as np
 
 from rlkit.core import logger
-from rlkit.launchers import config
+from rlkit.launchers import conf
 from rlkit.torch.pytorch_util import set_gpu_mode
 import rlkit.pythonplusplus as ppp
 
@@ -198,7 +198,7 @@ def create_log_dir(
     exp_name = create_exp_name(exp_prefix, exp_id=exp_id,
                                seed=seed)
     if base_log_dir is None:
-        base_log_dir = config.LOCAL_LOG_DIR
+        base_log_dir = conf.LOCAL_LOG_DIR
     if include_exp_prefix_sub_dir:
         log_dir = osp.join(base_log_dir, exp_prefix.replace("_", "-"), exp_name)
     else:
@@ -248,7 +248,7 @@ def setup_logger(
     :return:
     """
     if git_infos is None:
-        git_infos = get_git_infos(config.CODE_DIRS_TO_MOUNT)
+        git_infos = get_git_infos(conf.CODE_DIRS_TO_MOUNT)
     first_time = log_dir is None
     if first_time:
         log_dir = create_log_dir(exp_prefix, **create_log_dir_kwargs)
@@ -398,20 +398,20 @@ try:
     CODE_MOUNTS = [
         mount.MountLocal(local_dir=REPO_DIR, pythonpath=True),
     ]
-    for code_dir in config.CODE_DIRS_TO_MOUNT:
+    for code_dir in conf.CODE_DIRS_TO_MOUNT:
         CODE_MOUNTS.append(mount.MountLocal(local_dir=code_dir, pythonpath=True))
 
     NON_CODE_MOUNTS = []
-    for non_code_mapping in config.DIR_AND_MOUNT_POINT_MAPPINGS:
+    for non_code_mapping in conf.DIR_AND_MOUNT_POINT_MAPPINGS:
         NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping))
 
     SSS_CODE_MOUNTS = []
     SSS_NON_CODE_MOUNTS = []
-    if hasattr(config, 'SSS_DIR_AND_MOUNT_POINT_MAPPINGS'):
-        for non_code_mapping in config.SSS_DIR_AND_MOUNT_POINT_MAPPINGS:
+    if hasattr(conf, 'SSS_DIR_AND_MOUNT_POINT_MAPPINGS'):
+        for non_code_mapping in conf.SSS_DIR_AND_MOUNT_POINT_MAPPINGS:
             SSS_NON_CODE_MOUNTS.append(mount.MountLocal(**non_code_mapping))
-    if hasattr(config, 'SSS_CODE_DIRS_TO_MOUNT'):
-        for code_dir in config.SSS_CODE_DIRS_TO_MOUNT:
+    if hasattr(conf, 'SSS_CODE_DIRS_TO_MOUNT'):
+        for code_dir in conf.SSS_CODE_DIRS_TO_MOUNT:
             SSS_CODE_MOUNTS.append(
                 mount.MountLocal(local_dir=code_dir, pythonpath=True)
             )
@@ -517,12 +517,12 @@ def run_experiment(
     if variant is None:
         variant = {}
     if mode == 'ssh' and base_log_dir is None:
-        base_log_dir = config.SSH_LOG_DIR
+        base_log_dir = conf.SSH_LOG_DIR
     if base_log_dir is None:
         if mode == 'sss':
-            base_log_dir = config.SSS_LOG_DIR
+            base_log_dir = conf.SSS_LOG_DIR
         else:
-            base_log_dir = config.LOCAL_LOG_DIR
+            base_log_dir = conf.LOCAL_LOG_DIR
 
     for key, value in ppp.recursive_items(variant):
         # This check isn't really necessary, but it's to prevent myself from
@@ -545,7 +545,7 @@ def run_experiment(
             osp.dirname(doodad.__file__),
             os.pardir
         ))
-        dirs = config.CODE_DIRS_TO_MOUNT + [doodad_path]
+        dirs = conf.CODE_DIRS_TO_MOUNT + [doodad_path]
 
         git_infos = []
         for directory in dirs:
@@ -606,23 +606,23 @@ def run_experiment(
     GPU vs normal configs
     """
     if use_gpu:
-        docker_image = config.GPU_DOODAD_DOCKER_IMAGE
+        docker_image = conf.GPU_DOODAD_DOCKER_IMAGE
         if instance_type is None:
-            instance_type = config.GPU_INSTANCE_TYPE
+            instance_type = conf.GPU_INSTANCE_TYPE
         else:
             assert instance_type[0] == 'g'
         if spot_price is None:
-            spot_price = config.GPU_SPOT_PRICE
+            spot_price = conf.GPU_SPOT_PRICE
     else:
-        docker_image = config.DOODAD_DOCKER_IMAGE
+        docker_image = conf.DOODAD_DOCKER_IMAGE
         if instance_type is None:
-            instance_type = config.INSTANCE_TYPE
+            instance_type = conf.INSTANCE_TYPE
         if spot_price is None:
-            spot_price = config.SPOT_PRICE
+            spot_price = conf.SPOT_PRICE
     if mode == 'sss':
-        singularity_image = config.SSS_IMAGE
+        singularity_image = conf.SSS_IMAGE
     elif mode in ['local_singularity', 'slurm_singularity']:
-        singularity_image = config.SINGULARITY_IMAGE
+        singularity_image = conf.SINGULARITY_IMAGE
     else:
         singularity_image = None
 
@@ -632,9 +632,9 @@ def run_experiment(
     """
     mode_kwargs = {}
     if use_gpu and mode == 'ec2':
-        image_id = config.REGION_TO_GPU_AWS_IMAGE_ID[region]
+        image_id = conf.REGION_TO_GPU_AWS_IMAGE_ID[region]
         if region == 'us-east-1':
-            avail_zone = config.REGION_TO_GPU_AWS_AVAIL_ZONE.get(region, "us-east-1b")
+            avail_zone = conf.REGION_TO_GPU_AWS_AVAIL_ZONE.get(region, "us-east-1b")
             mode_kwargs['extra_ec2_instance_kwargs'] = dict(
                 Placement=dict(
                     AvailabilityZone=avail_zone,
@@ -642,8 +642,8 @@ def run_experiment(
             )
     else:
         image_id = None
-    if hasattr(config, "AWS_S3_PATH"):
-        aws_s3_path = config.AWS_S3_PATH
+    if hasattr(conf, "AWS_S3_PATH"):
+        aws_s3_path = conf.AWS_S3_PATH
     else:
         aws_s3_path = None
 
@@ -659,13 +659,13 @@ def run_experiment(
         )
     elif mode == 'ssh':
         if ssh_host == None:
-            ssh_dict = config.SSH_HOSTS[config.SSH_DEFAULT_HOST]
+            ssh_dict = conf.SSH_HOSTS[conf.SSH_DEFAULT_HOST]
         else:
-            ssh_dict = config.SSH_HOSTS[ssh_host]
+            ssh_dict = conf.SSH_HOSTS[ssh_host]
         credentials = doodad.ssh.credentials.SSHCredentials(
             username=ssh_dict['username'],
             hostname=ssh_dict['hostname'],
-            identity_file=config.SSH_PRIVATE_KEY
+            identity_file=conf.SSH_PRIVATE_KEY
         )
         dmode = doodad.mode.SSHDocker(
             credentials=credentials,
@@ -680,16 +680,16 @@ def run_experiment(
     elif mode == 'slurm_singularity' or mode == 'sss':
         assert time_in_mins is not None, "Must approximate/set time in minutes"
         if use_gpu:
-            kwargs = config.SLURM_GPU_CONFIG
+            kwargs = conf.SLURM_GPU_CONFIG
         else:
-            kwargs = config.SLURM_CPU_CONFIG
+            kwargs = conf.SLURM_CPU_CONFIG
         if mode == 'slurm_singularity':
             dmode = doodad.mode.SlurmSingularity(
                 image=singularity_image,
                 gpu=use_gpu,
                 time_in_mins=time_in_mins,
                 skip_wait=skip_wait,
-                pre_cmd=config.SINGULARITY_PRE_CMDS,
+                pre_cmd=conf.SINGULARITY_PRE_CMDS,
                 **kwargs
             )
         else:
@@ -698,7 +698,7 @@ def run_experiment(
                 gpu=use_gpu,
                 time_in_mins=time_in_mins,
                 skip_wait=skip_wait,
-                pre_cmd=config.SSS_PRE_CMDS,
+                pre_cmd=conf.SSS_PRE_CMDS,
                 **kwargs
             )
     elif mode == 'ec2':
@@ -720,21 +720,21 @@ def run_experiment(
             **mode_kwargs
         )
     elif mode == 'gcp':
-        image_name = config.GCP_IMAGE_NAME
+        image_name = conf.GCP_IMAGE_NAME
         if use_gpu:
-            image_name = config.GCP_GPU_IMAGE_NAME
+            image_name = conf.GCP_GPU_IMAGE_NAME
 
         if gcp_kwargs is None:
             gcp_kwargs = {}
         config_kwargs = {
-            **config.GCP_DEFAULT_KWARGS,
+            **conf.GCP_DEFAULT_KWARGS,
             **dict(image_name=image_name),
             **gcp_kwargs
         }
         dmode = doodad.mode.GCPDocker(
             image=docker_image,
             gpu=use_gpu,
-            gcp_bucket_name=config.GCP_BUCKET_NAME,
+            gcp_bucket_name=conf.GCP_BUCKET_NAME,
             gcp_log_prefix=exp_prefix,
             gcp_log_name="",
             **config_kwargs
@@ -756,24 +756,24 @@ def run_experiment(
     Get the outputs
     """
     launch_locally = None
-    target = config.RUN_DOODAD_EXPERIMENT_SCRIPT_PATH
+    target = conf.RUN_DOODAD_EXPERIMENT_SCRIPT_PATH
     if mode == 'ec2':
         # Ignored since I'm setting the snapshot dir directly
         base_log_dir_for_script = None
         run_experiment_kwargs['force_randomize_seed'] = True
         # The snapshot dir needs to be specified for S3 because S3 will
         # automatically create the experiment director and sub-directory.
-        snapshot_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
+        snapshot_dir_for_script = conf.OUTPUT_DIR_FOR_DOODAD_TARGET
     elif mode == 'local':
         base_log_dir_for_script = base_log_dir
         # The snapshot dir will be automatically created
         snapshot_dir_for_script = None
     elif mode == 'local_docker':
-        base_log_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
+        base_log_dir_for_script = conf.OUTPUT_DIR_FOR_DOODAD_TARGET
         # The snapshot dir will be automatically created
         snapshot_dir_for_script = None
     elif mode == 'ssh':
-        base_log_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
+        base_log_dir_for_script = conf.OUTPUT_DIR_FOR_DOODAD_TARGET
         # The snapshot dir will be automatically created
         snapshot_dir_for_script = None
     elif mode in ['local_singularity', 'slurm_singularity', 'sss']:
@@ -784,7 +784,7 @@ def run_experiment(
         if mode == 'sss':
             dmode.set_first_time(first_sss_launch)
             first_sss_launch = False
-            target = config.SSS_RUN_DOODAD_EXPERIMENT_SCRIPT_PATH
+            target = conf.SSS_RUN_DOODAD_EXPERIMENT_SCRIPT_PATH
     elif mode == 'here_no_doodad':
         base_log_dir_for_script = base_log_dir
         # The snapshot dir will be automatically created
@@ -793,7 +793,7 @@ def run_experiment(
         # Ignored since I'm setting the snapshot dir directly
         base_log_dir_for_script = None
         run_experiment_kwargs['force_randomize_seed'] = True
-        snapshot_dir_for_script = config.OUTPUT_DIR_FOR_DOODAD_TARGET
+        snapshot_dir_for_script = conf.OUTPUT_DIR_FOR_DOODAD_TARGET
     else:
         raise NotImplementedError("Mode not supported: {}".format(mode))
     run_experiment_kwargs['base_log_dir'] = base_log_dir_for_script
@@ -847,7 +847,7 @@ def create_mounts(
     if mode == 'ec2':
         output_mount = mount.MountS3(
             s3_path='',
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
+            mount_point=conf.OUTPUT_DIR_FOR_DOODAD_TARGET,
             output=True,
             sync_interval=sync_interval,
             include_types=('*.txt', '*.csv', '*.json', '*.gz', '*.tar',
@@ -857,9 +857,9 @@ def create_mounts(
     elif mode == 'gcp':
         output_mount = mount.MountGCP(
             gcp_path='',
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
+            mount_point=conf.OUTPUT_DIR_FOR_DOODAD_TARGET,
             output=True,
-            gcp_bucket_name=config.GCP_BUCKET_NAME,
+            gcp_bucket_name=conf.GCP_BUCKET_NAME,
             sync_interval=sync_interval,
             include_types=('*.txt', '*.csv', '*.json', '*.gz', '*.tar',
                            '*.log', '*.pkl', '*.mp4', '*.png', '*.jpg',
@@ -876,13 +876,13 @@ def create_mounts(
     elif mode == 'local_docker':
         output_mount = mount.MountLocal(
             local_dir=base_log_dir,
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
+            mount_point=conf.OUTPUT_DIR_FOR_DOODAD_TARGET,
             output=True,
         )
     elif mode == 'ssh':
         output_mount = mount.MountLocal(
             local_dir=base_log_dir,
-            mount_point=config.OUTPUT_DIR_FOR_DOODAD_TARGET,
+            mount_point=conf.OUTPUT_DIR_FOR_DOODAD_TARGET,
             output=True,
         )
     else:
