@@ -5,7 +5,7 @@ Implemented algorithms:
  - Skew-Fit
     - [example script](examples/skewfit/sawyer_door.py)
     - [paper](https://arxiv.org/abs/1903.03698)
-    - [Documentation](examples/skewfit/sawyer_door.py)
+    - [Documentation](docs/SkewFit.md)
  - Reinforcement Learning with Imagined Goals (RIG)
     - Special case of Skew-Fit: set power = 0
     - [paper](https://arxiv.org/abs/1807.04742)
