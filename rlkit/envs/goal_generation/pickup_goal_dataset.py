@@ -86,8 +86,8 @@ def generate_vae_dataset_from_params(
 
         if env_id is not None:
             import gym
-            import multiworld.envs.pygame
-            import multiworld.envs.mujoco
+            import multiworld
+            multiworld.register_all_envs()
             env = gym.make(env_id)
         else:
             if vae_dataset_specific_env_kwargs is None:
