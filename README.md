@@ -1,11 +1,11 @@
-# rlkit
+# RLkit
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
 Implemented algorithms:
  - Skew-Fit
     - [example script](examples/skewfit/sawyer_door.py)
     - [paper](https://arxiv.org/abs/1903.03698)
-    - [Documentation](examples/skewfit/sawyer_door.py)
+    - [Documentation](docs/SkewFit.md)
  - Reinforcement Learning with Imagined Goals (RIG)
     - Special case of Skew-Fit: set power = 0
     - [paper](https://arxiv.org/abs/1807.04742)
@@ -19,8 +19,8 @@ Implemented algorithms:
     - [Documentation](docs/HER.md)
  - (Double) Deep Q-Network (DQN)
     - [example script](examples/dqn_and_double_dqn.py)
-    - [paper](https://arxiv.org/pdf/1509.06461.pdf)
-    - [Double Q-learning paper](https://arxiv.org/pdf/1509.06461.pdf)
+    - [paper](https://arxiv.org/abs/1509.06461.pdf)
+    - [Double Q-learning paper](https://www.nature.com/articles/nature14236)
  - Soft Actor Critic (SAC)
     - [example script](examples/sac.py)
     - [original paper](https://arxiv.org/abs/1801.01290) and [updated
@@ -201,7 +201,46 @@ This requires some knowledge of AWS and/or GCP, which is beyond the scope of
 this README.
 To learn more, more about `doodad`, [go to the repository](https://github.com/justinjfu/doodad/).
 
-## Credits
+# Requests for pull-requests
+ - Implement policy-gradient algorithms.
+ - Implement model-based algorithms.
+
+# Legacy Code (v0.1.2)
+For Temporal Difference Models (TDMs) and the original implementation of 
+Reinforcement Learning with Imagined Goals (RIG), run
+`git checkout tags/v0.1.2`.
+
+# References
+The algorithms are based on the following papers
+
+[Skew-Fit: State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698).  
+Vitchyr H. Pong*, Murtaza Dalal*, Steven Lin*, Ashvin Nair, Shikhar Bahl, Sergey Levine. arXiv preprint, 2019.
+
+[Visual Reinforcement Learning with Imagined Goals](https://arxiv.org/abs/1807.04742).  
+Ashvin Nair*, Vitchyr Pong*, Murtaza Dalal, Shikhar Bahl, Steven Lin, Sergey Levine. NeurIPS 2018.
+
+[Temporal Difference Models: Model-Free Deep RL for Model-Based Control](https://arxiv.org/abs/1802.09081).  
+Vitchyr Pong*, Shixiang Gu*, Murtaza Dalal, Sergey Levine. ICLR 2018.
+
+[Hindsight Experience Replay](https://arxiv.org/abs/1707.01495).  
+Marcin Andrychowicz, Filip Wolski, Alex Ray, Jonas Schneider, Rachel Fong, Peter Welinder, Bob McGrew, Josh Tobin, Pieter Abbeel, Wojciech Zaremba. NeurIPS 2017.
+
+[Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461).  
+Hado van Hasselt, Arthur Guez, David Silver. AAAI 2016.
+
+[Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236).  
+Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves, Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou, Helen King, Dharshan Kumaran, Daan Wierstra, Shane Legg, Demis Hassabis. Nature 2015.
+
+[Soft Actor-Critic Algorithms and Applications](https://arxiv.org/abs/1812.05905).  
+Tuomas Haarnoja, Aurick Zhou, Kristian Hartikainen, George Tucker, Sehoon Ha, Jie Tan, Vikash Kumar, Henry Zhu, Abhishek Gupta, Pieter Abbeel, Sergey Levine. arXiv preprint, 2018.
+
+[Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290).  
+Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. ICML, 2018.
+
+[Addressing Function Approximation Error in Actor-Critic Methods](https://arxiv.org/abs/1802.09477)
+Scott Fujimoto, Herke van Hoof, David Meger. ICML, 2018.
+
+# Credits
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
 The serialization and logger code are basically a carbon copy of the rllab versions.
 
@@ -211,12 +250,3 @@ Other major collaborators and contributions:
  - [Murtaza Dalal](https://github.com/mdalal2020)
  - [Steven Lin](https://github.com/stevenlin1111)
  - [Ashvin Nair](https://github.com/anair13)
-
-## TODOs/Pull-Request requests
- - Implement policy-gradient algorithms.
- - Implement model-based algorithms.
-
-# Legacy Code (v0.1.2)
-For Temporal Difference Models (TDMs) and the original implementation of 
-Reinforcement Learning with Imagined Goals (RIG), do
-`git checkout tags/v0.1.2`.
