@@ -97,3 +97,4 @@ RUN pip install joblib==0.9.4
 RUN pip install opencv-python==3.4.0.12
 RUN pip install torchvision==0.2.0
 RUN pip install sk-video==1.1.10
+RUN pip install git+https://github.com/vitchyr/multiworld.git
