@@ -1,4 +1,9 @@
 # Skew-Fit
+Requires [multiworld](https://github.com/vitchyr/multiworld) to be installed:
+```
+pip install git+https://github.com/vitchyr/multiworld.git@28ee206f60a45690d484737466b558abdef191ea
+```
+
 Implementation of Skew-Fit. For more information:
  - [Videos](https://sites.google.com/view/skew-fit)
  - [arXiv](https://arxiv.org/abs/1903.03698)
@@ -9,7 +14,6 @@ with smoothing on.
 
 Note that [RIG](RIG.md) is a special-case of Skew-Fit with `power=0`.
 
-These examples require [multiworld](https://github.com/vitchyr/multiworld) to be installed.
 
 [examples/skewfit/sawyer_door.py](examples/skewfit/sawyer_door.py). 1 Seed:
 ![Skew-Fit Sawyer Door results](images/skewfit_door.png)

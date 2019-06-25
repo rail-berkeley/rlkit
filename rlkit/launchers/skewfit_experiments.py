@@ -7,7 +7,7 @@ import cv2
 import numpy as np
 import os.path as osp
 
-from rlkit.samplers.data_collector import (
+from rlkit.samplers.data_collector.vae_env import (
     VAEWrappedEnvPathCollector,
 )
 from rlkit.torch.her.her import HERTrainer
