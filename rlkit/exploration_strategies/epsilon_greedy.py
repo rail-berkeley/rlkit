@@ -1,8 +1,5 @@
 import random
 import numpy as np
-
-from gym.spaces import Discrete
-
 from rlkit.exploration_strategies.base import RawExplorationStrategy
 from rlkit.util.ml_util import LinearSchedule
 
