@@ -12,8 +12,9 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 def experiment(variant):
-    eval_env = gym.make('FetchReach-v1')
-    expl_env = gym.make('FetchReach-v1')
+    # unwrap the TimeLimitEnv wrapper since we manually termiante after 50 steps
+    eval_env = gym.make('FetchReach-v1').env
+    expl_env = gym.make('FetchReach-v1').env
 
     observation_key = 'observation'
     desired_goal_key = 'desired_goal'
@@ -88,7 +89,6 @@ def experiment(variant):
     )
     algorithm.to(ptu.device)
     algorithm.train()
-
 
 
 if __name__ == "__main__":
