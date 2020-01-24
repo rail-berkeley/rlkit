@@ -15,6 +15,7 @@ import csv
 import json
 import pickle
 import errno
+import torch
 
 from rlkit.core.tabulate import tabulate
 
@@ -280,21 +281,21 @@ class Logger(object):
         if self._snapshot_dir:
             if self._snapshot_mode == 'all':
                 file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
-                pickle.dump(params, open(file_name, "wb"))
+                torch.save(params, file_name)
             elif self._snapshot_mode == 'last':
                 # override previous params
                 file_name = osp.join(self._snapshot_dir, 'params.pkl')
-                pickle.dump(params, open(file_name, "wb"))
+                torch.save(params, file_name)
             elif self._snapshot_mode == "gap":
                 if itr % self._snapshot_gap == 0:
                     file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
-                    pickle.dump(params, open(file_name, "wb"))
+                    torch.save(params, file_name)
             elif self._snapshot_mode == "gap_and_last":
                 if itr % self._snapshot_gap == 0:
                     file_name = osp.join(self._snapshot_dir, 'itr_%d.pkl' % itr)
-                    pickle.dump(params, open(file_name, "wb"))
+                    torch.save(params, file_name)
                 file_name = osp.join(self._snapshot_dir, 'params.pkl')
-                pickle.dump(params, open(file_name, "wb"))
+                torch.save(params, file_name)
             elif self._snapshot_mode == 'none':
                 pass
             else:

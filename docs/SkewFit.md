@@ -15,11 +15,11 @@ with smoothing on.
 Note that [RIG](RIG.md) is a special-case of Skew-Fit with `power=0`.
 
 
-[examples/skewfit/sawyer_door.py](examples/skewfit/sawyer_door.py). 1 Seed:
+[examples/skewfit/sawyer_door.py](../examples/skewfit/sawyer_door.py). 1 Seed:
 ![Skew-Fit Sawyer Door results](images/skewfit_door.png)
 
-[examples/skewfit/sawyer_pickup.py](examples/skewfit/sawyer_pickup.py). 3 Seeds:
+[examples/skewfit/sawyer_pickup.py](../examples/skewfit/sawyer_pickup.py). 3 Seeds:
 ![Skew-Fit Sawyer Pickup results](images/skewfit_pickup.png)
 
-[examples/skewfit/sawyer_pusher.py](examples/skewfit/sawyer_pusher.py). 9 Seeds:
+[examples/skewfit/sawyer_pusher.py](../examples/skewfit/sawyer_pusher.py). 9 Seeds:
 ![Skew-Fit Sawyer Pusher results](images/skewfit_pusher.png)
