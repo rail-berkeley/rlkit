@@ -124,8 +124,9 @@ class TanhGaussianPolicy(Mlp, ExplorationPolicy):
         )
 
 
-class MakeDeterministic(Policy):
+class MakeDeterministic(nn.Module, Policy):
     def __init__(self, stochastic_policy):
+        super().__init__()
         self.stochastic_policy = stochastic_policy
 
     def get_action(self, observation):
