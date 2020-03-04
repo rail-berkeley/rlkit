@@ -180,7 +180,7 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ## Launching jobs with `doodad`
 The `run_experiment` function makes it easy to run Python code on Amazon Web
 Services (AWS) or Google Cloud Platform (GCP) by using
-[this fork of doodad](https://github.com/vitchyr/doodad/).
+[this fork of doodad](https://github.com/vitchyr/doodad/tree/v0.2.1).
 
 It's as easy as:
 ```
