@@ -149,6 +149,11 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>
 ```
 (rlkit) $ python scripts/run_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
+or
+```
+(rlkit) $ python scripts/run_goal_conditioned_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+```
+depending on whether or not the policy is goal-conditioned.
 
 If you have rllab installed, you can also visualize the results
 using `rllab`'s viskit, described at
