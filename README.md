@@ -149,6 +149,11 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>
 ```
 (rlkit) $ python scripts/run_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ```
+or
+```
+(rlkit) $ python scripts/run_goal_conditioned_policy.py LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
+```
+depending on whether or not the policy is goal-conditioned.
 
 If you have rllab installed, you can also visualize the results
 using `rllab`'s viskit, described at
@@ -180,7 +185,7 @@ LOCAL_LOG_DIR/<exp_prefix>/<foldername>/params.pkl
 ## Launching jobs with `doodad`
 The `run_experiment` function makes it easy to run Python code on Amazon Web
 Services (AWS) or Google Cloud Platform (GCP) by using
-[this fork of doodad](https://github.com/vitchyr/doodad/).
+[this fork of doodad](https://github.com/vitchyr/doodad/tree/v0.2.1).
 
 It's as easy as:
 ```

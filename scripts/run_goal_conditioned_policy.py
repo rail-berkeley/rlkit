@@ -1,5 +1,5 @@
 import argparse
-import pickle
+import torch
 
 from rlkit.core import logger
 from rlkit.samplers.rollout_functions import multitask_rollout
@@ -8,7 +8,7 @@ from rlkit.envs.vae_wrapper import VAEWrappedEnv
 
 
 def simulate_policy(args):
-    data = pickle.load(open(args.file, "rb"))
+    data = torch.load(args.file)
     policy = data['evaluation/policy']
     env = data['evaluation/env']
     print("Policy and environment loaded")
