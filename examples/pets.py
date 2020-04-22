@@ -13,7 +13,6 @@ from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-from ipdb import set_trace as db
 
 
 def experiment(variant):
@@ -40,6 +39,7 @@ def experiment(variant):
             cem_iters=variant['policy']['cem_iters'],
             cem_popsize=variant['policy']['cem_popsize'],
             cem_num_elites=variant['policy']['cem_num_elites'],
+            sampling_strategy=variant['policy']['sampling_strategy'],
             )
     trainer = PETSTrainer(expl_env,
                           policy,
@@ -79,6 +79,7 @@ if __name__ == '__main__':
                 cem_iters=10,
                 cem_popsize=100,
                 cem_num_elites=10,
+                sampling_strategy='TS1',
             ),
             model=dict(
                 num_bootstrap=5,

@@ -24,8 +24,10 @@ class MPCPolicy(Policy):
             cem_iters,
             cem_popsize,
             cem_num_elites,
+            sampling_strategy,
     ):
         super().__init__()
+        assert sampling_strategy in ('TS1', 'TSinf'), "Sampling Strategy must be TS1 or TSinf"
         self.model = model
         self.obs_dim = obs_dim
         self.action_dim = action_dim
@@ -48,6 +50,7 @@ class MPCPolicy(Policy):
         self.current_obs = None
         self.prev_sol = None
         self.num_particles = num_particles
+        self.sampling_strategy = sampling_strategy
 
     def reset(self):
         self.optimizer.reset()
@@ -82,6 +85,6 @@ class MPCPolicy(Policy):
         obs = obs.reshape((batch_size * self.num_particles, self.obs_dim))
         ac_seqs = np.tile(ac_seqs[:, np.newaxis, :, :], reps=(1, self.num_particles, 1, 1))
         ac_seqs = ac_seqs.reshape((batch_size * self.num_particles, self.cem_horizon, self.action_dim))
-        observations, rewards = self.model.unroll(obs, ac_seqs)
+        observations, rewards = self.model.unroll(obs, ac_seqs, self.sampling_strategy)
         rewards = np_ify(rewards).reshape((batch_size, self.num_particles, self.cem_horizon)).mean(axis=(1, 2))
         return rewards
