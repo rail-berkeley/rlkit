@@ -52,7 +52,7 @@ class Model(nn.Module):
         mean = output[:, :self.obs_dim]
         logvar = output[:, self.obs_dim:2*self.obs_dim]
         if self.predict_reward:
-            reward = output[:, -1]
+            reward = output[:, -1:]
         # do variance pinning
         logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
         logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
