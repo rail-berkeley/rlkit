@@ -14,6 +14,7 @@ from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+ptu.set_gpu_mode(True)
 
 def experiment(variant):
     expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))

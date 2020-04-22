@@ -32,7 +32,7 @@ class Model(nn.Module):
             self.output_dim = obs_dim * 2
 
         self.num_bootstrap = num_bootstrap
-        self._nets = []
+        self._nets = nn.ModuleList()
         for i in range(num_bootstrap):
             # TODO: figure out what the network architecture should be
             self._nets.append(FlattenMlp(hidden_sizes, self.output_dim, self.input_size, hidden_activation=swish))
