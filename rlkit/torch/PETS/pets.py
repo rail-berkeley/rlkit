@@ -64,6 +64,7 @@ class PETSTrainer(TorchTrainer):
         self.model_optimizer.zero_grad()
         loss.backward()
         self.model_optimizer.step()
+        self.model.trained_at_all = True
 
         if self._need_to_update_eval_statistics:
             self._need_to_update_eval_statistics = False

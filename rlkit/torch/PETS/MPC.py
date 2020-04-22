@@ -57,7 +57,12 @@ class MPCPolicy(Policy):
         self.current_obs = None
         self.prev_sol = None
 
+    def sample_action(self):
+        return np.random.uniform(low=self.ac_lb, high=self.ac_ub, size=self.action_dim)
+
     def get_action(self, obs_np):
+        if not self.model.trained_at_all:
+            return self.sample_action(), {}
         self.current_obs = obs_np
         init_mean = np.zeros(self.cem_horizon * self.action_dim)
         if self.prev_sol is not None:
@@ -87,4 +92,4 @@ class MPCPolicy(Policy):
         ac_seqs = ac_seqs.reshape((batch_size * self.num_particles, self.cem_horizon, self.action_dim))
         observations, rewards = self.model.unroll(obs, ac_seqs, self.sampling_strategy)
         rewards = np_ify(rewards).reshape((batch_size, self.num_particles, self.cem_horizon)).mean(axis=(1, 2))
-        return rewards
+        return -rewards

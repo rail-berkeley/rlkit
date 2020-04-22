@@ -38,6 +38,7 @@ class Model(nn.Module):
             self._nets.append(FlattenMlp(hidden_sizes, self.output_dim, self.input_size, hidden_activation=swish))
         self.max_logvar = nn.Parameter(torch.ones(1, self.obs_dim, dtype=torch.float32) / 2.0)
         self.min_logvar = nn.Parameter(-torch.ones(1, self.obs_dim, dtype=torch.float32) * 10.0)
+        self.trained_at_all = False
 
     def forward(self, obs, action, network_idx=None, return_net_outputs=False):
         # TODO: is this the usage I want?
