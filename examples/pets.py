@@ -13,13 +13,14 @@ from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+from ipdb import set_trace as db
 
 
 def experiment(variant):
     expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
     eval_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
     assert variant['policy']['num_particles'] % variant['model']['num_bootstrap'] == 0, "There must be an even number of particles per bootstrap"  # NOQA
-    assert variant['algorithm_kwargs']['num_trains_per_train_loop'] % variant['model']['num_bootstrap'] == 0, "Must be an even number of train steps per bootstrap",  # NOQA
+    assert variant['algorithm_kwargs']['num_trains_per_train_loop'] % variant['model']['num_bootstrap'] == 0, "Must be an even number of train steps per bootstrap"  # NOQA
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
 
@@ -83,7 +84,7 @@ if __name__ == '__main__':
                 num_bootstrap=5,
                 hidden_sizes=[500, 500, 500],
             ),
-            replay_buffer_size=1e7
+            replay_buffer_size=int(1e7),
             algorithm_kwargs=dict(
                 num_epochs=3000,
                 num_eval_steps_per_epoch=5000,
@@ -93,6 +94,7 @@ if __name__ == '__main__':
                 max_path_length=1000,
                 batch_size=256,
             ),
+            lr=0.001,
     )
 
     setup_logger(name)

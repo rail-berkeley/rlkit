@@ -5,7 +5,7 @@ import torch.nn as nn
 
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 from rlkit.torch.core import np_ify
-from rtkit.torch.PETS.model import gaussian_log_loss, bound_loss
+from rlkit.torch.PETS.model import gaussian_log_loss
 
 
 class PETSTrainer(TorchTrainer):
@@ -33,7 +33,6 @@ class PETSTrainer(TorchTrainer):
 
         self.reward_criterion = nn.MSELoss() if model.predict_reward else None
         self.model_criterion = gaussian_log_loss
-        self.bound_criterion = bound_loss
         self.model_optimizer = optimizer_class(
                 self.model.parameters(),
                 lr=lr
@@ -76,7 +75,7 @@ class PETSTrainer(TorchTrainer):
 
     @property
     def networks(self):
-        return self.model
+        return [self.model]
         # return self.model._nets
 
     def get_epoch_snapshot(self):

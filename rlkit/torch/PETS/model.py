@@ -19,10 +19,12 @@ class Model(nn.Module):
 
         TODO: handle the different PETS sampling strategies.
         '''
+        super().__init__()
         self.rew_function = rew_function
         self.predict_reward = self.rew_function is None
         self.obs_dim = obs_dim
         self.action_dim = action_dim
+        self.input_size = obs_dim + action_dim
         if self.predict_reward:
             self.output_dim = obs_dim * 2 + 1
         else:

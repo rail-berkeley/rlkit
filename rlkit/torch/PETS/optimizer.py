@@ -1,6 +1,5 @@
 import numpy as np
 import scipy.stats as stats
-from rlkit.policies.base import Policy
 
 
 class Optimizer:
@@ -38,10 +37,6 @@ class CEMOptimizer(Optimizer):
         """
         super().__init__()
         self.sol_dim, self.max_iters, self.popsize, self.num_elites = sol_dim, max_iters, popsize, num_elites
-        # self.sol_dim = sol_dim
-        # self.max_iters = max_iters
-        # self.popsize = 2
-        # self.num_elites = 1
 
         self.ub, self.lb = upper_bound, lower_bound
         self.epsilon, self.alpha = epsilon, alpha

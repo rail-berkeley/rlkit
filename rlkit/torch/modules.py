@@ -3,7 +3,6 @@ Contain some self-contained modules.
 """
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 
 
 class HuberLoss(nn.Module):
@@ -48,4 +47,4 @@ class LayerNorm(nn.Module):
 
 
 def swish(x):
-    return x * F.sigmoid(x)
+    return x * torch.sigmoid(x)

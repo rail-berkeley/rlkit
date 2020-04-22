@@ -44,13 +44,13 @@ class MPCPolicy(Policy):
                 lower_bound=self.ac_lb)
         self.cem_horizon = cem_horizon
         # 16 here comes from torch PETS implementation, unsure why
-        self.cem_init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.cem_horizon, self.action_dim])
+        self.cem_init_var = np.tile(np.square(self.ac_ub - self.ac_lb) / 16, [self.cem_horizon * self.action_dim])
         self.current_obs = None
         self.prev_sol = None
         self.num_particles = num_particles
 
     def reset(self):
-        self.optimizer.rest()
+        self.optimizer.reset()
         self.current_obs = None
         self.prev_sol = None
 
@@ -60,7 +60,7 @@ class MPCPolicy(Policy):
         if self.prev_sol is not None:
             init_mean[:(self.cem_horizon - 1) * self.action_dim] = self.prev_sol[self.action_dim:]
         new_sol = self.optimizer.obtain_solution(init_mean, self.cem_init_var)
-        return new_sol[:self.action_dim]
+        return new_sol[:self.action_dim], {}
 
     def get_actions(self, obs_np, deterministic=False):
         # TODO: figure out how this is used
@@ -81,6 +81,7 @@ class MPCPolicy(Policy):
         obs = np.tile(self.current_obs, reps=(batch_size, self.num_particles, 1))
         obs = obs.reshape((batch_size * self.num_particles, self.obs_dim))
         ac_seqs = np.tile(ac_seqs[:, np.newaxis, :, :], reps=(1, self.num_particles, 1, 1))
+        ac_seqs = ac_seqs.reshape((batch_size * self.num_particles, self.cem_horizon, self.action_dim))
         observations, rewards = self.model.unroll(obs, ac_seqs)
         rewards = np_ify(rewards).reshape((batch_size, self.num_particles, self.cem_horizon)).mean(axis=(1, 2))
         return rewards
