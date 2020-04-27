@@ -18,8 +18,10 @@ from reward_functions.mountain_car_continuous import mountain_car_continuous_rew
 ptu.set_gpu_mode(True)
 
 def experiment(variant):
-    expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
-    eval_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
+    expl_env = NormalizedBoxEnv(gym.make('BipedalWalker-v3'))
+    eval_env = NormalizedBoxEnv(gym.make('BipedalWalker-v3'))
+    # expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
+    # eval_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
     assert variant['policy']['num_particles'] % variant['model']['num_bootstrap'] == 0, "There must be an even number of particles per bootstrap"  # NOQA
     assert variant['algorithm_kwargs']['num_trains_per_train_loop'] % variant['model']['num_bootstrap'] == 0, "Must be an even number of train steps per bootstrap"  # NOQA
     obs_dim = expl_env.observation_space.low.size
@@ -90,9 +92,9 @@ if __name__ == '__main__':
             replay_buffer_size=int(1e7),
             algorithm_kwargs=dict(
                 num_epochs=3000,
-                num_eval_steps_per_epoch=200,
+                num_eval_steps_per_epoch=400,
                 num_trains_per_train_loop=2500,
-                num_expl_steps_per_train_loop=500,
+                num_expl_steps_per_train_loop=1000,
                 min_num_steps_before_training=1000,
                 max_path_length=200,
                 batch_size=256,
