@@ -59,13 +59,13 @@ class Model(nn.Module):
         logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)
         var = torch.exp(logvar)
         # sampling trick
-        obs = mean + torch.randn_like(mean) * var.sqrt()
+        next_obs = mean + torch.randn_like(mean) * var.sqrt()
 
         if not self.predict_reward:
-            reward = self.rew_function(obs, action)
+            reward = self.rew_function(obs, action, next_obs)
         if return_net_outputs:
             return mean, logvar, reward
-        return obs, reward
+        return next_obs, reward
 
     def unroll(self, obs, action_sequence, sampling_strategy):
         '''

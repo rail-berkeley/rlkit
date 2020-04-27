@@ -13,6 +13,7 @@ from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+from reward_functions.mountain_car_continuous import mountain_car_continuous_reward
 
 ptu.set_gpu_mode(True)
 
@@ -29,7 +30,7 @@ def experiment(variant):
                 obs_dim=obs_dim,
                 action_dim=action_dim,
                 num_bootstrap=variant['model']['num_bootstrap'],
-                rew_function=None  # for now
+                rew_function=mountain_car_continuous_reward  # for now
                 )
     policy = MPCPolicy(
             model=model,
