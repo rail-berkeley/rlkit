@@ -83,7 +83,7 @@ class PETSTrainer(TorchTrainer):
         return [self.model]
         # return self.model._nets
 
-    def get_epoch_snapshot(self):
+    def get_snapshot(self):
         return dict(model=self.model)
 
     def get_diagnostics(self):
