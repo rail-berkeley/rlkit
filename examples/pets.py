@@ -99,5 +99,5 @@ if __name__ == '__main__':
             lr=0.001,
     )
 
-    setup_logger(name)
+    setup_logger(name, variant=variant)
     experiment(variant)
