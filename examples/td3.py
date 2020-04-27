@@ -23,8 +23,10 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 def experiment(variant):
-    expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
-    eval_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
+    expl_env = NormalizedBoxEnv(gym.make('BipedalWalker-v3'))
+    eval_env = NormalizedBoxEnv(gym.make('BipedalWalker-v3'))
+    # expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
+    # eval_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
     # expl_env = NormalizedBoxEnv(HalfCheetahEnv())
     # eval_env = NormalizedBoxEnv(HalfCheetahEnv())
     obs_dim = expl_env.observation_space.low.size
@@ -125,5 +127,5 @@ if __name__ == "__main__":
         replay_buffer_size=int(1E6),
     )
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    setup_logger('rlkit-post-refactor-td3-half-cheetah', variant=variant)
+    setup_logger('td3-walker', variant=variant)
     experiment(variant)

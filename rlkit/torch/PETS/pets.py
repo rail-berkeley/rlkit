@@ -74,7 +74,7 @@ class PETSTrainer(TorchTrainer):
             self.eval_statistics['Model Loss'] = np_ify(model_loss)
             self.eval_statistics['Bound Loss'] = np_ify(bound_loss)
             self.eval_statistics['Reward Loss'] = np_ify(reward_loss)
-            self.eval_statistics['Model MSE'] = np_ify(model_loss)
+            self.eval_statistics['Model MSE'] = np_ify(mean_mse)
             self.eval_statistics['Loss'] = np_ify(loss)
         self._n_train_steps_total += 1
 
