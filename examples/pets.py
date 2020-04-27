@@ -14,6 +14,7 @@ from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+ptu.set_gpu_mode(True)
 
 def experiment(variant):
     expl_env = NormalizedBoxEnv(gym.make('MountainCarContinuous-v0'))
@@ -88,11 +89,11 @@ if __name__ == '__main__':
             replay_buffer_size=int(1e7),
             algorithm_kwargs=dict(
                 num_epochs=3000,
-                num_eval_steps_per_epoch=5000,
-                num_trains_per_train_loop=1000,
-                num_expl_steps_per_train_loop=1000,
+                num_eval_steps_per_epoch=200,
+                num_trains_per_train_loop=2500,
+                num_expl_steps_per_train_loop=500,
                 min_num_steps_before_training=1000,
-                max_path_length=1000,
+                max_path_length=200,
                 batch_size=256,
             ),
             lr=0.001,

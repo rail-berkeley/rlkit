@@ -32,12 +32,13 @@ class Model(nn.Module):
             self.output_dim = obs_dim * 2
 
         self.num_bootstrap = num_bootstrap
-        self._nets = []
+        self._nets = nn.ModuleList()
         for i in range(num_bootstrap):
             # TODO: figure out what the network architecture should be
             self._nets.append(FlattenMlp(hidden_sizes, self.output_dim, self.input_size, hidden_activation=swish))
         self.max_logvar = nn.Parameter(torch.ones(1, self.obs_dim, dtype=torch.float32) / 2.0)
         self.min_logvar = nn.Parameter(-torch.ones(1, self.obs_dim, dtype=torch.float32) * 10.0)
+        self.trained_at_all = False
 
     def forward(self, obs, action, network_idx=None, return_net_outputs=False):
         # TODO: is this the usage I want?
@@ -52,7 +53,7 @@ class Model(nn.Module):
         mean = output[:, :self.obs_dim]
         logvar = output[:, self.obs_dim:2*self.obs_dim]
         if self.predict_reward:
-            reward = output[:, -1]
+            reward = output[:, -1:]
         # do variance pinning
         logvar = self.max_logvar - F.softplus(self.max_logvar - logvar)
         logvar = self.min_logvar + F.softplus(logvar - self.min_logvar)

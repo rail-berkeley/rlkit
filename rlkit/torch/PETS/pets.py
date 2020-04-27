@@ -32,6 +32,7 @@ class PETSTrainer(TorchTrainer):
         self.render_eval_paths = render_eval_paths
 
         self.reward_criterion = nn.MSELoss() if model.predict_reward else None
+        self.mean_criterion = nn.MSELoss()  # just for information, not for training
         self.model_criterion = gaussian_log_loss
         self.model_optimizer = optimizer_class(
                 self.model.parameters(),
@@ -54,6 +55,8 @@ class PETSTrainer(TorchTrainer):
         net_idx = self._n_train_steps_total % len(self.model._nets)
         mean, logvar, predcted_rewards = self.model.forward(obs, actions, network_idx=net_idx, return_net_outputs=True)
         # TODO: possibly need to include weight decay
+        mean_mse = self.mean_criterion(mean, next_obs)
+
         model_loss = self.model_criterion(mean, logvar, next_obs)
         bound_loss = self.model.bound_loss()
         if self.reward_criterion:
@@ -64,12 +67,14 @@ class PETSTrainer(TorchTrainer):
         self.model_optimizer.zero_grad()
         loss.backward()
         self.model_optimizer.step()
+        self.model.trained_at_all = True
 
         if self._need_to_update_eval_statistics:
             self._need_to_update_eval_statistics = False
             self.eval_statistics['Model Loss'] = np_ify(model_loss)
             self.eval_statistics['Bound Loss'] = np_ify(bound_loss)
             self.eval_statistics['Reward Loss'] = np_ify(reward_loss)
+            self.eval_statistics['Model MSE'] = np_ify(model_loss)
             self.eval_statistics['Loss'] = np_ify(loss)
         self._n_train_steps_total += 1
 
