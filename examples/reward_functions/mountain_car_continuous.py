@@ -1,13 +1,16 @@
-import numpy as np
+import torch
+from ipdb import set_trace as db
 
 GOAL_POSITION = 0.45
 GOAL_VELOCITY = 0.
 
+@torch.no_grad()
 def mountain_car_continuous_reward(state, action, next_state):
-    position = next_state[0]
-    velocity = next_state[1]
+    batch_size = state.shape[0]
+    position = next_state[:, 0]
+    velocity = next_state[:, 1]
 
-    done = bool(position >= GOAL_POSITION and velocity >= GOAL_POSITION)
-    reward = 100 if done else 0
-    reward -= 0.1 * (action[0] ** 2)
+    reward = (position >= GOAL_POSITION) * (velocity >= GOAL_POSITION) * 100.
+    reward = reward[:, None].float()
+    reward -= 0.1 * (action ** 2)
     return reward
