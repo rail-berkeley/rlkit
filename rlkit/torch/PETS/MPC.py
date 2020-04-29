@@ -68,6 +68,7 @@ class MPCPolicy(Policy):
         if self.prev_sol is not None:
             init_mean[:(self.cem_horizon - 1) * self.action_dim] = self.prev_sol[self.action_dim:]
         new_sol = self.optimizer.obtain_solution(init_mean, self.cem_init_var)
+        self.prev_sol = new_sol
         return new_sol[:self.action_dim], {}
 
     def get_actions(self, obs_np, deterministic=False):
@@ -86,10 +87,11 @@ class MPCPolicy(Policy):
         '''
         batch_size = ac_seqs.shape[0]
         ac_seqs = ac_seqs.reshape((batch_size, self.cem_horizon, self.action_dim))
-        obs = np.tile(self.current_obs, reps=(batch_size, self.num_particles, 1))
-        obs = obs.reshape((batch_size * self.num_particles, self.obs_dim))
+        obs = np.tile(self.current_obs, reps=(batch_size * self.num_particles, 1))
         ac_seqs = np.tile(ac_seqs[:, np.newaxis, :, :], reps=(1, self.num_particles, 1, 1))
         ac_seqs = ac_seqs.reshape((batch_size * self.num_particles, self.cem_horizon, self.action_dim))
         observations, rewards = self.model.unroll(obs, ac_seqs, self.sampling_strategy)
-        rewards = np_ify(rewards).reshape((batch_size, self.num_particles, self.cem_horizon)).mean(axis=(1, 2))
-        return -rewards
+        rewards = np_ify(rewards).reshape((batch_size, self.num_particles, self.cem_horizon))
+        # sum over time, average over particles
+        # TODO (maybe): add discounting
+        return -rewards.sum(axis=(2)).mean(axis=(1))

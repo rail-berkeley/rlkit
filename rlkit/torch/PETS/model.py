@@ -98,6 +98,9 @@ class Model(nn.Module):
             # do the sampling for the bootstrap
             next_obs = bs_obs[bootstrap_assignments, range(batch_size), :]
             next_rew = bs_rew[bootstrap_assignments, range(batch_size)]
+
+            # move observation forward
+            obs = next_obs
             obs_output.append(next_obs)
             rew_output.append(next_rew)
             # resample if needed

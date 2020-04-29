@@ -32,7 +32,7 @@ def experiment(variant):
                 obs_dim=obs_dim,
                 action_dim=action_dim,
                 num_bootstrap=variant['model']['num_bootstrap'],
-                rew_function=mountain_car_continuous_reward  # for now
+                # rew_function=mountain_car_continuous_reward  # for now
                 )
     policy = MPCPolicy(
             model=model,
