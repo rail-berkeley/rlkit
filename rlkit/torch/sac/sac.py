@@ -34,6 +34,7 @@ class SACTrainer(TorchTrainer):
 
             use_automatic_entropy_tuning=True,
             target_entropy=None,
+            alpha=1.0,
     ):
         super().__init__()
         self.env = env
@@ -56,6 +57,8 @@ class SACTrainer(TorchTrainer):
                 [self.log_alpha],
                 lr=policy_lr,
             )
+
+        self._alpha = alpha
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
@@ -103,7 +106,7 @@ class SACTrainer(TorchTrainer):
             alpha = self.log_alpha.exp()
         else:
             alpha_loss = 0
-            alpha = 1
+            alpha = self._alpha
 
         q_new_actions = torch.min(
             self.qf1(obs, new_obs_actions),
@@ -135,7 +138,7 @@ class SACTrainer(TorchTrainer):
         self.policy_optimizer.zero_grad()
         policy_loss.backward()
         self.policy_optimizer.step()
-        
+
         self.qf1_optimizer.zero_grad()
         qf1_loss.backward()
         self.qf1_optimizer.step()
@@ -224,4 +227,3 @@ class SACTrainer(TorchTrainer):
             target_qf1=self.qf1,
             target_qf2=self.qf2,
         )
-
