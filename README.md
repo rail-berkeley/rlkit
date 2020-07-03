@@ -8,10 +8,10 @@ Implemented algorithms:
     - [Documentation](docs/SkewFit.md)
     - Requires [multiworld](https://github.com/vitchyr/multiworld) to be installed
  - Reinforcement Learning with Imagined Goals (RIG)
-    - Special case of Skew-Fit: set power = 0
+    - See [this version](https://github.com/vitchyr/rlkit/tree/v0.1.2) of this repository. 
     - [paper](https://arxiv.org/abs/1807.04742)
  - Temporal Difference Models (TDMs)
-    - Only implemented in v0.1.2-. See Legacy Documentation section below.
+    - Only implemented in [v0.1.2 of RLkit](https://github.com/vitchyr/rlkit/tree/v0.1.2). See Legacy Documentation section below.
     - [paper](https://arxiv.org/abs/1802.09081)
     - [Documentation](docs/TDMs.md)
  - Hindsight Experience Replay (HER)
