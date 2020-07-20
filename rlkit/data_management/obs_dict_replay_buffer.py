@@ -192,15 +192,12 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
                 num_rollout_goals:last_env_goal_idx] = \
                     env_goals[goal_key]
         if num_future_goals > 0:
-            future_obs_idxs = []
-            for i in indices[-num_future_goals:]:
-                possible_future_obs_idxs = self._idx_to_future_obs_idx[i]
-                # This is generally faster than random.choice. Makes you wonder what
-                # random.choice is doing
-                num_options = len(possible_future_obs_idxs)
-                next_obs_i = int(np.random.randint(0, num_options))
-                future_obs_idxs.append(possible_future_obs_idxs[next_obs_i])
-            future_obs_idxs = np.array(future_obs_idxs)
+            ## better future obs sample algorithm
+            future_indices = indices[-num_future_goals:]
+            possible_future_obs_lens = np.array([len(self._idx_to_future_obs_idx[i]) for i in future_indices])
+            next_obs_idxs = (np.random.random(num_future_goals) * possible_future_obs_lens).astype(np.int)
+            future_obs_idxs = np.array([self._idx_to_future_obs_idx[ids][next_obs_idxs[i]] for i, ids in enumerate(future_indices)])
+
             resampled_goals[-num_future_goals:] = self._next_obs[
                 self.achieved_goal_key
             ][future_obs_idxs]
