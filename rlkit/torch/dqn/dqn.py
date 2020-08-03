@@ -85,6 +85,7 @@ class DQNTrainer(TorchTrainer):
                 'Y Predictions',
                 ptu.get_numpy(y_pred),
             ))
+        self._n_train_steps_total += 1
 
     def get_diagnostics(self):
         return self.eval_statistics
