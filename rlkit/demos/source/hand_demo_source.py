@@ -3,7 +3,7 @@ import pickle
 
 from rlkit.data_management.path_builder import PathBuilder
 
-from rlkit.misc.asset_loader import load_local_or_remote_file
+from rlkit.util.io import load_local_or_remote_file
 
 class HandDemoSource(DemoSource):
     def __init__(self, filename):

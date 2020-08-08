@@ -52,6 +52,31 @@ def sync_down(path, check_exists=True):
     return local_path
 
 
+def sync_down_folder(path):
+    is_docker = os.path.isfile("/.dockerenv")
+    if is_docker:
+        local_path = "/tmp/%s" % (path)
+    else:
+        local_path = "%s/%s" % (LOCAL_LOG_DIR, path)
+
+    local_dir = os.path.dirname(local_path)
+    os.makedirs(local_dir, exist_ok=True)
+
+    if is_docker:
+        from doodad.ec2.autoconfig import AUTOCONFIG
+        os.environ["AWS_ACCESS_KEY_ID"] = AUTOCONFIG.aws_access_key()
+        os.environ["AWS_SECRET_ACCESS_KEY"] = AUTOCONFIG.aws_access_secret()
+
+    full_s3_path = os.path.join(AWS_S3_PATH, path)
+    bucket_name, bucket_relative_path = split_s3_full_path(full_s3_path)
+    command = "aws s3 sync s3://%s/%s %s" % (bucket_name, bucket_relative_path, local_path)
+    print(command)
+    stream = os.popen(command)
+    output = stream.read()
+    print(output)
+    return local_path
+
+
 def split_s3_full_path(s3_path):
     """
     Split "s3://foo/bar/baz" into "foo" and "bar/baz"
@@ -60,6 +85,14 @@ def split_s3_full_path(s3_path):
     bucket_name, *directories = bucket_name_and_directories.split('/')
     directory_path = '/'.join(directories)
     return bucket_name, directory_path
+
+
+class CPU_Unpickler(pickle.Unpickler):
+    """Utility for loading a pickled model on CPU machine saved from a GPU"""
+    def find_class(self, module, name):
+        if module == 'torch.storage' and name == '_load_from_bytes':
+            return lambda b: torch.load(io.BytesIO(b), map_location='cpu')
+        else: return super().find_class(module, name)
 
 
 def load_local_or_remote_file(filepath, file_type=None):
@@ -77,9 +110,23 @@ def load_local_or_remote_file(filepath, file_type=None):
     elif file_type == JOBLIB:
         object = joblib.load(local_path)
     else:
+        #f = open(local_path, 'rb')
+        #object = CPU_Unpickler(f).load()
         object = pickle.load(open(local_path, "rb"))
     print("loaded", local_path)
     return object
+
+
+def get_absolute_path(path):
+    if path[0] == "/":
+        return path
+    else:
+        is_docker = os.path.isfile("/.dockerenv")
+        if is_docker:
+            local_path = "/tmp/%s" % (path)
+        else:
+            local_path = "%s/%s" % (LOCAL_LOG_DIR, path)
+        return local_path
 
 
 if __name__ == "__main__":

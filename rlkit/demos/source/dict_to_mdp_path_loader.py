@@ -10,7 +10,7 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
-from rlkit.misc.asset_loader import (
+from rlkit.util.io import (
     load_local_or_remote_file, sync_down_folder, get_absolute_path, sync_down
 )
 
