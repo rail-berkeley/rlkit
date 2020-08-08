@@ -1,6 +1,6 @@
 import gym
 # import roboverse
-from rlkit.data_management.awr_env_replay_buffer import AWREnvReplayBuffer
+# from rlkit.data_management.awr_env_replay_buffer import AWREnvReplayBuffer
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.data_management.split_buffer import SplitReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv, StackObservationEnv, RewardWrapperEnv
@@ -308,17 +308,17 @@ def experiment(variant):
         else:
             error
 
-    if variant.get('replay_buffer_class', EnvReplayBuffer) == AWREnvReplayBuffer:
-        main_replay_buffer_kwargs = variant['replay_buffer_kwargs']
-        main_replay_buffer_kwargs['env'] = expl_env
-        main_replay_buffer_kwargs['qf1'] = qf1
-        main_replay_buffer_kwargs['qf2'] = qf2
-        main_replay_buffer_kwargs['policy'] = policy
-    else:
-        main_replay_buffer_kwargs=dict(
-            max_replay_buffer_size=variant['replay_buffer_size'],
-            env=expl_env,
-        )
+    # if variant.get('replay_buffer_class', EnvReplayBuffer) == AWREnvReplayBuffer:
+    #     main_replay_buffer_kwargs = variant['replay_buffer_kwargs']
+    #     main_replay_buffer_kwargs['env'] = expl_env
+    #     main_replay_buffer_kwargs['qf1'] = qf1
+    #     main_replay_buffer_kwargs['qf2'] = qf2
+    #     main_replay_buffer_kwargs['policy'] = policy
+    # else:
+    main_replay_buffer_kwargs=dict(
+        max_replay_buffer_size=variant['replay_buffer_size'],
+        env=expl_env,
+    )
     replay_buffer_kwargs = dict(
         max_replay_buffer_size=variant['replay_buffer_size'],
         env=expl_env,
