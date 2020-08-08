@@ -3,8 +3,8 @@ from functools import partial
 
 import numpy as np
 
-from rlkit.envs.vae_wrapper import VAEWrappedEnv
-from rlkit.core.eval_util import create_stats_ordered_dict
+from rlkit.envs.vae_wrappers import VAEWrappedEnv
+from rlkit.misc.eval_util import create_stats_ordered_dict
 from rlkit.samplers.data_collector.base import PathCollector
 from rlkit.samplers.rollout_functions import rollout
 
