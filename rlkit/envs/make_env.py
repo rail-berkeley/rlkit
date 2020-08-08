@@ -28,7 +28,6 @@ D4RL_ENVS = [
 
 def make(env_id=None, env_class=None, env_kwargs=None, normalize_env=True):
     assert env_id or env_class
-
     if env_class:
         env = env_class(**env_kwargs)
     elif env_id in DAPG_ENVS:
@@ -41,6 +40,7 @@ def make(env_id=None, env_class=None, env_kwargs=None, normalize_env=True):
         env = gym.make(env_id)
     elif env_id:
         env = gym.make(env_id)
+    env = env.env # unwrap TimeLimit
 
     if normalize_env:
         env = NormalizedBoxEnv(env)
