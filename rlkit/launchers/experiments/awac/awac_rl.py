@@ -23,24 +23,21 @@ from multiworld.core.flat_goal_env import FlatGoalEnv
 from multiworld.core.image_env import ImageEnv
 from multiworld.core.gym_to_multi_env import GymToMultiEnv
 
-from rlkit.envs.encoder_wrappers import VQVAEWrappedEnv
-from rlkit.launchers.experiments.ashvin.rfeatures.rfeatures_model import TimestepPredictionModel
-
 import torch
 import numpy as np
 from torchvision.utils import save_image
 
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
-from rlkit.exploration_strategies.gaussian_and_epislon import GaussianAndEpislonStrategy
+from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import GaussianAndEpsilonStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 
 import os.path as osp
 from rlkit.core import logger
-from rlkit.misc.asset_loader import load_local_or_remote_file
+from rlkit.util.io import load_local_or_remote_file
 import pickle
 
-from rlkit.envs.images import Renderer, InsertImageEnv, EnvRenderer
+# from rlkit.envs.images import Renderer, InsertImageEnv, EnvRenderer
 from rlkit.envs.make_env import make
 
 ENV_PARAMS = {
@@ -294,7 +291,7 @@ def experiment(variant):
                 policy=expl_policy,
             )
         elif exploration_strategy == 'gauss_eps':
-            es = GaussianAndEpislonStrategy(
+            es = GaussianAndEpsilonStrategy(
                 action_space=expl_env.action_space,
                 max_sigma=exploration_kwargs['noise'],
                 min_sigma=exploration_kwargs['noise'],  # constant sigma

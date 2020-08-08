@@ -23,7 +23,7 @@ from rlkit.launchers.contextual.util import (
 
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
-from rlkit.exploration_strategies.gaussian_and_epislon import GaussianAndEpislonStrategy
+from rlkit.exploration_strategies.gaussian_and_epislon import GaussianAndEpsilonStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 
 import os.path as osp
@@ -218,7 +218,7 @@ def experiment(variant):
                 policy=expl_policy,
             )
         elif exploration_strategy == 'gauss_eps':
-            es = GaussianAndEpislonStrategy(
+            es = GaussianAndEpsilonStrategy(
                 action_space=expl_env.action_space,
                 max_sigma=exploration_kwargs['noise'],
                 min_sigma=exploration_kwargs['noise'],  # constant sigma

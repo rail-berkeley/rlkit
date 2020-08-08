@@ -3,7 +3,7 @@ from rlkit.exploration_strategies.base import RawExplorationStrategy
 import numpy as np
 
 
-class GaussianAndEpislonStrategy(RawExplorationStrategy):
+class GaussianAndEpsilonStrategy(RawExplorationStrategy):
     """
     With probability epsilon, take a completely random action.
     with probability 1-epsilon, add Gaussian noise to the action taken by a
