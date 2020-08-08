@@ -17,13 +17,12 @@ from rlkit.torch.torch_rl_algorithm import (
 
 from rlkit.demos.source.hdf5_path_loader import HDF5PathLoader
 from rlkit.demos.source.mdp_path_loader import MDPPathLoader
-from rlkit.visualization.video import save_paths, VideoSaveFunction
+# from rlkit.visualization.video import save_paths, VideoSaveFunction
 
 from multiworld.core.flat_goal_env import FlatGoalEnv
 from multiworld.core.image_env import ImageEnv
 from multiworld.core.gym_to_multi_env import GymToMultiEnv
 
-from rlkit.launchers.experiments.ashvin.rfeatures.encoder_wrapped_env import EncoderWrappedEnv
 from rlkit.envs.encoder_wrappers import VQVAEWrappedEnv
 from rlkit.launchers.experiments.ashvin.rfeatures.rfeatures_model import TimestepPredictionModel
 

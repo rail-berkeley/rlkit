@@ -18,8 +18,6 @@ import random
 from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.data_management.path_builder import PathBuilder
 
-from rlkit.launchers.config import LOCAL_LOG_DIR, AWS_S3_PATH
-
 # import matplotlib
 # matplotlib.use('TkAgg')
 # import matplotlib.pyplot as plt
