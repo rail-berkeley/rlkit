@@ -90,7 +90,6 @@ if __name__ == "__main__":
 
     search_space = {
         'env_id': ["pen-binary-v0", "door-binary-v0", "relocate-binary-v0", ],
-        'seedid': range(5),
         'trainer_kwargs.beta': [0.5, ],
         'trainer_kwargs.clip_score': [0.5, ],
         'trainer_kwargs.awr_use_mle_for_vf': [True, ],
@@ -100,16 +99,15 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'dev-{}'.format(
-        __file__.replace('/', '-').replace('_', '-').split('.')[0]
-    )
-    use_gpu = False
+    # n_seeds = 1
+    # mode = 'local'
+    # exp_prefix = 'dev-{}'.format(
+    #     __file__.replace('/', '-').replace('_', '-').split('.')[0]
+    # )
 
-    # n_seeds = 3
-    # mode = 'gcp'
-    # exp_prefix = 'skew-fit-pickup-reference-post-refactor'
+    n_seeds = 3
+    mode = 'ec2'
+    exp_prefix = 'hand-awac1'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
@@ -118,7 +116,7 @@ if __name__ == "__main__":
                 exp_prefix=exp_prefix,
                 mode=mode,
                 variant=variant,
-                use_gpu=use_gpu,
+                use_gpu=True,
                 snapshot_gap=200,
                 snapshot_mode='gap_and_last',
                 num_exps_per_instance=3,

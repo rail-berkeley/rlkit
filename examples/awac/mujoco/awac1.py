@@ -82,7 +82,6 @@ if __name__ == "__main__":
         'pretrain_rl':[True],
         'pretrain_policy':[False],
         'env_id': ['HalfCheetah-v2', 'Ant-v2', 'Walker2d-v2', ],
-        'seedid': range(5),
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
@@ -93,7 +92,6 @@ if __name__ == "__main__":
     exp_prefix = 'dev-{}'.format(
         __file__.replace('/', '-').replace('_', '-').split('.')[0]
     )
-    use_gpu = False
 
     # n_seeds = 3
     # mode = 'gcp'
