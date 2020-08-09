@@ -8,7 +8,7 @@ Implemented algorithms:
     - [Documentation](docs/SkewFit.md)
     - Requires [multiworld](https://github.com/vitchyr/multiworld) to be installed
  - Reinforcement Learning with Imagined Goals (RIG)
-    - See [this version](https://github.com/vitchyr/rlkit/tree/v0.1.2) of this repository. 
+    - See [this version](https://github.com/vitchyr/rlkit/tree/v0.1.2) of this repository.
     - [paper](https://arxiv.org/abs/1807.04742)
  - Temporal Difference Models (TDMs)
     - Only implemented in [v0.1.2 of RLkit](https://github.com/vitchyr/rlkit/tree/v0.1.2). See Legacy Documentation section below.
@@ -32,6 +32,9 @@ Implemented algorithms:
  - Twin Delayed Deep Determinstic Policy Gradient (TD3)
     - [example script](examples/td3.py)
     - [paper](https://arxiv.org/abs/1802.09477)
+ - Advantage Weighted Actor Critic (AWAC)
+    - [example scripts](examples/awac)
+    - [paper](https://arxiv.org/abs/2006.09359)
 
 To get started, checkout the example scripts, linked above.
 
@@ -59,13 +62,13 @@ The initial release for 0.2 has the following major changes:
  - Switch to batch-style training rather than online training.
    - Makes code more amenable to parallelization.
    - Implementing the online-version is straightforward.
- - Refactor training code to be its own object, rather than being integrated 
+ - Refactor training code to be its own object, rather than being integrated
  inside of `RLAlgorithm`.
  - Refactor sampling code to be its own object, rather than being integrated
  inside of `RLAlgorithm`.
- - Implement [Skew-Fit: 
+ - Implement [Skew-Fit:
 State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698),
-a method for performing goal-directed exploration to maximize the entropy of 
+a method for performing goal-directed exploration to maximize the entropy of
 visited states.
  - Update soft actor-critic to more closely match TensorFlow implementation:
    - Rename `TwinSAC` to just `SAC`.
@@ -73,7 +76,7 @@ visited states.
    - Remove unnecessary policy regualization terms.
    - Use numerically stable Jacobian computation.
 
-Overall, the refactors are intended to make the code more modular and 
+Overall, the refactors are intended to make the code more modular and
 readable than the previous versions.
 
 ### Version 0.1
@@ -212,35 +215,35 @@ To learn more, more about `doodad`, [go to the repository](https://github.com/vi
  - Implement model-based algorithms.
 
 # Legacy Code (v0.1.2)
-For Temporal Difference Models (TDMs) and the original implementation of 
+For Temporal Difference Models (TDMs) and the original implementation of
 Reinforcement Learning with Imagined Goals (RIG), run
 `git checkout tags/v0.1.2`.
 
 # References
 The algorithms are based on the following papers
 
-[Skew-Fit: State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698).  
+[Skew-Fit: State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698).
 Vitchyr H. Pong*, Murtaza Dalal*, Steven Lin*, Ashvin Nair, Shikhar Bahl, Sergey Levine. arXiv preprint, 2019.
 
-[Visual Reinforcement Learning with Imagined Goals](https://arxiv.org/abs/1807.04742).  
+[Visual Reinforcement Learning with Imagined Goals](https://arxiv.org/abs/1807.04742).
 Ashvin Nair*, Vitchyr Pong*, Murtaza Dalal, Shikhar Bahl, Steven Lin, Sergey Levine. NeurIPS 2018.
 
-[Temporal Difference Models: Model-Free Deep RL for Model-Based Control](https://arxiv.org/abs/1802.09081).  
+[Temporal Difference Models: Model-Free Deep RL for Model-Based Control](https://arxiv.org/abs/1802.09081).
 Vitchyr Pong*, Shixiang Gu*, Murtaza Dalal, Sergey Levine. ICLR 2018.
 
-[Hindsight Experience Replay](https://arxiv.org/abs/1707.01495).  
+[Hindsight Experience Replay](https://arxiv.org/abs/1707.01495).
 Marcin Andrychowicz, Filip Wolski, Alex Ray, Jonas Schneider, Rachel Fong, Peter Welinder, Bob McGrew, Josh Tobin, Pieter Abbeel, Wojciech Zaremba. NeurIPS 2017.
 
-[Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461).  
+[Deep Reinforcement Learning with Double Q-learning](https://arxiv.org/abs/1509.06461).
 Hado van Hasselt, Arthur Guez, David Silver. AAAI 2016.
 
-[Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236).  
+[Human-level control through deep reinforcement learning](https://www.nature.com/articles/nature14236).
 Volodymyr Mnih, Koray Kavukcuoglu, David Silver, Andrei A. Rusu, Joel Veness, Marc G. Bellemare, Alex Graves, Martin Riedmiller, Andreas K. Fidjeland, Georg Ostrovski, Stig Petersen, Charles Beattie, Amir Sadik, Ioannis Antonoglou, Helen King, Dharshan Kumaran, Daan Wierstra, Shane Legg, Demis Hassabis. Nature 2015.
 
-[Soft Actor-Critic Algorithms and Applications](https://arxiv.org/abs/1812.05905).  
+[Soft Actor-Critic Algorithms and Applications](https://arxiv.org/abs/1812.05905).
 Tuomas Haarnoja, Aurick Zhou, Kristian Hartikainen, George Tucker, Sehoon Ha, Jie Tan, Vikash Kumar, Henry Zhu, Abhishek Gupta, Pieter Abbeel, Sergey Levine. arXiv preprint, 2018.
 
-[Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290).  
+[Soft Actor-Critic: Off-Policy Maximum Entropy Deep Reinforcement Learning with a Stochastic Actor](https://arxiv.org/abs/1801.01290).
 Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. ICML, 2018.
 
 [Addressing Function Approximation Error in Actor-Critic Methods](https://arxiv.org/abs/1802.09477)

@@ -1,10 +1,16 @@
 # AWAC
 
-This directory contains examples to run the implementation of advantage weighted actor critic (AWAC, pronounced "awake").
+This directory contains examples to run the implementation of advantage
+weighted actor critic (AWAC, pronounced "awake"). The paper with more details
+is available [here](https://arxiv.org/abs/2006.09359).
 
 ## Usage Instructions
 
-Running the dexterous manipulation experiments requires setting up the environments in this repository: [https://github.com/aravindr93/hand_dapg](https://github.com/aravindr93/hand_dapg). You can also use this docker image, which has the required dependencies set up: anair17/railrl-hand-v3
+Running the dexterous manipulation experiments requires setting up the
+environments in this repository:
+[https://github.com/aravindr93/hand_dapg](https://github.com/aravindr93/hand_dapg).
+You can also use the follwing docker image, which has the required dependencies
+set up: anair17/railrl-hand-v3
 
 ## Data
 
