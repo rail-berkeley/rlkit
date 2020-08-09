@@ -3,7 +3,6 @@ from functools import partial
 
 import numpy as np
 
-from rlkit.envs.vae_wrapper import VAEWrappedEnv
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.samplers.data_collector.base import PathCollector
 from rlkit.samplers.rollout_functions import rollout
@@ -159,11 +158,12 @@ class ObsDictPathCollector(MdpPathCollector):
 class VAEWrappedEnvPathCollector(GoalConditionedPathCollector):
     def __init__(
             self,
-            env: VAEWrappedEnv,
+            env,
             policy,
             decode_goals=False,
             **kwargs
     ):
+        """Expects env is VAEWrappedEnv"""
         super().__init__(env, policy, **kwargs)
         self._decode_goals = decode_goals
 
