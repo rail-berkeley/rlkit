@@ -16,10 +16,6 @@ import random
 from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.data_management.path_builder import PathBuilder
 
-# import matplotlib
-# matplotlib.use('TkAgg')
-# import matplotlib.pyplot as plt
-
 from rlkit.core import logger
 
 import glob
@@ -137,9 +133,6 @@ class MDPPathLoader:
     # replay buffer, and not to the demo_test or demo_train buffers
     def load_demo_path(self, demo_path, on_policy=True):
         data = list(load_local_or_remote_file(demo_path))
-        # if not on_policy:
-            # data = [data]
-        # random.shuffle(data)
         N = int(len(data) * self.demo_train_split)
         print("using", N, "paths for training")
 
@@ -155,17 +148,5 @@ class MDPPathLoader:
     def get_batch_from_buffer(self, replay_buffer):
         batch = replay_buffer.random_batch(self.bc_batch_size)
         batch = np_to_pytorch_batch(batch)
-        # obs = batch['observations']
-        # next_obs = batch['next_observations']
-        # goals = batch['resampled_goals']
-        # import ipdb; ipdb.set_trace()
-        # batch['observations'] = torch.cat((
-        #     obs,
-        #     goals
-        # ), dim=1)
-        # batch['next_observations'] = torch.cat((
-        #     next_obs,
-        #     goals
-        # ), dim=1)
         return batch
 

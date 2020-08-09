@@ -18,21 +18,9 @@ import random
 from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.data_management.path_builder import PathBuilder
 
-# import matplotlib
-# matplotlib.use('TkAgg')
-# import matplotlib.pyplot as plt
-
 from rlkit.core import logger
 
 import glob
-
-def load_encoder(encoder_file):
-    encoder = load_local_or_remote_file(encoder_file)
-    # TEMP #
-    #encoder.representation_size = encoder.discrete_size * encoder.embedding_dim
-    # TEMP #
-    return encoder
-
 
 class DictToMDPPathLoader:
     """
@@ -156,10 +144,6 @@ class DictToMDPPathLoader:
         for filename in paths:
             data.extend(list(load_local_or_remote_file(filename)))
 
-        # if not is_demo:
-            # data = [data]
-        # random.shuffle(data)
-
         if train_split is None:
             train_split = self.demo_train_split
 
@@ -183,181 +167,5 @@ class DictToMDPPathLoader:
     def get_batch_from_buffer(self, replay_buffer):
         batch = replay_buffer.random_batch(self.bc_batch_size)
         batch = np_to_pytorch_batch(batch)
-        # obs = batch['observations']
-        # next_obs = batch['next_observations']
-        # goals = batch['resampled_goals']
-        # import ipdb; ipdb.set_trace()
-        # batch['observations'] = torch.cat((
-        #     obs,
-        #     goals
-        # ), dim=1)
-        # batch['next_observations'] = torch.cat((
-        #     next_obs,
-        #     goals
-        # ), dim=1)
         return batch
-
-class EncoderDictToMDPPathLoader(DictToMDPPathLoader):
-
-    def __init__(
-            self,
-            trainer,
-            replay_buffer,
-            demo_train_buffer,
-            demo_test_buffer,
-            model_path=None,
-            env=None,
-            demo_paths=[], # list of dicts
-            normalize=False,
-            demo_train_split=0.9,
-            demo_data_split=1,
-            add_demos_to_replay_buffer=True,
-            bc_num_pretrain_steps=0,
-            bc_batch_size=64,
-            bc_weight=1.0,
-            rl_weight=1.0,
-            q_num_pretrain_steps=0,
-            weight_decay=0,
-            eval_policy=None,
-            recompute_reward=False,
-            env_info_key=None,
-            obs_key=None,
-            load_terminals=True,
-            do_preprocess=True,
-            **kwargs
-    ):
-        super().__init__(trainer,
-            replay_buffer,
-            demo_train_buffer,
-            demo_test_buffer,
-            demo_paths,
-            demo_train_split,
-            demo_data_split,
-            add_demos_to_replay_buffer,
-            bc_num_pretrain_steps,
-            bc_batch_size,
-            bc_weight,
-            rl_weight,
-            q_num_pretrain_steps,
-            weight_decay,
-            eval_policy,
-            recompute_reward,
-            env_info_key,
-            obs_key,
-            load_terminals,
-            **kwargs)
-        self.model = load_encoder(model_path)
-        self.normalize = normalize
-        self.env = env
-        self.do_preprocess = do_preprocess
-
-        print("ZEROING OUT GOALS")
-
-    def resize_img(self, obs):
-        from torchvision.transforms import Resize
-        from PIL import Image
-        resize = Resize((48, 48), interpolation=Image.NEAREST)
-
-        obs = obs.reshape(84, 84, 3) * 255.0
-        obs = Image.fromarray(obs, mode='RGB')
-        obs = np.array(resize(obs))
-        return obs.flatten() / 255.0
-
-    def preprocess(self, observation):
-        if not self.do_preprocess:
-            for i in range(len(observation)):
-                observation[i]["no_goal"] = np.zeros((0, ))
-            return observation
-        observation = copy.deepcopy(observation)
-        images = np.stack([observation[i]['image_observation'] for i in range(len(observation))])
-        goals = np.stack([np.zeros_like(observation[i]['image_observation']) for i in range(len(observation))])
-        #images = np.stack([self.resize_img(observation[i]['image_observation']) for i in range(len(observation))])
-
-        # latents = self.model.encode(ptu.from_numpy(images))
-        # recon = ptu.get_numpy(self.model.decode(latents))
-
-        # from torch.nn import functional as F
-
-        # print(F.mse_loss(ptu.from_numpy(recon), ptu.from_numpy(images.reshape(50, 3, 48, 48))))
-        # import ipdb; ipdb.set_trace()
-
-        if self.normalize:
-            images = images / 255.0
-
-        latents = ptu.get_numpy(self.model.encode(ptu.from_numpy(images)))
-        goals = ptu.get_numpy(self.model.encode(ptu.from_numpy(goals)))
-
-        for i in range(len(observation)):
-            observation[i]["latent_observation"] = latents[i]
-            observation[i]["latent_achieved_goal"] = latents[i]
-            observation[i]["latent_desired_goal"] = goals[-1]
-            #observation[i]["latent_desired_goal"] = latents[-1]
-            del observation[i]['image_observation']
-
-        return observation
-
-    def encode(self, obs):
-        if self.normalize:
-            return ptu.get_numpy(self.model.encode(ptu.from_numpy(obs) / 255.0))
-        return ptu.get_numpy(self.model.encode(ptu.from_numpy(obs)))
-
-
-    def load_path(self, path, replay_buffer, obs_dict=None):
-        rewards = []
-        path_builder = PathBuilder()
-        H = min(len(path["observations"]), len(path["actions"]))
-
-        if obs_dict:
-            traj_obs = self.preprocess(path["observations"])
-            next_traj_obs = self.preprocess(path["next_observations"])
-        else:
-            traj_obs = self.env.encode(path["observations"])
-            next_traj_obs = self.env.encode(path["next_observations"])
-
-        for i in range(H):
-            ob = traj_obs[i]
-            next_ob = next_traj_obs[i]
-            action = path["actions"][i]
-
-            # #temp fix#
-            # ob['state_desired_goal'] = np.zeros_like(ob['state_desired_goal'])
-            # ob['latent_desired_goal'] = np.zeros_like(ob['latent_desired_goal'])
-
-            # next_ob['state_desired_goal'] = np.zeros_like(next_ob['state_desired_goal'])
-            # next_ob['latent_desired_goal'] = np.zeros_like(next_ob['latent_desired_goal'])
-
-            # action[3] /= 5
-            # #temp fix#
-
-            reward = path["rewards"][i]
-            terminal = path["terminals"][i]
-            if not self.load_terminals:
-                terminal = np.zeros(terminal.shape)
-            agent_info = path["agent_infos"][i]
-            env_info = path["env_infos"][i]
-            if self.recompute_reward:
-                #reward = self.env.compute_rewards(action, path["next_observations"][i])
-                reward = self.env._compute_reward(ob, action, next_ob, context=next_ob)
-
-            reward = np.array([reward]).flatten()
-            rewards.append(reward)
-            terminal = np.array([terminal]).reshape((1, ))
-            path_builder.add_all(
-                observations=ob,
-                actions=action,
-                rewards=reward,
-                next_observations=next_ob,
-                terminals=terminal,
-                agent_infos=agent_info,
-                env_infos=env_info,
-            )
-        self.demo_trajectory_rewards.append(rewards)
-        path = path_builder.get_all_stacked()
-        replay_buffer.add_path(path)
-        print("rewards", np.min(rewards), np.max(rewards))
-        print("loading path, length", len(path["observations"]), len(path["actions"]))
-        print("actions", np.min(path["actions"]), np.max(path["actions"]))
-        print("path sum rewards", sum(rewards), len(rewards))
-
-
 

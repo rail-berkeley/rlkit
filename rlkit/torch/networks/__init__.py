@@ -8,12 +8,10 @@ from rlkit.torch.networks.basic import (
 )
 from rlkit.torch.networks.cnn import BasicCNN, CNN, MergedCNN, CNNPolicy
 from rlkit.torch.networks.dcnn import DCNN, TwoHeadDCNN
-from rlkit.torch.networks.deprecated_feedforward import (
-    FeedForwardPolicy, FeedForwardQFunction
-)
 from rlkit.torch.networks.feat_point_mlp import FeatPointMlp
 from rlkit.torch.networks.image_state import ImageStatePolicy, ImageStateQ
 from rlkit.torch.networks.linear_transform import LinearTransform
+from rlkit.torch.networks.normalization import LayerNorm
 from rlkit.torch.networks.mlp import (
     Mlp, ConcatMlp, MlpPolicy, TanhMlpPolicy,
     MlpQf,
@@ -33,11 +31,10 @@ __all__ = [
     'CNNPolicy',
     'DCNN',
     'Detach',
-    'FeedForwardPolicy',
-    'FeedForwardQFunction',
     'FeatPointMlp',
     'Flatten',
     'FlattenEach',
+    'LayerNorm',
     'LinearTransform',
     'ImageStatePolicy',
     'ImageStateQ',

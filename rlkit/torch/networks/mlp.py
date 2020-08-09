@@ -7,7 +7,7 @@ from rlkit.pythonplusplus import identity
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule, eval_np
 from rlkit.torch.data_management.normalizer import TorchFixedNormalizer
-from rlkit.torch.networks.experimental import LayerNorm
+from rlkit.torch.networks import LayerNorm
 from rlkit.torch.pytorch_util import activation_from_string
 
 

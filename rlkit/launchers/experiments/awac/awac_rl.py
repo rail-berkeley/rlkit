@@ -285,13 +285,6 @@ def experiment(variant):
         else:
             error
 
-    # if variant.get('replay_buffer_class', EnvReplayBuffer) == AWREnvReplayBuffer:
-    #     main_replay_buffer_kwargs = variant['replay_buffer_kwargs']
-    #     main_replay_buffer_kwargs['env'] = expl_env
-    #     main_replay_buffer_kwargs['qf1'] = qf1
-    #     main_replay_buffer_kwargs['qf2'] = qf2
-    #     main_replay_buffer_kwargs['policy'] = policy
-    # else:
     main_replay_buffer_kwargs=dict(
         max_replay_buffer_size=variant['replay_buffer_size'],
         env=expl_env,

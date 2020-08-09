@@ -4,8 +4,7 @@ import Pyro4
 from threading import Thread
 import time
 import numpy as np
-from rlkit.launchers import config
-# HOSTNAME = "192.168.0.102"
+from rlkit.launchers import conf as config
 
 Pyro4.config.SERIALIZERS_ACCEPTED = set(['pickle','json', 'marshal', 'serpent'])
 Pyro4.config.SERIALIZER='pickle'
@@ -18,11 +17,8 @@ class DeviceState(object):
 
     def get_state(self):
         return device_state
-        # return self.state
 
     def set_state(self, state):
-        # print("set", state)
-        # self.state = state
         global device_state
         device_state = state
 

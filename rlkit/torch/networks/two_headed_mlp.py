@@ -4,7 +4,7 @@ from torch.nn import functional as F
 from rlkit.pythonplusplus import identity
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
-from rlkit.torch.networks.experimental import LayerNorm
+from rlkit.torch.networks import LayerNorm
 
 
 class TwoHeadMlp(PyTorchModule):
