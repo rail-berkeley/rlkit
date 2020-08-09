@@ -1,6 +1,7 @@
 from functools import partial
 
 import numpy as np
+import copy
 
 create_rollout_function = partial
 
@@ -109,7 +110,7 @@ def rollout(
         if full_o_postprocess_func:
             full_o_postprocess_func(env, agent, o)
 
-        next_o, r, d, env_info = env.step(a.copy())
+        next_o, r, d, env_info = env.step(copy.deepcopy(a))
         if render:
             env.render(**render_kwargs)
         observations.append(o)
