@@ -7,7 +7,8 @@ from rlkit.data_management.replay_buffer import ReplayBuffer
 class ObsDictRelabelingBuffer(ReplayBuffer):
     """
     Replay buffer for environments whose observations are dictionaries, such as
-        - OpenAI Gym GoalEnv environments. https://blog.openai.com/ingredients-for-robotics-research/
+        - OpenAI Gym GoalEnv environments.
+          https://blog.openai.com/ingredients-for-robotics-research/
         - multiworld MultitaskEnv. https://github.com/vitchyr/multiworld/
 
     Implementation details:
@@ -107,9 +108,13 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
 
         actions = flatten_n(actions)
         if isinstance(self.env.action_space, Discrete):
-            actions = np.eye(self._action_dim)[actions].reshape((-1, self._action_dim))
+            actions = np.eye(self._action_dim)[actions]
+            actions = actions.reshape((-1, self._action_dim))
         obs = flatten_dict(obs, self.ob_keys_to_save + self.internal_keys)
-        next_obs = flatten_dict(next_obs, self.ob_keys_to_save + self.internal_keys)
+        next_obs = flatten_dict(
+                next_obs,
+                self.ob_keys_to_save + self.internal_keys,
+        )
         obs = preprocess_obs_dict(obs)
         next_obs = preprocess_obs_dict(next_obs)
 
@@ -136,7 +141,9 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
                 self._terminals[buffer_slice] = terminals[path_slice]
                 for key in self.ob_keys_to_save + self.internal_keys:
                     self._obs[key][buffer_slice] = obs[key][path_slice]
-                    self._next_obs[key][buffer_slice] = next_obs[key][path_slice]
+                    self._next_obs[key][buffer_slice] = (
+                            next_obs[key][path_slice]
+                    )
             # Pointers from before the wrap
             for i in range(self._top, self.max_size):
                 self._idx_to_future_obs_idx[i] = np.hstack((
@@ -186,17 +193,26 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
                 env_goals[self.desired_goal_key]
             )
             for goal_key in self.goal_keys:
-                new_obs_dict[goal_key][num_rollout_goals:last_env_goal_idx] = \
+                new_obs_dict[goal_key][num_rollout_goals:last_env_goal_idx] = (
                     env_goals[goal_key]
+                )
                 new_next_obs_dict[goal_key][
-                num_rollout_goals:last_env_goal_idx] = \
-                    env_goals[goal_key]
+                    num_rollout_goals:last_env_goal_idx
+                ] = env_goals[goal_key]
         if num_future_goals > 0:
-            ## better future obs sample algorithm
             future_indices = indices[-num_future_goals:]
-            possible_future_obs_lens = np.array([len(self._idx_to_future_obs_idx[i]) for i in future_indices])
-            next_obs_idxs = (np.random.random(num_future_goals) * possible_future_obs_lens).astype(np.int)
-            future_obs_idxs = np.array([self._idx_to_future_obs_idx[ids][next_obs_idxs[i]] for i, ids in enumerate(future_indices)])
+            possible_future_obs_lens = np.array([
+                len(self._idx_to_future_obs_idx[i]) for i in future_indices
+            ])
+            # Faster than a naive for-loop.
+            # See https://github.com/vitchyr/rlkit/pull/112 for details.
+            next_obs_idxs = (
+                np.random.random(num_future_goals) * possible_future_obs_lens
+            ).astype(np.int)
+            future_obs_idxs = np.array([
+                self._idx_to_future_obs_idx[ids][next_obs_idxs[i]]
+                for i, ids in enumerate(future_indices)
+            ])
 
             resampled_goals[-num_future_goals:] = self._next_obs[
                 self.achieved_goal_key
