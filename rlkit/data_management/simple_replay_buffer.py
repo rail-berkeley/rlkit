@@ -1,6 +1,7 @@
 from collections import OrderedDict
 
 import numpy as np
+import warnings
 
 from rlkit.data_management.replay_buffer import ReplayBuffer
 
@@ -13,6 +14,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         observation_dim,
         action_dim,
         env_info_sizes,
+        replace = True,
     ):
         self._observation_dim = observation_dim
         self._action_dim = action_dim
@@ -34,6 +36,8 @@ class SimpleReplayBuffer(ReplayBuffer):
         for key, size in env_info_sizes.items():
             self._env_infos[key] = np.zeros((max_replay_buffer_size, size))
         self._env_info_keys = env_info_sizes.keys()
+
+        self._replace = replace
 
         self._top = 0
         self._size = 0
@@ -59,7 +63,9 @@ class SimpleReplayBuffer(ReplayBuffer):
             self._size += 1
 
     def random_batch(self, batch_size):
-        indices = np.random.randint(0, self._size, batch_size)
+        indices = np.random.choice(self._size, size=batch_size, replace=self._replace or self._size < batch_size)
+        if not self._replace and self._size < batch_size:
+            warnings.warn('Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay.')
         batch = dict(
             observations=self._observations[indices],
             actions=self._actions[indices],
