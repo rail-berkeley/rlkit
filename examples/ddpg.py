@@ -13,7 +13,7 @@ from rlkit.exploration_strategies.base import (
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.ddpg.ddpg import DDPGTrainer
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
@@ -27,7 +27,7 @@ def experiment(variant):
     # env = NormalizedBoxEnv(gym.make('HalfCheetah-v1'))
     obs_dim = eval_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
-    qf = FlattenMlp(
+    qf = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']

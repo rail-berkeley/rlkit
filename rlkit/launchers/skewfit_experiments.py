@@ -447,7 +447,7 @@ def skewfit_experiment(variant):
     import rlkit.torch.pytorch_util as ptu
     from rlkit.data_management.online_vae_replay_buffer import \
         OnlineVaeRelabelingBuffer
-    from rlkit.torch.networks import FlattenMlp
+    from rlkit.torch.networks import ConcatMlp
     from rlkit.torch.sac.policies import TanhGaussianPolicy
     from rlkit.torch.vae.vae_trainer import ConvVAETrainer
 
@@ -471,22 +471,22 @@ def skewfit_experiment(variant):
     )
     action_dim = env.action_space.low.size
     hidden_sizes = variant.get('hidden_sizes', [400, 300])
-    qf1 = FlattenMlp(
+    qf1 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         hidden_sizes=hidden_sizes,
     )
-    qf2 = FlattenMlp(
+    qf2 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         hidden_sizes=hidden_sizes,
     )
-    target_qf1 = FlattenMlp(
+    target_qf1 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         hidden_sizes=hidden_sizes,
     )
-    target_qf2 = FlattenMlp(
+    target_qf2 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         hidden_sizes=hidden_sizes,

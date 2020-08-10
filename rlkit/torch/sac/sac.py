@@ -1,16 +1,24 @@
-from collections import OrderedDict
+from collections import OrderedDict, namedtuple
+from typing import Tuple
 
 import numpy as np
 import torch
 import torch.optim as optim
+from rlkit.core.loss import LossFunction, LossStatistics
 from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
+from rlkit.core.logging import add_prefix
+import gtimer as gt
 
+SACLosses = namedtuple(
+    'SACLosses',
+    'policy_loss qf1_loss qf2_loss alpha_loss',
+)
 
-class SACTrainer(TorchTrainer):
+class SACTrainer(TorchTrainer, LossFunction):
     def __init__(
             self,
             env,
@@ -34,7 +42,6 @@ class SACTrainer(TorchTrainer):
 
             use_automatic_entropy_tuning=True,
             target_entropy=None,
-            alpha=1.0,
     ):
         super().__init__()
         self.env = env
@@ -48,17 +55,17 @@ class SACTrainer(TorchTrainer):
 
         self.use_automatic_entropy_tuning = use_automatic_entropy_tuning
         if self.use_automatic_entropy_tuning:
-            if target_entropy:
-                self.target_entropy = target_entropy
+            if target_entropy is None:
+                # Use heuristic value from SAC paper
+                self.target_entropy = -np.prod(
+                    self.env.action_space.shape).item()
             else:
-                self.target_entropy = -np.prod(self.env.action_space.shape).item()  # heuristic value from Tuomas
+                self.target_entropy = target_entropy
             self.log_alpha = ptu.zeros(1, requires_grad=True)
             self.alpha_optimizer = optimizer_class(
                 [self.log_alpha],
                 lr=policy_lr,
             )
-
-        self._alpha = alpha
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
@@ -81,11 +88,62 @@ class SACTrainer(TorchTrainer):
 
         self.discount = discount
         self.reward_scale = reward_scale
-        self.eval_statistics = OrderedDict()
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
+        self.eval_statistics = OrderedDict()
 
     def train_from_torch(self, batch):
+        gt.blank_stamp()
+        losses, stats = self.compute_loss(
+            batch,
+            skip_statistics=not self._need_to_update_eval_statistics,
+        )
+        """
+        Update networks
+        """
+        if self.use_automatic_entropy_tuning:
+            self.alpha_optimizer.zero_grad()
+            losses.alpha_loss.backward()
+            self.alpha_optimizer.step()
+
+        self.policy_optimizer.zero_grad()
+        losses.policy_loss.backward()
+        self.policy_optimizer.step()
+
+        self.qf1_optimizer.zero_grad()
+        losses.qf1_loss.backward()
+        self.qf1_optimizer.step()
+
+        self.qf2_optimizer.zero_grad()
+        losses.qf2_loss.backward()
+        self.qf2_optimizer.step()
+
+        self._n_train_steps_total += 1
+
+        self.try_update_target_networks()
+        if self._need_to_update_eval_statistics:
+            self.eval_statistics = stats
+            # Compute statistics using only one batch per epoch
+            self._need_to_update_eval_statistics = False
+        gt.stamp('sac training', unique=False)
+
+    def try_update_target_networks(self):
+        if self._n_train_steps_total % self.target_update_period == 0:
+            self.update_target_networks()
+
+    def update_target_networks(self):
+        ptu.soft_update_from_to(
+            self.qf1, self.target_qf1, self.soft_target_tau
+        )
+        ptu.soft_update_from_to(
+            self.qf2, self.target_qf2, self.soft_target_tau
+        )
+
+    def compute_loss(
+        self,
+        batch,
+        skip_statistics=False,
+    ) -> Tuple[SACLosses, LossStatistics]:
         rewards = batch['rewards']
         terminals = batch['terminals']
         obs = batch['observations']
@@ -95,18 +153,15 @@ class SACTrainer(TorchTrainer):
         """
         Policy and Alpha Loss
         """
-        new_obs_actions, policy_mean, policy_log_std, log_pi, *_ = self.policy(
-            obs, reparameterize=True, return_log_prob=True,
-        )
+        dist = self.policy(obs)
+        new_obs_actions, log_pi = dist.rsample_and_logprob()
+        log_pi = log_pi.unsqueeze(-1)
         if self.use_automatic_entropy_tuning:
             alpha_loss = -(self.log_alpha * (log_pi + self.target_entropy).detach()).mean()
-            self.alpha_optimizer.zero_grad()
-            alpha_loss.backward()
-            self.alpha_optimizer.step()
             alpha = self.log_alpha.exp()
         else:
             alpha_loss = 0
-            alpha = self._alpha
+            alpha = 1
 
         q_new_actions = torch.min(
             self.qf1(obs, new_obs_actions),
@@ -119,10 +174,9 @@ class SACTrainer(TorchTrainer):
         """
         q1_pred = self.qf1(obs, actions)
         q2_pred = self.qf2(obs, actions)
-        # Make sure policy accounts for squashing functions like tanh correctly!
-        new_next_actions, _, _, new_log_pi, *_ = self.policy(
-            next_obs, reparameterize=True, return_log_prob=True,
-        )
+        next_dist = self.policy(next_obs)
+        new_next_actions, new_log_pi = next_dist.rsample_and_logprob()
+        new_log_pi = new_log_pi.unsqueeze(-1)
         target_q_values = torch.min(
             self.target_qf1(next_obs, new_next_actions),
             self.target_qf2(next_obs, new_next_actions),
@@ -133,78 +187,50 @@ class SACTrainer(TorchTrainer):
         qf2_loss = self.qf_criterion(q2_pred, q_target.detach())
 
         """
-        Update networks
-        """
-        self.policy_optimizer.zero_grad()
-        policy_loss.backward()
-        self.policy_optimizer.step()
-
-        self.qf1_optimizer.zero_grad()
-        qf1_loss.backward()
-        self.qf1_optimizer.step()
-
-        self.qf2_optimizer.zero_grad()
-        qf2_loss.backward()
-        self.qf2_optimizer.step()
-
-        """
-        Soft Updates
-        """
-        if self._n_train_steps_total % self.target_update_period == 0:
-            ptu.soft_update_from_to(
-                self.qf1, self.target_qf1, self.soft_target_tau
-            )
-            ptu.soft_update_from_to(
-                self.qf2, self.target_qf2, self.soft_target_tau
-            )
-
-        """
         Save some statistics for eval
         """
-        if self._need_to_update_eval_statistics:
-            self._need_to_update_eval_statistics = False
-            """
-            Eval should set this to None.
-            This way, these statistics are only computed for one batch.
-            """
-            policy_loss = (log_pi - q_new_actions).mean()
-
-            self.eval_statistics['QF1 Loss'] = np.mean(ptu.get_numpy(qf1_loss))
-            self.eval_statistics['QF2 Loss'] = np.mean(ptu.get_numpy(qf2_loss))
-            self.eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
+        eval_statistics = OrderedDict()
+        if not skip_statistics:
+            eval_statistics['QF1 Loss'] = np.mean(ptu.get_numpy(qf1_loss))
+            eval_statistics['QF2 Loss'] = np.mean(ptu.get_numpy(qf2_loss))
+            eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
                 policy_loss
             ))
-            self.eval_statistics.update(create_stats_ordered_dict(
+            eval_statistics.update(create_stats_ordered_dict(
                 'Q1 Predictions',
                 ptu.get_numpy(q1_pred),
             ))
-            self.eval_statistics.update(create_stats_ordered_dict(
+            eval_statistics.update(create_stats_ordered_dict(
                 'Q2 Predictions',
                 ptu.get_numpy(q2_pred),
             ))
-            self.eval_statistics.update(create_stats_ordered_dict(
+            eval_statistics.update(create_stats_ordered_dict(
                 'Q Targets',
                 ptu.get_numpy(q_target),
             ))
-            self.eval_statistics.update(create_stats_ordered_dict(
+            eval_statistics.update(create_stats_ordered_dict(
                 'Log Pis',
                 ptu.get_numpy(log_pi),
             ))
-            self.eval_statistics.update(create_stats_ordered_dict(
-                'Policy mu',
-                ptu.get_numpy(policy_mean),
-            ))
-            self.eval_statistics.update(create_stats_ordered_dict(
-                'Policy log std',
-                ptu.get_numpy(policy_log_std),
-            ))
+            policy_statistics = add_prefix(dist.get_diagnostics(), "policy/")
+            eval_statistics.update(policy_statistics)
             if self.use_automatic_entropy_tuning:
-                self.eval_statistics['Alpha'] = alpha.item()
-                self.eval_statistics['Alpha Loss'] = alpha_loss.item()
-        self._n_train_steps_total += 1
+                eval_statistics['Alpha'] = alpha.item()
+                eval_statistics['Alpha Loss'] = alpha_loss.item()
+
+        loss = SACLosses(
+            policy_loss=policy_loss,
+            qf1_loss=qf1_loss,
+            qf2_loss=qf2_loss,
+            alpha_loss=alpha_loss,
+        )
+
+        return loss, eval_statistics
 
     def get_diagnostics(self):
-        return self.eval_statistics
+        stats = super().get_diagnostics()
+        stats.update(self.eval_statistics)
+        return stats
 
     def end_epoch(self, epoch):
         self._need_to_update_eval_statistics = True
@@ -217,6 +243,15 @@ class SACTrainer(TorchTrainer):
             self.qf2,
             self.target_qf1,
             self.target_qf2,
+        ]
+
+    @property
+    def optimizers(self):
+        return [
+            self.alpha_optimizer,
+            self.qf1_optimizer,
+            self.qf2_optimizer,
+            self.policy_optimizer,
         ]
 
     def get_snapshot(self):

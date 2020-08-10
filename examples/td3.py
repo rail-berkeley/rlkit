@@ -16,7 +16,7 @@ from rlkit.exploration_strategies.base import \
 from rlkit.exploration_strategies.gaussian_strategy import GaussianStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.td3.td3 import TD3Trainer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
@@ -26,22 +26,22 @@ def experiment(variant):
     eval_env = NormalizedBoxEnv(HalfCheetahEnv())
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
-    qf1 = FlattenMlp(
+    qf1 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    qf2 = FlattenMlp(
+    qf2 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    target_qf1 = FlattenMlp(
+    target_qf1 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    target_qf2 = FlattenMlp(
+    target_qf2 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']

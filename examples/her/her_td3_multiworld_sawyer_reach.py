@@ -13,12 +13,12 @@ from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
 from rlkit.exploration_strategies.base import \
     PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
-    GaussianAndEpislonStrategy
+    GaussianAndEpsilonStrategy
 )
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import GoalConditionedPathCollector
 from rlkit.torch.her.her import HERTrainer
-from rlkit.torch.networks import FlattenMlp, TanhMlpPolicy
+from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.td3.td3 import TD3Trainer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
@@ -31,7 +31,7 @@ def experiment(variant):
     observation_key = 'state_observation'
     desired_goal_key = 'state_desired_goal'
     achieved_goal_key = desired_goal_key.replace("desired", "achieved")
-    es = GaussianAndEpislonStrategy(
+    es = GaussianAndEpsilonStrategy(
         action_space=expl_env.action_space,
         max_sigma=.2,
         min_sigma=.2,  # constant sigma
@@ -40,22 +40,22 @@ def experiment(variant):
     obs_dim = expl_env.observation_space.spaces['observation'].low.size
     goal_dim = expl_env.observation_space.spaces['desired_goal'].low.size
     action_dim = expl_env.action_space.low.size
-    qf1 = FlattenMlp(
+    qf1 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    qf2 = FlattenMlp(
+    qf2 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    target_qf1 = FlattenMlp(
+    target_qf1 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']
     )
-    target_qf2 = FlattenMlp(
+    target_qf2 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
         **variant['qf_kwargs']

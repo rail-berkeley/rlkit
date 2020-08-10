@@ -1,7 +1,17 @@
+import abc
+
 import numpy as np
 import torch
+from torch import nn as nn
 
 from rlkit.torch import pytorch_util as ptu
+
+
+class PyTorchModule(nn.Module, metaclass=abc.ABCMeta):
+    """
+    Keeping wrapper around to be a bit more future-proof.
+    """
+    pass
 
 
 def eval_np(module, *args, **kwargs):
@@ -16,10 +26,7 @@ def eval_np(module, *args, **kwargs):
     torch_args = tuple(torch_ify(x) for x in args)
     torch_kwargs = {k: torch_ify(v) for k, v in kwargs.items()}
     outputs = module(*torch_args, **torch_kwargs)
-    if isinstance(outputs, tuple):
-        return tuple(np_ify(x) for x in outputs)
-    else:
-        return np_ify(outputs)
+    return elem_or_tuple_to_numpy(outputs)
 
 
 def torch_ify(np_array_or_other):
@@ -44,6 +51,13 @@ def _elem_or_tuple_to_variable(elem_or_tuple):
     return ptu.from_numpy(elem_or_tuple).float()
 
 
+def elem_or_tuple_to_numpy(elem_or_tuple):
+    if isinstance(elem_or_tuple, tuple):
+        return tuple(np_ify(x) for x in elem_or_tuple)
+    else:
+        return np_ify(elem_or_tuple)
+
+
 def _filter_batch(np_batch):
     for k, v in np_batch.items():
         if v.dtype == np.bool:
@@ -53,9 +67,11 @@ def _filter_batch(np_batch):
 
 
 def np_to_pytorch_batch(np_batch):
-    return {
-        k: _elem_or_tuple_to_variable(x)
-        for k, x in _filter_batch(np_batch)
-        if x.dtype != np.dtype('O')  # ignore object (e.g. dictionaries)
-    }
-
+    if isinstance(np_batch, dict):
+        return {
+            k: _elem_or_tuple_to_variable(x)
+            for k, x in _filter_batch(np_batch)
+            if x.dtype != np.dtype('O')  # ignore object (e.g. dictionaries)
+        }
+    else:
+        _elem_or_tuple_to_variable(np_batch)
