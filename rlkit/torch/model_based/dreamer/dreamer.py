@@ -73,9 +73,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.reward_scale = reward_scale
         self.gradient_clip=gradient_clip
         self.lam=lam,
-        self.imagination_horizon=imagination_horizon,
-        self.free_nats=free_nats,
-        self.kl_scale=kl_scale,
+        self.imagination_horizon=imagination_horizon
+        self.free_nats=free_nats
+        self.kl_scale=kl_scale
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
@@ -112,15 +112,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         gt.stamp('dreamer training', unique=False)
     
     def imagine_ahead(self, post):
-        flatten = lambda x: tf.reshape(x, [-1] + list(x.shape[2:]))
-        start = {k: flatten(v) for k, v in post.items()}
-        actor = lambda state: self._actor(
-            tf.stop_gradient(self._dynamics.get_feat(state))).sample()
-        states = tools.static_scan(
-            lambda prev, _: self._dynamics.img_step(prev, actor(prev)),
-            tf.range(self._c.horizon), start)
-        imag_feat = self._dynamics.get_feat(states)
-        return imag_feat
+        # flatten = lambda x: tf.reshape(x, [-1] + list(x.shape[2:]))
+        # start = {k: flatten(v) for k, v in post.items()}
+        # actor = lambda state: self._actor(
+        #     tf.stop_gradient(self._dynamics.get_feat(state))).sample()
+        # states = tools.static_scan(
+        #     lambda prev, _: self._dynamics.img_step(prev, actor(prev)),
+        #     tf.range(self._c.horizon), start)
+        # imag_feat = self._dynamics.get_feat(states)
+        return None
 
     def compute_loss(
         self,
@@ -137,17 +137,18 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         World Model Loss
         """
-        post, prior, post_dist, prior_dist, feat, image_pred, reward_pred = self.world_model(obs, actions)
-        image_pred_loss = image_pred.log_prob(obs).sum()
-        reward_pred_loss = reward_pred.log_prob(rewards).sum()
-        div = post_dist.kl_divergence(prior_dist)
+        post, prior, post_dist, prior_dist, feat, image_dist, reward_dist = self.world_model(obs, actions, loop_through_path_length=True)
+        image_pred_loss = image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
+        reward_pred_loss = reward_dist.log_prob(rewards).mean()
+        div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = div.clamp_max_(self.free_nats)
         model_loss = self.kl_scale * div - (image_pred_loss + reward_pred_loss)
 
         """
         Policy Loss
         """
-        imag_feat = self._imagine_ahead(post)
+        import ipdb; ipdb.set_trace()
+        imag_feat = self.imagine_ahead(post)
         reward = self.world_model.reward(imag_feat).mode()
         pcont = self.discount * torch.ones_like(reward)
         value = self.vf(imag_feat).mode()
