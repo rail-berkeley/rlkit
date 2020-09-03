@@ -2,7 +2,6 @@ from rlkit.policies.base import Policy
 import numpy as np
 import rlkit.torch.pytorch_util as ptu
 import torch
-import torch.functional as F
 
 class DreamerPolicy(Policy):
 	"""
@@ -35,7 +34,7 @@ class DreamerPolicy(Policy):
 			latent, action = self.state
 		else:
 			latent = self.world_model.initial(observation.shape[0])
-			action = torch.zeros((observation.shape[0], self.action_dim))
+			action = ptu.zeros((observation.shape[0], self.action_dim))
 		embed = self.world_model.encode(observation)
 		latent, _ = self.world_model.obs_step(latent, action, embed)
 		feat = self.world_model.get_feat(latent)

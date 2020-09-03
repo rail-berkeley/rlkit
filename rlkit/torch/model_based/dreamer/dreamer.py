@@ -72,7 +72,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.discount = discount
         self.reward_scale = reward_scale
         self.gradient_clip=gradient_clip
-        self.lam=lam,
+        self.lam=lam
         self.imagination_horizon=imagination_horizon
         self.free_nats=free_nats
         self.kl_scale=kl_scale
@@ -90,12 +90,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         Update networks
         """
         self.actor_optimizer.zero_grad()
-        losses.actor_loss.backward()
+        losses.actor_loss.backward(retain_graph=True)
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
         self.actor_optimizer.step()
 
         self.vf_optimizer.zero_grad()
-        losses.vf_loss.backward()
+        losses.vf_loss.backward(retain_graph=True)
         torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip)
         self.vf_optimizer.step()
 
@@ -111,16 +111,13 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             self._need_to_update_eval_statistics = False
         gt.stamp('dreamer training', unique=False)
     
-    def imagine_ahead(self, post):
-        # flatten = lambda x: tf.reshape(x, [-1] + list(x.shape[2:]))
-        # start = {k: flatten(v) for k, v in post.items()}
-        # actor = lambda state: self._actor(
-        #     tf.stop_gradient(self._dynamics.get_feat(state))).sample()
-        # states = tools.static_scan(
-        #     lambda prev, _: self._dynamics.img_step(prev, actor(prev)),
-        #     tf.range(self._c.horizon), start)
-        # imag_feat = self._dynamics.get_feat(states)
-        return None
+    def imagine_ahead(self, state):
+        feat_full = []
+        for i in range(self.imagination_horizon):
+            action = self.actor(self.world_model.get_feat(state)).sample().detach()
+            state = self.world_model.img_step(state, action)
+            feat_full.append(self.world_model.get_feat(state).unsqueeze(0))
+        return torch.cat(feat_full)
 
     def compute_loss(
         self,
@@ -137,9 +134,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         World Model Loss
         """
-        post, prior, post_dist, prior_dist, feat, image_dist, reward_dist = self.world_model(obs, actions, loop_through_path_length=True)
+        post, prior, post_dist, prior_dist, image_dist, reward_dist = self.world_model(obs, actions, loop_through_path_length=True)
         image_pred_loss = image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
-        reward_pred_loss = reward_dist.log_prob(rewards).mean()
+        reward_pred_loss = reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = div.clamp_max_(self.free_nats)
         model_loss = self.kl_scale * div - (image_pred_loss + reward_pred_loss)
@@ -147,14 +144,13 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Policy Loss
         """
-        import ipdb; ipdb.set_trace()
         imag_feat = self.imagine_ahead(post)
-        reward = self.world_model.reward(imag_feat).mode()
-        pcont = self.discount * torch.ones_like(reward)
-        value = self.vf(imag_feat).mode()
-        returns = ptu.lambda_return(
-            reward[:-1], value[:-1], pcont[:-1],
-            bootstrap=value[-1], lambda_=self.lam, axis=0)
+        imagined_reward = self.world_model.reward(imag_feat).squeeze(-1)
+        pcont = self.discount * torch.ones_like(imagined_reward).squeeze(-1)
+        value = self.vf(imag_feat).squeeze(-1)
+        returns = lambda_return(
+            imagined_reward[:-1], value[:-1],
+            bootstrap=value[-1], lambda_=self.lam,)
         discount = torch.cumprod(torch.cat(
             [torch.ones_like(pcont[:1]), pcont[:-2]], 0), 0).detach()
         actor_loss = -(discount * returns).mean()
@@ -162,7 +158,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Value Loss
         """
-        value_pred = self.vf(imag_feat)[:-1]
+        value_pred = self.world_model.get_dist(self.vf(imag_feat)[:-1], 1)
         target = returns.detach()
         value_loss = -(discount * value_pred.log_prob(target)).mean()
 
@@ -217,3 +213,22 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             world_model=self.world_model,
             vf=self.vf,
         )
+
+def lambda_return(imged_reward, value_pred, bootstrap, discount=0.99, lambda_=0.95):
+    #from: https://github.com/yusukeurakami/dreamer-pytorch
+    # Setting lambda=1 gives a discounted Monte Carlo return.
+    # Setting lambda=0 gives a fixed 1-step return.
+    next_values = torch.cat([value_pred[1:], bootstrap[None]], 0)
+    discount_tensor = discount * torch.ones_like(imged_reward) #pcont
+    inputs = imged_reward + discount_tensor * next_values * (1 - lambda_)
+    last = bootstrap
+    indices = reversed(range(len(inputs)))
+    outputs = []
+    for index in indices:
+        inp, disc = inputs[index], discount_tensor[index]
+        last = inp + disc*lambda_*last
+        outputs.append(last)
+    outputs = list(reversed(outputs))
+    outputs = torch.stack(outputs, 0)
+    returns = outputs
+    return returns

@@ -112,21 +112,22 @@ if __name__ == "__main__":
         replay_buffer_size=int(1E5),
         algorithm_kwargs=dict(
             num_epochs=3000,
-            num_eval_steps_per_epoch=1,
+            num_eval_steps_per_epoch=6,
             num_trains_per_train_loop=100,
-            num_expl_steps_per_train_loop=1,
-            min_num_steps_before_training=0,
+            num_expl_steps_per_train_loop=100,
+            min_num_steps_before_training=1000,
             max_path_length=3,
-            batch_size=1,
+            batch_size=625,
         ),
         model_kwargs=dict(
-            stochastic_state_size=30,
-            deterministic_state_size=200,
+            model_hidden_size=400,
+            stochastic_state_size=60,
+            deterministic_state_size=400,
         ),
         trainer_kwargs=dict(
             discount=0.99,
         ),
     )
-    setup_logger('name-of-experiment', variant=variant)
-    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
+    setup_logger('name-of-experiment', variant=variant, snapshot_mode='none')
+    ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant)

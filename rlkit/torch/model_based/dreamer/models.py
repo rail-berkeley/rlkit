@@ -23,6 +23,7 @@ class ActorModel(Mlp):
 						 init_w=init_w,
 						 hidden_activation=getattr(F, activation_function),
 						 **kwargs)
+		self.action_dim = action_dim
 		self._dist = dist
 		self._min_std = min_std
 		self._init_std = ptu.from_numpy(np.array(init_std))
@@ -34,7 +35,7 @@ class ActorModel(Mlp):
 		for i, fc in enumerate(self.fcs):
 			h = self.hidden_activation(fc(h))
 		last = self.last_fc(h)
-		action_mean, action_std_dev = torch.chunk(last, 2, dim=1)
+		action_mean, action_std_dev = last.split(self.action_dim, -1)
 		action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
 		action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
 		dist = Normal(action_mean, action_std)
@@ -179,7 +180,7 @@ class WorldModel(PyTorchModule):
 		feat = self.get_feat(posterior_params)
 		image_params = self.decode(feat)
 		reward_params = self.reward(feat)
-		return posterior_params, prior_params, feat, image_params, reward_params
+		return posterior_params, prior_params, image_params, reward_params
 
 	def forward(self, obs, action, state=None, loop_through_path_length=False):
 		original_batch_size = obs.shape[0]
@@ -190,7 +191,7 @@ class WorldModel(PyTorchModule):
 			post_full, prior_full = dict(mean=[], std=[], stoch=[], deter=[]), dict(mean=[], std=[], stoch=[], deter=[])
 			image_full, reward_full = [], []
 			for i in range(path_length):
-				posterior_params, prior_params, feat, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
+				posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
 				image_full.append(image_params)
 				reward_full.append(reward_params)
 				for k in post_full.keys():
@@ -206,10 +207,10 @@ class WorldModel(PyTorchModule):
 
 			for k in prior_full.keys():
 				prior_full[k] = torch.cat(prior_full[k])
-			return post_full, prior_full, self.get_dist(post_full['mean'], post_full['std']), self.get_dist(prior_full['mean'], prior_full['std']), feat, self.get_dist(image_full, 1), self.get_dist(reward_full, 1)
+			return post_full, prior_full, self.get_dist(post_full['mean'], post_full['std']), self.get_dist(prior_full['mean'], prior_full['std']), self.get_dist(image_full, 1), self.get_dist(reward_full, 1)
 		else:
-			posterior_params, prior_params, feat, image_params, reward_params = self.forward_batch(obs, action, state)
-			return self.get_dist(posterior_params['mean'], posterior_params['std']), self.get_dist(prior_params['mean'], prior_params['std']), feat, self.get_dist(image_params, 1), self.get_dist(reward_params, 1)
+			posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs, action, state)
+			return self.get_dist(posterior_params['mean'], posterior_params['std']), self.get_dist(prior_params['mean'], prior_params['std']), self.get_dist(image_params, 1), self.get_dist(reward_params, 1)
 
 	def get_feat(self, state):
 		return torch.cat([state['stoch'], state['deter']], -1)
