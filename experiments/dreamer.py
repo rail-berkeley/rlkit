@@ -1,49 +1,74 @@
-from gym.envs.mujoco import HalfCheetahEnv
-
+from autolab_core import YamlConfig
+from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
+from hrl_exp.envs.wrappers import ImageEnvWrapper
+from rlkit.data_management.episode_replay_buffer import EpisodeReplayBuffer
+from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
+from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy
+from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
+from rlkit.torch.networks import Mlp
 import rlkit.torch.pytorch_util as ptu
-from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
-from rlkit.envs.wrappers import NormalizedBoxEnv
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.sac.policies import TanhGaussianPolicy, MakeDeterministic
-from rlkit.torch.sac.sac import SACTrainer
-from rlkit.torch.networks import ConcatMlp
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 def experiment(variant):
-    expl_env = NormalizedBoxEnv(HalfCheetahEnv())
-    eval_env = NormalizedBoxEnv(HalfCheetahEnv())
+    cfg_path = 'run_franka_lift.yaml'
+
+    train_cfg = YamlConfig(cfg_path)
+    train_cfg['scene']['gui'] = 0
+    train_cfg['image_preprocessor'] = None
+    train_cfg['rews']['block_distance_to_lift'] = 0
+    train_cfg['camera']['imshape']['width'] = 64
+    train_cfg['camera']['imshape']['height'] = 64
+    train_cfg['pytorch_format'] = True
+    train_cfg['flatten'] = True
+    expl_env = GymFrankaLiftVecEnv(train_cfg, **train_cfg['env'])
+    expl_env = ImageEnvWrapper(expl_env, train_cfg)
+
+    eval_cfg = YamlConfig(cfg_path)
+    eval_cfg['scene']['gui'] = 0
+    eval_cfg['scene']['n_envs'] = 5
+    eval_cfg['image_preprocessor'] = None
+    eval_cfg['rews']['block_distance_to_lift'] = 0
+    eval_cfg['camera']['imshape']['width'] = 64
+    eval_cfg['camera']['imshape']['height'] = 64
+    eval_cfg['pytorch_format'] = True
+    eval_cfg['flatten'] = True
+    eval_env = GymFrankaLiftVecEnv(eval_cfg, **eval_cfg['env'])
+    eval_env = ImageEnvWrapper(eval_env, eval_cfg)
+
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
 
-    M = variant['layer_size']
-    qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
+    world_model = WorldModel(
+        action_dim,
+        **variant['model_kwargs'],
+    )
+    actor = ActorModel(
+        [200]*3,
+        variant['model_kwargs']['stochastic_state_size'] + variant['model_kwargs']['deterministic_state_size'],
+        action_dim,
+    )
+    vf = Mlp(
+        hidden_sizes=[],
         output_size=1,
-        hidden_sizes=[M, M],
+        input_size=variant['model_kwargs']['stochastic_state_size'] + variant['model_kwargs']['deterministic_state_size'],
     )
-    qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+    policy = DreamerPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        exploration=True
     )
-    target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+    eval_policy = DreamerPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        exploration=False,
     )
-    target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
-    )
-    policy = TanhGaussianPolicy(
-        obs_dim=obs_dim,
-        action_dim=action_dim,
-        hidden_sizes=[M, M],
-    )
-    eval_policy = MakeDeterministic(policy)
     eval_path_collector = MdpPathCollector(
         eval_env,
         eval_policy,
@@ -52,17 +77,18 @@ def experiment(variant):
         expl_env,
         policy,
     )
-    replay_buffer = EnvReplayBuffer(
+    replay_buffer = EpisodeReplayBuffer(
         variant['replay_buffer_size'],
         expl_env,
+        3,
+        obs_dim,
+        action_dim,
     )
-    trainer = SACTrainer(
+    trainer = DreamerTrainer(
         env=eval_env,
-        policy=policy,
-        qf1=qf1,
-        qf2=qf2,
-        target_qf1=target_qf1,
-        target_qf2=target_qf2,
+        world_model=world_model,
+        actor=actor,
+        vf=vf,
         **variant['trainer_kwargs']
     )
     algorithm = TorchBatchRLAlgorithm(
@@ -78,32 +104,27 @@ def experiment(variant):
     algorithm.train()
 
 
-
-
 if __name__ == "__main__":
     # noinspection PyTypeChecker
     variant = dict(
-        algorithm="SAC",
+        algorithm="Dreamer",
         version="normal",
-        layer_size=256,
-        replay_buffer_size=int(1E6),
+        replay_buffer_size=int(1E5),
         algorithm_kwargs=dict(
             num_epochs=3000,
-            num_eval_steps_per_epoch=5000,
-            num_trains_per_train_loop=1000,
-            num_expl_steps_per_train_loop=1000,
-            min_num_steps_before_training=1000,
-            max_path_length=1000,
-            batch_size=256,
+            num_eval_steps_per_epoch=1,
+            num_trains_per_train_loop=100,
+            num_expl_steps_per_train_loop=1,
+            min_num_steps_before_training=0,
+            max_path_length=3,
+            batch_size=1,
+        ),
+        model_kwargs=dict(
+            stochastic_state_size=30,
+            deterministic_state_size=200,
         ),
         trainer_kwargs=dict(
             discount=0.99,
-            soft_target_tau=5e-3,
-            target_update_period=1,
-            policy_lr=3E-4,
-            qf_lr=3E-4,
-            reward_scale=1,
-            use_automatic_entropy_tuning=True,
         ),
     )
     setup_logger('name-of-experiment', variant=variant)
