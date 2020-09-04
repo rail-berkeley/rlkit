@@ -1,17 +1,11 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
-
 import numpy as np
 import torch
 import torch.optim as optim
 from rlkit.core.loss import LossFunction, LossStatistics
-from torch import nn as nn
-import torch.functional as F
-
 import rlkit.torch.pytorch_util as ptu
-from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
-from rlkit.core.logging import add_prefix
 import gtimer as gt
 
 DreamerLosses = namedtuple(
@@ -32,7 +26,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=6e-4,
+            world_model_lr=6e-4, #try 1e-3?
 
             optimizer_class=optim.Adam,
 
@@ -57,16 +51,19 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.actor_optimizer = optimizer_class(
             self.actor.parameters(),
             lr=actor_lr,
+            eps=1e-7,
         )
 
         self.vf_optimizer = optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
+            eps=1e-7,
         )
 
         self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
             lr=world_model_lr,
+            eps=1e-7,
         )
         self.discount = discount
         self.reward_scale = reward_scale
@@ -142,7 +139,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         image_pred_loss = image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
         reward_pred_loss = reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = div.clamp_max(self.free_nats)
+        div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
         model_loss = self.kl_scale * div - (image_pred_loss + reward_pred_loss)
 
         """

@@ -33,8 +33,21 @@ def vec_rollout(
     env_infos = []
     next_observations = []
     path_length = 0
+
     agent.reset()
     o = env.reset()
+    a = np.zeros((env.n_envs, env.action_space.low.size))
+    r = np.zeros(env.n_envs)
+
+    observations.append(o)
+    rewards.append(r)
+    terminals.append([False]*env.n_envs)
+    actions.append(a)
+    next_observations.append(o)
+    raw_next_obs.append(o)
+    agent_infos.append({})
+    env_infos.append({})
+
     if reset_callback:
         reset_callback(env, agent, o)
     if render:
@@ -50,7 +63,7 @@ def vec_rollout(
         next_o, r, d, env_info = env.step(copy.deepcopy(a))
         if render:
             env.render(**render_kwargs)
-        observations.append(o)
+        observations.append(next_o)
         rewards.append(r)
         terminals.append(d)
         actions.append(a)

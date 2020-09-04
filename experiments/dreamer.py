@@ -84,7 +84,7 @@ def experiment(variant):
     replay_buffer = EpisodeReplayBuffer(
         variant['replay_buffer_size'],
         expl_env,
-        3,
+        4,
         obs_dim,
         action_dim,
     )
