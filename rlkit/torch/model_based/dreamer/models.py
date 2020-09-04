@@ -1,5 +1,5 @@
-from rlkit.torch.conv_networks import CNN, DCNN
 from rlkit.torch.core import PyTorchModule
+from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.networks import Mlp
 from torch.distributions import Normal
 import torch.nn.functional as F
@@ -14,17 +14,16 @@ class ActorModel(Mlp):
 				 obs_dim,
 				 action_dim,
 				 init_w=1e-3,
-				 dist='tanh_normal',
-				 activation_function='elu', min_std=1e-4, init_std=5, mean_scale=5,
-				**kwargs ):
+				 hidden_activation=F.elu,
+				 min_std=1e-4, init_std=5, mean_scale=5,
+				 **kwargs):
 		super().__init__(hidden_sizes,
 						 input_size=obs_dim,
 						 output_size=action_dim*2,
 						 init_w=init_w,
-						 hidden_activation=getattr(F, activation_function),
+						 hidden_activation=hidden_activation,
 						 **kwargs)
 		self.action_dim = action_dim
-		self._dist = dist
 		self._min_std = min_std
 		self._init_std = ptu.from_numpy(np.array(init_std))
 		self._mean_scale = mean_scale
@@ -109,13 +108,12 @@ class WorldModel(PyTorchModule):
 	def __init__(
 			self,
 			action_dim,
-			stochastic_state_size=30,
-			deterministic_state_size=200,
+			stochastic_state_size=60,
+			deterministic_state_size=400,
 			embedding_size=1024,
-			model_hidden_size=200, model_act=F.elu,
+			model_hidden_size=400, model_act=F.elu,
 			depth=32, conv_act=F.relu,
-			dec_depth=32, dec_act=F.relu, dec_shape=(64, 64, 3),
-			reward_num_layers=3, reward_act=F.elu,
+			reward_num_layers=2,
 				 ):
 		super().__init__()
 		self.obs_step_mlp = Mlp(
@@ -125,7 +123,6 @@ class WorldModel(PyTorchModule):
 			hidden_activation=model_act,
 		)
 		self.img_step_layer = torch.nn.Linear(stochastic_state_size+action_dim, deterministic_state_size)
-		self.model_act=model_act
 		self.img_step_mlp = Mlp(
 			hidden_sizes=[model_hidden_size],
 			input_size=deterministic_state_size,
@@ -134,20 +131,22 @@ class WorldModel(PyTorchModule):
 		)
 		self.rnn = torch.nn.GRUCell(deterministic_state_size, deterministic_state_size)
 		self.conv_encoder = CNN(
-			64, 64, 3, embedding_size, [4]*4, [depth, depth*2, depth*4, depth*8], [2]*4, [0]*4,
+			64, 64, 3, embedding_size, [4]*4, [depth, depth*2, depth*4, depth*8], [2]*4, [0]*4, hidden_activation=conv_act, use_last_fc=False,
 		)
 
 		self.conv_decoder = DCNN(
 			stochastic_state_size+deterministic_state_size, [],
-			1, 1, depth*32, 6, 2, 3, [5, 5, 6], [depth*4, depth*2, depth*1], [2]*3, [0]*3,
+			1, 1, depth*32, 6, 2, 3, [5, 5, 6], [depth*4, depth*2, depth*1], [2]*3, [0]*3, hidden_activation=conv_act,
 							 )
 
 		self.reward = Mlp(
 			hidden_sizes=[model_hidden_size]*reward_num_layers,
 			input_size=stochastic_state_size+deterministic_state_size,
 			output_size=1,
-			hidden_activation=reward_act,
+			hidden_activation=model_act,
 		)
+
+		self.model_act=model_act
 		self.feature_size = stochastic_state_size + deterministic_state_size
 		self.stochastic_state_size = stochastic_state_size
 		self.deterministic_state_size = deterministic_state_size
@@ -156,7 +155,7 @@ class WorldModel(PyTorchModule):
 	def obs_step(self, prev_state, prev_action, embed):
 		prior = self.img_step(prev_state, prev_action)
 		x = torch.cat([prior['deter'], embed], -1)
-		x = self.model_act(self.obs_step_mlp(x))
+		x = self.obs_step_mlp(x)
 		mean, std = x.split(self.stochastic_state_size, -1)
 		std = F.softplus(std) + 0.1
 		stoch = self.get_dist(mean, std).sample()
@@ -190,33 +189,35 @@ class WorldModel(PyTorchModule):
 			path_length = obs.shape[1]
 			post_full, prior_full = dict(mean=[], std=[], stoch=[], deter=[]), dict(mean=[], std=[], stoch=[], deter=[])
 			image_full, reward_full = [], []
+
 			for i in range(path_length):
 				posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
 				image_full.append(image_params)
 				reward_full.append(reward_params)
 				for k in post_full.keys():
-					post_full[k].append(posterior_params[k])
+					post_full[k].append(posterior_params[k].reshape((1, posterior_params[k].shape[0], posterior_params[k].shape[1] )))
 
 				for k in prior_full.keys():
-					prior_full[k].append(prior_params[k])
+					prior_full[k].append(prior_params[k].reshape((1, prior_params[k].shape[0], prior_params[k].shape[1] )))
 				state = posterior_params
+
 			image_full = torch.cat(image_full)
 			reward_full = torch.cat(reward_full)
 			for k in post_full.keys():
-				post_full[k] = torch.cat(post_full[k])
+				post_full[k] = torch.cat(post_full[k]).permute(1, 0, 2)
 
 			for k in prior_full.keys():
-				prior_full[k] = torch.cat(prior_full[k])
-			return post_full, prior_full, self.get_dist(post_full['mean'], post_full['std']), self.get_dist(prior_full['mean'], prior_full['std']), self.get_dist(image_full, 1), self.get_dist(reward_full, 1)
+				prior_full[k] = torch.cat(prior_full[k]).permute(1, 0, 2)
+			return post_full, prior_full, self.get_dist(post_full['mean'], post_full['std']), self.get_dist(prior_full['mean'], prior_full['std']), self.get_dist(image_full, ptu.ones_like(image_full), dims=3), self.get_dist(reward_full, ptu.ones_like(reward_full))
 		else:
 			posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs, action, state)
-			return self.get_dist(posterior_params['mean'], posterior_params['std']), self.get_dist(prior_params['mean'], prior_params['std']), self.get_dist(image_params, 1), self.get_dist(reward_params, 1)
+			return self.get_dist(posterior_params['mean'], posterior_params['std']), self.get_dist(prior_params['mean'], prior_params['std']), self.get_dist(image_params, ptu.ones_like(image_params), dims=3), self.get_dist(reward_params, ptu.ones_like(reward_params))
 
 	def get_feat(self, state):
 		return torch.cat([state['stoch'], state['deter']], -1)
 
-	def get_dist(self, mean, std):
-		return torch.distributions.Independent(torch.distributions.Normal(mean, std), 1)
+	def get_dist(self, mean, std, dims=1):
+		return torch.distributions.Independent(torch.distributions.Normal(mean, std), dims)
 
 	def encode(self, obs):
 		return self.conv_encoder(self.preprocess(obs))

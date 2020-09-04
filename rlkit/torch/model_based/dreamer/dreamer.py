@@ -68,7 +68,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             self.world_model.parameters(),
             lr=world_model_lr,
         )
-
         self.discount = discount
         self.reward_scale = reward_scale
         self.gradient_clip=gradient_clip
@@ -89,20 +88,22 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Update networks
         """
+
         self.actor_optimizer.zero_grad()
         losses.actor_loss.backward(retain_graph=True)
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip)
+        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip, norm_type=2)
         self.actor_optimizer.step()
 
         self.vf_optimizer.zero_grad()
         losses.vf_loss.backward(retain_graph=True)
-        torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip)
+        torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip, norm_type=2)
         self.vf_optimizer.step()
 
         self.world_model_optimizer.zero_grad()
         losses.world_model_loss.backward()
+        torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip, norm_type=2)
         self.world_model_optimizer.step()
-        torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip)
+
         self._n_train_steps_total += 1
 
         if self._need_to_update_eval_statistics:
@@ -112,9 +113,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         gt.stamp('dreamer training', unique=False)
     
     def imagine_ahead(self, state):
+        for k,v in state.items():
+            state[k] = state[k].reshape(-1, state[k].shape[-1])
         feat_full = []
         for i in range(self.imagination_horizon):
-            action = self.actor(self.world_model.get_feat(state)).sample().detach()
+            feat = self.world_model.get_feat(state).detach()
+            action = self.actor(feat).sample()
             state = self.world_model.img_step(state, action)
             feat_full.append(self.world_model.get_feat(state).unsqueeze(0))
         return torch.cat(feat_full)
@@ -138,28 +142,28 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         image_pred_loss = image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
         reward_pred_loss = reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = div.clamp_max_(self.free_nats)
+        div = div.clamp_max(self.free_nats)
         model_loss = self.kl_scale * div - (image_pred_loss + reward_pred_loss)
 
         """
         Policy Loss
         """
         imag_feat = self.imagine_ahead(post)
-        imagined_reward = self.world_model.reward(imag_feat).squeeze(-1)
-        pcont = self.discount * torch.ones_like(imagined_reward).squeeze(-1)
-        value = self.vf(imag_feat).squeeze(-1)
-        returns = lambda_return(
+        imagined_reward = self.world_model.reward(imag_feat)
+        pcont = self.discount * torch.ones_like(imagined_reward)
+        value = self.vf(imag_feat)
+        imagined_returns = lambda_return(
             imagined_reward[:-1], value[:-1],
             bootstrap=value[-1], lambda_=self.lam,)
         discount = torch.cumprod(torch.cat(
             [torch.ones_like(pcont[:1]), pcont[:-2]], 0), 0).detach()
-        actor_loss = -(discount * returns).mean()
+        actor_loss = -(discount * imagined_returns).mean()
 
         """
         Value Loss
         """
         value_pred = self.world_model.get_dist(self.vf(imag_feat)[:-1], 1)
-        target = returns.detach()
+        target = imagined_returns.detach()
         value_loss = -(discount * value_pred.log_prob(target)).mean()
 
         """
@@ -168,12 +172,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         eval_statistics = OrderedDict()
         if not skip_statistics:
             eval_statistics['Value Loss'] = np.mean(ptu.get_numpy(value_loss))
-            eval_statistics['Policy Loss'] = np.mean(ptu.get_numpy(
+            eval_statistics['Actor Loss'] = np.mean(ptu.get_numpy(
                 actor_loss
             ))
             eval_statistics['World Model Loss'] = np.mean(ptu.get_numpy(
                 model_loss
             ))
+            eval_statistics['Image Loss'] = -1*np.mean(ptu.get_numpy(image_pred_loss))
+            eval_statistics['Reward Loss'] = -1*np.mean(ptu.get_numpy(reward_pred_loss))
+            eval_statistics['Divergence Loss'] = np.mean(ptu.get_numpy(div))
+            eval_statistics['Imagined Returns'] = np.mean(ptu.get_numpy(imagined_returns.mean()))
 
         loss = DreamerLosses(
             actor_loss=actor_loss,

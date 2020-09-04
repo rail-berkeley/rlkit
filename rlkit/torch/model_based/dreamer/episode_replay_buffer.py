@@ -21,6 +21,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
 
         self._observation_dim = get_dim(self._ob_space)
         self._action_dim = get_dim(self._action_space)
+        self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros((max_replay_buffer_size, max_path_length, observation_dim), dtype=np.uint8)
         # It's a bit memory inefficient to save the observations twice,
@@ -50,7 +51,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
     def _advance(self):
         self._top = (self._top + self.env.n_envs) % self._max_replay_buffer_size
         if self._size < self._max_replay_buffer_size:
-            self._size += self.env.n_envs
+            self._size += self.env.n_envs*self.max_path_length
 
     def random_batch(self, batch_size):
         indices = np.random.choice(self._size, size=batch_size, replace=self._replace or self._size < batch_size)
