@@ -2,6 +2,8 @@ from rlkit.policies.base import Policy
 import numpy as np
 import rlkit.torch.pytorch_util as ptu
 import torch
+from torch.distributions import Normal
+
 
 class DreamerPolicy(Policy):
 	"""
@@ -40,7 +42,7 @@ class DreamerPolicy(Policy):
 		feat = self.world_model.get_feat(latent)
 		if self.exploration:
 			action = self.actor(feat).sample()
-			action = torch.clamp(torch.normal(action, self.expl_amount), -1, 1)
+			action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
 		else:
 			action = self.actor(feat).mode()
 		self.state = (latent, action)

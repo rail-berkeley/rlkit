@@ -1,6 +1,6 @@
 from rlkit.torch.core import PyTorchModule
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
-from rlkit.torch.networks import Mlp
+from rlkit.torch.model_based.dreamer.mlp import Mlp
 from torch.distributions import Normal
 import torch.nn.functional as F
 from torch.distributions.transformed_distribution import TransformedDistribution
@@ -13,20 +13,20 @@ class ActorModel(Mlp):
 				 hidden_sizes,
 				 obs_dim,
 				 action_dim,
-				 init_w=1e-3,
 				 hidden_activation=F.elu,
 				 min_std=1e-4, init_std=5, mean_scale=5,
 				 **kwargs):
 		super().__init__(hidden_sizes,
 						 input_size=obs_dim,
 						 output_size=action_dim*2,
-						 init_w=init_w,
 						 hidden_activation=hidden_activation,
+						 hidden_init=torch.nn.init.xavier_uniform_,
 						 **kwargs)
 		self.action_dim = action_dim
 		self._min_std = min_std
 		self._init_std = ptu.from_numpy(np.array(init_std))
 		self._mean_scale = mean_scale
+		self.modules = self.fcs+[self.last_fc]
 
 	def forward(self, feat):
 		raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -121,22 +121,25 @@ class WorldModel(PyTorchModule):
 			input_size=embedding_size+deterministic_state_size,
 			output_size=2*stochastic_state_size,
 			hidden_activation=model_act,
+			hidden_init=torch.nn.init.xavier_uniform_,
 		)
 		self.img_step_layer = torch.nn.Linear(stochastic_state_size+action_dim, deterministic_state_size)
+		torch.nn.init.xavier_uniform_(self.img_step_layer.weight)
 		self.img_step_mlp = Mlp(
 			hidden_sizes=[model_hidden_size],
 			input_size=deterministic_state_size,
 			output_size=2*stochastic_state_size,
 			hidden_activation=model_act,
+			hidden_init=torch.nn.init.xavier_uniform_,
 		)
 		self.rnn = torch.nn.GRUCell(deterministic_state_size, deterministic_state_size)
 		self.conv_encoder = CNN(
-			64, 64, 3, embedding_size, [4]*4, [depth, depth*2, depth*4, depth*8], [2]*4, [0]*4, hidden_activation=conv_act, use_last_fc=False,
+			64, 64, 3, embedding_size, [4]*4, [depth, depth*2, depth*4, depth*8], [2]*4, [0]*4, hidden_activation=conv_act, hidden_init=torch.nn.init.xavier_uniform_
 		)
 
 		self.conv_decoder = DCNN(
 			stochastic_state_size+deterministic_state_size, [],
-			1, 1, depth*32, 6, 2, 3, [5, 5, 6], [depth*4, depth*2, depth*1], [2]*3, [0]*3, hidden_activation=conv_act,
+			1, 1, depth*32, 6, 2, 3, [5, 5, 6], [depth*4, depth*2, depth*1], [2]*3, [0]*3, hidden_activation=conv_act, hidden_init=torch.nn.init.xavier_uniform_
 							 )
 
 		self.reward = Mlp(
@@ -144,14 +147,15 @@ class WorldModel(PyTorchModule):
 			input_size=stochastic_state_size+deterministic_state_size,
 			output_size=1,
 			hidden_activation=model_act,
+			hidden_init=torch.nn.init.xavier_uniform_,
 		)
 
 		self.model_act=model_act
 		self.feature_size = stochastic_state_size + deterministic_state_size
 		self.stochastic_state_size = stochastic_state_size
 		self.deterministic_state_size = deterministic_state_size
-		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn,self.conv_encoder, self.reward, self.conv_decoder]
-
+		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.conv_encoder, self.conv_decoder, self.reward]
+		
 	def obs_step(self, prev_state, prev_action, embed):
 		prior = self.img_step(prev_state, prev_action)
 		x = torch.cat([prior['deter'], embed], -1)
@@ -165,12 +169,12 @@ class WorldModel(PyTorchModule):
 	def img_step(self, prev_state, prev_action):
 		x = torch.cat([prev_state['stoch'], prev_action], -1)
 		x = self.model_act(self.img_step_layer(x))
-		deter = self.rnn(x, prev_state['deter'])
-		x = self.img_step_mlp(deter)
+		deter_new = self.rnn(x, prev_state['deter'])
+		x = self.img_step_mlp(deter_new)
 		mean, std = x.split(self.stochastic_state_size, -1)
 		std = F.softplus(std) + 0.1
 		stoch = self.get_dist(mean, std).sample()
-		prior = {'mean': mean, 'std': std, 'stoch': stoch, 'deter': deter}
+		prior = {'mean': mean, 'std': std, 'stoch': stoch, 'deter': deter_new}
 		return prior
 
 	def forward_batch(self, obs, action, state=None,):
@@ -236,3 +240,42 @@ class WorldModel(PyTorchModule):
 			stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
 			deter=ptu.zeros([batch_size, self.deterministic_state_size])
 		)
+
+from typing import Iterable
+from torch.nn import Module
+
+# "get_parameters" and "FreezeParameters" are from the following repo
+# https://github.com/juliusfrost/dreamer-pytorch
+def get_parameters(modules: Iterable[Module]):
+	"""
+	Given a list of torch modules, returns a list of their parameters.
+	:param modules: iterable of modules
+	:returns: a list of parameters
+	"""
+	model_parameters = []
+	for module in modules:
+		model_parameters += list(module.parameters())
+	return model_parameters
+
+class FreezeParameters:
+	def __init__(self, modules: Iterable[Module]):
+		"""
+		Context manager to locally freeze gradients.
+		In some cases with can speed up computation because gradients aren't calculated for these listed modules.
+		example:
+		```
+		with FreezeParameters([module]):
+			output_tensor = module(input_tensor)
+		```
+		:param modules: iterable of modules. used to call .parameters() to freeze gradients.
+		"""
+		self.modules = modules
+		self.param_states = [p.requires_grad for p in get_parameters(self.modules)]
+
+	def __enter__(self):
+		for param in get_parameters(self.modules):
+			param.requires_grad = False
+
+	def __exit__(self, exc_type, exc_val, exc_tb):
+		for i, param in enumerate(get_parameters(self.modules)):
+			param.requires_grad = self.param_states[i]

@@ -4,9 +4,9 @@ from hrl_exp.envs.wrappers import ImageEnvWrapper
 from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
 from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy
 from rlkit.torch.model_based.dreamer.episode_replay_buffer import EpisodeReplayBuffer
+from rlkit.torch.model_based.dreamer.mlp import Mlp
 from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
 from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-from rlkit.torch.networks import Mlp
 import rlkit.torch.pytorch_util as ptu
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
@@ -59,6 +59,7 @@ def experiment(variant):
         input_size=variant['model_kwargs']['stochastic_state_size'] + variant['model_kwargs']['deterministic_state_size'],
         hidden_activation=torch.nn.functional.elu,
     )
+
     policy = DreamerPolicy(
         world_model,
         actor,
@@ -73,20 +74,24 @@ def experiment(variant):
         action_dim,
         exploration=False,
     )
-    eval_path_collector = VecMdpPathCollector(
-        eval_env,
-        eval_policy,
-    )
+
     expl_path_collector = VecMdpPathCollector(
         expl_env,
         policy,
     )
+
+    eval_path_collector = VecMdpPathCollector(
+        eval_env,
+        eval_policy,
+    )
+
     replay_buffer = EpisodeReplayBuffer(
         variant['replay_buffer_size'],
         expl_env,
         4,
         obs_dim,
         action_dim,
+        replace=False
     )
     trainer = DreamerTrainer(
         env=eval_env,
@@ -122,7 +127,6 @@ if __name__ == "__main__":
             min_num_steps_before_training=1200,
             max_path_length=3,
             batch_size=625,
-
             # num_epochs=3000,
             # num_eval_steps_per_epoch=1,
             # num_trains_per_train_loop=1,
