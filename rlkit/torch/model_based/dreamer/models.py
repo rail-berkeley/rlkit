@@ -125,6 +125,7 @@ class WorldModel(PyTorchModule):
 		)
 		self.img_step_layer = torch.nn.Linear(stochastic_state_size+action_dim, deterministic_state_size)
 		torch.nn.init.xavier_uniform_(self.img_step_layer.weight)
+		self.img_step_layer.bias.data.fill_(0)
 		self.img_step_mlp = Mlp(
 			hidden_sizes=[model_hidden_size],
 			input_size=deterministic_state_size,
