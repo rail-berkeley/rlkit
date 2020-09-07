@@ -40,11 +40,12 @@ class DreamerPolicy(Policy):
 		embed = self.world_model.encode(observation)
 		latent, _ = self.world_model.obs_step(latent, action, embed)
 		feat = self.world_model.get_feat(latent)
+		dist = self.actor(feat)
 		if self.exploration:
-			action = self.actor(feat).sample()
+			action = dist.rsample()
 			action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
 		else:
-			action = self.actor(feat).mode()
+			action = dist.mode()
 		self.state = (latent, action)
 		return ptu.get_numpy(action), {}
 

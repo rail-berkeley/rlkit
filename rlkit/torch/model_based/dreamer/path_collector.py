@@ -39,24 +39,14 @@ class VecMdpPathCollector(PathCollector):
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
-            max_path_length_this_loop = min(  # Do not go over num_steps
-                max_path_length,
-                (num_steps - num_steps_collected)//self._env.n_envs,
-            )
             path = self._rollout_fn(
                 self._env,
                 self._policy,
-                max_path_length=max_path_length_this_loop,
+                max_path_length=max_path_length,
                 render=self._render,
                 render_kwargs=self._render_kwargs,
             )
             path_len = len(path['actions'])
-            if (
-                    path_len != max_path_length
-                    and not path['terminals'][-1].all()
-                    and discard_incomplete_paths
-            ):
-                break
             num_steps_collected += path_len*self._env.n_envs
             paths.append(path)
         self._num_paths_total += len(paths)*self._env.n_envs

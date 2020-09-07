@@ -27,7 +27,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=6e-4, #try 1e-3?
+            # world_model_lr=6e-4, #try 1e-3?
+            world_model_lr=1e-3, #try 1e-3?
 
             optimizer_class=optim.Adam,
 

@@ -37,6 +37,7 @@ class ActorModel(Mlp):
 		action_mean, action_std_dev = last.split(self.action_dim, -1)
 		action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
 		action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
+
 		dist = Normal(action_mean, action_std)
 		dist = TransformedDistribution(dist, TanhBijector())
 		dist = torch.distributions.Independent(dist,1)
@@ -163,7 +164,7 @@ class WorldModel(PyTorchModule):
 		x = self.obs_step_mlp(x)
 		mean, std = x.split(self.stochastic_state_size, -1)
 		std = F.softplus(std) + 0.1
-		stoch = self.get_dist(mean, std).sample()
+		stoch = self.get_dist(mean, std).rsample()
 		post = {'mean': mean, 'std': std, 'stoch': stoch, 'deter': prior['deter']}
 		return post, prior
 
@@ -174,7 +175,7 @@ class WorldModel(PyTorchModule):
 		x = self.img_step_mlp(deter_new)
 		mean, std = x.split(self.stochastic_state_size, -1)
 		std = F.softplus(std) + 0.1
-		stoch = self.get_dist(mean, std).sample()
+		stoch = self.get_dist(mean, std).rsample()
 		prior = {'mean': mean, 'std': std, 'stoch': stoch, 'deter': deter_new}
 		return prior
 
