@@ -55,13 +55,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             lr=actor_lr,
             eps=1e-7,
         )
-
         self.vf_optimizer = optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
             eps=1e-7,
         )
-
         self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
             lr=world_model_lr,
@@ -106,7 +104,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         feat_full = []
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state).detach()
-            action = self.actor(feat).sample()
+            action = self.actor(feat).rsample()
             new_state = self.world_model.img_step(new_state, action)
             feat_full.append(self.world_model.get_feat(new_state).unsqueeze(0))
         return torch.cat(feat_full)
