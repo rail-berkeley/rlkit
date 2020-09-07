@@ -8,12 +8,17 @@ from rlkit.torch.model_based.dreamer.mlp import Mlp
 from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
 from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
 import rlkit.torch.pytorch_util as ptu
-from rlkit.launchers.launcher_util import setup_logger
+from rlkit.launchers.launcher_util import setup_logger, run_experiment
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 import torch
+import rlkit.util.hyperparameter as hyp
 
 
 def experiment(variant):
+    torch.autograd.set_detect_anomaly(True)
+    torch.backends.cudnn.benchmark = True
+    ptu.set_gpu_mode(True)
+
     cfg_path = 'run_franka_lift.yaml'
 
     train_cfg = YamlConfig(cfg_path)
@@ -120,20 +125,13 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1E5),
         algorithm_kwargs=dict(
-            num_epochs=3000,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=100,
             num_expl_steps_per_train_loop=150,
             min_num_steps_before_training=1200,
             max_path_length=3,
             batch_size=625,
-            # num_epochs=3000,
-            # num_eval_steps_per_epoch=1,
-            # num_trains_per_train_loop=1,
-            # num_expl_steps_per_train_loop=1,
-            # min_num_steps_before_training=0,
-            # max_path_length=3,
-            # batch_size=1,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -155,8 +153,24 @@ if __name__ == "__main__":
             kl_scale=1.0,
         ),
     )
-    setup_logger('dreamer-franka-lift-test', variant=variant, snapshot_mode='none')
-    ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    torch.autograd.set_detect_anomaly(True)
-    torch.backends.cudnn.benchmark = True
-    experiment(variant)
+
+    search_space = {
+    }
+    sweeper = hyp.DeterministicHyperparameterSweeper(
+        search_space, default_parameters=variant,
+    )
+
+    n_seeds = 1
+    mode = 'here_no_doodad'
+    exp_prefix = 'franka_lift_dreamer'
+
+    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        for _ in range(n_seeds):
+            run_experiment(
+                experiment,
+                exp_prefix=exp_prefix,
+                mode=mode,
+                variant=variant,
+                use_gpu=True,
+                snapshot_mode='none',
+            )
