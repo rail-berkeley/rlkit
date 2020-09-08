@@ -130,7 +130,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=100,
             num_expl_steps_per_train_loop=150,
-            min_num_steps_before_training=5000,
+            min_num_steps_before_training=1200,
             max_path_length=3,
             batch_size=625,
         ),
