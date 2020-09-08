@@ -42,6 +42,10 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             render_eval_paths=False,
     ):
         super().__init__()
+
+        torch.autograd.set_detect_anomaly(True)
+        torch.backends.cudnn.benchmark = True
+
         self.env = env
         self.actor = actor
         self.world_model = world_model

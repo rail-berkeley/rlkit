@@ -12,14 +12,15 @@ from rlkit.launchers.launcher_util import setup_logger, run_experiment
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 import torch
 import rlkit.util.hyperparameter as hyp
-
+from os.path import join
+import os
+import rlkit
 
 def experiment(variant):
-    torch.autograd.set_detect_anomaly(True)
-    torch.backends.cudnn.benchmark = True
     ptu.set_gpu_mode(True)
 
-    cfg_path = 'run_franka_lift.yaml'
+    rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
+    cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
     train_cfg = YamlConfig(cfg_path)
     train_cfg['scene']['gui'] = 0
@@ -125,7 +126,7 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1E5),
         algorithm_kwargs=dict(
-            num_epochs=100,
+            num_epochs=5000,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=100,
             num_expl_steps_per_train_loop=150,
@@ -160,8 +161,8 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 1
-    mode = 'here_no_doodad'
+    n_seeds = 2
+    mode = 'local'
     exp_prefix = 'franka_lift_dreamer'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
