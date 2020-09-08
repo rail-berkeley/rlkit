@@ -130,7 +130,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=100,
             num_expl_steps_per_train_loop=150,
-            min_num_steps_before_training=1200,
+            min_num_steps_before_training=5000,
             max_path_length=3,
             batch_size=625,
         ),
@@ -145,8 +145,7 @@ if __name__ == "__main__":
 
             actor_lr=8e-5,
             vf_lr=8e-5,
-            # world_model_lr=6e-4,
-            world_model_lr=1e-3,
+            world_model_lr=6e-4,
 
             gradient_clip=100.0,
             lam=.95,

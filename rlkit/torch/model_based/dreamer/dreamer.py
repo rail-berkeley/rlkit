@@ -1,5 +1,7 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
+
+import apex
 import numpy as np
 from rlkit.torch.model_based.dreamer.models import FreezeParameters
 import torch
@@ -30,7 +32,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             # world_model_lr=6e-4, #try 1e-3?
             world_model_lr=1e-3, #try 1e-3?
 
-            optimizer_class=optim.Adam,
+            optimizer_class=apex.optimizers.FusedAdam,
 
             gradient_clip=100.0,
             lam=.95,
