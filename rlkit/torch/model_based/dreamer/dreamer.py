@@ -99,7 +99,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             # Compute statistics using only one batch per epoch
             self._need_to_update_eval_statistics = False
         gt.stamp('dreamer training', unique=False)
-    
+
     def imagine_ahead(self, state):
         for k,v in state.items():
             state[k] = state[k].reshape(-1, state[k].shape[-1])

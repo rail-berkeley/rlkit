@@ -145,7 +145,8 @@ if __name__ == "__main__":
 
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=6e-4,
+            # world_model_lr=6e-4,
+            world_model_lr=1e-3,
 
             gradient_clip=100.0,
             lam=.95,
