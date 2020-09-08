@@ -40,10 +40,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
             plotter=None,
             render_eval_paths=False,
+            debug=False,
     ):
         super().__init__()
 
-        torch.autograd.set_detect_anomaly(True)
+        torch.autograd.set_detect_anomaly(debug)
+
         torch.backends.cudnn.benchmark = True
 
         self.env = env
@@ -134,7 +136,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
         world_model_loss = self.kl_scale * div + image_pred_loss + reward_pred_loss
 
-        self.world_model_optimizer.zero_grad()
+        zero_grad(self.world_model)
         world_model_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip, norm_type=2)
         self.world_model_optimizer.step()
@@ -153,7 +155,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         discount = torch.cumprod(discount_arr[:-1], 0)
         actor_loss = -(discount * returns).mean()
 
-        self.actor_optimizer.zero_grad()
+        zero_grad(self.actor)
         actor_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip, norm_type=2)
         self.actor_optimizer.step()
@@ -168,7 +170,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
         vf_loss = -(discount * value_dist.log_prob(target)).mean()
 
-        self.vf_optimizer.zero_grad()
+        zero_grad(self.vf)
         vf_loss.backward()
         torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip, norm_type=2)
         self.vf_optimizer.step()
@@ -251,3 +253,7 @@ def lambda_return(reward, value, discount, bootstrap, lambda_=0.95):
         outputs.append(accumulated_reward)
     returns = torch.flip(torch.stack(outputs), [0])
     return returns
+
+def zero_grad(model):
+    for param in model.parameters():
+        param.grad=None
