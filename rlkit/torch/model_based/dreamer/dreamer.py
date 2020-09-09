@@ -106,19 +106,21 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
     def imagine_ahead(self, state):
         #TODO: adaptively run the horizon based on position in path
+        max_path_len = state['stoch'].shape[1]
         for k,v in state.items():
-            state[k] = torch.cat([state[k][:, i, :] for i in range(state[k].shape[1])])
+            state[k] = torch.cat([state[k][:, i, :] for i in range(max_path_len)])
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
                 new_state[k] = v.detach()
-        feat_full = []
+        feats = []
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state).detach()
             action = self.actor(feat).rsample()
             new_state = self.world_model.img_step(new_state, action)
-            feat_full.append(self.world_model.get_feat(new_state).unsqueeze(0))
-        return torch.cat(feat_full)
+            feats.append(self.world_model.get_feat(new_state).unsqueeze(0))
+        feats = torch.cat(feats)
+        return feats
 
     def compute_loss(
         self,
@@ -134,7 +136,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         World Model Loss
         """
-        post, prior, post_dist, prior_dist, image_dist, reward_dist = self.world_model(obs, actions, loop_through_path_length=True)
+        post, prior, post_dist, prior_dist, image_dist, reward_dist = self.world_model(obs, actions)
         image_pred_loss = -1*image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
         reward_pred_loss = -1*reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
@@ -151,14 +153,26 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         with FreezeParameters(self.world_model.modules):
             imag_feat = self.imagine_ahead(post)
+        batch_size = obs.shape[0]
+        path_len = obs.shape[1]
+        imag_feats = [imag_feat[:path_len-i, i*batch_size:(i+1)*batch_size] for i in range(path_len)][:-1]
         with FreezeParameters(self.world_model.modules+self.vf.modules):
-            imag_reward = self.world_model.reward(imag_feat)
-            discount = self.discount * torch.ones_like(imag_reward)
-            value = self.vf(imag_feat)
-        imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
-        discount_arr = torch.cat([torch.ones_like(discount[:1]), discount[1:]])
-        discount = torch.cumprod(discount_arr[:-1], 0)
-        actor_loss = -(discount * imag_returns).mean()
+            imag_rewards = [self.world_model.reward(imag_feat) for imag_feat in imag_feats]
+            discounts = [self.discount * torch.ones_like(imag_reward) for imag_reward in imag_rewards]
+            values = [self.vf(imag_feat) for imag_feat in imag_feats]
+            # imag_reward = self.world_model.reward(imag_feat)
+            # discount = self.discount * torch.ones_like(imag_reward)
+            # value = self.vf(imag_feat)
+
+        imag_returns = [lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
+                        for imag_reward, discount, value,  in zip(imag_rewards, discounts, values)]
+        discounts = [torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[1:]])[:-1], 0) for discount in discounts]
+        actor_loss = -1 * torch.cat([discount * imag_return for discount, imag_return in zip(discounts, imag_returns)]).mean()
+
+        # imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
+        # discount_arr = torch.cat([torch.ones_like(discount[:1]), discount[1:]])
+        # discount = torch.cumprod(discount_arr[:-1], 0)
+        # actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
         actor_loss.backward()
@@ -170,10 +184,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         Value Loss
         """
         with torch.no_grad():
-            imag_feat_v = imag_feat.detach()
-            target = imag_returns.detach()
-        value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
-        vf_loss = -(discount * value_dist.log_prob(target)).mean()
+            imag_feats = [imag_feat.detach() for imag_feat in imag_feats]
+            targets = [imag_return.detach() for imag_return in imag_returns]
+        #     imag_feat_v = imag_feat.detach()
+        #     target = imag_returns.detach()
+        # value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
+        # vf_loss = -(discount * value_dist.log_prob(target)).mean()
+
+        value_dists = [self.world_model.get_dist(self.vf(imag_feat)[:-1], 1) for imag_feat in imag_feats]
+        vf_loss = -1*torch.cat([(discount.squeeze(-1) * value_dist.log_prob(target)) for discount, value_dist, target in zip(discounts, value_dists, targets)]).mean()
 
         zero_grad(self.vf)
         vf_loss.backward()
@@ -192,10 +211,14 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             eval_statistics['Image Loss'] = image_pred_loss.item()
             eval_statistics['Reward Loss'] = reward_pred_loss.item()
             eval_statistics['Divergence Loss'] = div.item()
-            eval_statistics['Imagined Returns'] = imag_returns.mean().item()
-            eval_statistics['Predicted Imagined Rewards'] = imag_reward.mean().item()
+            # eval_statistics['Imagined Returns'] = np.mean([imag_return.mean().item() for imag_return in imag_returns])
+            # eval_statistics['Predicted Imagined Rewards'] = np.mean([imag_reward.mean().item() for imag_reward in imag_rewards])
+
+            eval_statistics['Imagined Returns'] = np.mean([imag_return.mean().item() for imag_return in imag_returns])
+            eval_statistics['Predicted Imagined Rewards'] = np.mean([imag_reward.mean().item() for imag_reward in imag_rewards])
             eval_statistics['Predicted Rewards'] = reward_dist.mean.mean().item()
-            eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
+            eval_statistics['Predicted Imagined Values'] = np.mean([value_dist.mean.mean().item() for value_dist in value_dists])
+            # eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
 
         loss = DreamerLosses(
             actor_loss=actor_loss,

@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
             gradient_clip=100.0,
             lam=.95,
-            imagination_horizon=2,
+            imagination_horizon=4,
             free_nats=3.0,
             kl_scale=1.0,
             optimizer_class='apex_adam'
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     n_seeds = 2
     mode = 'local'
-    exp_prefix = 'franka_lift_dreamer_fixed_params_logging'
+    exp_prefix = 'franka_lift_dreamer_adaptive_horizon'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

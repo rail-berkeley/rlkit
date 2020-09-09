@@ -187,37 +187,37 @@ class WorldModel(PyTorchModule):
 		reward_params = self.reward(feat)
 		return posterior_params, prior_params, image_params, reward_params
 
-	def forward(self, obs, action, state=None, loop_through_path_length=False):
+	def forward(self, obs, action):
 		original_batch_size = obs.shape[0]
-		if not state:
-			state = self.initial(original_batch_size)
-		if loop_through_path_length:
-			path_length = obs.shape[1]
-			post_full, prior_full = dict(mean=[], std=[], stoch=[], deter=[]), dict(mean=[], std=[], stoch=[], deter=[])
-			image_full, reward_full = [], []
+		state = self.initial(original_batch_size)
+		path_length = obs.shape[1]
+		post, prior = dict(mean=[], std=[], stoch=[], deter=[]), dict(mean=[], std=[], stoch=[], deter=[])
+		images, rewards = [], []
 
-			for i in range(path_length):
-				posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
-				image_full.append(image_params)
-				reward_full.append(reward_params)
-				for k in post_full.keys():
-					post_full[k].append(posterior_params[k].reshape((1, posterior_params[k].shape[0], posterior_params[k].shape[1] )))
+		for i in range(path_length):
+			posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
+			images.append(image_params)
+			rewards.append(reward_params)
+			for k in post.keys():
+				post[k].append(posterior_params[k].reshape((1, posterior_params[k].shape[0], posterior_params[k].shape[1] )))
 
-				for k in prior_full.keys():
-					prior_full[k].append(prior_params[k].reshape((1, prior_params[k].shape[0], prior_params[k].shape[1] )))
-				state = posterior_params
+			for k in prior.keys():
+				prior[k].append(prior_params[k].reshape((1, prior_params[k].shape[0], prior_params[k].shape[1] )))
+			state = posterior_params
 
-			image_full = torch.cat(image_full)
-			reward_full = torch.cat(reward_full)
-			for k in post_full.keys():
-				post_full[k] = torch.cat(post_full[k]).permute(1, 0, 2)
+		images = torch.cat(images)
+		rewards = torch.cat(rewards)
+		for k in post.keys():
+			post[k] = torch.cat(post[k]).permute(1, 0, 2)
 
-			for k in prior_full.keys():
-				prior_full[k] = torch.cat(prior_full[k]).permute(1, 0, 2)
-			return post_full, prior_full, self.get_dist(post_full['mean'], post_full['std']), self.get_dist(prior_full['mean'], prior_full['std']), self.get_dist(image_full, ptu.ones_like(image_full), dims=3), self.get_dist(reward_full, ptu.ones_like(reward_full))
-		else:
-			posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs, action, state)
-			return self.get_dist(posterior_params['mean'], posterior_params['std']), self.get_dist(prior_params['mean'], prior_params['std']), self.get_dist(image_params, ptu.ones_like(image_params), dims=3), self.get_dist(reward_params, ptu.ones_like(reward_params))
+		for k in prior.keys():
+			prior[k] = torch.cat(prior[k]).permute(1, 0, 2)
+
+		post_dist = self.get_dist(post['mean'], post['std'])
+		prior_dist = self.get_dist(prior['mean'], prior['std'])
+		image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
+		reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
+		return post, prior, post_dist, prior_dist, image_dist, reward_dist
 
 	def get_feat(self, state):
 		return torch.cat([state['stoch'], state['deter']], -1)
