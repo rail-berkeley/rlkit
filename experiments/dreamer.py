@@ -152,6 +152,7 @@ if __name__ == "__main__":
             imagination_horizon=2,
             free_nats=3.0,
             kl_scale=1.0,
+            optimizer_class='apex_adam'
         ),
     )
 
