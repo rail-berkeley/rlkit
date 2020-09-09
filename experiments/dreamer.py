@@ -36,7 +36,7 @@ def experiment(variant):
 
     eval_cfg = YamlConfig(cfg_path)
     eval_cfg['scene']['gui'] = 0
-    eval_cfg['scene']['n_envs'] = 5
+    eval_cfg['scene']['n_envs'] = 10
     eval_cfg['image_preprocessor'] = None
     eval_cfg['rews']['block_distance_to_lift'] = 0
     eval_cfg['camera']['imshape']['width'] = 64
@@ -132,7 +132,7 @@ if __name__ == "__main__":
             num_epochs=5000,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
-            num_expl_steps_per_train_loop=150,
+            num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
             num_train_loops_per_epoch=5,
@@ -169,7 +169,7 @@ if __name__ == "__main__":
 
     n_seeds = 2
     mode = 'local'
-    exp_prefix = 'franka_lift_dreamer_fixed_params'
+    exp_prefix = 'franka_lift_dreamer_fixed_params_logging'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

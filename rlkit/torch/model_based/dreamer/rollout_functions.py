@@ -94,6 +94,4 @@ def vec_rollout(
         terminals=np.array(terminals),
         agent_infos=agent_infos,
         env_infos=env_infos,
-        full_observations=raw_obs,
-        full_next_observations=raw_obs,
     )
