@@ -35,13 +35,16 @@ class VecMdpPathCollector(PathCollector):
             max_path_length,
             num_steps,
             discard_incomplete_paths,
+            runtime_policy=None,
     ):
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
+            if not runtime_policy:
+                runtime_policy = self._policy
             path = self._rollout_fn(
                 self._env,
-                self._policy,
+                runtime_policy,
                 max_path_length=max_path_length,
                 render=self._render,
                 render_kwargs=self._render_kwargs,

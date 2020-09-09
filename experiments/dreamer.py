@@ -2,13 +2,13 @@ from autolab_core import YamlConfig
 from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
 from hrl_exp.envs.wrappers import ImageEnvWrapper
 from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
-from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy
+from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy, ActionSpaceSamplePolicy
 from rlkit.torch.model_based.dreamer.episode_replay_buffer import EpisodeReplayBuffer
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
 from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
 import rlkit.torch.pytorch_util as ptu
-from rlkit.launchers.launcher_util import setup_logger, run_experiment
+from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 import torch
 import rlkit.util.hyperparameter as hyp
@@ -66,7 +66,7 @@ def experiment(variant):
         hidden_activation=torch.nn.functional.elu,
     )
 
-    policy = DreamerPolicy(
+    expl_policy = DreamerPolicy(
         world_model,
         actor,
         obs_dim,
@@ -81,9 +81,11 @@ def experiment(variant):
         exploration=False,
     )
 
+    rand_policy = ActionSpaceSamplePolicy(expl_env)
+
     expl_path_collector = VecMdpPathCollector(
         expl_env,
-        policy,
+        expl_policy,
     )
 
     eval_path_collector = VecMdpPathCollector(
@@ -113,7 +115,8 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algorithm_kwargs']
+        pretrain_policy=rand_policy,
+        **variant['algorithm_kwargs'],
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -128,9 +131,11 @@ if __name__ == "__main__":
         algorithm_kwargs=dict(
             num_epochs=5000,
             num_eval_steps_per_epoch=30,
-            num_trains_per_train_loop=100,
+            num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150,
-            min_num_steps_before_training=1200,
+            min_num_steps_before_training=5000,
+            num_pretrain_steps=100,
+            num_train_loops_per_epoch=5,
             max_path_length=3,
             batch_size=625,
         ),
@@ -164,7 +169,7 @@ if __name__ == "__main__":
 
     n_seeds = 2
     mode = 'local'
-    exp_prefix = 'franka_lift_dreamer'
+    exp_prefix = 'franka_lift_dreamer_fixed_params'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

@@ -51,3 +51,13 @@ class DreamerPolicy(Policy):
 
 	def reset(self):
 		self.state = None
+
+class ActionSpaceSamplePolicy(Policy):
+	def __init__(
+			self,
+			env
+	):
+		self.env = env
+
+	def get_action(self, observation):
+		return np.array([self.env.action_space.sample() for _ in range(self.env.n_envs)]), {}

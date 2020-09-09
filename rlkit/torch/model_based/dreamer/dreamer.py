@@ -107,7 +107,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
     def imagine_ahead(self, state):
         #TODO: adaptively run the horizon based on position in path
         for k,v in state.items():
-            state[k] = state[k].reshape(-1, state[k].shape[-1])
+            state[k] = torch.cat([state[k][:, i, :] for i in range(state[k].shape[1])])
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
