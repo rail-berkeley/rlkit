@@ -157,7 +157,8 @@ if __name__ == "__main__":
             imagination_horizon=4,
             free_nats=3.0,
             kl_scale=1.0,
-            optimizer_class='apex_adam'
+            optimizer_class='apex_adam',
+            adaptive_horizon=False,
         ),
     )
 
@@ -167,9 +168,9 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 2
+    n_seeds = 1
     mode = 'local'
-    exp_prefix = 'franka_lift_dreamer_adaptive_horizon'
+    exp_prefix = 'franka_lift_dreamer_no_adaptive_horizon'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
