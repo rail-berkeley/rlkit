@@ -139,10 +139,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         World Model Loss
         """
         post, prior, post_dist, prior_dist, image_dist, reward_dist, pcont_dist = self.world_model(obs, actions)
+
+        #stack obs, rewards and terminals along path dimension
+        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
+        rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
+        terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
+
         image_pred_loss = -1*image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
-        reward_pred_loss = -1*reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
+        reward_pred_loss = -1*reward_dist.log_prob(rewards).mean()
         pcont_target = self.discount * (1 - terminals.float())
-        pcont_loss = -1*pcont_dist.log_prob(pcont_target.reshape(-1, 1)).mean()
+        pcont_loss = -1*pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
         world_model_loss = self.kl_scale * div + image_pred_loss + reward_pred_loss
