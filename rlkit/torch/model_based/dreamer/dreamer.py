@@ -199,7 +199,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             vf_loss = -1*torch.cat([(discount.squeeze(-1) * value_dist.log_prob(target)) for discount, value_dist, target in zip(discounts, value_dists, targets)]).mean()
         else:
             value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
-            vf_loss = -(discount * value_dist.log_prob(target)).mean()
+            vf_loss = -(discount.squeeze(-1) * value_dist.log_prob(target)).mean()
 
         zero_grad(self.vf)
         vf_loss.backward()
@@ -223,8 +223,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 eval_statistics['Predicted Imagined Rewards'] = np.mean([imag_reward.mean().item() for imag_reward in imag_rewards])
                 eval_statistics['Predicted Imagined Values'] = np.mean([value_dist.mean.mean().item() for value_dist in value_dists])
             else:
-                eval_statistics['Imagined Returns'] = np.mean([imag_return.mean().item() for imag_return in imag_returns])
-                eval_statistics['Predicted Imagined Rewards'] = np.mean([imag_reward.mean().item() for imag_reward in imag_rewards])
+                eval_statistics['Imagined Returns'] = imag_returns.mean().item()
+                eval_statistics['Predicted Imagined Rewards'] = imag_reward.mean().item()
                 eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
             eval_statistics['Predicted Rewards'] = reward_dist.mean.mean().item()
 
