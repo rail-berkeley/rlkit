@@ -129,25 +129,25 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1E5),
         algorithm_kwargs=dict(
-            # num_epochs=5000,
-            # num_eval_steps_per_epoch=30,
-            # num_trains_per_train_loop=200,
-            # num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
-            # min_num_steps_before_training=5000,
-            # num_pretrain_steps=100,
-            # num_train_loops_per_epoch=5,
-            # max_path_length=3,
-            # batch_size=625,
-
             num_epochs=5000,
             num_eval_steps_per_epoch=30,
-            num_trains_per_train_loop=10,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
-            min_num_steps_before_training=1000,
+            num_trains_per_train_loop=200,
+            num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
-            num_train_loops_per_epoch=1,
+            num_train_loops_per_epoch=5,
             max_path_length=3,
-            batch_size=50,
+            batch_size=625,
+
+            # num_epochs=5000,
+            # num_eval_steps_per_epoch=30,
+            # num_trains_per_train_loop=10,
+            # num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
+            # min_num_steps_before_training=1000,
+            # num_pretrain_steps=100,
+            # num_train_loops_per_epoch=1,
+            # max_path_length=3,
+            # batch_size=50,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
