@@ -34,10 +34,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
             gradient_clip=100.0,
             lam=.95,
-            imagination_horizon=2,
+            imagination_horizon=4,
             free_nats=3.0,
             kl_scale=1.0,
-            adaptive_horizon=False,
+            pcont_scale=10.0,
+            use_pcont=True,
 
             plotter=None,
             render_eval_paths=False,
@@ -83,7 +84,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.imagination_horizon=imagination_horizon
         self.free_nats=free_nats
         self.kl_scale=kl_scale
-        self.adaptive_horizon=adaptive_horizon
+        self.pcont_scale = pcont_scale
+        self.use_pcont=use_pcont
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
@@ -107,13 +109,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         gt.stamp('dreamer training', unique=False)
 
     def imagine_ahead(self, state):
-        max_path_len = state['stoch'].shape[1]
-        for k,v in state.items():
-            state[k] = torch.cat([state[k][:, i, :] for i in range(max_path_len)])
         new_state = {}
-        for k, v in state.items():
+        for k,v in state.items():
             with torch.no_grad():
-                new_state[k] = v.detach()
+                if self.use_pcont:  # Last step could be terminal.
+                    v = v[:, :-1]
+                new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         feats = []
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state).detach()
@@ -137,12 +138,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         World Model Loss
         """
-        post, prior, post_dist, prior_dist, image_dist, reward_dist = self.world_model(obs, actions)
+        post, prior, post_dist, prior_dist, image_dist, reward_dist, pcont_dist = self.world_model(obs, actions)
         image_pred_loss = -1*image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
         reward_pred_loss = -1*reward_dist.log_prob(rewards.reshape(-1, 1)).mean()
+        pcont_target = self.discount * (1 - terminals.float())
+        pcont_loss = -1*pcont_dist.log_prob(pcont_target.reshape(-1, 1)).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
         world_model_loss = self.kl_scale * div + image_pred_loss + reward_pred_loss
+        if self.use_pcont:
+            world_model_loss += self.pcont_scale*pcont_loss
 
         zero_grad(self.world_model)
         world_model_loss.backward()
@@ -154,28 +159,18 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         with FreezeParameters(self.world_model.modules):
             imag_feat = self.imagine_ahead(post)
-        batch_size = obs.shape[0]
-        path_len = obs.shape[1]
         with FreezeParameters(self.world_model.modules+self.vf.modules):
-            if self.adaptive_horizon:
-                imag_feats = [imag_feat[:path_len-i, i*batch_size:(i+1)*batch_size] for i in range(path_len)][:-1]
-                imag_rewards = [self.world_model.reward(imag_feat) for imag_feat in imag_feats]
-                discounts = [self.discount * torch.ones_like(imag_reward) for imag_reward in imag_rewards]
-                values = [self.vf(imag_feat) for imag_feat in imag_feats]
+            imag_reward = self.world_model.reward(imag_feat)
+            if self.use_pcont:
+                with FreezeParameters([self.world_model.pcont]):
+                    discount = self.world_model.get_dist(self.world_model.pcont(imag_feat), std=None, normal=False).mean
             else:
-                imag_reward = self.world_model.reward(imag_feat)
                 discount = self.discount * torch.ones_like(imag_reward)
-                value = self.vf(imag_feat)
-        if self.adaptive_horizon:
-            imag_returns = [lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
-                            for imag_reward, discount, value,  in zip(imag_rewards, discounts, values)]
-            discounts = [torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[1:]])[:-1], 0) for discount in discounts]
-            actor_loss = -1 * torch.cat([discount * imag_return for discount, imag_return in zip(discounts, imag_returns)]).mean()
-        else:
-            imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
-            discount_arr = torch.cat([torch.ones_like(discount[:1]), discount[1:]])
-            discount = torch.cumprod(discount_arr[:-1], 0)
-            actor_loss = -(discount * imag_returns).mean()
+            value = self.vf(imag_feat)
+        imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
+        discount_arr = torch.cat([torch.ones_like(discount[:1]), discount[1:]])
+        discount = torch.cumprod(discount_arr[:-1], 0)
+        actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
         actor_loss.backward()
@@ -187,19 +182,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         Value Loss
         """
         with torch.no_grad():
-            if self.adaptive_horizon:
-                imag_feats = [imag_feat.detach() for imag_feat in imag_feats]
-                targets = [imag_return.detach() for imag_return in imag_returns]
-            else:
-                imag_feat_v = imag_feat.detach()
-                target = imag_returns.detach()
+            imag_feat_v = imag_feat.detach()
+            target = imag_returns.detach()
+            discount = discount.detach()
 
-        if self.adaptive_horizon:
-            value_dists = [self.world_model.get_dist(self.vf(imag_feat)[:-1], 1) for imag_feat in imag_feats]
-            vf_loss = -1*torch.cat([(discount.squeeze(-1) * value_dist.log_prob(target)) for discount, value_dist, target in zip(discounts, value_dists, targets)]).mean()
-        else:
-            value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
-            vf_loss = -(discount.squeeze(-1) * value_dist.log_prob(target)).mean()
+        value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
+        vf_loss = -(discount.squeeze(-1) * value_dist.log_prob(target)).mean()
 
         zero_grad(self.vf)
         vf_loss.backward()
@@ -218,14 +206,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             eval_statistics['Image Loss'] = image_pred_loss.item()
             eval_statistics['Reward Loss'] = reward_pred_loss.item()
             eval_statistics['Divergence Loss'] = div.item()
-            if self.adaptive_horizon:
-                eval_statistics['Imagined Returns'] = np.mean([imag_return.mean().item() for imag_return in imag_returns])
-                eval_statistics['Predicted Imagined Rewards'] = np.mean([imag_reward.mean().item() for imag_reward in imag_rewards])
-                eval_statistics['Predicted Imagined Values'] = np.mean([value_dist.mean.mean().item() for value_dist in value_dists])
-            else:
-                eval_statistics['Imagined Returns'] = imag_returns.mean().item()
-                eval_statistics['Predicted Imagined Rewards'] = imag_reward.mean().item()
-                eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
+            if self.use_pcont:
+                eval_statistics['Pcont Loss'] = pcont_loss.item()
+            eval_statistics['Imagined Returns'] = imag_returns.mean().item()
+            eval_statistics['Predicted Imagined Rewards'] = imag_reward.mean().item()
+            eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
             eval_statistics['Predicted Rewards'] = reward_dist.mean.mean().item()
 
         loss = DreamerLosses(

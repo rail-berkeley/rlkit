@@ -115,6 +115,7 @@ class WorldModel(PyTorchModule):
 			model_hidden_size=400, model_act=F.elu,
 			depth=32, conv_act=F.relu,
 			reward_num_layers=2,
+			pcont_num_layers=3,
 				 ):
 		super().__init__()
 		self.obs_step_mlp = Mlp(
@@ -151,12 +152,19 @@ class WorldModel(PyTorchModule):
 			hidden_activation=model_act,
 			hidden_init=torch.nn.init.xavier_uniform_,
 		)
+		self.pcont = Mlp(
+			hidden_sizes=[model_hidden_size]*pcont_num_layers,
+			input_size=stochastic_state_size+deterministic_state_size,
+			output_size=1,
+			hidden_activation=model_act,
+			hidden_init=torch.nn.init.xavier_uniform_,
+		)
 
 		self.model_act=model_act
 		self.feature_size = stochastic_state_size + deterministic_state_size
 		self.stochastic_state_size = stochastic_state_size
 		self.deterministic_state_size = deterministic_state_size
-		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward]
+		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward, self.pcont]
 		
 	def obs_step(self, prev_state, prev_action, embed):
 		prior = self.img_step(prev_state, prev_action)
@@ -185,19 +193,21 @@ class WorldModel(PyTorchModule):
 		feat = self.get_feat(posterior_params)
 		image_params = self.decode(feat)
 		reward_params = self.reward(feat)
-		return posterior_params, prior_params, image_params, reward_params
+		pcont_params = self.pcont(feat)
+		return posterior_params, prior_params, image_params, reward_params, pcont_params
 
 	def forward(self, obs, action):
 		original_batch_size = obs.shape[0]
 		state = self.initial(original_batch_size)
 		path_length = obs.shape[1]
 		post, prior = dict(mean=[], std=[], stoch=[], deter=[]), dict(mean=[], std=[], stoch=[], deter=[])
-		images, rewards = [], []
+		images, rewards, pconts = [], [], []
 
 		for i in range(path_length):
-			posterior_params, prior_params, image_params, reward_params = self.forward_batch(obs[:, i], action[:, i], state)
+			posterior_params, prior_params, image_params, reward_params, pcont_params = self.forward_batch(obs[:, i], action[:, i], state)
 			images.append(image_params)
 			rewards.append(reward_params)
+			pconts.append(pcont_params)
 			for k in post.keys():
 				post[k].append(posterior_params[k].reshape((1, posterior_params[k].shape[0], posterior_params[k].shape[1] )))
 
@@ -207,6 +217,7 @@ class WorldModel(PyTorchModule):
 
 		images = torch.cat(images)
 		rewards = torch.cat(rewards)
+		pconts = torch.cat(pconts)
 		for k in post.keys():
 			post[k] = torch.cat(post[k]).permute(1, 0, 2)
 
@@ -217,13 +228,17 @@ class WorldModel(PyTorchModule):
 		prior_dist = self.get_dist(prior['mean'], prior['std'])
 		image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
 		reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
-		return post, prior, post_dist, prior_dist, image_dist, reward_dist
+		pcont_dist = self.get_dist(pconts, None, normal=False)
+		return post, prior, post_dist, prior_dist, image_dist, reward_dist, pcont_dist
 
 	def get_feat(self, state):
 		return torch.cat([state['stoch'], state['deter']], -1)
 
-	def get_dist(self, mean, std, dims=1):
-		return torch.distributions.Independent(torch.distributions.Normal(mean, std), dims)
+	def get_dist(self, mean, std, dims=1, normal=True):
+		if normal:
+			return torch.distributions.Independent(torch.distributions.Normal(mean, std), dims)
+		else:
+			return torch.distributions.Independent(torch.distributions.Bernoulli(logits=mean), dims)
 
 	def encode(self, obs):
 		return self.conv_encoder(self.preprocess(obs))

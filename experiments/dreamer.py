@@ -138,6 +138,15 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=5,
             max_path_length=3,
             batch_size=625,
+
+            # num_eval_steps_per_epoch=30,
+            # num_trains_per_train_loop=10,
+            # num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
+            # min_num_steps_before_training=1000,
+            # num_pretrain_steps=100,
+            # num_train_loops_per_epoch=1,
+            # max_path_length=3,
+            # batch_size=50,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -158,7 +167,8 @@ if __name__ == "__main__":
             free_nats=3.0,
             kl_scale=1.0,
             optimizer_class='apex_adam',
-            adaptive_horizon=False,
+            pcont_scale=10.0,
+            use_pcont=True,
         ),
     )
 
