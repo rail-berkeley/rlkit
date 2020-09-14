@@ -189,12 +189,12 @@ class WorldModel(PyTorchModule):
 
 	def forward_batch(self, obs, action, state=None,):
 		embed = self.encode(obs)
-		posterior_params, prior_params = self.obs_step(state, action, embed)
-		feat = self.get_feat(posterior_params)
+		post_params, prior_params = self.obs_step(state, action, embed)
+		feat = self.get_feat(post_params)
 		image_params = self.decode(feat)
 		reward_params = self.reward(feat)
 		pcont_params = self.pcont(feat)
-		return posterior_params, prior_params, image_params, reward_params, pcont_params
+		return post_params, prior_params, image_params, reward_params, pcont_params
 
 	def forward(self, obs, action):
 		original_batch_size = obs.shape[0]
@@ -204,25 +204,25 @@ class WorldModel(PyTorchModule):
 		images, rewards, pconts = [], [], []
 
 		for i in range(path_length):
-			posterior_params, prior_params, image_params, reward_params, pcont_params = self.forward_batch(obs[:, i], action[:, i], state)
+			post_params, prior_params, image_params, reward_params, pcont_params = self.forward_batch(obs[:, i], action[:, i], state)
 			images.append(image_params)
 			rewards.append(reward_params)
 			pconts.append(pcont_params)
 			for k in post.keys():
-				post[k].append(posterior_params[k].reshape((1, posterior_params[k].shape[0], posterior_params[k].shape[1] )))
+				post[k].append(post_params[k].unsqueeze(1))
 
 			for k in prior.keys():
-				prior[k].append(prior_params[k].reshape((1, prior_params[k].shape[0], prior_params[k].shape[1] )))
-			state = posterior_params
+				prior[k].append(prior_params[k].unsqueeze(1))
+			state = post_params
 
 		images = torch.cat(images)
 		rewards = torch.cat(rewards)
 		pconts = torch.cat(pconts)
 		for k in post.keys():
-			post[k] = torch.cat(post[k]).permute(1, 0, 2)
+			post[k] = torch.cat(post[k], dim=1)
 
 		for k in prior.keys():
-			prior[k] = torch.cat(prior[k]).permute(1, 0, 2)
+			prior[k] = torch.cat(prior[k], dim=1)
 
 		post_dist = self.get_dist(post['mean'], post['std'])
 		prior_dist = self.get_dist(prior['mean'], prior['std'])

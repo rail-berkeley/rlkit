@@ -181,7 +181,7 @@ if __name__ == "__main__":
 
     n_seeds = 1
     mode = 'local'
-    exp_prefix = 'franka_lift_dreamer_no_adaptive_horizon'
+    exp_prefix = 'franka_lift_dreamer_pcont_discount_fix'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):

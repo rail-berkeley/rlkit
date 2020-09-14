@@ -174,8 +174,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 discount = self.discount * torch.ones_like(imag_reward)
             value = self.vf(imag_feat)
         imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
-        discount_arr = torch.cat([torch.ones_like(discount[:1]), discount[1:]])
-        discount = torch.cumprod(discount_arr[:-1], 0)
+        discount = torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0).detach()
+        discount = torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[1:]])[:-1], 0)
         actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
