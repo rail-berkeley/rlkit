@@ -15,35 +15,29 @@ import rlkit.util.hyperparameter as hyp
 from os.path import join
 import os
 import rlkit
+import argparse
+import pickle
 
 def experiment(variant):
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
     cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
     train_cfg = YamlConfig(cfg_path)
-    train_cfg['scene']['gui'] = 0
-    train_cfg['scene']['n_envs'] = 50
-    train_cfg['image_preprocessor'] = None
-    train_cfg['rews']['block_distance_to_lift'] = 0
-    train_cfg['camera']['imshape']['width'] = 64
-    train_cfg['camera']['imshape']['height'] = 64
+
+    train_cfg['scene']['n_envs'] = variant['env_kwargs']['n_train_envs']
+    train_cfg['rews']['block_distance_to_lift'] = variant['env_kwargs']['block_distance_to_lift']
+    train_cfg['scene']['gui'] = variant['env_kwargs']['gui']
+
     train_cfg['pytorch_format'] = True
     train_cfg['flatten'] = True
     expl_env = GymFrankaLiftVecEnv(train_cfg, **train_cfg['env'])
     expl_env = ImageEnvWrapper(expl_env, train_cfg)
 
-    eval_cfg = YamlConfig(cfg_path)
-    eval_cfg['scene']['gui'] = 0
-    eval_cfg['scene']['n_envs'] = 10
-    eval_cfg['image_preprocessor'] = None
-    eval_cfg['rews']['block_distance_to_lift'] = 0
-    eval_cfg['camera']['imshape']['width'] = 64
-    eval_cfg['camera']['imshape']['height'] = 64
-    eval_cfg['pytorch_format'] = True
-    eval_cfg['flatten'] = True
+    eval_cfg = pickle.loads(pickle.dumps(train_cfg))
+    eval_cfg['scene']['n_envs'] = variant['env_kwargs']['n_eval_envs']
+
     eval_env = GymFrankaLiftVecEnv(eval_cfg, **eval_cfg['env'])
     eval_env = ImageEnvWrapper(eval_env, eval_cfg)
-
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
@@ -122,12 +116,25 @@ def experiment(variant):
 
 
 if __name__ == "__main__":
-    # noinspection PyTypeChecker
-    variant = dict(
-        algorithm="Dreamer",
-        version="normal",
-        replay_buffer_size=int(1E5),
-        algorithm_kwargs=dict(
+    parser = argparse.ArgumentParser(description='Process some integers.')
+    parser.add_argument('--exp_prefix', type=str, default='franka_lift_dreamer')
+    parser.add_argument('--debug', action='store_true', default=False)
+    args = parser.parse_args()
+    if args.debug:
+        algorithm_kwargs = dict(
+            num_epochs=3,
+            num_eval_steps_per_epoch=30,
+            num_trains_per_train_loop=10,
+            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
+            min_num_steps_before_training=100,
+            num_pretrain_steps=100,
+            num_train_loops_per_epoch=1,
+            max_path_length=3,
+            batch_size=50,
+        )
+        exp_prefix = 'test'+args.exp_prefix
+    else:
+        algorithm_kwargs = dict(
             num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
@@ -137,16 +144,19 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=5,
             max_path_length=3,
             batch_size=625,
-
-            # num_epochs=1,
-            # num_eval_steps_per_epoch=30,
-            # num_trains_per_train_loop=10,
-            # num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
-            # min_num_steps_before_training=100,
-            # num_pretrain_steps=100,
-            # num_train_loops_per_epoch=1,
-            # max_path_length=3,
-            # batch_size=50,
+        )
+        exp_prefix=args.exp_prefix
+    # noinspection PyTypeChecker
+    variant = dict(
+        algorithm="Dreamer",
+        version="normal",
+        replay_buffer_size=int(1E5),
+        algorithm_kwargs=algorithm_kwargs,
+        env_kwargs = dict(
+            block_distance_to_lift=0,
+            gui=0,
+            n_train_envs=50,
+            n_eval_envs=10,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -180,7 +190,6 @@ if __name__ == "__main__":
 
     n_seeds = 10
     mode = 'local' #never use here_no_doodad with IG (always install doodad!)
-    exp_prefix = 'test'
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
