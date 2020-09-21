@@ -1,4 +1,4 @@
-name: rlkit
+resname: rlkit
 channels:
 - kne  # for pybox2d
 - pytorch

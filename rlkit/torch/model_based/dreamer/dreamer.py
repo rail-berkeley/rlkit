@@ -175,7 +175,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             value = self.vf(imag_feat)
         imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
         discount = torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0).detach()
-        #discount = torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[1:]])[:-1], 0)
         actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
@@ -215,8 +214,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             if self.use_pcont:
                 eval_statistics['Pcont Loss'] = pcont_loss.item()
             eval_statistics['Imagined Returns'] = imag_returns.mean().item()
-            eval_statistics['Predicted Imagined Rewards'] = imag_reward.mean().item()
-            eval_statistics['Predicted Imagined Values'] = value_dist.mean.mean().item()
+            eval_statistics['Imagined Rewards'] = imag_reward.mean().item()
+            eval_statistics['Imagined Values'] = value_dist.mean.mean().item()
             eval_statistics['Predicted Rewards'] = reward_dist.mean.mean().item()
 
         loss = DreamerLosses(
