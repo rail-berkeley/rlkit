@@ -73,7 +73,6 @@ env:
   auto_reset_after_done: False
   include_timestep_in_obs: True
   include_primitive_action_in_obs: False
-  total_args: True
 
 rews:
   dense: False

@@ -26,7 +26,7 @@ def experiment(variant):
 
     train_cfg['scene']['n_envs'] = variant['env_kwargs']['n_train_envs']
     train_cfg['rews']['block_distance_to_lift'] = variant['env_kwargs']['block_distance_to_lift']
-    train_cfg['scene']['gui'] = variant['env_kwargs']['gui']
+    train_cfg['env']['fixed_schema'] = variant['env_kwargs']['fixed_schema']
 
     train_cfg['pytorch_format'] = True
     train_cfg['flatten'] = True
@@ -116,8 +116,8 @@ def experiment(variant):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description='Process some integers.')
-    parser.add_argument('--exp_prefix', type=str, default='franka_lift_dreamer')
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--exp_prefix', type=str, default='')
     parser.add_argument('--debug', action='store_true', default=False)
     args = parser.parse_args()
     if args.debug:
@@ -139,7 +139,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
-            min_num_steps_before_training=1000,
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
             num_train_loops_per_epoch=5,
             max_path_length=3,
@@ -154,9 +154,9 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs = dict(
             block_distance_to_lift=0,
-            gui=0,
             n_train_envs=50,
             n_eval_envs=10,
+            fixed_schema=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
