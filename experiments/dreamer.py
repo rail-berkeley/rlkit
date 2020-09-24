@@ -51,6 +51,8 @@ def experiment(variant):
         variant['model_kwargs']['stochastic_state_size'] + variant['model_kwargs']['deterministic_state_size'],
         action_dim,
         hidden_activation=torch.nn.functional.elu,
+        split_size=expl_env.wrapped_env.num_primitives,
+        **variant['actor_kwargs']
     )
     vf = Mlp(
         hidden_sizes=[variant['model_kwargs']['model_hidden_size']]*3,
@@ -64,6 +66,8 @@ def experiment(variant):
         actor,
         obs_dim,
         action_dim,
+        split_dist=variant['actor_kwargs'],
+        split_size=expl_env.wrapped_env.num_primitives,
         exploration=True
     )
     eval_policy = DreamerPolicy(
@@ -71,6 +75,8 @@ def experiment(variant):
         actor,
         obs_dim,
         action_dim,
+        split_dist=variant['actor_kwargs'],
+        split_size=expl_env.wrapped_env.num_primitives,
         exploration=False,
     )
 
@@ -135,7 +141,7 @@ if __name__ == "__main__":
         exp_prefix = 'test'+args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -157,6 +163,9 @@ if __name__ == "__main__":
             n_train_envs=50,
             n_eval_envs=10,
             fixed_schema=False,
+        ),
+        actor_kwargs=dict(
+          split_dist=True,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -188,7 +197,7 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 10
+    n_seeds = 3
     mode = 'local' #never use here_no_doodad with IG (always install doodad!)
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):

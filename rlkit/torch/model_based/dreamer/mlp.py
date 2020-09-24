@@ -40,14 +40,11 @@ class Mlp(PyTorchModule):
 
         self.modules = self.fcs + [self.last_fc]
 
-    def forward(self, input, return_preactivations=False):
+    def forward(self, input):
         h = input
         for i, fc in enumerate(self.fcs):
             h = fc(h)
             h = self.hidden_activation(h)
         preactivation = self.last_fc(h)
         output = self.output_activation(preactivation)
-        if return_preactivations:
-            return output, preactivation
-        else:
-            return output
+        return output

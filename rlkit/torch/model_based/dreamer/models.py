@@ -13,9 +13,13 @@ class ActorModel(Mlp):
 				 hidden_sizes,
 				 obs_dim,
 				 action_dim,
+				 split_dist=False,
+				 split_size=0,
 				 hidden_activation=F.elu,
 				 min_std=1e-4, init_std=5, mean_scale=5,
 				 **kwargs):
+		self.split_dist = split_dist
+		self.split_size = split_size
 		super().__init__(hidden_sizes,
 						 input_size=obs_dim,
 						 output_size=action_dim*2,
@@ -28,20 +32,37 @@ class ActorModel(Mlp):
 		self._mean_scale = mean_scale
 		self.modules = self.fcs+[self.last_fc]
 
-	def forward(self, feat):
+	def forward(self, input):
 		raw_init_std = torch.log(torch.exp(self._init_std) - 1)
-		h = feat
+		h = input
 		for i, fc in enumerate(self.fcs):
 			h = self.hidden_activation(fc(h))
 		last = self.last_fc(h)
-		action_mean, action_std_dev = last.split(self.action_dim, -1)
-		action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
-		action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
+		if self.split_dist:
+			mean, std = last.split(self.action_dim, -1)
+			logits, cont_act_mean, extra = mean.split(self.split_size, -1)
+			dist1 = OneHotDist(logits=logits)
 
-		dist = Normal(action_mean, action_std)
-		dist = TransformedDistribution(dist, TanhBijector())
-		dist = torch.distributions.Independent(dist,1)
-		dist = SampleDist(dist)
+			cont_act_mean = torch.cat((cont_act_mean, extra), -1)
+			_, cont_act_std, extra = std.split(self.split_size, -1)
+			cont_act_std = torch.cat((cont_act_std, extra), -1)
+			action_mean = self._mean_scale * torch.tanh(cont_act_mean / self._mean_scale)
+			action_std = F.softplus(cont_act_std + raw_init_std) + self._min_std
+
+			dist2 = Normal(action_mean, action_std)
+			dist2 = TransformedDistribution(dist2, TanhBijector())
+			dist2 = torch.distributions.Independent(dist2,1)
+			dist2 = SampleDist(dist2)
+			dist = SplitDist(dist1, dist2)
+		else:
+			action_mean, action_std_dev = last.split(self.action_dim, -1)
+			action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
+			action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
+
+			dist = Normal(action_mean, action_std)
+			dist = TransformedDistribution(dist, TanhBijector())
+			dist = torch.distributions.Independent(dist,1)
+			dist = SampleDist(dist)
 		return dist
 
 # "atanh", "TanhBijector" and "SampleDist" are from the following repo
@@ -104,6 +125,50 @@ class SampleDist:
 
 	def sample(self):
 		return self._dist.sample()
+
+class OneHotDist:
+
+	def __init__(self, logits=None, probs=None):
+		self._dist = torch.distributions.Categorical(logits=logits, probs=probs)
+		self._num_classes = self._dist.logits.shape[-1]
+
+	@property
+	def name(self):
+		return 'OneHotDist'
+
+	def __getattr__(self, name):
+		return getattr(self._dist, name)
+
+	def log_prob(self, values):
+		indices = torch.argmax(values, dim=-1)
+		return self._dist.log_prob(indices)
+
+	def mean(self):
+		return self._dist.mean
+
+	def mode(self):
+		return self._one_hot(torch.argmax(self._dist.probs, dim=-1))
+
+	def rsample(self):
+		indices = self._dist.sample()
+		sample = self._one_hot(indices).float()
+		probs = self._dist.probs
+		sample += probs - (probs).detach() #straight through estimator
+		return sample
+
+	def _one_hot(self, indices):
+		return F.one_hot(indices, self._num_classes)
+
+class SplitDist:
+	def __init__(self, dist1, dist2):
+		self._dist1 = dist1
+		self._dist2 = dist2
+
+	def rsample(self):
+		return torch.cat((self._dist1.rsample(), self._dist2.rsample()), -1)
+
+	def mode(self):
+		return torch.cat((self._dist1.mode(), self._dist2.mode()), -1)
 
 class WorldModel(PyTorchModule):
 	def __init__(

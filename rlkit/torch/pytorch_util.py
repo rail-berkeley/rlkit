@@ -302,3 +302,8 @@ def tensor(*args, torch_device=None, **kwargs):
 
 def normal(*args, **kwargs):
     return torch.normal(*args, **kwargs).to(device)
+
+def rand(*args, torch_device=None, **kwargs):
+    if torch_device is None:
+        torch_device = device
+    return torch.rand(*args, **kwargs, device=torch_device)

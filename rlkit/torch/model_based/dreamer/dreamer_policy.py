@@ -3,7 +3,7 @@ import numpy as np
 import rlkit.torch.pytorch_util as ptu
 import torch
 from torch.distributions import Normal
-
+import torch.nn.functional as F
 
 class DreamerPolicy(Policy):
 	"""
@@ -16,6 +16,8 @@ class DreamerPolicy(Policy):
 			obs_dim,
 			action_dim,
 			expl_amount=0.3,
+			split_dist=False,
+			split_size=0,
 			exploration=False,
 	):
 		self.world_model = world_model
@@ -24,6 +26,8 @@ class DreamerPolicy(Policy):
 		self.obs_dim = obs_dim
 		self.action_dim = action_dim
 		self.expl_amount = expl_amount
+		self.split_dist = split_dist
+		self.split_size = split_size
 
 	def get_action(self, observation):
 		"""
@@ -43,7 +47,17 @@ class DreamerPolicy(Policy):
 		dist = self.actor(feat)
 		if self.exploration:
 			action = dist.rsample()
-			action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
+			if self.split_dist:
+				deter, cont, extra = action.split(self.split_size, -1)
+				cont = torch.cat((cont, extra), -1)
+				indices = torch.distributions.Categorical(logits=0*deter).sample()
+				rand_action = F.one_hot(indices, deter.shape[-1])
+				probs = ptu.rand(deter.shape[:1])
+				deter = torch.where(probs.reshape(-1,1) < self.expl_amount, rand_action.int(), deter.int())
+				cont = torch.clamp(Normal(cont, self.expl_amount).rsample(), -1, 1)
+				action = torch.cat((deter, cont), -1)
+			else:
+				action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
 		else:
 			action = dist.mode()
 		self.state = (latent, action)
