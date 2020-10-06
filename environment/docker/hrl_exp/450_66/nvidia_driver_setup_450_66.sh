@@ -1,5 +1,5 @@
 #!/bin/bash
-NVIDIA_DRIVER_VERSION=$(cat /proc/driver/nvidia/version | sed -n -e 's/^.*Module  //p' | cut -f1 -d' ')
+NVIDIA_DRIVER_VERSION=450.66
 
 echo "detected nvidia driver: "${NVIDIA_DRIVER_VERSION}
 
