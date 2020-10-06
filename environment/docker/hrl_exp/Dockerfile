@@ -105,3 +105,8 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git
 RUN mkdir /home/test
 RUN cd /home/test && git clone https://github.com/NVIDIA/apex.git
 RUN cd /home/test/apex/ && pip install -q -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+
+COPY nvidia_icd.json /usr/share/vulkan/icd.d
+
+COPY nvidia_driver_setup.sh /nvidia_driver_setup.sh
+RUN  /nvidia_driver_setup.sh
