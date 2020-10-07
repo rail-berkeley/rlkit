@@ -105,3 +105,7 @@ RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y git
 RUN mkdir /home/test
 RUN cd /home/test && git clone https://github.com/NVIDIA/apex.git
 RUN cd /home/test/apex/ && pip install -q -v --no-cache-dir --global-option="--cpp_ext" --global-option="--cuda_ext" ./
+
+RUN mkdir /home/test/carbongym
+RUN cd /home/test/carbongym && git init . && git pull https://824d1ec21bc8cd8f10eeabb09cae73bc42f0f0cb@github.com/mihdalal/carbongym.git
+RUN cd /home/test/carbongym/python && pip install -e .
