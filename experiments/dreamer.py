@@ -52,7 +52,7 @@ def experiment(variant):
         action_dim,
         hidden_activation=torch.nn.functional.elu,
         split_size=expl_env.wrapped_env.num_primitives,
-        **variant['actor_kwargs']
+        split_dist=variant['actor_kwargs']['split_dist'] and (not variant['env_kwargs']['fixed_schema'])
     )
     vf = Mlp(
         hidden_sizes=[variant['model_kwargs']['model_hidden_size']]*3,
@@ -66,7 +66,7 @@ def experiment(variant):
         actor,
         obs_dim,
         action_dim,
-        split_dist=variant['actor_kwargs'],
+        split_dist=variant['actor_kwargs']['split_dist'] and (not variant['env_kwargs']['fixed_schema']),
         split_size=expl_env.wrapped_env.num_primitives,
         exploration=True
     )
@@ -162,7 +162,7 @@ if __name__ == "__main__":
             block_distance_to_lift=0,
             n_train_envs=50,
             n_eval_envs=10,
-            fixed_schema=False,
+            fixed_schema=True,
         ),
         actor_kwargs=dict(
           split_dist=True,
@@ -179,7 +179,7 @@ if __name__ == "__main__":
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=6e-4,
-
+            use_amp=True,
             gradient_clip=100.0,
             lam=.95,
             imagination_horizon=4,
@@ -197,7 +197,7 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 3
+    n_seeds = 1
     mode = 'local' #never use here_no_doodad with IG (always install doodad!)
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):

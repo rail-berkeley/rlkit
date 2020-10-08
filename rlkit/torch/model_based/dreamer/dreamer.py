@@ -1,6 +1,5 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
-import apex
 import numpy as np
 from rlkit.torch.model_based.dreamer.models import FreezeParameters
 import torch
@@ -9,6 +8,13 @@ from rlkit.core.loss import LossFunction, LossStatistics
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 import gtimer as gt
+
+try:
+    import apex
+    from apex import amp
+    APEX_AVAILABLE = True
+except ModuleNotFoundError:
+    APEX_AVAILABLE = False
 
 DreamerLosses = namedtuple(
     'DreamerLosses',
@@ -31,6 +37,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             world_model_lr=6e-4,
 
             optimizer_class='torch_adam',
+            use_amp=False,
 
             gradient_clip=100.0,
             lam=.95,
@@ -51,15 +58,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         torch.backends.cudnn.benchmark = True
 
         self.env = env
-        self.actor = actor
-        self.world_model = world_model
-        self.vf = vf
+        self.actor = actor.to(ptu.device)
+        self.world_model = world_model.to(ptu.device)
+        self.vf = vf.to(ptu.device)
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
         if optimizer_class == 'torch_adam':
             optimizer_class = optim.Adam
-        elif optimizer_class == 'apex_adam':
+        elif optimizer_class == 'apex_adam' and APEX_AVAILABLE:
             optimizer_class = apex.optimizers.FusedAdam
 
         self.actor_optimizer = optimizer_class(
@@ -77,6 +84,21 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             lr=world_model_lr,
             eps=1e-7,
         )
+        self.use_amp = use_amp and APEX_AVAILABLE
+        if self.use_amp:
+            self.world_model, self.world_model_optimizer = amp.initialize(
+                self.world_model, self.world_model_optimizer, opt_level="O1",
+                keep_batchnorm_fp32=None, loss_scale="dynamic"
+            )
+            self.actor, self.actor_optimizer = amp.initialize(
+                self.actor, self.actor_optimizer, opt_level="O1",
+                keep_batchnorm_fp32=None, loss_scale="dynamic"
+            )
+            self.vf, self.vf_optimizer = amp.initialize(
+                self.vf, self.vf_optimizer, opt_level="O1",
+                keep_batchnorm_fp32=None, loss_scale="dynamic"
+            )
+
         self.discount = discount
         self.reward_scale = reward_scale
         self.gradient_clip=gradient_clip
@@ -156,8 +178,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             world_model_loss += self.pcont_scale*pcont_loss
 
         zero_grad(self.world_model)
-        world_model_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip, norm_type=2)
+        if self.use_amp:
+            with amp.scale_loss(world_model_loss, self.world_model_optimizer) as scaled_world_model_loss:
+                scaled_world_model_loss.backward()
+        else:
+            world_model_loss.backward()
+        if self.gradient_clip > 0:
+            if not self.use_amp:
+                torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip, norm_type=2)
+            else:
+                torch.nn.utils.clip_grad_norm_(amp.master_params(
+                    self.world_model_optimizer), self.gradient_clip, norm_type=2)
         self.world_model_optimizer.step()
 
         """
@@ -178,8 +209,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
-        actor_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip, norm_type=2)
+        if self.use_amp:
+            with amp.scale_loss(actor_loss, self.actor_optimizer) as scaled_actor_loss:
+                scaled_actor_loss.backward()
+        else:
+            actor_loss.backward()
+        if self.gradient_clip > 0:
+            if not self.use_amp:
+                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip, norm_type=2)
+            else:
+                torch.nn.utils.clip_grad_norm_(amp.master_params(
+                    self.actor_optimizer), self.gradient_clip, norm_type=2)
         self.actor_optimizer.step()
 
 
@@ -195,8 +235,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         vf_loss = -(discount.squeeze(-1) * value_dist.log_prob(target)).mean()
 
         zero_grad(self.vf)
-        vf_loss.backward()
-        torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip, norm_type=2)
+        if self.use_amp:
+            with amp.scale_loss(vf_loss, self.vf_optimizer) as scaled_vf_loss:
+                scaled_vf_loss.backward()
+        else:
+            vf_loss.backward()
+        if self.gradient_clip > 0:
+            if not self.use_amp:
+                torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip, norm_type=2)
+            else:
+                torch.nn.utils.clip_grad_norm_(amp.master_params(
+                    self.vf_optimizer), self.gradient_clip, norm_type=2)
         self.vf_optimizer.step()
 
 
