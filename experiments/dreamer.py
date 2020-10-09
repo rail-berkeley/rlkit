@@ -141,7 +141,7 @@ if __name__ == "__main__":
         exp_prefix = 'test'+args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -180,6 +180,7 @@ if __name__ == "__main__":
             vf_lr=8e-5,
             world_model_lr=6e-4,
             use_amp=True,
+            opt_level="O1",
             gradient_clip=100.0,
             lam=.95,
             imagination_horizon=4,
@@ -192,6 +193,10 @@ if __name__ == "__main__":
     )
 
     search_space = {
+        'trainer_kwargs.opt_level':[
+            "O0",
+            "O1",
+        ]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,

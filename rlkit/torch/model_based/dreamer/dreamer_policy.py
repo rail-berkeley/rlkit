@@ -41,9 +41,8 @@ class DreamerPolicy(Policy):
 		else:
 			latent = self.world_model.initial(observation.shape[0])
 			action = ptu.zeros((observation.shape[0], self.action_dim))
-		embed = self.world_model.encode(observation)
-		latent, _ = self.world_model.obs_step(latent, action, embed)
-		feat = self.world_model.get_feat(latent)
+		post, _, _, _, _, _, _ = self.world_model(observation.unsqueeze(0), action.unsqueeze(0))
+		feat = self.world_model.get_feat(post).squeeze(0)
 		dist = self.actor(feat)
 		if self.exploration:
 			action = dist.rsample()

@@ -38,6 +38,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
             optimizer_class='torch_adam',
             use_amp=False,
+            opt_level="O1",
 
             gradient_clip=100.0,
             lam=.95,
@@ -86,19 +87,13 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         )
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
-            self.world_model, self.world_model_optimizer = amp.initialize(
-                self.world_model, self.world_model_optimizer, opt_level="O1",
-                keep_batchnorm_fp32=None, loss_scale="dynamic"
+            models, optimizers = amp.initialize(
+                [self.world_model, self.actor, self.vf], [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
+                opt_level=opt_level,
             )
-            self.actor, self.actor_optimizer = amp.initialize(
-                self.actor, self.actor_optimizer, opt_level="O1",
-                keep_batchnorm_fp32=None, loss_scale="dynamic"
-            )
-            self.vf, self.vf_optimizer = amp.initialize(
-                self.vf, self.vf_optimizer, opt_level="O1",
-                keep_batchnorm_fp32=None, loss_scale="dynamic"
-            )
-
+            self.world_model, self.actor, self.vf = models
+            self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer = optimizers
+        self.opt_level=opt_level
         self.discount = discount
         self.reward_scale = reward_scale
         self.gradient_clip=gradient_clip
@@ -194,9 +189,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Actor Loss
         """
-        with FreezeParameters(self.world_model.modules):
+        with FreezeParameters(self.world_model.modules()):
             imag_feat = self.imagine_ahead(post)
-        with FreezeParameters(self.world_model.modules+self.vf.modules):
+        with FreezeParameters(self.world_model.modules()+self.vf.modules()):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
                 with FreezeParameters([self.world_model.pcont]):

@@ -30,7 +30,7 @@ class ActorModel(Mlp):
 		self._min_std = min_std
 		self._init_std = ptu.from_numpy(np.array(init_std))
 		self._mean_scale = mean_scale
-		self.modules = self.fcs+[self.last_fc]
+		self.modules = lambda:self.fcs+[self.last_fc]
 
 	def forward(self, input):
 		raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -229,7 +229,7 @@ class WorldModel(PyTorchModule):
 		self.feature_size = stochastic_state_size + deterministic_state_size
 		self.stochastic_state_size = stochastic_state_size
 		self.deterministic_state_size = deterministic_state_size
-		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward, self.pcont]
+		self.modules = lambda:[self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward, self.pcont]
 		
 	def obs_step(self, prev_state, prev_action, embed):
 		prior = self.img_step(prev_state, prev_action)
@@ -243,7 +243,8 @@ class WorldModel(PyTorchModule):
 
 	def img_step(self, prev_state, prev_action):
 		x = torch.cat([prev_state['stoch'], prev_action], -1)
-		x = self.model_act(self.img_step_layer(x))
+		x = self.img_step_layer(x)
+		x = self.model_act(x)
 		deter_new = self.rnn(x, prev_state['deter'])
 		x = self.img_step_mlp(deter_new)
 		mean, std = x.split(self.stochastic_state_size, -1)
@@ -328,7 +329,7 @@ from torch.nn import Module
 
 # "get_parameters" and "FreezeParameters" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
-def get_parameters(modules: Iterable[Module]):
+def get_parameters(modules):
 	"""
 	Given a list of torch modules, returns a list of their parameters.
 	:param modules: iterable of modules
@@ -340,7 +341,7 @@ def get_parameters(modules: Iterable[Module]):
 	return model_parameters
 
 class FreezeParameters:
-	def __init__(self, modules: Iterable[Module]):
+	def __init__(self, modules):
 		"""
 		Context manager to locally freeze gradients.
 		In some cases with can speed up computation because gradients aren't calculated for these listed modules.
