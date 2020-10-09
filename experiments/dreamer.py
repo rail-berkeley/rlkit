@@ -202,7 +202,7 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 1
+    n_seeds = 5
     mode = 'local' #never use here_no_doodad with IG (always install doodad!)
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
