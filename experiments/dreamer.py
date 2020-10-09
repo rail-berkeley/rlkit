@@ -17,8 +17,13 @@ import os
 import rlkit
 import argparse
 import pickle
+import torch.distributed as dist
+
 
 def experiment(variant):
+    os.environ['MASTER_ADDR'] = 'localhost'
+    os.environ['MASTER_PORT'] = '12355'
+    dist.init_process_group("gloo", rank=0, world_size=1)
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
     cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
@@ -119,6 +124,7 @@ def experiment(variant):
     )
     algorithm.to(ptu.device)
     algorithm.train()
+    dist.destroy_process_group()
 
 
 if __name__ == "__main__":

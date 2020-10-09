@@ -20,6 +20,7 @@ DreamerLosses = namedtuple(
     'DreamerLosses',
     'actor_loss vf_loss world_model_loss',
 )
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 class DreamerTrainer(TorchTrainer, LossFunction):
     def __init__(
@@ -93,6 +94,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             )
             self.world_model, self.actor, self.vf = models
             self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer = optimizers
+
+        # self.actor = DDP(self.actor, device_ids=[0])
+        # self.world_model = DDP(self.world_model, device_ids=[0])
+        # self.vf = DDP(self.vf, device_ids=[0])
+        #
         self.opt_level=opt_level
         self.discount = discount
         self.reward_scale = reward_scale
