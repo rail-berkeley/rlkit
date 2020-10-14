@@ -4,6 +4,9 @@ scene:
   gui: 0
   cts: False
   gym:
+    device:
+      compute: 0
+      graphics: 0
     dt: 0.01
     substeps: 2
     flex:

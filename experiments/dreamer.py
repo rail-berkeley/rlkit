@@ -20,13 +20,16 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     import torch
-
+    ptu.set_gpu_mode(True, gpu_id=variant.get('torch_device', 0))
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
     cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
     train_cfg = YamlConfig(cfg_path)
-
+    train_cfg['franka']['workspace_limits']['ee_lower'] = variant['env_kwargs']['ee_lower']
+    train_cfg['franka']['workspace_limits']['ee_upper'] = variant['env_kwargs']['ee_upper']
     train_cfg['scene']['n_envs'] = variant['env_kwargs']['n_train_envs']
+    train_cfg['scene']['gym']['device']['compute'] = variant['env_kwargs']['compute_device']
+    train_cfg['scene']['gym']['device']['graphics'] = variant['env_kwargs']['graphics_device']
     train_cfg['rews']['block_distance_to_lift'] = variant['env_kwargs']['block_distance_to_lift']
     train_cfg['env']['fixed_schema'] = variant['env_kwargs']['fixed_schema']
     train_cfg['env']['randomize_block_pose_on_reset'] = variant['env_kwargs']['randomize_block_pose_on_reset']
@@ -127,6 +130,7 @@ def experiment(variant):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_prefix', type=str, default='')
+    parser.add_argument('--num_seeds', type=int, default=3)
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--debug', action='store_true', default=False)
     args = parser.parse_args()
@@ -145,7 +149,7 @@ if __name__ == "__main__":
         exp_prefix = 'test'+args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -161,12 +165,17 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1E5),
         algorithm_kwargs=algorithm_kwargs,
+        torch_device=0,
         env_kwargs = dict(
             block_distance_to_lift=0,
             n_train_envs=50,
             n_eval_envs=10,
             fixed_schema=True,
             randomize_block_pose_on_reset=True,
+            ee_lower=(.45, .525, -.05),
+            ee_upper=(.55, .6, .05),
+            compute_device=0,
+            graphics_device=0,
         ),
         actor_kwargs=dict(
           split_dist=True,
@@ -197,15 +206,17 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        'env_kwargs.randomize_block_pose_on_reset':[True, False],
+        'env_kwargs.randomize_block_pose_on_reset':[True],
+        'env_kwargs.ee_lower':[(.45, .525, -.05), (.4, .525, -.1), (.35, .525, -.15)],
+        'env_kwargs.ee_upper':[(.55, .625, .05), (.6, .725, .1), (.65, .825, .15)],
+        'env_kwargs.block_distance_to_lift':[0, .05, .1]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 1
+    n_seeds = args.num_seeds
     mode = args.mode #never use here_no_doodad with IG (always install doodad!)
-
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
             run_experiment(
