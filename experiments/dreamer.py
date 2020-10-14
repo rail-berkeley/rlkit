@@ -20,10 +20,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     import torch
-    import torch.distributed as dist
-    os.environ['MASTER_ADDR'] = 'localhost'
-    os.environ['MASTER_PORT'] = '12355'
-    dist.init_process_group("gloo", rank=0, world_size=1)
+
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
     cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
@@ -124,12 +121,12 @@ def experiment(variant):
     )
     algorithm.to(ptu.device)
     algorithm.train()
-    dist.destroy_process_group()
 
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument('--exp_prefix', type=str, default='')
+    parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--debug', action='store_true', default=False)
     args = parser.parse_args()
     if args.debug:
@@ -186,7 +183,7 @@ if __name__ == "__main__":
             vf_lr=8e-5,
             world_model_lr=6e-4,
             use_amp=True,
-            opt_level="O1",
+            opt_level="O0",
             gradient_clip=100.0,
             lam=.95,
             imagination_horizon=4,
@@ -199,17 +196,13 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        'trainer_kwargs.opt_level':[
-            "O0",
-            "O1",
-        ]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 5
-    mode = 'local' #never use here_no_doodad with IG (always install doodad!)
+    n_seeds = 1
+    mode = args.mode #never use here_no_doodad with IG (always install doodad!)
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
