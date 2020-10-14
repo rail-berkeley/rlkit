@@ -1,26 +1,26 @@
-from autolab_core import YamlConfig
-from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
-from hrl_exp.envs.wrappers import ImageEnvWrapper
-from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
-from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy, ActionSpaceSamplePolicy
-from rlkit.torch.model_based.dreamer.episode_replay_buffer import EpisodeReplayBuffer
-from rlkit.torch.model_based.dreamer.mlp import Mlp
-from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
-from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-import rlkit.torch.pytorch_util as ptu
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-import torch
 import rlkit.util.hyperparameter as hyp
-from os.path import join
+import argparse
 import os
 import rlkit
-import argparse
+from os.path import join
 import pickle
-import torch.distributed as dist
+import rlkit.torch.pytorch_util as ptu
 
 
 def experiment(variant):
+    from autolab_core import YamlConfig
+    from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
+    from hrl_exp.envs.wrappers import ImageEnvWrapper
+    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
+    from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerPolicy, ActionSpaceSamplePolicy
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import EpisodeReplayBuffer
+    from rlkit.torch.model_based.dreamer.mlp import Mlp
+    from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
+    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    import torch
+    import torch.distributed as dist
     os.environ['MASTER_ADDR'] = 'localhost'
     os.environ['MASTER_PORT'] = '12355'
     dist.init_process_group("gloo", rank=0, world_size=1)
