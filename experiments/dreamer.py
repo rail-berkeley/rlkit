@@ -29,6 +29,7 @@ def experiment(variant):
     train_cfg['scene']['n_envs'] = variant['env_kwargs']['n_train_envs']
     train_cfg['rews']['block_distance_to_lift'] = variant['env_kwargs']['block_distance_to_lift']
     train_cfg['env']['fixed_schema'] = variant['env_kwargs']['fixed_schema']
+    train_cfg['env']['randomize_block_pose_on_reset'] = variant['env_kwargs']['randomize_block_pose_on_reset']
 
     train_cfg['pytorch_format'] = True
     train_cfg['flatten'] = True
@@ -144,7 +145,7 @@ if __name__ == "__main__":
         exp_prefix = 'test'+args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150, #200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -155,7 +156,6 @@ if __name__ == "__main__":
             batch_size=625,
         )
         exp_prefix=args.exp_prefix
-    # noinspection PyTypeChecker
     variant = dict(
         algorithm="Dreamer",
         version="normal",
@@ -166,6 +166,7 @@ if __name__ == "__main__":
             n_train_envs=50,
             n_eval_envs=10,
             fixed_schema=True,
+            randomize_block_pose_on_reset=True,
         ),
         actor_kwargs=dict(
           split_dist=True,
@@ -196,6 +197,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
+        'env_kwargs.randomize_block_pose_on_reset':[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
