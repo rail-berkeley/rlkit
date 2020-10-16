@@ -7,7 +7,7 @@ parser.add_argument('--mode', type=str, default='local')
 parser.add_argument('--variant', type=str)
 parser.add_argument('--num_seeds', type=int, default=1)
 parser.add_argument('--gpu_id', type=int, default=0)
-parser.add_argument('--tmux_session_name', type=str, default='research')
+parser.add_argument('--tmux_session_name', type=str, default='')
 args = parser.parse_args()
 variant = json.loads(args.variant)
 
@@ -30,7 +30,6 @@ def experiment(variant):
 	import pickle
 	import rlkit.torch.pytorch_util as ptu
 
-	ptu.set_gpu_mode(True, gpu_id=variant.get('torch_device', 0))
 	rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
 	cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
 
@@ -38,8 +37,6 @@ def experiment(variant):
 	train_cfg['franka']['workspace_limits']['ee_lower'] = variant['env_kwargs']['ee_lower']
 	train_cfg['franka']['workspace_limits']['ee_upper'] = variant['env_kwargs']['ee_upper']
 	train_cfg['scene']['n_envs'] = variant['env_kwargs']['n_train_envs']
-	train_cfg['scene']['gym']['device']['compute'] = variant['env_kwargs']['compute_device']
-	train_cfg['scene']['gym']['device']['graphics'] = variant['env_kwargs']['graphics_device']
 	train_cfg['rews']['block_distance_to_lift'] = variant['env_kwargs']['block_distance_to_lift']
 	train_cfg['env']['fixed_schema'] = variant['env_kwargs']['fixed_schema']
 	train_cfg['env']['randomize_block_pose_on_reset'] = variant['env_kwargs']['randomize_block_pose_on_reset']
@@ -147,8 +144,9 @@ for _ in range(args.num_seeds):
 		gpu_id=args.gpu_id,
 	)
 
-import libtmux
-server = libtmux.Server()
-session = server.find_where({ "session_name": args.tmux_session_name })
-window = session.attached_window
-window.kill_window()
+if args.tmux_session_name:
+	import libtmux
+	server = libtmux.Server()
+	session = server.find_where({ "session_name": args.tmux_session_name })
+	window = session.attached_window
+	window.kill_window()

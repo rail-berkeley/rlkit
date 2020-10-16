@@ -30,7 +30,7 @@ class ActorModel(Mlp):
 		self._min_std = min_std
 		self._init_std = ptu.from_numpy(np.array(init_std))
 		self._mean_scale = mean_scale
-		self.modules = lambda:self.fcs+[self.last_fc]
+		self.modules = self.fcs+[self.last_fc]
 
 	def forward(self, input):
 		raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -229,7 +229,7 @@ class WorldModel(PyTorchModule):
 		self.feature_size = stochastic_state_size + deterministic_state_size
 		self.stochastic_state_size = stochastic_state_size
 		self.deterministic_state_size = deterministic_state_size
-		self.modules = lambda:[self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward, self.pcont]
+		self.modules = [self.obs_step_mlp, self.img_step_layer, self.img_step_mlp, self.rnn, self.conv_encoder, self.conv_decoder, self.reward, self.pcont]
 		
 	def obs_step(self, prev_state, prev_action, embed):
 		prior = self.img_step(prev_state, prev_action)
@@ -323,9 +323,6 @@ class WorldModel(PyTorchModule):
 			stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
 			deter=ptu.zeros([batch_size, self.deterministic_state_size])
 		)
-
-from typing import Iterable
-from torch.nn import Module
 
 # "get_parameters" and "FreezeParameters" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
