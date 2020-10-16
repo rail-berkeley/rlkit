@@ -6,6 +6,8 @@ parser.add_argument('--exp_prefix', type=str, default='')
 parser.add_argument('--mode', type=str, default='local')
 parser.add_argument('--variant', type=str)
 parser.add_argument('--num_seeds', type=int, default=1)
+parser.add_argument('--gpu_id', type=int, default=0)
+parser.add_argument('--tmux_session_name', type=str, default='research')
 args = parser.parse_args()
 variant = json.loads(args.variant)
 
@@ -142,10 +144,11 @@ for _ in range(args.num_seeds):
 		variant=variant,
 		use_gpu=True,
 		snapshot_mode='none',
+		gpu_id=args.gpu_id,
 	)
 
 import libtmux
 server = libtmux.Server()
-session = server.find_where({ "session_name": "research" })
+session = server.find_where({ "session_name": args.tmux_session_name })
 window = session.attached_window
 window.kill_window()

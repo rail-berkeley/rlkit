@@ -12,10 +12,12 @@ if __name__ == "__main__":
     parser.add_argument('--mode', type=str, default='local')
     parser.add_argument('--debug', action='store_true', default=False)
     parser.add_argument('--tmux', action='store_true', default=False)
+    parser.add_argument('--tmux_session_name', type=str, default='research')
     args = parser.parse_args()
 
-    server = libtmux.Server()
-    session = server.find_where({ "session_name": "research" })
+    if args.tmux:
+        server = libtmux.Server()
+        session = server.find_where({ "session_name": args.tmux_session_name })
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=2,
@@ -98,18 +100,20 @@ if __name__ == "__main__":
 
     num_gpus = torch.cuda.device_count()
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        gpu_device = exp_id % num_gpus
+        gpu_id = exp_id % num_gpus # only matters for docker runs
         json_var = json.dumps(variant)
-        cmd = "CUDA_VISIBLE_DEVICES={} python experiments/runner.py --variant \'{}\' --exp_prefix {} --mode {} --num_seeds {}".format(
-            gpu_device,
+        cmd = "python experiments/runner.py --variant \'{}\' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {} --tmux_session_name {}".format(
             json_var,
             args.exp_prefix,
             args.mode,
             args.num_seeds,
+            gpu_id,
+            args.tmux_session_name
         )
         if args.tmux:
-            w = session.new_window(attach=False, window_name="exp_id:{} device:{}".format(exp_id, gpu_device))
+            w = session.new_window(attach=False, window_name="exp_id:{} device:{}".format(exp_id, gpu_id))
             pane = w.split_window()
+            pane.send_keys('conda activate hrl-exp-env')
             pane.send_keys(cmd)
         else:
             os.system(cmd)

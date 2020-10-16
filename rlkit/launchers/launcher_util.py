@@ -436,6 +436,7 @@ def run_experiment(
         local_input_dir_to_mount_point_dict=None,  # TODO(vitchyr): test this
         # local settings
         skip_wait=False,
+        gpu_id=0,
         # ec2 settings
         sync_interval=180,
         region='us-east-1',
@@ -656,6 +657,7 @@ def run_experiment(
         dmode = doodad.mode.LocalDocker(
             image=docker_image,
             gpu=use_gpu,
+            gpu_id=gpu_id,
         )
     elif mode == 'ssh':
         if ssh_host == None:
