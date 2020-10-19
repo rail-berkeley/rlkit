@@ -50,13 +50,13 @@ if __name__ == "__main__":
         replay_buffer_size=int(1E5),
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs = dict(
-            block_distance_to_lift=0,
             n_train_envs=50,
             n_eval_envs=10,
             fixed_schema=True,
-            randomize_block_pose_on_reset=False,
             ee_lower=(.45, .525, -.05),
             ee_upper=(.55, .6, .05),
+            target_screw_angle=-1.57,
+            target_screw_angle_tol=.5,
         ),
         actor_kwargs=dict(
           split_dist=False,
@@ -86,10 +86,6 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        'env_kwargs.randomize_block_pose_on_reset':[False],
-        # 'env_kwargs.ee_lower':[(.45, .525, -.05), (.4, .525, -.1), (.35, .525, -.15)],
-        # 'env_kwargs.ee_upper':[(.55, .625, .05), (.6, .725, .1), (.65, .825, .15)],
-        # 'env_kwargs.block_distance_to_lift':[0, .05, .1]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
@@ -99,7 +95,7 @@ if __name__ == "__main__":
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         gpu_id = exp_id % num_gpus # only matters for docker runs
         json_var = json.dumps(variant)
-        cmd = "python experiments/runner.py --variant \'{}\' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
+        cmd = "python experiments/hex_screw/runner.py --variant \'{}\' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
             json_var,
             args.exp_prefix,
             args.mode,

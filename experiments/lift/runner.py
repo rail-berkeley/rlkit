@@ -31,7 +31,7 @@ def experiment(variant):
 	import rlkit.torch.pytorch_util as ptu
 
 	rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
-	cfg_path = join(rlkit_project_dir, 'experiments/run_franka_lift.yaml')
+	cfg_path = join(rlkit_project_dir, 'cfg/run_franka_lift.yaml')
 
 	train_cfg = YamlConfig(cfg_path)
 	train_cfg['franka']['workspace_limits']['ee_lower'] = variant['env_kwargs']['ee_lower']
