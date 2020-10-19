@@ -120,6 +120,6 @@ camera:
     imshape:
         width: 64
         height: 64
-    cam_pos: [1.1, 1.1, 0]
-    look_at: [1, 1, 0]
+    cam_pos: [.7, .9, 0]
+    look_at: [0, -.3, 0]
 
