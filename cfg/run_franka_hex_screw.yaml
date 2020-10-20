@@ -2,7 +2,11 @@ scene:
     n_envs: 30
     es: 1
     gui: 0
+    cts: False
     gym:
+        device:
+            compute: 0
+            graphics: 0
         dt: 0.01
         substeps: 2
         flex:
@@ -14,6 +18,9 @@ scene:
             shape_collision_margin: 1e-3
             contact_regularization: 1e-7
             deterministic_mode: True
+    cam:
+        cam_pos: [1.2, 1.2, 0]
+        look_at: [1, 1, 0]
 
 franka:
     asset_options:
@@ -67,6 +74,8 @@ task:
 env:
     n_inter_steps: 75
     auto_reset_after_done: False
+    include_timestep_in_obs: True
+    include_primitive_action_in_obs: False
 
 rews:
     dense: False
@@ -83,9 +92,6 @@ table:
         rolling_friction: 0
         torsion_friction: 0
         thickness: 2e-3
-    rb_props:
-        flags: none # can be none, no_sim, no_gravity
-        color: [0, 0, 0]
     asset_options:
         fix_base_link: True
 
