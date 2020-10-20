@@ -55,7 +55,7 @@ if __name__ == "__main__":
             fixed_schema=True,
             ee_lower=(0.45, 0.525, -0.05),
             ee_upper=(0.55, 0.6, 0.05),
-            target_screw_angle=-1.57,
+            target_screw_angle=0.05,
             target_screw_angle_tol=0.5,
         ),
         actor_kwargs=dict(
@@ -85,7 +85,7 @@ if __name__ == "__main__":
         ),
     )
 
-    search_space = {}
+    search_space = {"env_kwargs.target_screw_angle": [0.05, 0.5, 1, 1.5]}
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
