@@ -7,6 +7,7 @@ class EpsilonGreedy(RawExplorationStrategy):
     """
     Take a random discrete action with some probability.
     """
+
     def __init__(self, action_space, prob_random_action=0.1):
         self.prob_random_action = prob_random_action
         self.action_space = action_space

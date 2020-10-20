@@ -14,15 +14,18 @@ from rlkit.demos.source.mdp_path_loader import MDPPathLoader
 from rlkit.visualization.video import save_paths
 
 import torch
-from rlkit.visualization.video import save_paths, VideoSaveFunction, RIGVideoSaveFunction
+from rlkit.visualization.video import (
+    save_paths,
+    VideoSaveFunction,
+    RIGVideoSaveFunction,
+)
 from rlkit.envs.images import Renderer, InsertImageEnv, EnvRenderer
 from rlkit.launchers.contextual.util import (
     get_save_video_function,
     get_gym_env,
 )
 
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_and_epislon import GaussianAndEpsilonStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 
@@ -30,10 +33,8 @@ import os.path as osp
 from rlkit.core import logger
 from rlkit.misc.asset_loader import load_local_or_remote_file
 
-from rlkit.data_management.obs_dict_replay_buffer import \
-        ObsDictRelabelingBuffer
-from rlkit.data_management.wrappers.concat_to_obs_wrapper import \
-        ConcatToObsWrapper
+from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
+from rlkit.data_management.wrappers.concat_to_obs_wrapper import ConcatToObsWrapper
 from rlkit.envs.reward_mask_wrapper import DiscreteDistribution, RewardMaskWrapper
 
 from functools import partial
@@ -49,33 +50,47 @@ from rlkit.envs.contextual.goal_conditioned import (
     IndexIntoAchievedGoal,
 )
 
+
 def compute_hand_sparse_reward(next_obs, reward, done, info):
-    return info['goal_achieved'] - 1
+    return info["goal_achieved"] - 1
+
 
 def resume(variant):
-    data = load_local_or_remote_file(variant.get("pretrained_algorithm_path"), map_location="cuda")
-    algo = data['algorithm']
+    data = load_local_or_remote_file(
+        variant.get("pretrained_algorithm_path"), map_location="cuda"
+    )
+    algo = data["algorithm"]
 
-    algo.num_epochs = variant['num_epochs']
+    algo.num_epochs = variant["num_epochs"]
 
-    post_pretrain_hyperparams = variant["trainer_kwargs"].get("post_pretrain_hyperparams", {})
+    post_pretrain_hyperparams = variant["trainer_kwargs"].get(
+        "post_pretrain_hyperparams", {}
+    )
     algo.trainer.set_algorithm_weights(**post_pretrain_hyperparams)
 
     algo.train()
 
+
 def process_args(variant):
     if variant.get("debug", False):
-        variant['max_path_length'] = 50
-        variant['batch_size'] = 5
-        variant['num_epochs'] = 5
-        variant['num_eval_steps_per_epoch'] = 100
-        variant['num_expl_steps_per_train_loop'] = 100
-        variant['num_trains_per_train_loop'] = 10
-        variant['min_num_steps_before_training'] = 100
-        variant['min_num_steps_before_training'] = 100
-        variant['trainer_kwargs']['bc_num_pretrain_steps'] = min(10, variant['trainer_kwargs'].get('bc_num_pretrain_steps', 0))
-        variant['trainer_kwargs']['q_num_pretrain1_steps'] = min(10, variant['trainer_kwargs'].get('q_num_pretrain1_steps', 0))
-        variant['trainer_kwargs']['q_num_pretrain2_steps'] = min(10, variant['trainer_kwargs'].get('q_num_pretrain2_steps', 0))
+        variant["max_path_length"] = 50
+        variant["batch_size"] = 5
+        variant["num_epochs"] = 5
+        variant["num_eval_steps_per_epoch"] = 100
+        variant["num_expl_steps_per_train_loop"] = 100
+        variant["num_trains_per_train_loop"] = 10
+        variant["min_num_steps_before_training"] = 100
+        variant["min_num_steps_before_training"] = 100
+        variant["trainer_kwargs"]["bc_num_pretrain_steps"] = min(
+            10, variant["trainer_kwargs"].get("bc_num_pretrain_steps", 0)
+        )
+        variant["trainer_kwargs"]["q_num_pretrain1_steps"] = min(
+            10, variant["trainer_kwargs"].get("q_num_pretrain1_steps", 0)
+        )
+        variant["trainer_kwargs"]["q_num_pretrain2_steps"] = min(
+            10, variant["trainer_kwargs"].get("q_num_pretrain2_steps", 0)
+        )
+
 
 def experiment(variant):
     render = variant.get("render", False)
@@ -91,15 +106,17 @@ def experiment(variant):
     eval_env = env_class(**env_kwargs)
     env = eval_env
 
-    if variant.get('sparse_reward', False):
+    if variant.get("sparse_reward", False):
         expl_env = RewardWrapperEnv(expl_env, compute_hand_sparse_reward)
         eval_env = RewardWrapperEnv(eval_env, compute_hand_sparse_reward)
 
-    if variant.get('add_env_demos', False):
+    if variant.get("add_env_demos", False):
         variant["path_loader_kwargs"]["demo_paths"].append(variant["env_demo_path"])
 
-    if variant.get('add_env_offpolicy_data', False):
-        variant["path_loader_kwargs"]["demo_paths"].append(variant["env_offpolicy_data_path"])
+    if variant.get("add_env_offpolicy_data", False):
+        variant["path_loader_kwargs"]["demo_paths"].append(
+            variant["env_offpolicy_data_path"]
+        )
 
     if variant.get("use_masks", False):
         mask_wrapper_kwargs = variant.get("mask_wrapper_kwargs", dict())
@@ -119,42 +136,48 @@ def experiment(variant):
         expl_env = StackObservationEnv(expl_env, stack_obs=stack_obs)
         eval_env = StackObservationEnv(eval_env, stack_obs=stack_obs)
 
-    observation_key = variant.get('observation_key', 'latent_observation')
-    desired_goal_key = variant.get('desired_goal_key', 'latent_desired_goal')
-    achieved_goal_key = variant.get('achieved_goal_key', 'latent_achieved_goal')
+    observation_key = variant.get("observation_key", "latent_observation")
+    desired_goal_key = variant.get("desired_goal_key", "latent_desired_goal")
+    achieved_goal_key = variant.get("achieved_goal_key", "latent_achieved_goal")
     obs_dim = (
-            env.observation_space.spaces[observation_key].low.size
-            + env.observation_space.spaces[desired_goal_key].low.size
+        env.observation_space.spaces[observation_key].low.size
+        + env.observation_space.spaces[desired_goal_key].low.size
     )
     action_dim = eval_env.action_space.low.size
 
-    if hasattr(expl_env, 'info_sizes'):
+    if hasattr(expl_env, "info_sizes"):
         env_info_sizes = expl_env.info_sizes
     else:
         env_info_sizes = dict()
 
-    replay_buffer_kwargs=dict(
+    replay_buffer_kwargs = dict(
         env=env,
         observation_key=observation_key,
         desired_goal_key=desired_goal_key,
         achieved_goal_key=achieved_goal_key,
     )
-    replay_buffer_kwargs.update(variant.get('replay_buffer_kwargs', dict()))
+    replay_buffer_kwargs.update(variant.get("replay_buffer_kwargs", dict()))
     replay_buffer = ConcatToObsWrapper(
         ObsDictRelabelingBuffer(**replay_buffer_kwargs),
-        ["resampled_goals", ],
+        [
+            "resampled_goals",
+        ],
     )
-    replay_buffer_kwargs.update(variant.get('demo_replay_buffer_kwargs', dict()))
+    replay_buffer_kwargs.update(variant.get("demo_replay_buffer_kwargs", dict()))
     demo_train_buffer = ConcatToObsWrapper(
         ObsDictRelabelingBuffer(**replay_buffer_kwargs),
-        ["resampled_goals", ],
+        [
+            "resampled_goals",
+        ],
     )
     demo_test_buffer = ConcatToObsWrapper(
         ObsDictRelabelingBuffer(**replay_buffer_kwargs),
-        ["resampled_goals", ],
+        [
+            "resampled_goals",
+        ],
     )
 
-    M = variant['layer_size']
+    M = variant["layer_size"]
     qf1 = ConcatMlp(
         input_size=obs_dim + action_dim,
         output_size=1,
@@ -177,7 +200,7 @@ def experiment(variant):
     )
 
     policy_class = variant.get("policy_class", TanhGaussianPolicy)
-    policy_kwargs = variant['policy_kwargs']
+    policy_kwargs = variant["policy_kwargs"]
     policy_path = variant.get("policy_path", False)
     if policy_path:
         policy = load_local_or_remote_file(policy_path)
@@ -199,7 +222,7 @@ def experiment(variant):
         )
 
     expl_policy = policy
-    exploration_kwargs =  variant.get('exploration_kwargs', {})
+    exploration_kwargs = variant.get("exploration_kwargs", {})
     if exploration_kwargs:
         if exploration_kwargs.get("deterministic_exploration", False):
             expl_policy = MakeDeterministic(policy)
@@ -207,21 +230,21 @@ def experiment(variant):
         exploration_strategy = exploration_kwargs.get("strategy", None)
         if exploration_strategy is None:
             pass
-        elif exploration_strategy == 'ou':
+        elif exploration_strategy == "ou":
             es = OUStrategy(
                 action_space=expl_env.action_space,
-                max_sigma=exploration_kwargs['noise'],
-                min_sigma=exploration_kwargs['noise'],
+                max_sigma=exploration_kwargs["noise"],
+                min_sigma=exploration_kwargs["noise"],
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
                 exploration_strategy=es,
                 policy=expl_policy,
             )
-        elif exploration_strategy == 'gauss_eps':
+        elif exploration_strategy == "gauss_eps":
             es = GaussianAndEpsilonStrategy(
                 action_space=expl_env.action_space,
-                max_sigma=exploration_kwargs['noise'],
-                min_sigma=exploration_kwargs['noise'],  # constant sigma
+                max_sigma=exploration_kwargs["noise"],
+                min_sigma=exploration_kwargs["noise"],  # constant sigma
                 epsilon=0,
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
@@ -239,9 +262,9 @@ def experiment(variant):
         target_qf1=target_qf1,
         target_qf2=target_qf2,
         buffer_policy=buffer_policy,
-        **variant['trainer_kwargs']
+        **variant["trainer_kwargs"],
     )
-    if variant['collection_mode'] == 'online':
+    if variant["collection_mode"] == "online":
         expl_path_collector = MdpStepCollector(
             expl_env,
             policy,
@@ -253,13 +276,13 @@ def experiment(variant):
             exploration_data_collector=expl_path_collector,
             evaluation_data_collector=eval_path_collector,
             replay_buffer=replay_buffer,
-            max_path_length=variant['max_path_length'],
-            batch_size=variant['batch_size'],
-            num_epochs=variant['num_epochs'],
-            num_eval_steps_per_epoch=variant['num_eval_steps_per_epoch'],
-            num_expl_steps_per_train_loop=variant['num_expl_steps_per_train_loop'],
-            num_trains_per_train_loop=variant['num_trains_per_train_loop'],
-            min_num_steps_before_training=variant['min_num_steps_before_training'],
+            max_path_length=variant["max_path_length"],
+            batch_size=variant["batch_size"],
+            num_epochs=variant["num_epochs"],
+            num_eval_steps_per_epoch=variant["num_eval_steps_per_epoch"],
+            num_expl_steps_per_train_loop=variant["num_expl_steps_per_train_loop"],
+            num_trains_per_train_loop=variant["num_trains_per_train_loop"],
+            min_num_steps_before_training=variant["min_num_steps_before_training"],
         )
     else:
         eval_path_collector = GoalConditionedPathCollector(
@@ -283,13 +306,13 @@ def experiment(variant):
             exploration_data_collector=expl_path_collector,
             evaluation_data_collector=eval_path_collector,
             replay_buffer=replay_buffer,
-            max_path_length=variant['max_path_length'],
-            batch_size=variant['batch_size'],
-            num_epochs=variant['num_epochs'],
-            num_eval_steps_per_epoch=variant['num_eval_steps_per_epoch'],
-            num_expl_steps_per_train_loop=variant['num_expl_steps_per_train_loop'],
-            num_trains_per_train_loop=variant['num_trains_per_train_loop'],
-            min_num_steps_before_training=variant['min_num_steps_before_training'],
+            max_path_length=variant["max_path_length"],
+            batch_size=variant["batch_size"],
+            num_epochs=variant["num_epochs"],
+            num_eval_steps_per_epoch=variant["num_eval_steps_per_epoch"],
+            num_expl_steps_per_train_loop=variant["num_expl_steps_per_train_loop"],
+            num_trains_per_train_loop=variant["num_trains_per_train_loop"],
+            min_num_steps_before_training=variant["min_num_steps_before_training"],
         )
     algorithm.to(ptu.device)
 
@@ -310,13 +333,13 @@ def experiment(variant):
             image_goal_distribution = AddImageDistribution(
                 env=env,
                 base_distribution=state_goal_distribution,
-                image_goal_key='image_desired_goal',
+                image_goal_key="image_desired_goal",
                 renderer=renderer,
             )
             img_env = InsertImageEnv(env, renderer=renderer)
             rollout_function = partial(
                 rf.multitask_rollout,
-                max_path_length=variant['max_path_length'],
+                max_path_length=variant["max_path_length"],
                 observation_key=observation_key,
                 desired_goal_key=desired_goal_key,
                 return_dict_obs=True,
@@ -339,42 +362,44 @@ def experiment(variant):
                 policy,
                 tag=tag,
                 imsize=renderer.width,
-                image_format='CWH',
-                **save_video_kwargs
+                image_format="CWH",
+                **save_video_kwargs,
             )
             return video_func
+
         expl_video_func = get_video_func(expl_env, expl_policy, "expl")
         eval_video_func = get_video_func(eval_env, MakeDeterministic(policy), "eval")
         algorithm.post_train_funcs.append(eval_video_func)
         algorithm.post_train_funcs.append(expl_video_func)
 
-    if variant.get('save_paths', False):
+    if variant.get("save_paths", False):
         algorithm.post_train_funcs.append(save_paths)
 
-    if variant.get('load_demos', False):
-        path_loader_class = variant.get('path_loader_class', MDPPathLoader)
-        path_loader = path_loader_class(trainer,
+    if variant.get("load_demos", False):
+        path_loader_class = variant.get("path_loader_class", MDPPathLoader)
+        path_loader = path_loader_class(
+            trainer,
             replay_buffer=replay_buffer,
             demo_train_buffer=demo_train_buffer,
             demo_test_buffer=demo_test_buffer,
-            **path_loader_kwargs
+            **path_loader_kwargs,
         )
         path_loader.load_demos()
-    if variant.get('pretrain_policy', False):
+    if variant.get("pretrain_policy", False):
         trainer.pretrain_policy_with_bc(
             policy,
             demo_train_buffer,
             demo_test_buffer,
             trainer.bc_num_pretrain_steps,
         )
-    if variant.get('pretrain_rl', False):
+    if variant.get("pretrain_rl", False):
         trainer.pretrain_q_with_bc_data()
 
-    if variant.get('save_pretrained_algorithm', False):
-        p_path = osp.join(logger.get_snapshot_dir(), 'pretrain_algorithm.p')
-        pt_path = osp.join(logger.get_snapshot_dir(), 'pretrain_algorithm.pt')
+    if variant.get("save_pretrained_algorithm", False):
+        p_path = osp.join(logger.get_snapshot_dir(), "pretrain_algorithm.p")
+        pt_path = osp.join(logger.get_snapshot_dir(), "pretrain_algorithm.pt")
         data = algorithm._get_snapshot()
-        data['algorithm'] = algorithm
+        data["algorithm"] = algorithm
         torch.save(data, open(pt_path, "wb"))
         torch.save(data, open(p_path, "wb"))
 

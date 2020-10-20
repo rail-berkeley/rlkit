@@ -16,13 +16,12 @@ if __name__ == "__main__":
         min_num_steps_before_training=1000,
         max_path_length=1000,
         batch_size=1024,
-        replay_buffer_size=int(1E6),
+        replay_buffer_size=int(1e6),
         layer_size=256,
         num_layers=2,
         algorithm="AWAC",
         version="normal",
-        collection_mode='batch',
-
+        collection_mode="batch",
         policy_class=GaussianPolicy,
         policy_kwargs=dict(
             hidden_sizes=[256] * 4,
@@ -30,15 +29,13 @@ if __name__ == "__main__":
             min_log_std=-6,
             std_architecture="values",
         ),
-        qf_kwargs=dict(
-            hidden_sizes=[256, 256]
-        ),
+        qf_kwargs=dict(hidden_sizes=[256, 256]),
         trainer_kwargs=dict(
             discount=0.99,
             soft_target_tau=5e-3,
             target_update_period=1,
-            policy_lr=3E-4,
-            qf_lr=3E-4,
+            policy_lr=3e-4,
+            qf_lr=3e-4,
             reward_scale=1,
             beta=1,
             alpha=0,
@@ -48,7 +45,6 @@ if __name__ == "__main__":
             policy_weight_decay=1e-4,
             train_bc_on_rl_buffer=False,
             buffer_policy_sample_actions=False,
-
             reparam_weight=0.0,
             awr_weight=1.0,
             bc_weight=0.0,
@@ -68,7 +64,6 @@ if __name__ == "__main__":
             ],
         ),
         path_loader_class=DictToMDPPathLoader,
-
         pretrain_rl=True,
         use_validation_buffer=True,
         add_env_demos=True,
@@ -77,20 +72,27 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        'trainer_kwargs.beta':[2, ],
-        'train_rl':[True],
-        'pretrain_rl':[True],
-        'pretrain_policy':[False],
-        'env_id': ['HalfCheetah-v2', 'Ant-v2', 'Walker2d-v2', ],
+        "trainer_kwargs.beta": [
+            2,
+        ],
+        "train_rl": [True],
+        "pretrain_rl": [True],
+        "pretrain_policy": [False],
+        "env_id": [
+            "HalfCheetah-v2",
+            "Ant-v2",
+            "Walker2d-v2",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'dev-{}'.format(
-        __file__.replace('/', '-').replace('_', '-').split('.')[0]
+    mode = "local"
+    exp_prefix = "dev-{}".format(
+        __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )
 
     # n_seeds = 3
@@ -106,12 +108,11 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=use_gpu,
                 snapshot_gap=200,
-                snapshot_mode='gap_and_last',
+                snapshot_mode="gap_and_last",
                 num_exps_per_instance=3,
                 gcp_kwargs=dict(
-                    zone='us-west1-b',
+                    zone="us-west1-b",
                 ),
-
             )
 
     # variants = []

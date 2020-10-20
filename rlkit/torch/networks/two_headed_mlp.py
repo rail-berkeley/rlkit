@@ -9,18 +9,18 @@ from rlkit.torch.networks import LayerNorm
 
 class TwoHeadMlp(PyTorchModule):
     def __init__(
-            self,
-            hidden_sizes,
-            first_head_size,
-            second_head_size,
-            input_size,
-            init_w=3e-3,
-            hidden_activation=F.relu,
-            output_activation=identity,
-            hidden_init=ptu.fanin_init,
-            b_init_value=0.,
-            layer_norm=False,
-            layer_norm_kwargs=None,
+        self,
+        hidden_sizes,
+        first_head_size,
+        second_head_size,
+        input_size,
+        init_w=3e-3,
+        hidden_activation=F.relu,
+        output_activation=identity,
+        hidden_init=ptu.fanin_init,
+        b_init_value=0.0,
+        layer_norm=False,
+        layer_norm_kwargs=None,
     ):
         super().__init__()
 

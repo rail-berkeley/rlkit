@@ -10,13 +10,15 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import ExplorationPolicy
 from rlkit.torch.core import torch_ify, elem_or_tuple_to_numpy
 from rlkit.torch.distributions import (
-    Delta, TanhNormal, MultivariateDiagonalNormal, GaussianMixture, GaussianMixtureFull,
+    Delta,
+    TanhNormal,
+    MultivariateDiagonalNormal,
+    GaussianMixture,
+    GaussianMixtureFull,
 )
 from rlkit.torch.networks import Mlp, CNN
 from rlkit.torch.networks.basic import MultiInputSequential
-from rlkit.torch.networks.stochastic.distribution_generator import (
-    DistributionGenerator
-)
+from rlkit.torch.networks.stochastic.distribution_generator import DistributionGenerator
 from rlkit.torch.sac.policies.base import (
     TorchStochasticPolicy,
     PolicyFromDistributionGenerator,
@@ -40,11 +42,11 @@ class TanhGaussianPolicyAdapter(TorchStochasticPolicy):
     """
 
     def __init__(
-            self,
-            obs_processor,
-            obs_processor_output_dim,
-            action_dim,
-            hidden_sizes,
+        self,
+        obs_processor,
+        obs_processor_output_dim,
+        action_dim,
+        hidden_sizes,
     ):
         super().__init__()
         self.obs_processor = obs_processor
@@ -77,13 +79,7 @@ class TanhGaussianPolicy(Mlp, TorchStochasticPolicy):
     """
 
     def __init__(
-            self,
-            hidden_sizes,
-            obs_dim,
-            action_dim,
-            std=None,
-            init_w=1e-3,
-            **kwargs
+        self, hidden_sizes, obs_dim, action_dim, std=None, init_w=1e-3, **kwargs
     ):
         super().__init__(
             hidden_sizes,
@@ -115,8 +111,17 @@ class TanhGaussianPolicy(Mlp, TorchStochasticPolicy):
             log_std = torch.clamp(log_std, LOG_SIG_MIN, LOG_SIG_MAX)
             std = torch.exp(log_std)
         else:
-            std = torch.from_numpy(np.array([self.std, ])).float().to(
-                ptu.device)
+            std = (
+                torch.from_numpy(
+                    np.array(
+                        [
+                            self.std,
+                        ]
+                    )
+                )
+                .float()
+                .to(ptu.device)
+            )
 
         return TanhNormal(mean, std)
 
@@ -131,16 +136,16 @@ class TanhGaussianPolicy(Mlp, TorchStochasticPolicy):
 
 class GaussianPolicy(Mlp, TorchStochasticPolicy):
     def __init__(
-            self,
-            hidden_sizes,
-            obs_dim,
-            action_dim,
-            std=None,
-            init_w=1e-3,
-            min_log_std=None,
-            max_log_std=None,
-            std_architecture="shared",
-            **kwargs
+        self,
+        hidden_sizes,
+        obs_dim,
+        action_dim,
+        std=None,
+        init_w=1e-3,
+        min_log_std=None,
+        max_log_std=None,
+        std_architecture="shared",
+        **kwargs
     ):
         super().__init__(
             hidden_sizes,
@@ -165,7 +170,8 @@ class GaussianPolicy(Mlp, TorchStochasticPolicy):
                 self.last_fc_log_std.bias.data.uniform_(-init_w, init_w)
             elif self.std_architecture == "values":
                 self.log_std_logits = nn.Parameter(
-                    ptu.zeros(action_dim, requires_grad=True))
+                    ptu.zeros(action_dim, requires_grad=True)
+                )
             else:
                 raise ValueError(self.std_architecture)
         else:
@@ -185,29 +191,36 @@ class GaussianPolicy(Mlp, TorchStochasticPolicy):
                 log_std = torch.sigmoid(self.log_std_logits)
             else:
                 raise ValueError(self.std_architecture)
-            log_std = self.min_log_std + log_std * (
-                        self.max_log_std - self.min_log_std)
+            log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
-            std = torch.from_numpy(np.array([self.std, ])).float().to(
-                ptu.device)
+            std = (
+                torch.from_numpy(
+                    np.array(
+                        [
+                            self.std,
+                        ]
+                    )
+                )
+                .float()
+                .to(ptu.device)
+            )
 
         return MultivariateDiagonalNormal(mean, std)
 
 
-
 class GaussianCNNPolicy(CNN, TorchStochasticPolicy):
     def __init__(
-            self,
-            hidden_sizes,
-            obs_dim,
-            action_dim,
-            std=None,
-            init_w=1e-3,
-            min_log_std=None,
-            max_log_std=None,
-            std_architecture="shared",
-            **kwargs
+        self,
+        hidden_sizes,
+        obs_dim,
+        action_dim,
+        std=None,
+        init_w=1e-3,
+        min_log_std=None,
+        max_log_std=None,
+        std_architecture="shared",
+        **kwargs
     ):
         super().__init__(
             hidden_sizes=hidden_sizes,
@@ -231,7 +244,8 @@ class GaussianCNNPolicy(CNN, TorchStochasticPolicy):
                 self.last_fc_log_std.bias.data.uniform_(-init_w, init_w)
             elif self.std_architecture == "values":
                 self.log_std_logits = nn.Parameter(
-                    ptu.zeros(action_dim, requires_grad=True))
+                    ptu.zeros(action_dim, requires_grad=True)
+                )
             else:
                 raise ValueError(self.std_architecture)
         else:
@@ -249,29 +263,37 @@ class GaussianCNNPolicy(CNN, TorchStochasticPolicy):
                 log_std = torch.sigmoid(self.log_std_logits)
             else:
                 raise ValueError(self.std_architecture)
-            log_std = self.min_log_std + log_std * (
-                        self.max_log_std - self.min_log_std)
+            log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
-            std = torch.from_numpy(np.array([self.std, ])).float().to(
-                ptu.device)
+            std = (
+                torch.from_numpy(
+                    np.array(
+                        [
+                            self.std,
+                        ]
+                    )
+                )
+                .float()
+                .to(ptu.device)
+            )
 
         return MultivariateDiagonalNormal(mean, std)
 
 
 class GaussianMixturePolicy(Mlp, TorchStochasticPolicy):
     def __init__(
-            self,
-            hidden_sizes,
-            obs_dim,
-            action_dim,
-            std=None,
-            init_w=1e-3,
-            min_log_std=None,
-            max_log_std=None,
-            num_gaussians=1,
-            std_architecture="shared",
-            **kwargs
+        self,
+        hidden_sizes,
+        obs_dim,
+        action_dim,
+        std=None,
+        init_w=1e-3,
+        min_log_std=None,
+        max_log_std=None,
+        num_gaussians=1,
+        std_architecture="shared",
+        **kwargs
     ):
         super().__init__(
             hidden_sizes,
@@ -294,13 +316,15 @@ class GaussianMixturePolicy(Mlp, TorchStochasticPolicy):
                 last_hidden_size = hidden_sizes[-1]
 
             if self.std_architecture == "shared":
-                self.last_fc_log_std = nn.Linear(last_hidden_size,
-                                                 action_dim * num_gaussians)
+                self.last_fc_log_std = nn.Linear(
+                    last_hidden_size, action_dim * num_gaussians
+                )
                 self.last_fc_log_std.weight.data.uniform_(-init_w, init_w)
                 self.last_fc_log_std.bias.data.uniform_(-init_w, init_w)
             elif self.std_architecture == "values":
                 self.log_std_logits = nn.Parameter(
-                    ptu.zeros(action_dim * num_gaussians, requires_grad=True))
+                    ptu.zeros(action_dim * num_gaussians, requires_grad=True)
+                )
             else:
                 raise ValueError(self.std_architecture)
         else:
@@ -326,34 +350,46 @@ class GaussianMixturePolicy(Mlp, TorchStochasticPolicy):
                 log_std = torch.sigmoid(self.log_std_logits)
             else:
                 raise ValueError(self.std_architecture)
-            log_std = self.min_log_std + log_std * (
-                        self.max_log_std - self.min_log_std)
+            log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
             std = torch.from_numpy(self.std)
             log_std = self.log_std
 
         weights = F.softmax(self.last_fc_weights(h)).reshape(
-            (-1, self.num_gaussians, 1))
-        mixture_means = mean.reshape((-1, self.action_dim, self.num_gaussians,))
-        mixture_stds = std.reshape((-1, self.action_dim, self.num_gaussians,))
+            (-1, self.num_gaussians, 1)
+        )
+        mixture_means = mean.reshape(
+            (
+                -1,
+                self.action_dim,
+                self.num_gaussians,
+            )
+        )
+        mixture_stds = std.reshape(
+            (
+                -1,
+                self.action_dim,
+                self.num_gaussians,
+            )
+        )
         dist = GaussianMixture(mixture_means, mixture_stds, weights)
         return dist
 
 
 class BinnedGMMPolicy(Mlp, TorchStochasticPolicy):
     def __init__(
-            self,
-            hidden_sizes,
-            obs_dim,
-            action_dim,
-            std=None,
-            init_w=1e-3,
-            min_log_std=None,
-            max_log_std=None,
-            num_gaussians=1,
-            std_architecture="shared",
-            **kwargs
+        self,
+        hidden_sizes,
+        obs_dim,
+        action_dim,
+        std=None,
+        init_w=1e-3,
+        min_log_std=None,
+        max_log_std=None,
+        num_gaussians=1,
+        std_architecture="shared",
+        **kwargs
     ):
         super().__init__(
             hidden_sizes,
@@ -376,20 +412,21 @@ class BinnedGMMPolicy(Mlp, TorchStochasticPolicy):
                 last_hidden_size = hidden_sizes[-1]
 
             if self.std_architecture == "shared":
-                self.last_fc_log_std = nn.Linear(last_hidden_size,
-                                                 action_dim * num_gaussians)
+                self.last_fc_log_std = nn.Linear(
+                    last_hidden_size, action_dim * num_gaussians
+                )
                 self.last_fc_log_std.weight.data.uniform_(-init_w, init_w)
                 self.last_fc_log_std.bias.data.uniform_(-init_w, init_w)
             elif self.std_architecture == "values":
                 self.log_std_logits = nn.Parameter(
-                    ptu.zeros(action_dim * num_gaussians, requires_grad=True))
+                    ptu.zeros(action_dim * num_gaussians, requires_grad=True)
+                )
             else:
                 raise ValueError(self.std_architecture)
         else:
             self.log_std = np.log(std)
             assert LOG_SIG_MIN <= self.log_std <= LOG_SIG_MAX
-        self.last_fc_weights = nn.Linear(last_hidden_size,
-                                         action_dim * num_gaussians)
+        self.last_fc_weights = nn.Linear(last_hidden_size, action_dim * num_gaussians)
         self.last_fc_weights.weight.data.uniform_(-init_w, init_w)
         self.last_fc_weights.bias.data.uniform_(-init_w, init_w)
 
@@ -409,20 +446,31 @@ class BinnedGMMPolicy(Mlp, TorchStochasticPolicy):
                 log_std = torch.sigmoid(self.log_std_logits)
             else:
                 raise ValueError(self.std_architecture)
-            log_std = self.min_log_std + log_std * (
-                        self.max_log_std - self.min_log_std)
+            log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
             std = torch.from_numpy(self.std)
             log_std = self.log_std
         batch_size = len(obs)
         logits = self.last_fc_weights(h).reshape(
-            (-1, self.action_dim, self.num_gaussians,))
+            (
+                -1,
+                self.action_dim,
+                self.num_gaussians,
+            )
+        )
         weights = F.softmax(logits, dim=2)
-        linspace = np.tile(np.linspace(-1, 1, self.num_gaussians),
-                           (batch_size, self.action_dim, 1))
+        linspace = np.tile(
+            np.linspace(-1, 1, self.num_gaussians), (batch_size, self.action_dim, 1)
+        )
         mixture_means = ptu.from_numpy(linspace)
-        mixture_stds = std.reshape((-1, self.action_dim, self.num_gaussians,))
+        mixture_stds = std.reshape(
+            (
+                -1,
+                self.action_dim,
+                self.num_gaussians,
+            )
+        )
         dist = GaussianMixtureFull(mixture_means, mixture_stds, weights)
         return dist
 
@@ -437,8 +485,8 @@ class TanhGaussianObsProcessorPolicy(TanhGaussianPolicy):
     def forward(self, obs, *args, **kwargs):
         obs_and_goal = obs
         assert obs_and_goal.shape[1] == self.pre_obs_dim + self.pre_goal_dim
-        obs = obs_and_goal[:, :self.pre_obs_dim]
-        goal = obs_and_goal[:, self.pre_obs_dim:]
+        obs = obs_and_goal[:, : self.pre_obs_dim]
+        goal = obs_and_goal[:, self.pre_obs_dim :]
 
         h_obs = self.obs_processor(obs)
         h_goal = self.obs_processor(goal)
@@ -456,16 +504,8 @@ class TanhCNNGaussianPolicy(CNN, TorchStochasticPolicy):
     policy = TanhGaussianPolicy(...)
     """
 
-    def __init__(
-            self,
-            std=None,
-            init_w=1e-3,
-            **kwargs
-    ):
-        super().__init__(
-            init_w=init_w,
-            **kwargs
-        )
+    def __init__(self, std=None, init_w=1e-3, **kwargs):
+        super().__init__(init_w=init_w, **kwargs)
         obs_dim = self.input_width * self.input_height
         action_dim = self.output_size
         self.log_std = None

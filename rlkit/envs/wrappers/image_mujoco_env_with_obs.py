@@ -10,8 +10,8 @@ class ImageMujocoWithObsEnv(ImageMujocoEnv):
         self.observation_space = Box(
             low=0.0,
             high=1.0,
-            shape=(self.image_length * self.history_length
-                   + self.wrapped_env.obs_dim,))
+            shape=(self.image_length * self.history_length + self.wrapped_env.obs_dim,),
+        )
 
     def _get_obs(self, history_flat, true_state):
         return np.concatenate([history_flat, true_state])

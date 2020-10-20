@@ -24,23 +24,27 @@ from rlkit.core import logger
 
 import glob
 
+
 def load_hdf5(dataset, replay_buffer):
-    all_obs = dataset['observations']
-    all_act = dataset['actions']
+    all_obs = dataset["observations"]
+    all_act = dataset["actions"]
     N = min(all_obs.shape[0], 1000000)
     _obs = all_obs[:N]
     _actions = all_act[:N]
-    _next_obs = np.concatenate([all_obs[1:N,:], np.zeros_like(_obs[0])[np.newaxis,:]], axis=0)
-    _rew = dataset['rewards'][:N]
-    _done = dataset['terminals'][:N]
+    _next_obs = np.concatenate(
+        [all_obs[1:N, :], np.zeros_like(_obs[0])[np.newaxis, :]], axis=0
+    )
+    _rew = dataset["rewards"][:N]
+    _done = dataset["terminals"][:N]
 
     replay_buffer._observations[:N] = _obs[:N]
     replay_buffer._next_obs[:N] = _next_obs[:N]
     replay_buffer._actions[:N] = _actions[:N]
     replay_buffer._rewards[:N] = np.expand_dims(_rew, 1)[:N]
     replay_buffer._terminals[:N] = np.expand_dims(_done, 1)[:N]
-    replay_buffer._size = N-1
+    replay_buffer._size = N - 1
     replay_buffer._top = replay_buffer._size
+
 
 class HDF5PathLoader:
     """
@@ -49,28 +53,27 @@ class HDF5PathLoader:
     """
 
     def __init__(
-            self,
-            trainer,
-            replay_buffer,
-            demo_train_buffer,
-            demo_test_buffer,
-            demo_paths=[], # list of dicts
-            demo_train_split=0.9,
-            demo_data_split=1,
-            add_demos_to_replay_buffer=True,
-            bc_num_pretrain_steps=0,
-            bc_batch_size=64,
-            bc_weight=1.0,
-            rl_weight=1.0,
-            q_num_pretrain_steps=0,
-            weight_decay=0,
-            eval_policy=None,
-            recompute_reward=False,
-            env_info_key=None,
-            obs_key=None,
-            load_terminals=True,
-
-            **kwargs
+        self,
+        trainer,
+        replay_buffer,
+        demo_train_buffer,
+        demo_test_buffer,
+        demo_paths=[],  # list of dicts
+        demo_train_split=0.9,
+        demo_data_split=1,
+        add_demos_to_replay_buffer=True,
+        bc_num_pretrain_steps=0,
+        bc_batch_size=64,
+        bc_weight=1.0,
+        rl_weight=1.0,
+        q_num_pretrain_steps=0,
+        weight_decay=0,
+        eval_policy=None,
+        recompute_reward=False,
+        env_info_key=None,
+        obs_key=None,
+        load_terminals=True,
+        **kwargs
     ):
         self.trainer = trainer
 

@@ -6,10 +6,11 @@ import time
 import numpy as np
 from rlkit.launchers import conf as config
 
-Pyro4.config.SERIALIZERS_ACCEPTED = set(['pickle','json', 'marshal', 'serpent'])
-Pyro4.config.SERIALIZER='pickle'
+Pyro4.config.SERIALIZERS_ACCEPTED = set(["pickle", "json", "marshal", "serpent"])
+Pyro4.config.SERIALIZER = "pickle"
 
 device_state = None
+
 
 @Pyro4.expose
 class DeviceState(object):
@@ -22,20 +23,21 @@ class DeviceState(object):
         global device_state
         device_state = state
 
+
 class SpaceMouseExpert:
     def __init__(
-            self,
-            xyz_dims=3,
-            xyz_remap=[0, 1, 2],
-            xyz_scale=[1, 1, 1],
-            xyz_abs_threshold=0.0,
-            rot_dims=3,
-            rot_remap=[0, 1, 2],
-            rot_scale=[1, 1, 1],
-            rot_abs_threshold=0.0,
-            rot_discrete=False,
-            min_clip=-np.inf,
-            max_clip=np.inf
+        self,
+        xyz_dims=3,
+        xyz_remap=[0, 1, 2],
+        xyz_scale=[1, 1, 1],
+        xyz_abs_threshold=0.0,
+        rot_dims=3,
+        rot_remap=[0, 1, 2],
+        rot_scale=[1, 1, 1],
+        rot_abs_threshold=0.0,
+        rot_discrete=False,
+        min_clip=-np.inf,
+        max_clip=np.inf,
     ):
         """TODO: fill in other params"""
         self.xyz_dims = xyz_dims
@@ -49,7 +51,7 @@ class SpaceMouseExpert:
         self.rot_discrete = rot_discrete
         self.min_clip = min_clip
         self.max_clip = max_clip
-        self.thread = Thread(target = start_server)
+        self.thread = Thread(target=start_server)
         self.thread.daemon = True
         self.thread.start()
         self.device_state = DeviceState()
@@ -67,8 +69,8 @@ class SpaceMouseExpert:
             state["roll"],
             state["pitch"],
             state["yaw"],
-            state["grasp"], #["left_click"],
-            state["reset"], #["right_click"],
+            state["grasp"],  # ["left_click"],
+            state["reset"],  # ["right_click"],
         )
 
         xyz = dpos[self.xyz_remap]
@@ -86,7 +88,7 @@ class SpaceMouseExpert:
         rot = rot * self.rot_scale
         rot = np.clip(rot, self.min_clip, self.max_clip)
 
-        a = np.concatenate([xyz[:self.xyz_dims], rot[:self.rot_dims]])
+        a = np.concatenate([xyz[: self.xyz_dims], rot[: self.rot_dims]])
 
         valid = not np.all(np.isclose(a, 0))
 
@@ -97,12 +99,15 @@ class SpaceMouseExpert:
 
 def start_server():
     daemon = Pyro4.Daemon(config.SPACEMOUSE_HOSTNAME)
-    ns = Pyro4.locateNS()                  # find the name server
-    uri = daemon.register(DeviceState)   # register the greeting maker as a Pyro object
-    ns.register("example.greeting", uri)   # register the object with a name in the name server
+    ns = Pyro4.locateNS()  # find the name server
+    uri = daemon.register(DeviceState)  # register the greeting maker as a Pyro object
+    ns.register(
+        "example.greeting", uri
+    )  # register the object with a name in the name server
     print("uri:", uri)
     print("Server ready.")
-    daemon.requestLoop()                   # start the event loop of the server to wait for calls
+    daemon.requestLoop()  # start the event loop of the server to wait for calls
+
 
 if __name__ == "__main__":
     expert = SpaceMouseExpert()

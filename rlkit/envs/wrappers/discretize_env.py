@@ -13,8 +13,7 @@ class DiscretizeEnv(ProxyEnv, Env):
         low = self.wrapped_env.action_space.low
         high = self.wrapped_env.action_space.high
         action_ranges = [
-            np.linspace(low[i], high[i], num_bins)
-            for i in range(len(low))
+            np.linspace(low[i], high[i], num_bins) for i in range(len(low))
         ]
         self.idx_to_continuous_action = [
             np.array(x) for x in itertools.product(*action_ranges)
@@ -24,5 +23,3 @@ class DiscretizeEnv(ProxyEnv, Env):
     def step(self, action):
         continuous_action = self.idx_to_continuous_action[action]
         return super().step(continuous_action)
-
-

@@ -7,7 +7,6 @@ from rlkit.data_management.obs_dict_replay_buffer import normalize_image
 
 
 class ImageDataset(Dataset):
-
     def __init__(self, images, should_normalize=True):
         super().__init__()
         self.dataset = images
@@ -26,7 +25,6 @@ class ImageDataset(Dataset):
 
 
 class InfiniteRandomSampler(Sampler):
-
     def __init__(self, data_source):
         self.data_source = data_source
         self.iter = iter(torch.randperm(len(self.data_source)).tolist())
@@ -47,7 +45,6 @@ class InfiniteRandomSampler(Sampler):
 
 
 class InfiniteWeightedRandomSampler(Sampler):
-
     def __init__(self, data_source, weights):
         assert len(data_source) == len(weights)
         assert len(weights.shape) == 1

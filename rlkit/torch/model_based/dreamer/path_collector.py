@@ -6,14 +6,14 @@ from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
 
 class VecMdpPathCollector(PathCollector):
     def __init__(
-            self,
-            env,
-            policy,
-            max_num_epoch_paths_saved=None,
-            render=False,
-            render_kwargs=None,
-            rollout_fn=vec_rollout,
-            save_env_in_snapshot=True,
+        self,
+        env,
+        policy,
+        max_num_epoch_paths_saved=None,
+        render=False,
+        render_kwargs=None,
+        rollout_fn=vec_rollout,
+        save_env_in_snapshot=True,
     ):
         if render_kwargs is None:
             render_kwargs = {}
@@ -31,11 +31,11 @@ class VecMdpPathCollector(PathCollector):
         self._save_env_in_snapshot = save_env_in_snapshot
 
     def collect_new_paths(
-            self,
-            max_path_length,
-            num_steps,
-            discard_incomplete_paths,
-            runtime_policy=None,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
+        runtime_policy=None,
     ):
         paths = []
         num_steps_collected = 0
@@ -49,18 +49,24 @@ class VecMdpPathCollector(PathCollector):
                 render=self._render,
                 render_kwargs=self._render_kwargs,
             )
-            path_len = len(path['actions'])
-            num_steps_collected += path_len*self._env.n_envs
+            path_len = len(path["actions"])
+            num_steps_collected += path_len * self._env.n_envs
             paths.append(path)
-        self._num_paths_total += len(paths)*self._env.n_envs
+        self._num_paths_total += len(paths) * self._env.n_envs
         self._num_steps_total += num_steps_collected
         log_paths = [{} for i in range(len(paths))]
         for i, path in enumerate(paths):
-            for k in ['observations', 'actions', 'terminals', 'rewards', 'next_observations']:
+            for k in [
+                "observations",
+                "actions",
+                "terminals",
+                "rewards",
+                "next_observations",
+            ]:
                 log_paths[i][k] = path[k][1:]
-            for k in ['agent_infos', 'env_infos']:
+            for k in ["agent_infos", "env_infos"]:
                 log_paths[i][k] = path[k][1:]
-        self._epoch_paths.extend(log_paths) #only used for logging
+        self._epoch_paths.extend(log_paths)  # only used for logging
         return paths
 
     def get_epoch_paths(self):
@@ -70,16 +76,20 @@ class VecMdpPathCollector(PathCollector):
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
 
     def get_diagnostics(self):
-        path_lens = [len(path['actions']) for path in self._epoch_paths]
-        stats = OrderedDict([
-            ('num steps total', self._num_steps_total),
-            ('num paths total', self._num_paths_total),
-        ])
-        stats.update(create_stats_ordered_dict(
-            "path length",
-            path_lens,
-            always_show_all_stats=True,
-        ))
+        path_lens = [len(path["actions"]) for path in self._epoch_paths]
+        stats = OrderedDict(
+            [
+                ("num steps total", self._num_steps_total),
+                ("num paths total", self._num_paths_total),
+            ]
+        )
+        stats.update(
+            create_stats_ordered_dict(
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
+            )
+        )
         return stats
 
     def get_snapshot(self):
@@ -87,5 +97,5 @@ class VecMdpPathCollector(PathCollector):
             policy=self._policy,
         )
         if self._save_env_in_snapshot:
-            snapshot_dict['env'] = self._env
+            snapshot_dict["env"] = self._env
         return snapshot_dict

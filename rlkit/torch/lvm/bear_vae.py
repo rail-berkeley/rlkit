@@ -10,22 +10,24 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import ExplorationPolicy
 from rlkit.torch.core import torch_ify, elem_or_tuple_to_numpy
 from rlkit.torch.distributions import (
-    Delta, TanhNormal, MultivariateDiagonalNormal, GaussianMixture, GaussianMixtureFull,
+    Delta,
+    TanhNormal,
+    MultivariateDiagonalNormal,
+    GaussianMixture,
+    GaussianMixtureFull,
 )
 from rlkit.torch.networks import Mlp, CNN
 from rlkit.torch.networks.basic import MultiInputSequential
-from rlkit.torch.networks.stochastic.distribution_generator import (
-    DistributionGenerator
-)
+from rlkit.torch.networks.stochastic.distribution_generator import DistributionGenerator
 from rlkit.torch.lvm.latent_variable_model import LatentVariableModel
 
 
 class VAEPolicy(LatentVariableModel):
     def __init__(
-            self,
-            obs_dim,
-            action_dim,
-            latent_dim,
+        self,
+        obs_dim,
+        action_dim,
+        latent_dim,
     ):
         encoder = Encoder(obs_dim, latent_dim, action_dim)
         decoder = Decoder(obs_dim, latent_dim, action_dim)
@@ -41,8 +43,7 @@ class VAEPolicy(LatentVariableModel):
         # Clamped for numerical stability
         log_std = self.encoder.log_std(z).clamp(-4, 15)
         std = torch.exp(log_std)
-        z = mean + std * ptu.from_numpy(
-            np.random.normal(0, 1, size=(std.size())))
+        z = mean + std * ptu.from_numpy(np.random.normal(0, 1, size=(std.size())))
 
         u = self.decode(state, z)
 
@@ -50,8 +51,9 @@ class VAEPolicy(LatentVariableModel):
 
     def decode(self, state, z=None):
         if z is None:
-            z = ptu.from_numpy(np.random.normal(0, 1, size=(
-            state.size(0), self.latent_dim))).clamp(-0.5, 0.5)
+            z = ptu.from_numpy(
+                np.random.normal(0, 1, size=(state.size(0), self.latent_dim))
+            ).clamp(-0.5, 0.5)
 
         a = F.relu(self.decoder.d1(torch.cat([state, z], 1)))
         a = F.relu(self.decoder.d2(a))
@@ -59,12 +61,19 @@ class VAEPolicy(LatentVariableModel):
 
     def decode_multiple(self, state, z=None, num_decode=10):
         if z is None:
-            z = ptu.from_numpy(np.random.normal(0, 1, size=(
-            state.size(0), num_decode, self.latent_dim))).clamp(-0.5, 0.5)
+            z = ptu.from_numpy(
+                np.random.normal(
+                    0, 1, size=(state.size(0), num_decode, self.latent_dim)
+                )
+            ).clamp(-0.5, 0.5)
 
-        a = F.relu(self.decoder.d1(torch.cat(
-            [state.unsqueeze(0).repeat(num_decode, 1, 1).permute(1, 0, 2), z],
-            2)))
+        a = F.relu(
+            self.decoder.d1(
+                torch.cat(
+                    [state.unsqueeze(0).repeat(num_decode, 1, 1).permute(1, 0, 2), z], 2
+                )
+            )
+        )
         a = F.relu(self.decoder.d2(a))
         return torch.tanh(self.decoder.d3(a)), self.decoder.d3(a)
 

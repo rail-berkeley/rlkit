@@ -8,15 +8,15 @@ from rlkit.torch.vae.conv_vae import imsize48_default_architecture
 
 if __name__ == "__main__":
     variant = dict(
-        algorithm='Skew-Fit',
+        algorithm="Skew-Fit",
         double_algo=False,
         online_vae_exploration=False,
         imsize=48,
         init_camera=sawyer_init_camera_zoomed_in,
-        env_id='SawyerPushNIPSEasy-v0',
+        env_id="SawyerPushNIPSEasy-v0",
         skewfit_variant=dict(
             save_video=True,
-            custom_goal_sampler='replay_buffer',
+            custom_goal_sampler="replay_buffer",
             online_vae_trainer_kwargs=dict(
                 beta=20,
                 lr=1e-3,
@@ -56,29 +56,29 @@ if __name__ == "__main__":
                 max_size=int(100000),
                 fraction_goals_rollout_goals=0.2,
                 fraction_goals_env_goals=0.5,
-                exploration_rewards_type='None',
-                vae_priority_type='vae_prob',
+                exploration_rewards_type="None",
+                vae_priority_type="vae_prob",
                 priority_function_kwargs=dict(
-                    sampling_method='importance_sampling',
-                    decoder_distribution='gaussian_identity_variance',
+                    sampling_method="importance_sampling",
+                    decoder_distribution="gaussian_identity_variance",
                     num_latents_to_sample=10,
                 ),
                 power=-1,
-                relabeling_goal_sampling_mode='vae_prior',
+                relabeling_goal_sampling_mode="vae_prior",
             ),
-            exploration_goal_sampling_mode='vae_prior',
-            evaluation_goal_sampling_mode='reset_of_env',
+            exploration_goal_sampling_mode="vae_prior",
+            evaluation_goal_sampling_mode="reset_of_env",
             normalize=False,
             render=False,
             exploration_noise=0.0,
-            exploration_type='ou',
-            training_mode='train',
-            testing_mode='test',
+            exploration_type="ou",
+            training_mode="train",
+            testing_mode="test",
             reward_params=dict(
-                type='latent_distance',
+                type="latent_distance",
             ),
-            observation_key='latent_observation',
-            desired_goal_key='latent_desired_goal',
+            observation_key="latent_observation",
+            desired_goal_key="latent_desired_goal",
             vae_wrapped_env_kwargs=dict(
                 sample_from_true_prior=True,
             ),
@@ -88,10 +88,10 @@ if __name__ == "__main__":
             beta=20,
             num_epochs=0,
             dump_skew_debug_plots=False,
-            decoder_activation='gaussian',
+            decoder_activation="gaussian",
             generate_vae_dataset_kwargs=dict(
                 N=40,
-                test_p=.9,
+                test_p=0.9,
                 use_cached=False,
                 show=False,
                 oracle_dataset=True,
@@ -102,7 +102,7 @@ if __name__ == "__main__":
             vae_kwargs=dict(
                 input_channels=3,
                 architecture=imsize48_default_architecture,
-                decoder_distribution='gaussian_identity_variance',
+                decoder_distribution="gaussian_identity_variance",
             ),
             # TODO: why the redundancy?
             algo_kwargs=dict(
@@ -111,35 +111,35 @@ if __name__ == "__main__":
                 batch_size=64,
                 lr=1e-3,
                 skew_config=dict(
-                    method='vae_prob',
+                    method="vae_prob",
                     power=-1,
                 ),
                 skew_dataset=True,
                 priority_function_kwargs=dict(
-                    decoder_distribution='gaussian_identity_variance',
-                    sampling_method='importance_sampling',
+                    decoder_distribution="gaussian_identity_variance",
+                    sampling_method="importance_sampling",
                     num_latents_to_sample=10,
                 ),
                 use_parallel_dataloading=False,
             ),
-
             save_period=25,
         ),
     )
     search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'dev-{}'.format(
-        __file__.replace('/', '-').replace('_', '-').split('.')[0]
+    mode = "local"
+    exp_prefix = "dev-{}".format(
+        __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )
 
     n_seeds = 3
-    mode = 'ec2'
-    exp_prefix = 'rlkit-skew-fit-pusher-reference-sample-from-true-prior-take2'
+    mode = "ec2"
+    exp_prefix = "rlkit-skew-fit-pusher-reference-sample-from-true-prior-take2"
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(n_seeds):
@@ -152,10 +152,10 @@ if __name__ == "__main__":
                 num_exps_per_instance=3,
                 gcp_kwargs=dict(
                     terminate=True,
-                    zone='us-east1-c',
+                    zone="us-east1-c",
                     gpu_kwargs=dict(
-                        gpu_model='nvidia-tesla-k80',
+                        gpu_model="nvidia-tesla-k80",
                         num_gpu=1,
-                    )
-                )
-          )
+                    ),
+                ),
+            )

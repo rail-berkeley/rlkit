@@ -9,12 +9,12 @@ from rlkit.envs.wrappers.stack_observation_env import StackObservationEnv
 
 
 __all__ = [
-    'DiscretizeEnv',
-    'HistoryEnv',
-    'ImageMujocoEnv',
-    'ImageMujocoWithObsEnv',
-    'NormalizedBoxEnv',
-    'ProxyEnv',
-    'RewardWrapperEnv',
-    'StackObservationEnv',
+    "DiscretizeEnv",
+    "HistoryEnv",
+    "ImageMujocoEnv",
+    "ImageMujocoWithObsEnv",
+    "NormalizedBoxEnv",
+    "ProxyEnv",
+    "RewardWrapperEnv",
+    "StackObservationEnv",
 ]

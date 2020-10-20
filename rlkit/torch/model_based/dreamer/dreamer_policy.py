@@ -5,20 +5,20 @@ import torch
 from torch.distributions import Normal
 import torch.nn.functional as F
 
+
 class DreamerPolicy(Policy):
-    """
-    """
+    """"""
 
     def __init__(
-            self,
-            world_model,
-            actor,
-            obs_dim,
-            action_dim,
-            expl_amount=0.3,
-            split_dist=False,
-            split_size=0,
-            exploration=False,
+        self,
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        expl_amount=0.3,
+        split_dist=False,
+        split_size=0,
+        exploration=False,
     ):
         self.world_model = world_model
         self.actor = actor
@@ -50,10 +50,14 @@ class DreamerPolicy(Policy):
             if self.split_dist:
                 deter, cont, extra = action.split(self.split_size, -1)
                 cont = torch.cat((cont, extra), -1)
-                indices = torch.distributions.Categorical(logits=0*deter).sample()
+                indices = torch.distributions.Categorical(logits=0 * deter).sample()
                 rand_action = F.one_hot(indices, deter.shape[-1])
                 probs = ptu.rand(deter.shape[:1])
-                deter = torch.where(probs.reshape(-1,1) < self.expl_amount, rand_action.int(), deter.int())
+                deter = torch.where(
+                    probs.reshape(-1, 1) < self.expl_amount,
+                    rand_action.int(),
+                    deter.int(),
+                )
                 cont = torch.clamp(Normal(cont, self.expl_amount).rsample(), -1, 1)
                 action = torch.cat((deter, cont), -1)
             else:
@@ -66,12 +70,13 @@ class DreamerPolicy(Policy):
     def reset(self):
         self.state = None
 
+
 class ActionSpaceSamplePolicy(Policy):
-    def __init__(
-            self,
-            env
-    ):
+    def __init__(self, env):
         self.env = env
 
     def get_action(self, observation):
-        return np.array([self.env.action_space.sample() for _ in range(self.env.n_envs)]), {}
+        return (
+            np.array([self.env.action_space.sample() for _ in range(self.env.n_envs)]),
+            {},
+        )

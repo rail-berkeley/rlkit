@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def split_paths(paths):
     """
     Stack multiples obs/actions/etc. from different paths

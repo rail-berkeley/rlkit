@@ -7,8 +7,8 @@ import time
 import Pyro4
 from rlkit.launchers import config
 
-Pyro4.config.SERIALIZERS_ACCEPTED = set(['pickle','json', 'marshal', 'serpent'])
-Pyro4.config.SERIALIZER='pickle'
+Pyro4.config.SERIALIZERS_ACCEPTED = set(["pickle", "json", "marshal", "serpent"])
+Pyro4.config.SERIALIZER = "pickle"
 
 nameserver = Pyro4.locateNS(host=config.SPACEMOUSE_HOSTNAME)
 uri = nameserver.lookup("example.greeting")

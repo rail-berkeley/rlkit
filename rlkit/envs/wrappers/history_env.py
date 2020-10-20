@@ -12,12 +12,12 @@ class HistoryEnv(ProxyEnv, Env):
         super().__init__(wrapped_env)
         self.history_len = history_len
 
-        high = np.inf * np.ones(
-            self.history_len * self.observation_space.low.size)
+        high = np.inf * np.ones(self.history_len * self.observation_space.low.size)
         low = -high
-        self.observation_space = Box(low=low,
-                                     high=high,
-                                     )
+        self.observation_space = Box(
+            low=low,
+            high=high,
+        )
         self.history = deque(maxlen=self.history_len)
 
     def step(self, action):
@@ -41,5 +41,3 @@ class HistoryEnv(ProxyEnv, Env):
             dummy = np.zeros(self._wrapped_env.observation_space.low.size)
             observations.append(dummy)
         return np.c_[observations]
-
-

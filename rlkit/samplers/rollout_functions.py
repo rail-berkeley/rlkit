@@ -7,20 +7,22 @@ create_rollout_function = partial
 
 
 def multitask_rollout(
-        env,
-        agent,
-        max_path_length=np.inf,
-        render=False,
-        render_kwargs=None,
-        observation_key=None,
-        desired_goal_key=None,
-        get_action_kwargs=None,
-        return_dict_obs=False,
-        full_o_postprocess_func=None,
+    env,
+    agent,
+    max_path_length=np.inf,
+    render=False,
+    render_kwargs=None,
+    observation_key=None,
+    desired_goal_key=None,
+    get_action_kwargs=None,
+    return_dict_obs=False,
+    full_o_postprocess_func=None,
 ):
     if full_o_postprocess_func:
+
         def wrapped_fun(env, agent, o):
             full_o_postprocess_func(env, agent, observation_key, o)
+
     else:
         wrapped_fun = None
 
@@ -38,47 +40,44 @@ def multitask_rollout(
         full_o_postprocess_func=wrapped_fun,
     )
     if not return_dict_obs:
-        paths['observations'] = paths['observations'][observation_key]
+        paths["observations"] = paths["observations"][observation_key]
     return paths
 
 
 def contextual_rollout(
-        env,
-        agent,
-        observation_key=None,
-        context_keys_for_policy=None,
-        obs_processor=None,
-        **kwargs
+    env,
+    agent,
+    observation_key=None,
+    context_keys_for_policy=None,
+    obs_processor=None,
+    **kwargs
 ):
     if context_keys_for_policy is None:
-        context_keys_for_policy = ['context']
+        context_keys_for_policy = ["context"]
 
     if not obs_processor:
+
         def obs_processor(o):
             combined_obs = [o[observation_key]]
             for k in context_keys_for_policy:
                 combined_obs.append(o[k])
             return np.concatenate(combined_obs, axis=0)
-    paths = rollout(
-        env,
-        agent,
-        preprocess_obs_for_policy_fn=obs_processor,
-        **kwargs
-    )
+
+    paths = rollout(env, agent, preprocess_obs_for_policy_fn=obs_processor, **kwargs)
     return paths
 
 
 def rollout(
-        env,
-        agent,
-        max_path_length=np.inf,
-        render=False,
-        render_kwargs=None,
-        preprocess_obs_for_policy_fn=None,
-        get_action_kwargs=None,
-        return_dict_obs=False,
-        full_o_postprocess_func=None,
-        reset_callback=None,
+    env,
+    agent,
+    max_path_length=np.inf,
+    render=False,
+    render_kwargs=None,
+    preprocess_obs_for_policy_fn=None,
+    get_action_kwargs=None,
+    return_dict_obs=False,
+    full_o_postprocess_func=None,
+    reset_callback=None,
 ):
     if render_kwargs is None:
         render_kwargs = {}
@@ -150,11 +149,11 @@ def rollout(
 
 
 def deprecated_rollout(
-        env,
-        agent,
-        max_path_length=np.inf,
-        render=False,
-        render_kwargs=None,
+    env,
+    agent,
+    max_path_length=np.inf,
+    render=False,
+    render_kwargs=None,
 ):
     """
     The following value for the following keys will be a 2D array, with the
@@ -207,12 +206,7 @@ def deprecated_rollout(
     if len(observations.shape) == 1:
         observations = np.expand_dims(observations, 1)
         next_o = np.array([next_o])
-    next_observations = np.vstack(
-        (
-            observations[1:, :],
-            np.expand_dims(next_o, 0)
-        )
-    )
+    next_observations = np.vstack((observations[1:, :], np.expand_dims(next_o, 0)))
     return dict(
         observations=observations,
         actions=actions,

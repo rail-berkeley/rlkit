@@ -29,7 +29,7 @@ class ProxyEnv(Env):
             self.wrapped_env.terminate()
 
     def __getattr__(self, attr):
-        if attr == '_wrapped_env':
+        if attr == "_wrapped_env":
             raise AttributeError()
         return getattr(self._wrapped_env, attr)
 
@@ -47,4 +47,4 @@ class ProxyEnv(Env):
         self.__dict__.update(state)
 
     def __str__(self):
-        return '{}({})'.format(type(self).__name__, self.wrapped_env)
+        return "{}({})".format(type(self).__name__, self.wrapped_env)

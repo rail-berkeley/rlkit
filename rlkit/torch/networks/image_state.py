@@ -6,9 +6,9 @@ class ImageStatePolicy(PyTorchModule, Policy):
     """Switches between image or state inputs"""
 
     def __init__(
-            self,
-            image_conv_net,
-            state_fc_net,
+        self,
+        image_conv_net,
+        state_fc_net,
     ):
         super().__init__()
 
@@ -36,12 +36,12 @@ class ImageStateQ(PyTorchModule):
     """Switches between image or state inputs"""
 
     def __init__(
-            self,
-            # obs_dim,
-            # action_dim,
-            # goal_dim,
-            image_conv_net,  # assumed to be a MergedCNN
-            state_fc_net,
+        self,
+        # obs_dim,
+        # action_dim,
+        # goal_dim,
+        image_conv_net,  # assumed to be a MergedCNN
+        state_fc_net,
     ):
         super().__init__()
 
@@ -59,5 +59,3 @@ class ImageStateQ(PyTorchModule):
         if self.state_fc_net is not None:
             state = input[:, 21168:]  # action + state
             return self.state_fc_net(state, action)
-
-

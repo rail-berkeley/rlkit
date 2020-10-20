@@ -10,24 +10,31 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import ExplorationPolicy
 from rlkit.torch.core import torch_ify, elem_or_tuple_to_numpy
 from rlkit.torch.distributions import (
-    Delta, TanhNormal, MultivariateDiagonalNormal, GaussianMixture, GaussianMixtureFull,
+    Delta,
+    TanhNormal,
+    MultivariateDiagonalNormal,
+    GaussianMixture,
+    GaussianMixtureFull,
 )
 from rlkit.torch.networks import Mlp, CNN
 from rlkit.torch.networks.basic import MultiInputSequential
-from rlkit.torch.networks.stochastic.distribution_generator import (
-    DistributionGenerator
-)
+from rlkit.torch.networks.stochastic.distribution_generator import DistributionGenerator
 
 
 class TorchStochasticPolicy(
-    DistributionGenerator,
-    ExplorationPolicy, metaclass=abc.ABCMeta
+    DistributionGenerator, ExplorationPolicy, metaclass=abc.ABCMeta
 ):
-    def get_action(self, obs_np, ):
+    def get_action(
+        self,
+        obs_np,
+    ):
         actions = self.get_actions(obs_np[None])
         return actions[0, :], {}
 
-    def get_actions(self, obs_np, ):
+    def get_actions(
+        self,
+        obs_np,
+    ):
         dist = self._get_dist_from_np(obs_np)
         actions = dist.sample()
         return elem_or_tuple_to_numpy(actions)
@@ -50,13 +57,14 @@ class PolicyFromDistributionGenerator(
     policy = PolicyFromBatchDistributionModule(distribution_generator)
     ```
     """
+
     pass
 
 
 class MakeDeterministic(TorchStochasticPolicy):
     def __init__(
-            self,
-            action_distribution_generator: DistributionGenerator,
+        self,
+        action_distribution_generator: DistributionGenerator,
     ):
         super().__init__()
         self._action_distribution_generator = action_distribution_generator

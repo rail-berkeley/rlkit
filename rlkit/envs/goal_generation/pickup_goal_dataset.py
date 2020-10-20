@@ -1,5 +1,5 @@
 from multiworld.envs.mujoco.sawyer_xyz.sawyer_pick_and_place import (
-    get_image_presampled_goals
+    get_image_presampled_goals,
 )
 import numpy as np
 import cv2
@@ -14,21 +14,19 @@ def setup_pickup_image_env(image_env, num_presampled_goals):
     Image env and pickup env will have presampled goals. VAE wrapper should
     encode whatever presampled goal is sampled.
     """
-    presampled_goals = get_image_presampled_goals(image_env,
-                                                  num_presampled_goals)
+    presampled_goals = get_image_presampled_goals(image_env, num_presampled_goals)
     image_env._presampled_goals = presampled_goals
-    image_env.num_goals_presampled = \
-    presampled_goals[random.choice(list(presampled_goals))].shape[0]
+    image_env.num_goals_presampled = presampled_goals[
+        random.choice(list(presampled_goals))
+    ].shape[0]
 
 
-def get_image_presampled_goals_from_vae_env(env, num_presampled_goals,
-                                            env_id=None):
+def get_image_presampled_goals_from_vae_env(env, num_presampled_goals, env_id=None):
     image_env = env.wrapped_env
     return get_image_presampled_goals(image_env, num_presampled_goals)
 
 
-def get_image_presampled_goals_from_image_env(env, num_presampled_goals,
-                                              env_id=None):
+def get_image_presampled_goals_from_image_env(env, num_presampled_goals, env_id=None):
     return get_image_presampled_goals(env, num_presampled_goals)
 
 
@@ -37,21 +35,21 @@ def generate_vae_dataset(variant):
 
 
 def generate_vae_dataset_from_params(
-        env_class=None,
-        env_kwargs=None,
-        env_id=None,
-        N=10000,
-        test_p=0.9,
-        use_cached=True,
-        imsize=84,
-        num_channels=1,
-        show=False,
-        init_camera=None,
-        dataset_path=None,
-        oracle_dataset=False,
-        n_random_steps=100,
-        vae_dataset_specific_env_kwargs=None,
-        save_file_prefix=None,
+    env_class=None,
+    env_kwargs=None,
+    env_id=None,
+    N=10000,
+    test_p=0.9,
+    use_cached=True,
+    imsize=84,
+    num_channels=1,
+    show=False,
+    init_camera=None,
+    dataset_path=None,
+    oracle_dataset=False,
+    n_random_steps=100,
+    vae_dataset_specific_env_kwargs=None,
+    save_file_prefix=None,
 ):
     from multiworld.core.image_env import ImageEnv, unormalize_image
     import time
@@ -67,7 +65,7 @@ def generate_vae_dataset_from_params(
     filename = "/tmp/{}_N{}_{}_imsize{}_oracle{}.npy".format(
         save_file_prefix,
         str(N),
-        init_camera.__name__ if init_camera else '',
+        init_camera.__name__ if init_camera else "",
         imsize,
         oracle_dataset,
     )
@@ -87,6 +85,7 @@ def generate_vae_dataset_from_params(
         if env_id is not None:
             import gym
             import multiworld
+
             multiworld.register_all_envs()
             env = gym.make(env_id)
         else:
@@ -106,18 +105,18 @@ def generate_vae_dataset_from_params(
             )
         setup_pickup_image_env(env, num_presampled_goals=N)
         env.reset()
-        info['env'] = env
+        info["env"] = env
 
         dataset = np.zeros((N, imsize * imsize * num_channels), dtype=np.uint8)
         for i in range(N):
-            img = env._presampled_goals['image_desired_goal'][i]
+            img = env._presampled_goals["image_desired_goal"][i]
             dataset[i, :] = unormalize_image(img)
             if show:
                 img = img.reshape(3, imsize, imsize).transpose()
                 img = img[::-1, :, ::-1]
-                cv2.imshow('img', img)
+                cv2.imshow("img", img)
                 cv2.waitKey(1)
-                time.sleep(.2)
+                time.sleep(0.2)
                 # radius = input('waiting...')
         print("done making training data", filename, time.time() - now)
         np.random.shuffle(dataset)

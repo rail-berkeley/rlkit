@@ -16,6 +16,7 @@ class Split(nn.Module):
     """
     Split input and process each chunk with a separate module.
     """
+
     def __init__(self, module1, module2, split_idx):
         super().__init__()
         self.module1 = module1
@@ -23,10 +24,10 @@ class Split(nn.Module):
         self.split_idx = split_idx
 
     def forward(self, x):
-        in1 = x[:, :self.split_idx]
+        in1 = x[:, : self.split_idx]
         out1 = self.module1(in1)
 
-        in2 = x[:, self.split_idx:]
+        in2 = x[:, self.split_idx :]
         out2 = self.module2(in2)
 
         return out1, out2
@@ -49,6 +50,7 @@ class Flatten(nn.Module):
 
 class Map(nn.Module):
     """Apply a module to each input."""
+
     def __init__(self, module):
         super().__init__()
         self.module = module
@@ -59,6 +61,7 @@ class Map(nn.Module):
 
 class ApplyMany(nn.Module):
     """Apply many modules to one input."""
+
     def __init__(self, *modules):
         super().__init__()
         self.modules_to_apply = nn.ModuleList(modules)

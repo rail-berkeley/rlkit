@@ -7,11 +7,12 @@ class SplitReplayBuffer(ReplayBuffer):
     """
     Split the data into a training and validation set.
     """
+
     def __init__(
-            self,
-            train_replay_buffer: ReplayBuffer,
-            validation_replay_buffer: ReplayBuffer,
-            fraction_paths_in_train,
+        self,
+        train_replay_buffer: ReplayBuffer,
+        validation_replay_buffer: ReplayBuffer,
+        fraction_paths_in_train,
     ):
         self.train_replay_buffer = train_replay_buffer
         self.validation_replay_buffer = validation_replay_buffer
@@ -63,7 +64,7 @@ class SplitReplayBuffer(ReplayBuffer):
         )
 
     def __setstate__(self, d):
-        self.train_replay_buffer = d['train_replay_buffer']
-        self.validation_replay_buffer = d['validation_replay_buffer']
-        self.fraction_paths_in_train = d['fraction_paths_in_train']
+        self.train_replay_buffer = d["train_replay_buffer"]
+        self.validation_replay_buffer = d["validation_replay_buffer"]
+        self.fraction_paths_in_train = d["fraction_paths_in_train"]
         self.replay_buffer = self.train_replay_buffer

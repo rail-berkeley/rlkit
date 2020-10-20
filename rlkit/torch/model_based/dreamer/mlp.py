@@ -7,14 +7,14 @@ from rlkit.torch.core import PyTorchModule
 
 class Mlp(PyTorchModule):
     def __init__(
-            self,
-            hidden_sizes,
-            output_size,
-            input_size,
-            hidden_activation=F.elu,
-            output_activation=identity,
-            hidden_init=torch.nn.init.xavier_uniform_,
-            b_init_value=0.,
+        self,
+        hidden_sizes,
+        output_size,
+        input_size,
+        hidden_activation=F.elu,
+        output_activation=identity,
+        hidden_init=torch.nn.init.xavier_uniform_,
+        b_init_value=0.0,
     ):
         super().__init__()
 

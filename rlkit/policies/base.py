@@ -5,6 +5,7 @@ class Policy(object, metaclass=abc.ABCMeta):
     """
     General policy interface.
     """
+
     @abc.abstractmethod
     def get_action(self, observation):
         """

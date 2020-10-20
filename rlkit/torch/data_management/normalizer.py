@@ -9,6 +9,7 @@ class TorchNormalizer(Normalizer):
     """
     Update with np array, but de/normalize pytorch Tensors.
     """
+
     def normalize(self, v, clip_range=None):
         if not self.synchronized:
             self.synchronize()

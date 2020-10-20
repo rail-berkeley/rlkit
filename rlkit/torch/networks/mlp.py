@@ -13,17 +13,17 @@ from rlkit.torch.pytorch_util import activation_from_string
 
 class Mlp(PyTorchModule):
     def __init__(
-            self,
-            hidden_sizes,
-            output_size,
-            input_size,
-            init_w=3e-3,
-            hidden_activation=F.relu,
-            output_activation=identity,
-            hidden_init=ptu.fanin_init,
-            b_init_value=0.,
-            layer_norm=False,
-            layer_norm_kwargs=None,
+        self,
+        hidden_sizes,
+        output_size,
+        input_size,
+        init_w=3e-3,
+        hidden_activation=F.relu,
+        output_activation=identity,
+        hidden_init=ptu.fanin_init,
+        b_init_value=0.0,
+        layer_norm=False,
+        layer_norm_kwargs=None,
     ):
         super().__init__()
 
@@ -79,18 +79,19 @@ class MultiHeadedMlp(Mlp):
                   \
                    .-> linear head 2
     """
+
     def __init__(
-            self,
-            hidden_sizes,
-            output_sizes,
-            input_size,
-            init_w=3e-3,
-            hidden_activation=F.relu,
-            output_activations=None,
-            hidden_init=ptu.fanin_init,
-            b_init_value=0.,
-            layer_norm=False,
-            layer_norm_kwargs=None,
+        self,
+        hidden_sizes,
+        output_sizes,
+        input_size,
+        init_w=3e-3,
+        hidden_activation=F.relu,
+        output_activations=None,
+        hidden_init=ptu.fanin_init,
+        b_init_value=0.0,
+        layer_norm=False,
+        layer_norm_kwargs=None,
     ):
         super().__init__(
             hidden_sizes=hidden_sizes,
@@ -117,6 +118,7 @@ class ConcatMultiHeadedMlp(MultiHeadedMlp):
     """
     Concatenate inputs along dimension and then pass through MultiHeadedMlp.
     """
+
     def __init__(self, *args, dim=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.dim = dim
@@ -130,6 +132,7 @@ class ConcatMlp(Mlp):
     """
     Concatenate inputs along dimension and then pass through MLP.
     """
+
     def __init__(self, *args, dim=1, **kwargs):
         super().__init__(*args, **kwargs)
         self.dim = dim
@@ -144,12 +147,7 @@ class MlpPolicy(Mlp, Policy):
     A simpler interface for creating policies.
     """
 
-    def __init__(
-            self,
-            *args,
-            obs_normalizer: TorchFixedNormalizer = None,
-            **kwargs
-    ):
+    def __init__(self, *args, obs_normalizer: TorchFixedNormalizer = None, **kwargs):
         super().__init__(*args, **kwargs)
         self.obs_normalizer = obs_normalizer
 
@@ -177,11 +175,11 @@ class TanhMlpPolicy(MlpPolicy):
 
 class MlpQf(ConcatMlp):
     def __init__(
-            self,
-            *args,
-            obs_normalizer: TorchFixedNormalizer = None,
-            action_normalizer: TorchFixedNormalizer = None,
-            **kwargs
+        self,
+        *args,
+        obs_normalizer: TorchFixedNormalizer = None,
+        action_normalizer: TorchFixedNormalizer = None,
+        **kwargs
     ):
         super().__init__(*args, **kwargs)
         self.obs_normalizer = obs_normalizer
@@ -207,17 +205,22 @@ class MlpQfWithObsProcessor(Mlp):
 
 
 class MlpGoalQfWithObsProcessor(Mlp):
-    def __init__(self, obs_processor, obs_dim,
-                 backprop_into_obs_preprocessor=True,
-                 *args, **kwargs):
+    def __init__(
+        self,
+        obs_processor,
+        obs_dim,
+        backprop_into_obs_preprocessor=True,
+        *args,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
         self.obs_processor = obs_processor
         self.backprop_into_obs_preprocessor = backprop_into_obs_preprocessor
         self.obs_dim = obs_dim
 
     def forward(self, obs, actions, **kwargs):
-        h_s = self.obs_processor(obs[:, :self.obs_dim])
-        h_g = self.obs_processor(obs[:, self.obs_dim:])
+        h_s = self.obs_processor(obs[:, : self.obs_dim])
+        h_g = self.obs_processor(obs[:, self.obs_dim :])
         if not self.backprop_into_obs_preprocessor:
             h_s = h_s.detach()
             h_g = h_g.detach()
@@ -233,18 +236,20 @@ class SplitIntoManyHeads(nn.Module):
           \
            '-> head 2
     """
+
     def __init__(
-            self,
-            output_sizes,
-            output_activations=None,
+        self,
+        output_sizes,
+        output_activations=None,
     ):
         super().__init__()
         if output_activations is None:
-            output_activations = ['identity' for _ in output_sizes]
+            output_activations = ["identity" for _ in output_sizes]
         else:
             if len(output_activations) != len(output_sizes):
-                raise ValueError("output_activation and output_sizes must have "
-                                 "the same length")
+                raise ValueError(
+                    "output_activation and output_sizes must have " "the same length"
+                )
 
         self._output_narrow_params = []
         self._output_activations = []
@@ -264,9 +269,7 @@ class SplitIntoManyHeads(nn.Module):
         )
         outputs = tuple(
             activation(x)
-            for activation, x in zip(
-                self._output_activations, pre_activation_outputs
-            )
+            for activation, x in zip(self._output_activations, pre_activation_outputs)
         )
         return outputs
 
@@ -286,15 +289,16 @@ class ParallelMlp(nn.Module):
 
     The last dimension of the output corresponds to the MLP index.
     """
+
     def __init__(
-            self,
-            num_heads,
-            input_size,
-            output_size_per_mlp,
-            hidden_sizes,
-            hidden_activation='relu',
-            output_activation='identity',
-            input_is_already_expanded=False,
+        self,
+        num_heads,
+        input_size,
+        output_size_per_mlp,
+        hidden_sizes,
+        hidden_activation="relu",
+        output_activation="identity",
+        input_is_already_expanded=False,
     ):
         super().__init__()
 
@@ -323,7 +327,7 @@ class ParallelMlp(nn.Module):
                 groups=num_heads,
             )
             layers.append(last_fc)
-            if output_activation != 'identity':
+            if output_activation != "identity":
                 if isinstance(output_activation, str):
                     activation = activation_from_string(output_activation)
                 else:

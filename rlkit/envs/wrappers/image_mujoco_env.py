@@ -11,16 +11,17 @@ from rlkit.envs.proxy_env import ProxyEnv
 
 
 class ImageMujocoEnv(ProxyEnv, Env):
-    def __init__(self,
-                 wrapped_env,
-                 imsize=32,
-                 keep_prev=0,
-                 init_camera=None,
-                 camera_name=None,
-                 transpose=False,
-                 grayscale=False,
-                 normalize=False,
-                 ):
+    def __init__(
+        self,
+        wrapped_env,
+        imsize=32,
+        keep_prev=0,
+        init_camera=None,
+        camera_name=None,
+        transpose=False,
+        grayscale=False,
+        normalize=False,
+    ):
         super().__init__(wrapped_env)
 
         self.imsize = imsize
@@ -45,10 +46,9 @@ class ImageMujocoEnv(ProxyEnv, Env):
         self.normalize = normalize
         self._render_local = False
 
-        self.observation_space = Box(low=0.0,
-                                     high=1.0,
-                                     shape=(
-                                         self.image_length * self.history_length,))
+        self.observation_space = Box(
+            low=0.0, high=1.0, shape=(self.image_length * self.history_length,)
+        )
 
     def step(self, action):
         # image observation get returned as a flattened 1D array
@@ -81,14 +81,14 @@ class ImageMujocoEnv(ProxyEnv, Env):
 
     def _image_observation(self):
         # returns the image as a torch format np array
-        image_obs = self._wrapped_env.sim.render(width=self.imsize,
-                                                 height=self.imsize,
-                                                 camera_name=self.camera_name)
+        image_obs = self._wrapped_env.sim.render(
+            width=self.imsize, height=self.imsize, camera_name=self.camera_name
+        )
         if self._render_local:
-            cv2.imshow('env', image_obs)
+            cv2.imshow("env", image_obs)
             cv2.waitKey(1)
         if self.grayscale:
-            image_obs = Image.fromarray(image_obs).convert('L')
+            image_obs = Image.fromarray(image_obs).convert("L")
             image_obs = np.array(image_obs)
         if self.normalize:
             image_obs = image_obs / 255.0
@@ -118,18 +118,12 @@ class ImageMujocoEnv(ProxyEnv, Env):
         imlength = self.image_length * self.history_length
         obs_length = self.observation_space.low.size
         obs = obs.view(-1, obs_length)
-        image_obs = obs.narrow(start=0,
-                               length=imlength,
-                               dimension=1)
+        image_obs = obs.narrow(start=0, length=imlength, dimension=1)
         if obs_length == imlength:
             return image_obs, None
 
-        fc_obs = obs.narrow(start=imlength,
-                            length=obs.shape[1] - imlength,
-                            dimension=1)
+        fc_obs = obs.narrow(start=imlength, length=obs.shape[1] - imlength, dimension=1)
         return image_obs, fc_obs
 
     def enable_render(self):
         self._render_local = True
-
-

@@ -1,6 +1,4 @@
-from rlkit.torch.networks.stochastic.distribution_generator import (
-    DistributionGenerator
-)
+from rlkit.torch.networks.stochastic.distribution_generator import DistributionGenerator
 from rlkit.torch.sac.policies.base import (
     TorchStochasticPolicy,
     PolicyFromDistributionGenerator,

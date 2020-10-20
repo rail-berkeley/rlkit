@@ -10,10 +10,9 @@ import gym
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_and_epsilon_strategy import (
-    GaussianAndEpsilonStrategy
+    GaussianAndEpsilonStrategy,
 )
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import GoalConditionedPathCollector
@@ -25,50 +24,51 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 def experiment(variant):
     import multiworld
+
     multiworld.register_all_envs()
-    eval_env = gym.make('SawyerReachXYZEnv-v0')
-    expl_env = gym.make('SawyerReachXYZEnv-v0')
-    observation_key = 'state_observation'
-    desired_goal_key = 'state_desired_goal'
+    eval_env = gym.make("SawyerReachXYZEnv-v0")
+    expl_env = gym.make("SawyerReachXYZEnv-v0")
+    observation_key = "state_observation"
+    desired_goal_key = "state_desired_goal"
     achieved_goal_key = desired_goal_key.replace("desired", "achieved")
     es = GaussianAndEpsilonStrategy(
         action_space=expl_env.action_space,
-        max_sigma=.2,
-        min_sigma=.2,  # constant sigma
-        epsilon=.3,
+        max_sigma=0.2,
+        min_sigma=0.2,  # constant sigma
+        epsilon=0.3,
     )
-    obs_dim = expl_env.observation_space.spaces['observation'].low.size
-    goal_dim = expl_env.observation_space.spaces['desired_goal'].low.size
+    obs_dim = expl_env.observation_space.spaces["observation"].low.size
+    goal_dim = expl_env.observation_space.spaces["desired_goal"].low.size
     action_dim = expl_env.action_space.low.size
     qf1 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     qf2 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     target_qf1 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     target_qf2 = ConcatMlp(
         input_size=obs_dim + goal_dim + action_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     policy = TanhMlpPolicy(
         input_size=obs_dim + goal_dim,
         output_size=action_dim,
-        **variant['policy_kwargs']
+        **variant["policy_kwargs"]
     )
     target_policy = TanhMlpPolicy(
         input_size=obs_dim + goal_dim,
         output_size=action_dim,
-        **variant['policy_kwargs']
+        **variant["policy_kwargs"]
     )
     expl_policy = PolicyWrappedWithExplorationStrategy(
         exploration_strategy=es,
@@ -79,7 +79,7 @@ def experiment(variant):
         observation_key=observation_key,
         desired_goal_key=desired_goal_key,
         achieved_goal_key=achieved_goal_key,
-        **variant['replay_buffer_kwargs']
+        **variant["replay_buffer_kwargs"]
     )
     trainer = TD3Trainer(
         policy=policy,
@@ -88,7 +88,7 @@ def experiment(variant):
         target_qf1=target_qf1,
         target_qf2=target_qf2,
         target_policy=target_policy,
-        **variant['trainer_kwargs']
+        **variant["trainer_kwargs"]
     )
     trainer = HERTrainer(trainer)
     eval_path_collector = GoalConditionedPathCollector(
@@ -110,7 +110,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algo_kwargs']
+        **variant["algo_kwargs"]
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -141,5 +141,5 @@ if __name__ == "__main__":
             hidden_sizes=[400, 300],
         ),
     )
-    setup_logger('her-td3-sawyer-experiment', variant=variant)
+    setup_logger("her-td3-sawyer-experiment", variant=variant)
     experiment(variant)

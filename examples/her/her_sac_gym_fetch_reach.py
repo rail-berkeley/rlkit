@@ -13,11 +13,11 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 def experiment(variant):
     # unwrap the TimeLimitEnv wrapper since we manually termiante after 50 steps
-    eval_env = gym.make('FetchReach-v1').env
-    expl_env = gym.make('FetchReach-v1').env
+    eval_env = gym.make("FetchReach-v1").env
+    expl_env = gym.make("FetchReach-v1").env
 
-    observation_key = 'observation'
-    desired_goal_key = 'desired_goal'
+    observation_key = "observation"
+    desired_goal_key = "desired_goal"
 
     achieved_goal_key = desired_goal_key.replace("desired", "achieved")
     replay_buffer = ObsDictRelabelingBuffer(
@@ -25,35 +25,33 @@ def experiment(variant):
         observation_key=observation_key,
         desired_goal_key=desired_goal_key,
         achieved_goal_key=achieved_goal_key,
-        **variant['replay_buffer_kwargs']
+        **variant["replay_buffer_kwargs"]
     )
-    obs_dim = eval_env.observation_space.spaces['observation'].low.size
+    obs_dim = eval_env.observation_space.spaces["observation"].low.size
     action_dim = eval_env.action_space.low.size
-    goal_dim = eval_env.observation_space.spaces['desired_goal'].low.size
+    goal_dim = eval_env.observation_space.spaces["desired_goal"].low.size
     qf1 = ConcatMlp(
         input_size=obs_dim + action_dim + goal_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     qf2 = ConcatMlp(
         input_size=obs_dim + action_dim + goal_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     target_qf1 = ConcatMlp(
         input_size=obs_dim + action_dim + goal_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     target_qf2 = ConcatMlp(
         input_size=obs_dim + action_dim + goal_dim,
         output_size=1,
-        **variant['qf_kwargs']
+        **variant["qf_kwargs"]
     )
     policy = TanhGaussianPolicy(
-        obs_dim=obs_dim + goal_dim,
-        action_dim=action_dim,
-        **variant['policy_kwargs']
+        obs_dim=obs_dim + goal_dim, action_dim=action_dim, **variant["policy_kwargs"]
     )
     eval_policy = MakeDeterministic(policy)
     trainer = SACTrainer(
@@ -63,7 +61,7 @@ def experiment(variant):
         qf2=qf2,
         target_qf1=target_qf1,
         target_qf2=target_qf2,
-        **variant['sac_trainer_kwargs']
+        **variant["sac_trainer_kwargs"]
     )
     trainer = HERTrainer(trainer)
     eval_path_collector = GoalConditionedPathCollector(
@@ -85,7 +83,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algo_kwargs']
+        **variant["algo_kwargs"]
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -93,8 +91,8 @@ def experiment(variant):
 
 if __name__ == "__main__":
     variant = dict(
-        algorithm='HER-SAC',
-        version='normal',
+        algorithm="HER-SAC",
+        version="normal",
         algo_kwargs=dict(
             batch_size=128,
             num_epochs=100,
@@ -108,13 +106,13 @@ if __name__ == "__main__":
             discount=0.99,
             soft_target_tau=5e-3,
             target_update_period=1,
-            policy_lr=3E-4,
-            qf_lr=3E-4,
+            policy_lr=3e-4,
+            qf_lr=3e-4,
             reward_scale=1,
             use_automatic_entropy_tuning=True,
         ),
         replay_buffer_kwargs=dict(
-            max_size=int(1E6),
+            max_size=int(1e6),
             fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
             fraction_goals_env_goals=0,
         ),
@@ -125,5 +123,5 @@ if __name__ == "__main__":
             hidden_sizes=[400, 300],
         ),
     )
-    setup_logger('her-sac-fetch-experiment', variant=variant)
+    setup_logger("her-sac-fetch-experiment", variant=variant)
     experiment(variant)

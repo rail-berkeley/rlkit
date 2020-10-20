@@ -11,7 +11,10 @@ from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 from rlkit.util.io import (
-    load_local_or_remote_file, sync_down_folder, get_absolute_path, sync_down
+    load_local_or_remote_file,
+    sync_down_folder,
+    get_absolute_path,
+    sync_down,
 )
 
 import random
@@ -22,6 +25,7 @@ from rlkit.core import logger
 
 import glob
 
+
 class DictToMDPPathLoader:
     """
     Path loader for that loads obs-dict demonstrations
@@ -29,28 +33,27 @@ class DictToMDPPathLoader:
     """
 
     def __init__(
-            self,
-            trainer,
-            replay_buffer,
-            demo_train_buffer,
-            demo_test_buffer,
-            demo_paths=[], # list of dicts
-            demo_train_split=0.9,
-            demo_data_split=1,
-            add_demos_to_replay_buffer=True,
-            bc_num_pretrain_steps=0,
-            bc_batch_size=64,
-            bc_weight=1.0,
-            rl_weight=1.0,
-            q_num_pretrain_steps=0,
-            weight_decay=0,
-            eval_policy=None,
-            recompute_reward=False,
-            env_info_key=None,
-            obs_key=None,
-            load_terminals=True,
-
-            **kwargs
+        self,
+        trainer,
+        replay_buffer,
+        demo_train_buffer,
+        demo_test_buffer,
+        demo_paths=[],  # list of dicts
+        demo_train_split=0.9,
+        demo_data_split=1,
+        add_demos_to_replay_buffer=True,
+        bc_num_pretrain_steps=0,
+        bc_batch_size=64,
+        bc_weight=1.0,
+        rl_weight=1.0,
+        q_num_pretrain_steps=0,
+        weight_decay=0,
+        eval_policy=None,
+        recompute_reward=False,
+        env_info_key=None,
+        obs_key=None,
+        load_terminals=True,
+        **kwargs
     ):
         self.trainer = trainer
 
@@ -107,7 +110,7 @@ class DictToMDPPathLoader:
 
             reward = np.array([reward]).flatten()
             rewards.append(reward)
-            terminal = np.array([terminal]).reshape((1, ))
+            terminal = np.array([terminal]).reshape((1,))
             path_builder.add_all(
                 observations=ob,
                 actions=action,
@@ -130,7 +133,9 @@ class DictToMDPPathLoader:
     # Parameterize which demo is being tested (and all jitter variants)
     # If is_demo is False, we only add the demos to the
     # replay buffer, and not to the demo_test or demo_train buffers
-    def load_demo_path(self, path, is_demo, obs_dict, train_split=None, data_split=None, sync_dir=None):
+    def load_demo_path(
+        self, path, is_demo, obs_dict, train_split=None, data_split=None, sync_dir=None
+    ):
         print("loading off-policy path", path)
 
         if sync_dir is not None:
@@ -168,4 +173,3 @@ class DictToMDPPathLoader:
         batch = replay_buffer.random_batch(self.bc_batch_size)
         batch = np_to_pytorch_batch(batch)
         return batch
-

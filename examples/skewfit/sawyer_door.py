@@ -4,22 +4,21 @@ import rlkit.util.hyperparameter as hyp
 from multiworld.envs.mujoco.cameras import sawyer_door_env_camera_v0
 from rlkit.launchers.launcher_util import run_experiment
 import rlkit.torch.vae.vae_schedules as vae_schedules
-from rlkit.launchers.skewfit_experiments import \
-    skewfit_full_experiment
+from rlkit.launchers.skewfit_experiments import skewfit_full_experiment
 from rlkit.torch.vae.conv_vae import imsize48_default_architecture
 
 
 if __name__ == "__main__":
     variant = dict(
-        algorithm='Skew-Fit-SAC',
+        algorithm="Skew-Fit-SAC",
         double_algo=False,
         online_vae_exploration=False,
         imsize=48,
-        env_id='SawyerDoorHookResetFreeEnv-v1',
+        env_id="SawyerDoorHookResetFreeEnv-v1",
         init_camera=sawyer_door_env_camera_v0,
         skewfit_variant=dict(
             save_video=True,
-            custom_goal_sampler='replay_buffer',
+            custom_goal_sampler="replay_buffer",
             online_vae_trainer_kwargs=dict(
                 beta=20,
                 lr=1e-3,
@@ -56,25 +55,25 @@ if __name__ == "__main__":
                 max_size=int(100000),
                 fraction_goals_rollout_goals=0.2,
                 fraction_goals_env_goals=0.5,
-                exploration_rewards_type='None',
-                vae_priority_type='vae_prob',
+                exploration_rewards_type="None",
+                vae_priority_type="vae_prob",
                 priority_function_kwargs=dict(
-                    sampling_method='importance_sampling',
-                    decoder_distribution='gaussian_identity_variance',
+                    sampling_method="importance_sampling",
+                    decoder_distribution="gaussian_identity_variance",
                     num_latents_to_sample=10,
                 ),
                 power=-0.5,
-                relabeling_goal_sampling_mode='custom_goal_sampler',
+                relabeling_goal_sampling_mode="custom_goal_sampler",
             ),
-            exploration_goal_sampling_mode='custom_goal_sampler',
-            evaluation_goal_sampling_mode='presampled',
-            training_mode='train',
-            testing_mode='test',
+            exploration_goal_sampling_mode="custom_goal_sampler",
+            evaluation_goal_sampling_mode="presampled",
+            training_mode="train",
+            testing_mode="test",
             reward_params=dict(
-                type='latent_distance',
+                type="latent_distance",
             ),
-            observation_key='latent_observation',
-            desired_goal_key='latent_desired_goal',
+            observation_key="latent_observation",
+            desired_goal_key="latent_desired_goal",
             presampled_goals_path=osp.join(
                 osp.dirname(mwmj.__file__),
                 "goals",
@@ -90,10 +89,10 @@ if __name__ == "__main__":
             beta=20,
             num_epochs=0,
             dump_skew_debug_plots=False,
-            decoder_activation='gaussian',
+            decoder_activation="gaussian",
             generate_vae_dataset_kwargs=dict(
                 N=2,
-                test_p=.9,
+                test_p=0.9,
                 use_cached=True,
                 show=False,
                 oracle_dataset=False,
@@ -101,7 +100,7 @@ if __name__ == "__main__":
                 non_presampled_goal_img_is_garbage=True,
             ),
             vae_kwargs=dict(
-                decoder_distribution='gaussian_identity_variance',
+                decoder_distribution="gaussian_identity_variance",
                 input_channels=3,
                 architecture=imsize48_default_architecture,
             ),
@@ -112,16 +111,16 @@ if __name__ == "__main__":
         ),
     )
 
-    search_space = {
-    }
+    search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'dev-{}'.format(
-        __file__.replace('/', '-').replace('_', '-').split('.')[0]
+    mode = "local"
+    exp_prefix = "dev-{}".format(
+        __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
@@ -132,5 +131,4 @@ if __name__ == "__main__":
                 mode=mode,
                 variant=variant,
                 use_gpu=True,
-          )
-
+            )

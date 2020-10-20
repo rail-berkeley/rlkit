@@ -7,9 +7,7 @@ from gym.envs.mujoco import HalfCheetahEnv
 
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
-from rlkit.exploration_strategies.base import (
-    PolicyWrappedWithExplorationStrategy
-)
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
@@ -28,14 +26,10 @@ def experiment(variant):
     obs_dim = eval_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
     qf = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        **variant['qf_kwargs']
+        input_size=obs_dim + action_dim, output_size=1, **variant["qf_kwargs"]
     )
     policy = TanhMlpPolicy(
-        input_size=obs_dim,
-        output_size=action_dim,
-        **variant['policy_kwargs']
+        input_size=obs_dim, output_size=action_dim, **variant["policy_kwargs"]
     )
     target_qf = copy.deepcopy(qf)
     target_policy = copy.deepcopy(policy)
@@ -45,13 +39,13 @@ def experiment(variant):
         policy=policy,
     )
     expl_path_collector = MdpPathCollector(expl_env, exploration_policy)
-    replay_buffer = EnvReplayBuffer(variant['replay_buffer_size'], expl_env)
+    replay_buffer = EnvReplayBuffer(variant["replay_buffer_size"], expl_env)
     trainer = DDPGTrainer(
         qf=qf,
         target_qf=target_qf,
         policy=policy,
         target_policy=target_policy,
-        **variant['trainer_kwargs']
+        **variant["trainer_kwargs"]
     )
     algorithm = TorchBatchRLAlgorithm(
         trainer=trainer,
@@ -60,7 +54,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algorithm_kwargs']
+        **variant["algorithm_kwargs"]
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -91,8 +85,8 @@ if __name__ == "__main__":
         policy_kwargs=dict(
             hidden_sizes=[400, 300],
         ),
-        replay_buffer_size=int(1E6),
+        replay_buffer_size=int(1e6),
     )
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    setup_logger('name-of-experiment', variant=variant)
+    setup_logger("name-of-experiment", variant=variant)
     experiment(variant)

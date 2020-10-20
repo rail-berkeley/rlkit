@@ -12,11 +12,11 @@ class NormalizedBoxEnv(ProxyEnv):
     """
 
     def __init__(
-            self,
-            env,
-            reward_scale=1.,
-            obs_mean=None,
-            obs_std=None,
+        self,
+        env,
+        reward_scale=1.0,
+        obs_mean=None,
+        obs_std=None,
     ):
         ProxyEnv.__init__(self, env)
         self._should_normalize = not (obs_mean is None and obs_std is None)
@@ -37,8 +37,10 @@ class NormalizedBoxEnv(ProxyEnv):
 
     def estimate_obs_stats(self, obs_batch, override_values=False):
         if self._obs_mean is not None and not override_values:
-            raise Exception("Observation mean and std already set. To "
-                            "override, set override_values to True.")
+            raise Exception(
+                "Observation mean and std already set. To "
+                "override, set override_values to True."
+            )
         self._obs_mean = np.mean(obs_batch, axis=0)
         self._obs_std = np.std(obs_batch, axis=0)
 
@@ -48,7 +50,7 @@ class NormalizedBoxEnv(ProxyEnv):
     def step(self, action):
         lb = self._wrapped_env.action_space.low
         ub = self._wrapped_env.action_space.high
-        scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
+        scaled_action = lb + (action + 1.0) * 0.5 * (ub - lb)
         scaled_action = np.clip(scaled_action, lb, ub)
 
         wrapped_step = self._wrapped_env.step(scaled_action)
@@ -59,5 +61,3 @@ class NormalizedBoxEnv(ProxyEnv):
 
     def __str__(self):
         return "Normalized: %s" % self._wrapped_env
-
-

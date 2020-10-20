@@ -25,9 +25,7 @@ def clip_magnitude(value, magnitude):
 
 
 def is_numeric(x):
-    return not isinstance(x, bool) and (
-        isinstance(x, int) or isinstance(x, float)
-    )
+    return not isinstance(x, bool) and (isinstance(x, int) or isinstance(x, float))
 
 
 """
@@ -55,7 +53,7 @@ def dot_map_dict_to_nested_dict(dot_map_dict):
     tree = {}
 
     for key, item in dot_map_dict.items():
-        split_keys = key.split('.')
+        split_keys = key.split(".")
         if len(split_keys) == 1:
             if key in tree:
                 raise ValueError("Duplicate key: {}".format(key))
@@ -67,9 +65,7 @@ def dot_map_dict_to_nested_dict(dot_map_dict):
             last_key = split_keys[-1]
             if not isinstance(t, dict):
                 raise TypeError(
-                    "Key inside dot map must point to dictionary: {}".format(
-                        key
-                    )
+                    "Key inside dot map must point to dictionary: {}".format(key)
                 )
             if last_key in t:
                 raise ValueError("Duplicate key: {}".format(last_key))
@@ -77,7 +73,7 @@ def dot_map_dict_to_nested_dict(dot_map_dict):
     return tree
 
 
-def nested_dict_to_dot_map_dict(d, parent_key=''):
+def nested_dict_to_dot_map_dict(d, parent_key=""):
     """
     Convert a recursive dictionary into a flat, dot-map dictionary.
 
@@ -95,27 +91,29 @@ def nested_dict_to_dot_map_dict(d, parent_key=''):
     return dict(items)
 
 
-def merge_recursive_dicts(a, b, path=None,
-                          ignore_duplicate_keys_in_second_dict=False):
+def merge_recursive_dicts(a, b, path=None, ignore_duplicate_keys_in_second_dict=False):
     """
     Merge two dicts that may have nested dicts.
     """
-    if path is None: path = []
+    if path is None:
+        path = []
     for key in b:
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
-                merge_recursive_dicts(a[key], b[key], path + [str(key)],
-                                      ignore_duplicate_keys_in_second_dict=ignore_duplicate_keys_in_second_dict)
+                merge_recursive_dicts(
+                    a[key],
+                    b[key],
+                    path + [str(key)],
+                    ignore_duplicate_keys_in_second_dict=ignore_duplicate_keys_in_second_dict,
+                )
             elif a[key] == b[key]:
                 print("Same value for key: {}".format(key))
             else:
-                duplicate_key = '.'.join(path + [str(key)])
+                duplicate_key = ".".join(path + [str(key)])
                 if ignore_duplicate_keys_in_second_dict:
                     print("duplicate key ignored: {}".format(duplicate_key))
                 else:
-                    raise Exception(
-                        'Duplicate keys at {}'.format(duplicate_key)
-                    )
+                    raise Exception("Duplicate keys at {}".format(duplicate_key))
         else:
             a[key] = b[key]
     return a
@@ -194,10 +192,7 @@ def dict_to_safe_json(d, sort=False):
         if safe_json(item):
             new_d[key] = item
         else:
-            if (
-                    isinstance(item, dict)
-                    or isinstance(item, collections.OrderedDict)
-            ):
+            if isinstance(item, dict) or isinstance(item, collections.OrderedDict):
                 new_d[key] = dict_to_safe_json(item, sort=sort)
             else:
                 new_d[key] = str(item)
@@ -254,9 +249,7 @@ def map_recursive(fctn, x_or_iterable):
     """
     # if isinstance(x_or_iterable, Iterable):
     if isinstance(x_or_iterable, list) or isinstance(x_or_iterable, tuple):
-        return type(x_or_iterable)(
-            map_recursive(fctn, item) for item in x_or_iterable
-        )
+        return type(x_or_iterable)(map_recursive(fctn, item) for item in x_or_iterable)
     else:
         return fctn(x_or_iterable)
 
@@ -275,8 +268,7 @@ def filter_recursive(x_or_iterable):
         for sub_elem in x_or_iterable:
             filtered_sub_elem = filter_recursive(sub_elem)
             if filtered_sub_elem is not None and not (
-                        isinstance(filtered_sub_elem, list) and
-                            len(filtered_sub_elem) == 0
+                isinstance(filtered_sub_elem, list) and len(filtered_sub_elem) == 0
             ):
                 new_items.append(filtered_sub_elem)
         return new_items
@@ -304,7 +296,7 @@ def batch(iterable, n=1):
     """
     l = len(iterable)
     for ndx in range(0, l, n):
-        yield iterable[ndx:min(ndx + n, l)]
+        yield iterable[ndx : min(ndx + n, l)]
 
 
 def takespread(sequence, num):

@@ -10,9 +10,9 @@ class StackObservationEnv(ProxyEnv):
     """
 
     def __init__(
-            self,
-            env,
-            stack_obs=1,
+        self,
+        env,
+        stack_obs=1,
     ):
         ProxyEnv.__init__(self, env)
         self.stack_obs = stack_obs
@@ -33,10 +33,5 @@ class StackObservationEnv(ProxyEnv):
 
     def step(self, action):
         next_obs, reward, done, info = self._wrapped_env.step(action)
-        self._last_obs = np.vstack((
-            self._last_obs[1:, :],
-            next_obs
-        ))
+        self._last_obs = np.vstack((self._last_obs[1:, :], next_obs))
         return self._last_obs.copy().flatten(), reward, done, info
-
-

@@ -12,45 +12,42 @@ import gtimer as gt
 try:
     import apex
     from apex import amp
+
     APEX_AVAILABLE = True
 except ModuleNotFoundError:
     APEX_AVAILABLE = False
 
 DreamerLosses = namedtuple(
-    'DreamerLosses',
-    'actor_loss vf_loss world_model_loss',
+    "DreamerLosses",
+    "actor_loss vf_loss world_model_loss",
 )
+
 
 class DreamerTrainer(TorchTrainer, LossFunction):
     def __init__(
-            self,
-            env,
-            actor,
-            vf,
-            world_model,
-
-            discount=0.99,
-            reward_scale=1.0,
-
-            actor_lr=8e-5,
-            vf_lr=8e-5,
-            world_model_lr=6e-4,
-
-            optimizer_class='torch_adam',
-            use_amp=False,
-            opt_level="O1",
-
-            gradient_clip=100.0,
-            lam=.95,
-            imagination_horizon=4,
-            free_nats=3.0,
-            kl_scale=1.0,
-            pcont_scale=10.0,
-            use_pcont=True,
-
-            plotter=None,
-            render_eval_paths=False,
-            debug=False,
+        self,
+        env,
+        actor,
+        vf,
+        world_model,
+        discount=0.99,
+        reward_scale=1.0,
+        actor_lr=8e-5,
+        vf_lr=8e-5,
+        world_model_lr=6e-4,
+        optimizer_class="torch_adam",
+        use_amp=False,
+        opt_level="O1",
+        gradient_clip=100.0,
+        lam=0.95,
+        imagination_horizon=4,
+        free_nats=3.0,
+        kl_scale=1.0,
+        pcont_scale=10.0,
+        use_pcont=True,
+        plotter=None,
+        render_eval_paths=False,
+        debug=False,
     ):
         super().__init__()
 
@@ -65,9 +62,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
-        if optimizer_class == 'torch_adam':
+        if optimizer_class == "torch_adam":
             optimizer_class = optim.Adam
-        elif optimizer_class == 'apex_adam' and APEX_AVAILABLE:
+        elif optimizer_class == "apex_adam" and APEX_AVAILABLE:
             optimizer_class = apex.optimizers.FusedAdam
 
         self.actor_optimizer = optimizer_class(
@@ -88,26 +85,31 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
             models, optimizers = amp.initialize(
-                [self.world_model, self.actor, self.vf], [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
+                [self.world_model, self.actor, self.vf],
+                [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
                 opt_level=opt_level,
             )
             self.world_model, self.actor, self.vf = models
-            self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer = optimizers
+            (
+                self.world_model_optimizer,
+                self.actor_optimizer,
+                self.vf_optimizer,
+            ) = optimizers
 
         # self.actor = DDP(self.actor, device_ids=[0])
         # self.world_model = DDP(self.world_model, device_ids=[0])
         # self.vf = DDP(self.vf, device_ids=[0])
         #
-        self.opt_level=opt_level
+        self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
-        self.gradient_clip=gradient_clip
-        self.lam=lam
-        self.imagination_horizon=imagination_horizon
-        self.free_nats=free_nats
-        self.kl_scale=kl_scale
+        self.gradient_clip = gradient_clip
+        self.lam = lam
+        self.imagination_horizon = imagination_horizon
+        self.free_nats = free_nats
+        self.kl_scale = kl_scale
         self.pcont_scale = pcont_scale
-        self.use_pcont=use_pcont
+        self.use_pcont = use_pcont
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
@@ -128,11 +130,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             self.eval_statistics = stats
             # Compute statistics using only one batch per epoch
             self._need_to_update_eval_statistics = False
-        gt.stamp('dreamer training', unique=False)
+        gt.stamp("dreamer training", unique=False)
 
     def imagine_ahead(self, state):
         new_state = {}
-        for k,v in state.items():
+        for k, v in state.items():
             with torch.no_grad():
                 if self.use_pcont:  # Last step could be terminal.
                     v = v[:, :-1]
@@ -152,43 +154,63 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         skip_statistics=False,
         **kwargs,
     ) -> Tuple[DreamerLosses, LossStatistics]:
-        rewards = batch['rewards']
-        terminals = batch['terminals']
-        obs = batch['observations']
-        actions = batch['actions']
-        next_obs = batch['next_observations']
+        rewards = batch["rewards"]
+        terminals = batch["terminals"]
+        obs = batch["observations"]
+        actions = batch["actions"]
+        next_obs = batch["next_observations"]
         """
         World Model Loss
         """
-        post, prior, post_dist, prior_dist, image_dist, reward_dist, pcont_dist = self.world_model(obs, actions)
+        (
+            post,
+            prior,
+            post_dist,
+            prior_dist,
+            image_dist,
+            reward_dist,
+            pcont_dist,
+        ) = self.world_model(obs, actions)
 
-        #stack obs, rewards and terminals along path dimension
+        # stack obs, rewards and terminals along path dimension
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
         terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
 
-        image_pred_loss = -1*image_dist.log_prob(self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)).mean()
-        reward_pred_loss = -1*reward_dist.log_prob(rewards).mean()
+        image_pred_loss = (
+            -1
+            * image_dist.log_prob(
+                self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)
+            ).mean()
+        )
+        reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
         pcont_target = self.discount * (1 - terminals.float())
-        pcont_loss = -1*pcont_dist.log_prob(pcont_target).mean()
+        pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
         world_model_loss = self.kl_scale * div + image_pred_loss + reward_pred_loss
         if self.use_pcont:
-            world_model_loss += self.pcont_scale*pcont_loss
+            world_model_loss += self.pcont_scale * pcont_loss
 
         zero_grad(self.world_model)
         if self.use_amp:
-            with amp.scale_loss(world_model_loss, self.world_model_optimizer) as scaled_world_model_loss:
+            with amp.scale_loss(
+                world_model_loss, self.world_model_optimizer
+            ) as scaled_world_model_loss:
                 scaled_world_model_loss.backward()
         else:
             world_model_loss.backward()
         if self.gradient_clip > 0:
             if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(self.world_model.parameters(), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    self.world_model.parameters(), self.gradient_clip, norm_type=2
+                )
             else:
-                torch.nn.utils.clip_grad_norm_(amp.master_params(
-                    self.world_model_optimizer), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    amp.master_params(self.world_model_optimizer),
+                    self.gradient_clip,
+                    norm_type=2,
+                )
         self.world_model_optimizer.step()
 
         """
@@ -196,16 +218,26 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         with FreezeParameters(self.world_model.modules):
             imag_feat = self.imagine_ahead(post)
-        with FreezeParameters(self.world_model.modules+self.vf.modules):
+        with FreezeParameters(self.world_model.modules + self.vf.modules):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
                 with FreezeParameters([self.world_model.pcont]):
-                    discount = self.world_model.get_dist(self.world_model.pcont(imag_feat), std=None, normal=False).mean
+                    discount = self.world_model.get_dist(
+                        self.world_model.pcont(imag_feat), std=None, normal=False
+                    ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
             value = self.vf(imag_feat)
-        imag_returns = lambda_return(imag_reward[:-1], value[:-1], discount[:-1], bootstrap=value[-1], lambda_=self.lam)
-        discount = torch.cumprod(torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0).detach()
+        imag_returns = lambda_return(
+            imag_reward[:-1],
+            value[:-1],
+            discount[:-1],
+            bootstrap=value[-1],
+            lambda_=self.lam,
+        )
+        discount = torch.cumprod(
+            torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0
+        ).detach()
         actor_loss = -(discount * imag_returns).mean()
 
         zero_grad(self.actor)
@@ -216,12 +248,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             actor_loss.backward()
         if self.gradient_clip > 0:
             if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(self.actor.parameters(), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    self.actor.parameters(), self.gradient_clip, norm_type=2
+                )
             else:
-                torch.nn.utils.clip_grad_norm_(amp.master_params(
-                    self.actor_optimizer), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    amp.master_params(self.actor_optimizer),
+                    self.gradient_clip,
+                    norm_type=2,
+                )
         self.actor_optimizer.step()
-
 
         """
         Value Loss
@@ -242,30 +278,34 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             vf_loss.backward()
         if self.gradient_clip > 0:
             if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(self.vf.parameters(), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    self.vf.parameters(), self.gradient_clip, norm_type=2
+                )
             else:
-                torch.nn.utils.clip_grad_norm_(amp.master_params(
-                    self.vf_optimizer), self.gradient_clip, norm_type=2)
+                torch.nn.utils.clip_grad_norm_(
+                    amp.master_params(self.vf_optimizer),
+                    self.gradient_clip,
+                    norm_type=2,
+                )
         self.vf_optimizer.step()
-
 
         """
         Save some statistics for eval
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
-            eval_statistics['Value Loss'] = vf_loss.item()
-            eval_statistics['Actor Loss'] = actor_loss.item()
-            eval_statistics['World Model Loss'] = world_model_loss.item()
-            eval_statistics['Image Loss'] = image_pred_loss.item()
-            eval_statistics['Reward Loss'] = reward_pred_loss.item()
-            eval_statistics['Divergence Loss'] = div.item()
+            eval_statistics["Value Loss"] = vf_loss.item()
+            eval_statistics["Actor Loss"] = actor_loss.item()
+            eval_statistics["World Model Loss"] = world_model_loss.item()
+            eval_statistics["Image Loss"] = image_pred_loss.item()
+            eval_statistics["Reward Loss"] = reward_pred_loss.item()
+            eval_statistics["Divergence Loss"] = div.item()
             if self.use_pcont:
-                eval_statistics['Pcont Loss'] = pcont_loss.item()
-            eval_statistics['Imagined Returns'] = imag_returns.mean().item()
-            eval_statistics['Imagined Rewards'] = imag_reward.mean().item()
-            eval_statistics['Imagined Values'] = value_dist.mean.mean().item()
-            eval_statistics['Predicted Rewards'] = reward_dist.mean.mean().item()
+                eval_statistics["Pcont Loss"] = pcont_loss.item()
+            eval_statistics["Imagined Returns"] = imag_returns.mean().item()
+            eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
+            eval_statistics["Imagined Values"] = value_dist.mean.mean().item()
+            eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
         loss = DreamerLosses(
             actor_loss=actor_loss,
@@ -306,8 +346,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             vf=self.vf,
         )
 
+
 def lambda_return(reward, value, discount, bootstrap, lambda_=0.95):
-    #from: https://github.com/yusukeurakami/dreamer-pytorch
+    # from: https://github.com/yusukeurakami/dreamer-pytorch
     # Setting lambda=1 gives a discounted Monte Carlo return.
     # Setting lambda=0 gives a fixed 1-step return.
     """
@@ -328,6 +369,7 @@ def lambda_return(reward, value, discount, bootstrap, lambda_=0.95):
     returns = torch.flip(torch.stack(outputs), [0])
     return returns
 
+
 def zero_grad(model):
     for param in model.parameters():
-        param.grad=None
+        param.grad = None

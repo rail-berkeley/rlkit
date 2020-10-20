@@ -21,9 +21,7 @@ class DistributionGenerator(nn.Module, metaclass=abc.ABCMeta):
 
 
 class ModuleToDistributionGenerator(
-    MultiInputSequential,
-    DistributionGenerator,
-    metaclass=abc.ABCMeta
+    MultiInputSequential, DistributionGenerator, metaclass=abc.ABCMeta
 ):
     pass
 
@@ -48,7 +46,8 @@ class Gaussian(ModuleToDistributionGenerator):
             mean, log_std = super().forward(*input)
             std = log_std.exp()
         return MultivariateDiagonalNormal(
-            mean, std, reinterpreted_batch_ndims=self.reinterpreted_batch_ndims)
+            mean, std, reinterpreted_batch_ndims=self.reinterpreted_batch_ndims
+        )
 
 
 class BernoulliGenerator(ModuleToDistributionGenerator):

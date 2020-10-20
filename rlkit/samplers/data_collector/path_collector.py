@@ -10,14 +10,14 @@ from rlkit.samplers.rollout_functions import rollout
 
 class MdpPathCollector(PathCollector):
     def __init__(
-            self,
-            env,
-            policy,
-            max_num_epoch_paths_saved=None,
-            render=False,
-            render_kwargs=None,
-            rollout_fn=rollout,
-            save_env_in_snapshot=True,
+        self,
+        env,
+        policy,
+        max_num_epoch_paths_saved=None,
+        render=False,
+        render_kwargs=None,
+        rollout_fn=rollout,
+        save_env_in_snapshot=True,
     ):
         if render_kwargs is None:
             render_kwargs = {}
@@ -35,10 +35,10 @@ class MdpPathCollector(PathCollector):
         self._save_env_in_snapshot = save_env_in_snapshot
 
     def collect_new_paths(
-            self,
-            max_path_length,
-            num_steps,
-            discard_incomplete_paths,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
     ):
         paths = []
         num_steps_collected = 0
@@ -54,11 +54,11 @@ class MdpPathCollector(PathCollector):
                 render=self._render,
                 render_kwargs=self._render_kwargs,
             )
-            path_len = len(path['actions'])
+            path_len = len(path["actions"])
             if (
-                    path_len != max_path_length
-                    and not path['terminals'][-1]
-                    and discard_incomplete_paths
+                path_len != max_path_length
+                and not path["terminals"][-1]
+                and discard_incomplete_paths
             ):
                 break
             num_steps_collected += path_len
@@ -75,16 +75,20 @@ class MdpPathCollector(PathCollector):
         self._epoch_paths = deque(maxlen=self._max_num_epoch_paths_saved)
 
     def get_diagnostics(self):
-        path_lens = [len(path['actions']) for path in self._epoch_paths]
-        stats = OrderedDict([
-            ('num steps total', self._num_steps_total),
-            ('num paths total', self._num_paths_total),
-        ])
-        stats.update(create_stats_ordered_dict(
-            "path length",
-            path_lens,
-            always_show_all_stats=True,
-        ))
+        path_lens = [len(path["actions"]) for path in self._epoch_paths]
+        stats = OrderedDict(
+            [
+                ("num steps total", self._num_steps_total),
+                ("num paths total", self._num_paths_total),
+            ]
+        )
+        stats.update(
+            create_stats_ordered_dict(
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
+            )
+        )
         return stats
 
     def get_snapshot(self):
@@ -92,18 +96,18 @@ class MdpPathCollector(PathCollector):
             policy=self._policy,
         )
         if self._save_env_in_snapshot:
-            snapshot_dict['env'] = self._env
+            snapshot_dict["env"] = self._env
         return snapshot_dict
 
 
 class GoalConditionedPathCollector(MdpPathCollector):
     def __init__(
-            self,
-            *args,
-            observation_key='observation',
-            desired_goal_key='desired_goal',
-            goal_sampling_mode=None,
-            **kwargs
+        self,
+        *args,
+        observation_key="observation",
+        desired_goal_key="desired_goal",
+        goal_sampling_mode=None,
+        **kwargs
     ):
         def obs_processor(o):
             return np.hstack((o[observation_key], o[desired_goal_key]))
@@ -131,12 +135,7 @@ class GoalConditionedPathCollector(MdpPathCollector):
 
 
 class ObsDictPathCollector(MdpPathCollector):
-    def __init__(
-            self,
-            *args,
-            observation_key='observation',
-            **kwargs
-    ):
+    def __init__(self, *args, observation_key="observation", **kwargs):
         def obs_processor(obs):
             return obs[observation_key]
 
@@ -156,13 +155,7 @@ class ObsDictPathCollector(MdpPathCollector):
 
 
 class VAEWrappedEnvPathCollector(GoalConditionedPathCollector):
-    def __init__(
-            self,
-            env,
-            policy,
-            decode_goals=False,
-            **kwargs
-    ):
+    def __init__(self, env, policy, decode_goals=False, **kwargs):
         """Expects env is VAEWrappedEnv"""
         super().__init__(env, policy, **kwargs)
         self._decode_goals = decode_goals

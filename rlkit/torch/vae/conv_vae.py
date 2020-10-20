@@ -23,15 +23,12 @@ imsize48_default_architecture = dict(
     ),
     deconv_args=dict(
         hidden_sizes=[],
-
         deconv_input_width=3,
         deconv_input_height=3,
         deconv_input_channels=64,
-
         deconv_output_kernel_size=6,
         deconv_output_strides=3,
         deconv_output_channels=3,
-
         kernel_sizes=[3, 3],
         n_channels=[32, 16],
         strides=[2, 2],
@@ -39,7 +36,7 @@ imsize48_default_architecture = dict(
     deconv_kwargs=dict(
         batch_norm_deconv=False,
         batch_norm_fc=False,
-    )
+    ),
 )
 
 imsize48_default_architecture_with_more_hidden_layers = dict(
@@ -53,21 +50,17 @@ imsize48_default_architecture_with_more_hidden_layers = dict(
     ),
     deconv_args=dict(
         hidden_sizes=[150, 300, 500],
-
         deconv_input_width=3,
         deconv_input_height=3,
         deconv_input_channels=64,
-
         deconv_output_kernel_size=6,
         deconv_output_strides=3,
         deconv_output_channels=3,
-
         kernel_sizes=[3, 3],
         n_channels=[32, 16],
         strides=[2, 2],
     ),
-    deconv_kwargs=dict(
-    )
+    deconv_kwargs=dict(),
 )
 
 imsize84_default_architecture = dict(
@@ -83,15 +76,12 @@ imsize84_default_architecture = dict(
     ),
     deconv_args=dict(
         hidden_sizes=[],
-
         deconv_input_width=2,
         deconv_input_height=2,
         deconv_input_channels=32,
-
         deconv_output_kernel_size=6,
         deconv_output_strides=3,
         deconv_output_channels=3,
-
         kernel_sizes=[5, 6],
         n_channels=[32, 16],
         strides=[3, 3],
@@ -99,26 +89,24 @@ imsize84_default_architecture = dict(
     deconv_kwargs=dict(
         batch_norm_deconv=False,
         batch_norm_fc=False,
-    )
+    ),
 )
 
 
 class ConvVAE(GaussianLatentVAE):
     def __init__(
-            self,
-            representation_size,
-            architecture,
-
-            encoder_class=CNN,
-            decoder_class=DCNN,
-            decoder_output_activation=identity,
-            decoder_distribution='bernoulli',
-
-            input_channels=1,
-            imsize=48,
-            init_w=1e-3,
-            min_variance=1e-3,
-            hidden_init=ptu.fanin_init,
+        self,
+        representation_size,
+        architecture,
+        encoder_class=CNN,
+        decoder_class=DCNN,
+        decoder_output_activation=identity,
+        decoder_distribution="bernoulli",
+        input_channels=1,
+        imsize=48,
+        init_w=1e-3,
+        min_variance=1e-3,
+        hidden_init=ptu.fanin_init,
     ):
         """
 
@@ -165,23 +153,29 @@ class ConvVAE(GaussianLatentVAE):
         self.imsize = imsize
         self.imlength = self.imsize * self.imsize * self.input_channels
 
-        conv_args, conv_kwargs, deconv_args, deconv_kwargs = \
-            architecture['conv_args'], architecture['conv_kwargs'], \
-            architecture['deconv_args'], architecture['deconv_kwargs']
-        conv_output_size = deconv_args['deconv_input_width'] * \
-                           deconv_args['deconv_input_height'] * \
-                           deconv_args['deconv_input_channels']
+        conv_args, conv_kwargs, deconv_args, deconv_kwargs = (
+            architecture["conv_args"],
+            architecture["conv_kwargs"],
+            architecture["deconv_args"],
+            architecture["deconv_kwargs"],
+        )
+        conv_output_size = (
+            deconv_args["deconv_input_width"]
+            * deconv_args["deconv_input_height"]
+            * deconv_args["deconv_input_channels"]
+        )
 
         self.encoder = encoder_class(
             **conv_args,
-            paddings=np.zeros(len(conv_args['kernel_sizes']), dtype=np.int64),
+            paddings=np.zeros(len(conv_args["kernel_sizes"]), dtype=np.int64),
             input_height=self.imsize,
             input_width=self.imsize,
             input_channels=self.input_channels,
             output_size=conv_output_size,
             init_w=init_w,
             hidden_init=hidden_init,
-            **conv_kwargs)
+            **conv_kwargs
+        )
 
         self.fc1 = nn.Linear(self.encoder.output_size, representation_size)
         self.fc2 = nn.Linear(self.encoder.output_size, representation_size)
@@ -197,9 +191,10 @@ class ConvVAE(GaussianLatentVAE):
             fc_input_size=representation_size,
             init_w=init_w,
             output_activation=decoder_output_activation,
-            paddings=np.zeros(len(deconv_args['kernel_sizes']), dtype=np.int64),
+            paddings=np.zeros(len(deconv_args["kernel_sizes"]), dtype=np.int64),
             hidden_init=hidden_init,
-            **deconv_kwargs)
+            **deconv_kwargs
+        )
 
         self.epoch = 0
         self.decoder_distribution = decoder_distribution
@@ -214,33 +209,46 @@ class ConvVAE(GaussianLatentVAE):
         return (mu, logvar)
 
     def decode(self, latents):
-        decoded = self.decoder(latents).view(-1,
-                                             self.imsize * self.imsize * self.input_channels)
-        if self.decoder_distribution == 'bernoulli':
+        decoded = self.decoder(latents).view(
+            -1, self.imsize * self.imsize * self.input_channels
+        )
+        if self.decoder_distribution == "bernoulli":
             return decoded, [decoded]
-        elif self.decoder_distribution == 'gaussian_identity_variance':
-            return torch.clamp(decoded, 0, 1), [torch.clamp(decoded, 0, 1),
-                                                torch.ones_like(decoded)]
+        elif self.decoder_distribution == "gaussian_identity_variance":
+            return torch.clamp(decoded, 0, 1), [
+                torch.clamp(decoded, 0, 1),
+                torch.ones_like(decoded),
+            ]
         else:
-            raise NotImplementedError('Distribution {} not supported'.format(
-                self.decoder_distribution))
+            raise NotImplementedError(
+                "Distribution {} not supported".format(self.decoder_distribution)
+            )
 
     def logprob(self, inputs, obs_distribution_params):
-        if self.decoder_distribution == 'bernoulli':
-            inputs = inputs.narrow(start=0, length=self.imlength,
-                                   dim=1).contiguous().view(-1, self.imlength)
-            log_prob = - F.binary_cross_entropy(
-                obs_distribution_params[0],
-                inputs,
-                reduction='elementwise_mean'
-            ) * self.imlength
+        if self.decoder_distribution == "bernoulli":
+            inputs = (
+                inputs.narrow(start=0, length=self.imlength, dim=1)
+                .contiguous()
+                .view(-1, self.imlength)
+            )
+            log_prob = (
+                -F.binary_cross_entropy(
+                    obs_distribution_params[0], inputs, reduction="elementwise_mean"
+                )
+                * self.imlength
+            )
             return log_prob
-        if self.decoder_distribution == 'gaussian_identity_variance':
-            inputs = inputs.narrow(start=0, length=self.imlength,
-                                   dim=1).contiguous().view(-1, self.imlength)
-            log_prob = -1 * F.mse_loss(inputs, obs_distribution_params[0],
-                                       reduction='elementwise_mean')
+        if self.decoder_distribution == "gaussian_identity_variance":
+            inputs = (
+                inputs.narrow(start=0, length=self.imlength, dim=1)
+                .contiguous()
+                .view(-1, self.imlength)
+            )
+            log_prob = -1 * F.mse_loss(
+                inputs, obs_distribution_params[0], reduction="elementwise_mean"
+            )
             return log_prob
         else:
-            raise NotImplementedError('Distribution {} not supported'.format(
-                self.decoder_distribution))
+            raise NotImplementedError(
+                "Distribution {} not supported".format(self.decoder_distribution)
+            )

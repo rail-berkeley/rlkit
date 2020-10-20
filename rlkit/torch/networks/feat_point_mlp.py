@@ -10,15 +10,15 @@ from rlkit.torch.core import PyTorchModule
 
 class FeatPointMlp(PyTorchModule):
     def __init__(
-            self,
-            downsample_size,
-            input_channels,
-            num_feat_points,
-            temperature=1.0,
-            init_w=1e-3,
-            input_size=32,
-            hidden_init=ptu.fanin_init,
-            output_activation=identity,
+        self,
+        downsample_size,
+        input_channels,
+        num_feat_points,
+        temperature=1.0,
+        init_w=1e-3,
+        input_size=32,
+        hidden_init=ptu.fanin_init,
+        output_activation=identity,
     ):
         super().__init__()
 
@@ -43,7 +43,9 @@ class FeatPointMlp(PyTorchModule):
         self.out_size = int(np.prod(test_mat.shape))
         self.fc1 = nn.Linear(2 * self.num_feat_points, 400)
         self.fc2 = nn.Linear(400, 300)
-        self.last_fc = nn.Linear(300, self.input_channels * self.downsample_size * self.downsample_size)
+        self.last_fc = nn.Linear(
+            300, self.input_channels * self.downsample_size * self.downsample_size
+        )
 
         self.init_weights(init_w)
         self.i = 0
@@ -60,7 +62,9 @@ class FeatPointMlp(PyTorchModule):
         return out
 
     def encoder(self, input):
-        x = input.contiguous().view(-1, self.input_channels, self.input_size, self.input_size)
+        x = input.contiguous().view(
+            -1, self.input_channels, self.input_size, self.input_size
+        )
         x = F.relu(self.conv1(x))
         x = F.relu(self.conv2(x))
         x = self.conv3(x)
@@ -90,14 +94,12 @@ class FeatPointMlp(PyTorchModule):
         return h
 
     def history_encoder(self, input, history_length):
-        input = input.contiguous().view(-1,
-                                        self.input_channels,
-                                        self.input_size,
-                                        self.input_size)
+        input = input.contiguous().view(
+            -1, self.input_channels, self.input_size, self.input_size
+        )
         latent = self.encoder(input)
 
         assert latent.shape[0] % history_length == 0
         n_samples = latent.shape[0] // history_length
         latent = latent.view(n_samples, -1)
         return latent
-

@@ -10,8 +10,8 @@ filename = str(uuid.uuid4())
 
 def simulate_policy(args):
     data = torch.load(args.file)
-    policy = data['evaluation/policy']
-    env = data['evaluation/env']
+    policy = data["evaluation/policy"]
+    env = data["evaluation/env"]
     print("Policy loaded")
     if args.gpu:
         set_gpu_mode(True)
@@ -30,11 +30,9 @@ def simulate_policy(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('file', type=str,
-                        help='path to the snapshot file')
-    parser.add_argument('--H', type=int, default=300,
-                        help='Max length of rollout')
-    parser.add_argument('--gpu', action='store_true')
+    parser.add_argument("file", type=str, help="path to the snapshot file")
+    parser.add_argument("--H", type=int, default=300, help="Max length of rollout")
+    parser.add_argument("--gpu", action="store_true")
     args = parser.parse_args()
 
     simulate_policy(args)

@@ -11,8 +11,7 @@ from gym.envs.mujoco import HalfCheetahEnv
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.gaussian_strategy import GaussianStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
@@ -27,34 +26,22 @@ def experiment(variant):
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
     qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        **variant['qf_kwargs']
+        input_size=obs_dim + action_dim, output_size=1, **variant["qf_kwargs"]
     )
     qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        **variant['qf_kwargs']
+        input_size=obs_dim + action_dim, output_size=1, **variant["qf_kwargs"]
     )
     target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        **variant['qf_kwargs']
+        input_size=obs_dim + action_dim, output_size=1, **variant["qf_kwargs"]
     )
     target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        **variant['qf_kwargs']
+        input_size=obs_dim + action_dim, output_size=1, **variant["qf_kwargs"]
     )
     policy = TanhMlpPolicy(
-        input_size=obs_dim,
-        output_size=action_dim,
-        **variant['policy_kwargs']
+        input_size=obs_dim, output_size=action_dim, **variant["policy_kwargs"]
     )
     target_policy = TanhMlpPolicy(
-        input_size=obs_dim,
-        output_size=action_dim,
-        **variant['policy_kwargs']
+        input_size=obs_dim, output_size=action_dim, **variant["policy_kwargs"]
     )
     es = GaussianStrategy(
         action_space=expl_env.action_space,
@@ -74,7 +61,7 @@ def experiment(variant):
         exploration_policy,
     )
     replay_buffer = EnvReplayBuffer(
-        variant['replay_buffer_size'],
+        variant["replay_buffer_size"],
         expl_env,
     )
     trainer = TD3Trainer(
@@ -84,7 +71,7 @@ def experiment(variant):
         target_qf1=target_qf1,
         target_qf2=target_qf2,
         target_policy=target_policy,
-        **variant['trainer_kwargs']
+        **variant["trainer_kwargs"]
     )
     algorithm = TorchBatchRLAlgorithm(
         trainer=trainer,
@@ -93,7 +80,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algorithm_kwargs']
+        **variant["algorithm_kwargs"]
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -119,8 +106,8 @@ if __name__ == "__main__":
         policy_kwargs=dict(
             hidden_sizes=[400, 300],
         ),
-        replay_buffer_size=int(1E6),
+        replay_buffer_size=int(1e6),
     )
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
-    setup_logger('rlkit-post-refactor-td3-half-cheetah', variant=variant)
+    setup_logger("rlkit-post-refactor-td3-half-cheetah", variant=variant)
     experiment(variant)

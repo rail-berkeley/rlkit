@@ -8,8 +8,7 @@ import gym
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.epsilon_greedy import EpsilonGreedy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import GoalConditionedPathCollector
@@ -23,17 +22,19 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 try:
     import multiworld.envs.gridworlds
 except ImportError as e:
-    print("To run this example, you need to install `multiworld`. See "
-          "https://github.com/vitchyr/multiworld.")
+    print(
+        "To run this example, you need to install `multiworld`. See "
+        "https://github.com/vitchyr/multiworld."
+    )
     raise e
 
 
 def experiment(variant):
-    expl_env = gym.make('GoalGridworld-v0')
-    eval_env = gym.make('GoalGridworld-v0')
+    expl_env = gym.make("GoalGridworld-v0")
+    eval_env = gym.make("GoalGridworld-v0")
 
-    obs_dim = expl_env.observation_space.spaces['observation'].low.size
-    goal_dim = expl_env.observation_space.spaces['desired_goal'].low.size
+    obs_dim = expl_env.observation_space.spaces["observation"].low.size
+    goal_dim = expl_env.observation_space.spaces["desired_goal"].low.size
     action_dim = expl_env.action_space.n
     qf = ConcatMlp(
         input_size=obs_dim + goal_dim,
@@ -55,11 +56,10 @@ def experiment(variant):
     )
 
     replay_buffer = ObsDictRelabelingBuffer(
-        env=eval_env,
-        **variant['replay_buffer_kwargs']
+        env=eval_env, **variant["replay_buffer_kwargs"]
     )
-    observation_key = 'observation'
-    desired_goal_key = 'desired_goal'
+    observation_key = "observation"
+    desired_goal_key = "desired_goal"
     eval_path_collector = GoalConditionedPathCollector(
         eval_env,
         eval_policy,
@@ -72,11 +72,7 @@ def experiment(variant):
         observation_key=observation_key,
         desired_goal_key=desired_goal_key,
     )
-    trainer = DQNTrainer(
-        qf=qf,
-        target_qf=target_qf,
-        **variant['trainer_kwargs']
-    )
+    trainer = DQNTrainer(qf=qf, target_qf=target_qf, **variant["trainer_kwargs"])
     trainer = HERTrainer(trainer)
     algorithm = TorchBatchRLAlgorithm(
         trainer=trainer,
@@ -85,7 +81,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        **variant['algo_kwargs']
+        **variant["algo_kwargs"]
     )
     algorithm.to(ptu.device)
     algorithm.train()
@@ -111,5 +107,5 @@ if __name__ == "__main__":
             fraction_goals_env_goals=0.0,
         ),
     )
-    setup_logger('her-dqn-gridworld-experiment', variant=variant)
+    setup_logger("her-dqn-gridworld-experiment", variant=variant)
     experiment(variant)

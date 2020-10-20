@@ -10,6 +10,7 @@ class LayerNorm(nn.Module):
     """
     Simple 1D LayerNorm.
     """
+
     def __init__(self, features, center=True, scale=False, eps=1e-6):
         super().__init__()
         self.center = center

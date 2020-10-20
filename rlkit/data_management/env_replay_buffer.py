@@ -6,12 +6,7 @@ import numpy as np
 
 
 class EnvReplayBuffer(SimpleReplayBuffer):
-    def __init__(
-            self,
-            max_replay_buffer_size,
-            env,
-            env_info_sizes=None
-    ):
+    def __init__(self, max_replay_buffer_size, env, env_info_sizes=None):
         """
         :param max_replay_buffer_size:
         :param env:
@@ -21,7 +16,7 @@ class EnvReplayBuffer(SimpleReplayBuffer):
         self._action_space = env.action_space
 
         if env_info_sizes is None:
-            if hasattr(env, 'info_sizes'):
+            if hasattr(env, "info_sizes"):
                 env_info_sizes = env.info_sizes
             else:
                 env_info_sizes = dict()
@@ -30,11 +25,12 @@ class EnvReplayBuffer(SimpleReplayBuffer):
             max_replay_buffer_size=max_replay_buffer_size,
             observation_dim=get_dim(self._ob_space),
             action_dim=get_dim(self._action_space),
-            env_info_sizes=env_info_sizes
+            env_info_sizes=env_info_sizes,
         )
 
-    def add_sample(self, observation, action, reward, terminal,
-                   next_observation, **kwargs):
+    def add_sample(
+        self, observation, action, reward, terminal, next_observation, **kwargs
+    ):
         if isinstance(self._action_space, Discrete):
             new_action = np.zeros(self._action_dim)
             new_action[action] = 1

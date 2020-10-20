@@ -2,7 +2,7 @@ import os
 
 from gym.spaces import Box, Discrete, Tuple
 
-ENV_ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
+ENV_ASSET_DIR = os.path.join(os.path.dirname(__file__), "assets")
 
 
 def get_asset_full_path(file_name):
@@ -16,7 +16,7 @@ def get_dim(space):
         return space.n
     elif isinstance(space, Tuple):
         return sum(get_dim(subspace) for subspace in space.spaces)
-    elif hasattr(space, 'flat_dim'):
+    elif hasattr(space, "flat_dim"):
         return space.flat_dim
     else:
         raise TypeError("Unknown space: {}".format(space))

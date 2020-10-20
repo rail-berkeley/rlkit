@@ -5,6 +5,7 @@ from rlkit.data_management.path_builder import PathBuilder
 
 from rlkit.util.io import load_local_or_remote_file
 
+
 class HandDemoSource(DemoSource):
     def __init__(self, filename):
         self.data = load_local_or_remote_file(filename)
@@ -23,10 +24,10 @@ class HandDemoSource(DemoSource):
                 ob = path["observations"][t, :]
                 action = path["actions"][t, :]
                 reward = path["rewards"][t]
-                next_ob = path["observations"][t+1, :]
+                next_ob = path["observations"][t + 1, :]
                 terminal = 0
-                agent_info = {} # todo (need to unwrap each key)
-                env_info = {} # todo (need to unwrap each key)
+                agent_info = {}  # todo (need to unwrap each key)
+                env_info = {}  # todo (need to unwrap each key)
 
                 path_builder.add_all(
                     observations=ob,

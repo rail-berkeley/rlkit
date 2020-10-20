@@ -10,22 +10,22 @@ from rlkit.torch.core import PyTorchModule
 class PretrainedCNN(PyTorchModule):
     # Uses a pretrained CNN architecture from torchvision
     def __init__(
-            self,
-            input_width,
-            input_height,
-            input_channels,
-            output_size,
-            hidden_sizes=None,
-            added_fc_input_size=0,
-            batch_norm_fc=False,
-            init_w=1e-4,
-            hidden_init=nn.init.xavier_uniform_,
-            hidden_activation=nn.ReLU(),
-            output_activation=identity,
-            output_conv_channels=False,
-            model_architecture=models.resnet18,
-            model_pretrained=True,
-            model_freeze=False,
+        self,
+        input_width,
+        input_height,
+        input_channels,
+        output_size,
+        hidden_sizes=None,
+        added_fc_input_size=0,
+        batch_norm_fc=False,
+        init_w=1e-4,
+        hidden_init=nn.init.xavier_uniform_,
+        hidden_activation=nn.ReLU(),
+        output_activation=identity,
+        output_conv_channels=False,
+        model_architecture=models.resnet18,
+        model_pretrained=True,
+        model_freeze=False,
     ):
         if hidden_sizes is None:
             hidden_sizes = []
@@ -40,11 +40,14 @@ class PretrainedCNN(PyTorchModule):
         self.hidden_activation = hidden_activation
         self.batch_norm_fc = batch_norm_fc
         self.added_fc_input_size = added_fc_input_size
-        self.conv_input_length = self.input_width * self.input_height * self.input_channels
+        self.conv_input_length = (
+            self.input_width * self.input_height * self.input_channels
+        )
         self.output_conv_channels = output_conv_channels
 
-        self.pretrained_model = nn.Sequential(*list(model_architecture(
-            pretrained=model_pretrained).children())[:-1])
+        self.pretrained_model = nn.Sequential(
+            *list(model_architecture(pretrained=model_pretrained).children())[:-1]
+        )
         if model_freeze:
             for child in self.pretrained_model.children():
                 for param in child.parameters():
@@ -87,14 +90,16 @@ class PretrainedCNN(PyTorchModule):
             self.last_fc.bias.data.uniform_(-init_w, init_w)
 
     def forward(self, input, return_last_activations=False):
-        conv_input = input.narrow(start=0,
-                                  length=self.conv_input_length,
-                                  dim=1).contiguous()
+        conv_input = input.narrow(
+            start=0, length=self.conv_input_length, dim=1
+        ).contiguous()
         # reshape from batch of flattened images into (channels, w, h)
-        h = conv_input.view(conv_input.shape[0],
-                            self.input_channels,
-                            self.input_height,
-                            self.input_width)
+        h = conv_input.view(
+            conv_input.shape[0],
+            self.input_channels,
+            self.input_height,
+            self.input_width,
+        )
 
         h = self.apply_forward_conv(h)
 
@@ -126,5 +131,3 @@ class PretrainedCNN(PyTorchModule):
                 h = self.fc_norm_layers[i](h)
             h = self.hidden_activation(h)
         return h
-
-

@@ -20,6 +20,7 @@ from rlkit.core import logger
 
 import glob
 
+
 class MDPPathLoader:
     """
     Path loader for that loads obs-dict demonstrations
@@ -27,26 +28,26 @@ class MDPPathLoader:
     """
 
     def __init__(
-            self,
-            trainer,
-            demo_path,
-            replay_buffer,
-            demo_train_buffer,
-            demo_test_buffer,
-            demo_off_policy_path=[],
-            demo_train_split=0.9,
-            add_demos_to_replay_buffer=True,
-            bc_num_pretrain_steps=0,
-            bc_batch_size=64,
-            bc_weight=1.0,
-            rl_weight=1.0,
-            q_num_pretrain_steps=0,
-            weight_decay=0,
-            eval_policy=None,
-            recompute_reward=False,
-            env_info_key=None,
-            obs_key=None,
-            **kwargs
+        self,
+        trainer,
+        demo_path,
+        replay_buffer,
+        demo_train_buffer,
+        demo_test_buffer,
+        demo_off_policy_path=[],
+        demo_train_split=0.9,
+        add_demos_to_replay_buffer=True,
+        bc_num_pretrain_steps=0,
+        bc_batch_size=64,
+        bc_weight=1.0,
+        rl_weight=1.0,
+        q_num_pretrain_steps=0,
+        weight_decay=0,
+        eval_policy=None,
+        recompute_reward=False,
+        env_info_key=None,
+        obs_key=None,
+        **kwargs
     ):
         self.trainer = trainer
 
@@ -96,7 +97,7 @@ class MDPPathLoader:
 
             reward = np.array([reward])
             rewards.append(reward)
-            terminal = np.array([terminal]).reshape((1, ))
+            terminal = np.array([terminal]).reshape((1,))
             path_builder.add_all(
                 observations=ob,
                 actions=action,
@@ -110,7 +111,9 @@ class MDPPathLoader:
         path = path_builder.get_all_stacked()
         replay_buffer.add_path(path)
 
-    def load_demos(self, ):
+    def load_demos(
+        self,
+    ):
         # Off policy
         if type(self.demo_off_policy_path) is list:
             for demo_pattern in self.demo_off_policy_path:
@@ -126,7 +129,6 @@ class MDPPathLoader:
                 self.load_demo_path(demo_path)
         else:
             self.load_demo_path(self.demo_path)
-
 
     # Parameterize which demo is being tested (and all jitter variants)
     # If on_policy is False, we only add the demos to the
@@ -149,4 +151,3 @@ class MDPPathLoader:
         batch = replay_buffer.random_batch(self.bc_batch_size)
         batch = np_to_pytorch_batch(batch)
         return batch
-

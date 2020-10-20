@@ -35,7 +35,7 @@ class ProxyEnv(Env):
             self.wrapped_env.terminate()
 
     def __getattr__(self, attr):
-        if attr == '_wrapped_env':
+        if attr == "_wrapped_env":
             raise AttributeError()
         return getattr(self._wrapped_env, attr)
 
@@ -53,7 +53,7 @@ class ProxyEnv(Env):
         self.__dict__.update(state)
 
     def __str__(self):
-        return '{}({})'.format(type(self).__name__, self.wrapped_env)
+        return "{}({})".format(type(self).__name__, self.wrapped_env)
 
 
 class HistoryEnv(ProxyEnv, Env):
@@ -61,12 +61,12 @@ class HistoryEnv(ProxyEnv, Env):
         super().__init__(wrapped_env)
         self.history_len = history_len
 
-        high = np.inf * np.ones(
-            self.history_len * self.observation_space.low.size)
+        high = np.inf * np.ones(self.history_len * self.observation_space.low.size)
         low = -high
-        self.observation_space = Box(low=low,
-                                     high=high,
-                                     )
+        self.observation_space = Box(
+            low=low,
+            high=high,
+        )
         self.history = deque(maxlen=self.history_len)
 
     def step(self, action):
@@ -98,8 +98,7 @@ class DiscretizeEnv(ProxyEnv, Env):
         low = self.wrapped_env.action_space.low
         high = self.wrapped_env.action_space.high
         action_ranges = [
-            np.linspace(low[i], high[i], num_bins)
-            for i in range(len(low))
+            np.linspace(low[i], high[i], num_bins) for i in range(len(low))
         ]
         self.idx_to_continuous_action = [
             np.array(x) for x in itertools.product(*action_ranges)
@@ -119,11 +118,11 @@ class NormalizedBoxEnv(ProxyEnv):
     """
 
     def __init__(
-            self,
-            env,
-            reward_scale=1.,
-            obs_mean=None,
-            obs_std=None,
+        self,
+        env,
+        reward_scale=1.0,
+        obs_mean=None,
+        obs_std=None,
     ):
         ProxyEnv.__init__(self, env)
         self._should_normalize = not (obs_mean is None and obs_std is None)
@@ -144,8 +143,10 @@ class NormalizedBoxEnv(ProxyEnv):
 
     def estimate_obs_stats(self, obs_batch, override_values=False):
         if self._obs_mean is not None and not override_values:
-            raise Exception("Observation mean and std already set. To "
-                            "override, set override_values to True.")
+            raise Exception(
+                "Observation mean and std already set. To "
+                "override, set override_values to True."
+            )
         self._obs_mean = np.mean(obs_batch, axis=0)
         self._obs_std = np.std(obs_batch, axis=0)
 
@@ -155,7 +156,7 @@ class NormalizedBoxEnv(ProxyEnv):
     def step(self, action):
         lb = self._wrapped_env.action_space.low
         ub = self._wrapped_env.action_space.high
-        scaled_action = lb + (action + 1.) * 0.5 * (ub - lb)
+        scaled_action = lb + (action + 1.0) * 0.5 * (ub - lb)
         scaled_action = np.clip(scaled_action, lb, ub)
 
         wrapped_step = self._wrapped_env.step(scaled_action)
@@ -166,4 +167,3 @@ class NormalizedBoxEnv(ProxyEnv):
 
     def __str__(self):
         return "Normalized: %s" % self._wrapped_env
-
