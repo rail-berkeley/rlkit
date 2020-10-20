@@ -79,14 +79,17 @@ env:
 
 rews:
     dense: False
-    target_screw_angle: -1.57
+    target_screw_angle: 0.05
     target_screw_angle_tol: .2
+    greater_than_target: True
 
 table:
     dims:
         width: 1
         height: 0.5
         depth: 1
+    rb_props:
+        color: [0.2, 0.7, 0.2]
     shape_props:
         friction: 0.1
         rolling_friction: 0
@@ -103,29 +106,19 @@ hex_screw_base:
         torsion_friction: 1
         thickness: 2e-3
     rb_props:
-        color: [0.5, 0.5, 0.5]
+        color: [ 0, 0, 0 ]
     asset_options:
         density: 100
         fix_base_link: True
     dof_props:
         driveMode: ['DOF_MODE_NONE']
 
-hex_screw:
-    urdf_path: hex_screw/screw.urdf
-    shape_props:
-        friction: 0.2
-        rolling_friction: 0.01
-        torsion_friction: 0.01
-        thickness: .005
-    rb_props:
-        color: [0.5, 0.5, 0.5]
-    asset_options:
-        density: 100
-
 camera:
     imshape:
         width: 64
         height: 64
-    cam_pos: [.7, .9, 0]
-    look_at: [0, -.3, 0]
+    cam_pos: [.75, .8, 0]
+    look_at: [ 0, -.3, 0 ]
 
+pytorch_format: True
+flatten: True
