@@ -17,6 +17,7 @@ variant = json.loads(args.variant)
 def experiment(variant):
     from autolab_core import YamlConfig
     from hrl_exp.envs.franka_hex_screw import GymFrankaHexScrewVecEnv
+    from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
     from hrl_exp.envs.wrappers import ImageEnvWrapper
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
@@ -38,9 +39,30 @@ def experiment(variant):
     import rlkit.torch.pytorch_util as ptu
 
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
-    cfg_path = join(rlkit_project_dir, "cfg/run_franka_hex_screw.yaml")
 
-    train_cfg = YamlConfig(cfg_path)
+    if variant["env_class"] == "hex_screw":
+        env_class = GymFrankaHexScrewVecEnv
+        cfg_path = join(rlkit_project_dir, "cfg/run_franka_hex_screw.yaml")
+        train_cfg = YamlConfig(cfg_path)
+        train_cfg["rews"]["target_screw_angle"] = variant["env_kwargs"][
+            "target_screw_angle"
+        ]
+        train_cfg["rews"]["target_screw_angle_tol"] = variant["env_kwargs"][
+            "target_screw_angle_tol"
+        ]
+    elif variant["env_class"] == "lift":
+        env_class = GymFrankaLiftVecEnv
+        cfg_path = join(rlkit_project_dir, "cfg/run_franka_lift.yaml")
+        train_cfg = YamlConfig(cfg_path)
+        train_cfg["rews"]["block_distance_to_lift"] = variant["env_kwargs"][
+            "block_distance_to_lift"
+        ]
+        train_cfg["env"]["randomize_block_pose_on_reset"] = variant["env_kwargs"][
+            "randomize_block_pose_on_reset"
+        ]
+    else:
+        raise EnvironmentError("Invalid env class provided")
+
     train_cfg["franka"]["workspace_limits"]["ee_lower"] = variant["env_kwargs"][
         "ee_lower"
     ]
@@ -49,22 +71,16 @@ def experiment(variant):
     ]
     train_cfg["scene"]["n_envs"] = variant["env_kwargs"]["n_train_envs"]
     train_cfg["env"]["fixed_schema"] = variant["env_kwargs"]["fixed_schema"]
-    train_cfg["rews"]["target_screw_angle"] = variant["env_kwargs"][
-        "target_screw_angle"
-    ]
-    train_cfg["rews"]["target_screw_angle_tol"] = variant["env_kwargs"][
-        "target_screw_angle_tol"
-    ]
-
     train_cfg["pytorch_format"] = True
     train_cfg["flatten"] = True
-    expl_env = GymFrankaHexScrewVecEnv(train_cfg, **train_cfg["env"])
-    expl_env = ImageEnvWrapper(expl_env, train_cfg)
 
     eval_cfg = pickle.loads(pickle.dumps(train_cfg))
     eval_cfg["scene"]["n_envs"] = variant["env_kwargs"]["n_eval_envs"]
 
-    eval_env = GymFrankaHexScrewVecEnv(eval_cfg, **eval_cfg["env"])
+    expl_env = env_class(train_cfg, **train_cfg["env"])
+    expl_env = ImageEnvWrapper(expl_env, train_cfg)
+
+    eval_env = env_class(eval_cfg, **eval_cfg["env"])
     eval_env = ImageEnvWrapper(eval_env, eval_cfg)
 
     obs_dim = expl_env.observation_space.low.size
@@ -117,11 +133,17 @@ def experiment(variant):
     expl_path_collector = VecMdpPathCollector(
         expl_env,
         expl_policy,
+        save_env_in_snapshot=False,
+        env_params=train_cfg,
+        env_class=env_class,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
+        save_env_in_snapshot=False,
+        env_params=eval_cfg,
+        env_class=env_class,
     )
 
     replay_buffer = EpisodeReplayBuffer(
@@ -155,7 +177,7 @@ for _ in range(args.num_seeds):
         mode=args.mode,
         variant=variant,
         use_gpu=True,
-        snapshot_mode="none",
+        snapshot_mode="last",
         gpu_id=args.gpu_id,
     )
 

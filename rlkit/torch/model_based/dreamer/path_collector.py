@@ -14,6 +14,8 @@ class VecMdpPathCollector(PathCollector):
         render_kwargs=None,
         rollout_fn=vec_rollout,
         save_env_in_snapshot=True,
+        env_params=None,
+        env_class=None,
     ):
         if render_kwargs is None:
             render_kwargs = {}
@@ -29,6 +31,8 @@ class VecMdpPathCollector(PathCollector):
         self._num_paths_total = 0
 
         self._save_env_in_snapshot = save_env_in_snapshot
+        self.env_params = env_params
+        self.env_class = env_class
 
     def collect_new_paths(
         self,
@@ -98,4 +102,8 @@ class VecMdpPathCollector(PathCollector):
         )
         if self._save_env_in_snapshot:
             snapshot_dict["env"] = self._env
+        if self.env_params:
+            snapshot_dict["env_params"] = self.env_params
+        if self.env_class:
+            snapshot_dict["env_class"] = self.env_class
         return snapshot_dict

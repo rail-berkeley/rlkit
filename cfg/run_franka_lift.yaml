@@ -86,6 +86,8 @@ table:
     width: 1
     height: 0.5
     depth: 1
+  rb_props:
+    color: [1, 1, 1]
   shape_props:
     friction: 0.1
     rolling_friction: 0
@@ -93,7 +95,6 @@ table:
     thickness: 2e-3
   asset_options:
     fix_base_link: True
-
 block:
   dims:
     width: 0.05
