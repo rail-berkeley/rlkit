@@ -95,6 +95,7 @@ table:
     thickness: 2e-3
   asset_options:
     fix_base_link: True
+
 block:
   dims:
     width: 0.05
