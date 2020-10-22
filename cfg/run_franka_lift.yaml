@@ -105,7 +105,7 @@ block:
     friction: 0.2
     rolling_friction: 0.01
     torsion_friction: 0.01
-    thickness: .005
+    thickness: .001
   rb_props:
     flags: none # can be none, no_sim, no_gravity
     color: [0.2, 0.7, 0.2]

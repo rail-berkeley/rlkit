@@ -104,7 +104,7 @@ hex_screw_base:
         friction: 1
         rolling_friction: 1
         torsion_friction: 1
-        thickness: 2e-3
+        thickness: .001
     rb_props:
         color: [ 0, 0, 0 ]
     asset_options:
