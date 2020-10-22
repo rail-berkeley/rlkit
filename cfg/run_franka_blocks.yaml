@@ -4,9 +4,6 @@ scene:
   gui: 0
   cts: False
   gym:
-    device:
-      compute: 0
-      graphics: 0
     dt: 0.01
     substeps: 2
     flex:
@@ -31,8 +28,8 @@ franka:
     max_angular_velocity: 40.0
     disable_gravity: True
   workspace_limits:
-    ee_lower: [.45, .525, -.05]
-    ee_upper: [.55, .6, .05]
+    ee_lower: [.5, .525, -.1]
+    ee_upper: [.5, .675, .1]
   attractor_props:
     stiffness: 1e3
     damping: 2e2
@@ -43,56 +40,56 @@ franka:
     damping: [2e2, 2e2, 2e2, 2e2, 2e2, 2e2, 2e2, 5, 5]
     effort: [87, 87, 87, 87, 12, 12, 12, 100, 100]
   action:
-    mode: vic # vic, joints, hfpc, hfpc_cartesian_gains
-    joints:
-      max_rot_delta: 30 # deg
-    vic:
-      max_tra_delta: 0.01 # m
-      max_rot_delta: 5 # deg
-      min_stiffness: 1e2
-      max_stiffness: 1e4
-    hfpc:
-      max_tra_delta: 0.01 # m
-      max_rot_delta: 5 # deg
-      max_force_delta: 5 # N
-      min_pos_kp: 1
-      max_pos_kp: 100
-      min_force_kp: 0.01
-      max_force_kp: 10
-    hfpc_cartesian_gains:
-      max_tra_delta: 0.01 # m
-      max_rot_delta: 5 # deg
-      max_force_delta: 5 # N
-      min_pos_kp: 1
-      max_pos_kp: 100
-      min_force_kp: 0.01
-      max_force_kp: 10
+      mode: vic # vic, joints, hfpc, hfpc_cartesian_gains
+      joints:
+          max_rot_delta: 30 # deg
+      vic:
+          max_tra_delta: 0.01 # m
+          max_rot_delta: 5 # deg
+          min_stiffness: 1e2
+          max_stiffness: 1e4
+      hfpc:
+          max_tra_delta: 0.01 # m
+          max_rot_delta: 5 # deg
+          max_force_delta: 5 # N
+          min_pos_kp: 1
+          max_pos_kp: 100
+          min_force_kp: 0.01
+          max_force_kp: 10
+      hfpc_cartesian_gains:
+          max_tra_delta: 0.01 # m
+          max_rot_delta: 5 # deg
+          max_force_delta: 5 # N
+          min_pos_kp: 1
+          max_pos_kp: 100
+          min_force_kp: 0.01
+          max_force_kp: 10
 
 task:
-  max_steps: 2
+    max_steps: 14
 
 env:
-  n_inter_steps: 50
-  auto_reset_after_done: False
-  include_timestep_in_obs: True
-  include_primitive_action_in_obs: False
+    n_inter_steps: 75
+    auto_reset_after_done: False
+    include_timestep_in_obs: False
 
 rews:
-  dense: False
-  block_distance_to_lift: 0
-
+    dense: False
+    block_stack_tol: .01
+    num_blocks_to_stack: 1
+    
 table:
   dims:
     width: 1
     height: 0.5
     depth: 1
-  rb_props:
-    color: [1, 1, 1]
   shape_props:
     friction: 0.1
     rolling_friction: 0
     torsion_friction: 0
     thickness: 2e-3
+  rb_props:
+    color: [1, 1, 1]
   asset_options:
     fix_base_link: True
 

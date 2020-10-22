@@ -18,6 +18,7 @@ def experiment(variant):
     from autolab_core import YamlConfig
     from hrl_exp.envs.franka_hex_screw import GymFrankaHexScrewVecEnv
     from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
+    from hrl_exp.envs.franka_blocks import GymFrankaBlocksVecEnv
     from hrl_exp.envs.wrappers import ImageEnvWrapper
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
@@ -59,6 +60,14 @@ def experiment(variant):
         ]
         train_cfg["env"]["randomize_block_pose_on_reset"] = variant["env_kwargs"][
             "randomize_block_pose_on_reset"
+        ]
+    elif variant["env_class"] == "blocks":
+        env_class = GymFrankaBlocksVecEnv
+        cfg_path = join(rlkit_project_dir, "cfg/run_franka_blocks.yaml")
+        train_cfg = YamlConfig(cfg_path)
+        train_cfg["rews"]["block_stack_tol"] = variant["env_kwargs"]["block_stack_tol"]
+        train_cfg["rews"]["num_blocks_to_stack"] = variant["env_kwargs"][
+            "num_blocks_to_stack"
         ]
     else:
         raise EnvironmentError("Invalid env class provided")
@@ -117,6 +126,7 @@ def experiment(variant):
         and (not variant["env_kwargs"]["fixed_schema"]),
         split_size=expl_env.wrapped_env.num_primitives,
         exploration=True,
+        expl_amount=variant.get("expl_amount", 0),
     )
     eval_policy = DreamerPolicy(
         world_model,
