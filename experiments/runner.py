@@ -157,7 +157,12 @@ def experiment(variant):
     )
 
     replay_buffer = EpisodeReplayBuffer(
-        variant["replay_buffer_size"], expl_env, 4, obs_dim, action_dim, replace=False
+        variant["replay_buffer_size"],
+        expl_env,
+        variant["trainer_kwargs"]["imagination_horizon"],
+        obs_dim,
+        action_dim,
+        replace=False,
     )
     trainer = DreamerTrainer(
         env=eval_env,

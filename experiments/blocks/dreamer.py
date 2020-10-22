@@ -87,7 +87,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_kwargs.num_blocks_to_stack": [1, 2],
+        "env_kwargs.num_blocks_to_stack": [1],
         "expl_amount": [0.3, 0.5, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
