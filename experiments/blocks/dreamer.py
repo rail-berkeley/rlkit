@@ -27,7 +27,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=100,
             num_pretrain_steps=100,
             num_train_loops_per_epoch=1,
-            max_path_length=3,
+            max_path_length=15,
             batch_size=50,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -40,7 +40,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
             num_train_loops_per_epoch=5,
-            max_path_length=3,
+            max_path_length=15,
             batch_size=625,
         )
         exp_prefix = args.exp_prefix
@@ -87,7 +87,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_kwargs.num_blocks_to_stack": [1, 2],
+        "env_kwargs.num_blocks_to_stack": [1],
         "expl_amount": [0.3, 0.5, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
