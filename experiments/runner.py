@@ -19,6 +19,7 @@ def experiment(variant):
     from hrl_exp.envs.franka_hex_screw import GymFrankaHexScrewVecEnv
     from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
     from hrl_exp.envs.franka_blocks import GymFrankaBlocksVecEnv
+    from hrl_exp.envs.franka_T_screw import GymFrankaTScrewVecEnv
     from hrl_exp.envs.wrappers import ImageEnvWrapper
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
@@ -44,6 +45,16 @@ def experiment(variant):
     if variant["env_class"] == "hex_screw":
         env_class = GymFrankaHexScrewVecEnv
         cfg_path = join(rlkit_project_dir, "cfg/run_franka_hex_screw.yaml")
+        train_cfg = YamlConfig(cfg_path)
+        train_cfg["rews"]["target_screw_angle"] = variant["env_kwargs"][
+            "target_screw_angle"
+        ]
+        train_cfg["rews"]["target_screw_angle_tol"] = variant["env_kwargs"][
+            "target_screw_angle_tol"
+        ]
+    elif variant["env_class"] == "T_screw":
+        env_class = GymFrankaTScrewVecEnv
+        cfg_path = join(rlkit_project_dir, "cfg/run_franka_T_screw.yaml")
         train_cfg = YamlConfig(cfg_path)
         train_cfg["rews"]["target_screw_angle"] = variant["env_kwargs"][
             "target_screw_angle"

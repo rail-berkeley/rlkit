@@ -1,0 +1,121 @@
+scene:
+    n_envs: 30
+    es: 1
+    gui: 0
+    cts: False
+    gym:
+        device:
+            compute: 0
+            graphics: 0
+        dt: 0.01
+        substeps: 2
+        flex:
+            solver_type: 5
+            num_outer_iterations: 4
+            num_inner_iterations: 30
+            relaxation: 0.75
+            warm_start: 0.8
+            shape_collision_margin: 1e-3
+            contact_regularization: 1e-7
+            deterministic_mode: True
+    cam:
+        cam_pos: [1.2, 1.2, 0]
+        look_at: [1, 1, 0]
+
+franka:
+    asset_options:
+        fix_base_link: True
+        flip_visual_attachments: True
+        armature: 0.01
+        max_linear_velocity: 100.0
+        max_angular_velocity: 40.0
+        disable_gravity: True
+    workspace_limits:
+        ee_lower: [ .55, .525, -.1 ]
+        ee_upper: [ .65, .7, .1 ]
+    attractor_props:
+        stiffness: 1e3
+        damping: 2e2
+    shape_props:
+        thickness: 1e-3
+    dof_props:
+        stiffness: [2e3, 2e3, 2e3, 2e3, 2e3, 2e3, 2e3, 1e2, 1e2]
+        damping: [2e2, 2e2, 2e2, 2e2, 2e2, 2e2, 2e2, 5, 5]
+        effort: [87, 87, 87, 87, 12, 12, 12, 100, 100]
+    action:
+        mode: vic # vic, joints, hfpc, hfpc_cartesian_gains
+        joints:
+            max_rot_delta: 30 # deg
+        vic:
+            max_tra_delta: 0.05 # m
+            max_rot_delta: 5 # deg
+            min_stiffness: 1e2
+            max_stiffness: 1e4
+        hfpc:
+            max_tra_delta: 0.01 # m
+            max_rot_delta: 5 # deg
+            max_force_delta: 5 # N
+            min_pos_kp: 1
+            max_pos_kp: 100
+            min_force_kp: 0.01
+            max_force_kp: 10
+        hfpc_cartesian_gains:
+            max_tra_delta: 0.01 # m
+            max_rot_delta: 5 # deg
+            max_force_delta: 5 # N
+            min_pos_kp: 1
+            max_pos_kp: 100
+            min_force_kp: 0.01
+            max_force_kp: 10
+
+task:
+    max_steps: 2
+
+env:
+    n_inter_steps: 100
+    auto_reset_after_done: False
+    include_timestep_in_obs: True
+    include_primitive_action_in_obs: False
+
+rews:
+    dense: False
+    target_screw_angle: 0.05
+    target_screw_angle_tol: .2
+    greater_than_target: True
+
+table:
+    dims:
+        width: 1
+        height: 0.5
+        depth: 1
+    rb_props:
+        color: [0.2, 0.7, 0.2]
+    shape_props:
+        friction: 0.1
+        rolling_friction: 0
+        torsion_friction: 0
+        thickness: 2e-3
+    asset_options:
+        fix_base_link: True
+
+T_screw_base:
+    urdf_path: T_screw/base.urdf
+    shape_props:
+        friction: 1
+        rolling_friction: 1
+        torsion_friction: 1
+        thickness: .001
+    rb_props:
+        color: [0.5, 0.5, 0.5]
+    asset_options:
+        density: 100
+        fix_base_link: True
+    dof_props:
+        driveMode: ['DOF_MODE_NONE']
+
+camera:
+    imshape:
+        width: 64
+        height: 64
+    cam_pos: [.75, .8, 0]
+    look_at: [ 0, -.3, 0 ]
