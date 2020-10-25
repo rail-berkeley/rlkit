@@ -1,5 +1,5 @@
 #!/bin/bash
-NVIDIA_DRIVER_VERSION=450.66
+NVIDIA_DRIVER_VERSION=440.82
 
 echo "detected nvidia driver: "${NVIDIA_DRIVER_VERSION}
 
