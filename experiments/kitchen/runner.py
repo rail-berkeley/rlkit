@@ -165,22 +165,21 @@ def experiment(variant):
     algorithm.train()
 
 
-if __name__ == "__main__":
-    for _ in range(args.num_seeds):
-        run_experiment(
-            experiment,
-            exp_prefix=args.exp_prefix,
-            mode=args.mode,
-            variant=variant,
-            use_gpu=True,
-            snapshot_mode="last",
-            gpu_id=args.gpu_id,
-        )
+for _ in range(args.num_seeds):
+    run_experiment(
+        experiment,
+        exp_prefix=args.exp_prefix,
+        mode=args.mode,
+        variant=variant,
+        use_gpu=True,
+        snapshot_mode="last",
+        gpu_id=args.gpu_id,
+    )
 
-    if args.tmux_session_name:
-        import libtmux
+if args.tmux_session_name:
+    import libtmux
 
-        server = libtmux.Server()
-        session = server.find_where({"session_name": args.tmux_session_name})
-        window = session.attached_window
-        window.kill_window()
+    server = libtmux.Server()
+    session = server.find_where({"session_name": args.tmux_session_name})
+    window = session.attached_window
+    window.kill_window()
