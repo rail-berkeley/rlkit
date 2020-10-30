@@ -49,10 +49,9 @@ def simulate_policy(file):
         a, agent_info = policy.get_action(
             o,
         )
-        env.step(a)
-        img = env.render(mode="rgb_array", imwidth=1000, imheight=1000)
+        env.step(a, render_every_step=True)
         path_length += 1
-        img_array.append(img)
+        img_array.extend(env.img_array)
 
     fourcc = cv2.VideoWriter_fourcc(*"DIVX")
     out = cv2.VideoWriter(args.file[:-10] + "final.avi", fourcc, 20.0, (1000, 1000))
