@@ -1,5 +1,6 @@
 from functools import partial
 
+import cv2
 import numpy as np
 import copy
 
@@ -17,6 +18,7 @@ def vec_rollout(
     return_dict_obs=False,
     full_o_postprocess_func=None,
     reset_callback=None,
+    save_video=True,
 ):
     if render_kwargs is None:
         render_kwargs = {}
@@ -52,7 +54,9 @@ def vec_rollout(
     if reset_callback:
         reset_callback(env, agent, o)
     if render:
-        env.render(**render_kwargs)
+        img = env.render(mode="rgb_array", imwidth=256, imheight=256)
+        cv2.imshow("img", img)
+        cv2.waitKey(1)
     while path_length < max_path_length:
         raw_obs.append(o)
         o_for_agent = preprocess_obs_for_policy_fn(o)
@@ -63,7 +67,9 @@ def vec_rollout(
 
         next_o, r, d, env_info = env.step(copy.deepcopy(a))
         if render:
-            env.render(**render_kwargs)
+            img = env.render(mode="rgb_array", imwidth=256, imheight=256)
+            cv2.imshow("img", img)
+            cv2.waitKey(1)
         observations.append(next_o)
         rewards.append(r)
         terminals.append(d)
