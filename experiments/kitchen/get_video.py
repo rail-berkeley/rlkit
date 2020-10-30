@@ -1,19 +1,18 @@
 import cv2
 from d4rl.kitchen.kitchen_envs import *
 from hrl_exp.envs.mujoco_vec_wrappers import make_env, Async, VecEnv, DummyVecEnv
-from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
 from rlkit.torch.pytorch_util import set_gpu_mode
 import argparse
 import torch
 import uuid
-from rlkit.core import logger
 import rlkit.torch.pytorch_util as ptu
+from glob import glob
 
 filename = str(uuid.uuid4())
 
 
-def simulate_policy(args):
-    data = torch.load(args.file)
+def simulate_policy(file):
+    data = torch.load(file)
     policy = data["evaluation/policy"]
     env_params = data["evaluation/env_params"]
     env_class = data["evaluation/env_class"]
@@ -65,8 +64,10 @@ def simulate_policy(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file", type=str, help="path to the snapshot file")
+    parser.add_argument("--path", type=str, help="path to the snapshot file")
     parser.add_argument("--H", type=int, default=3, help="Max length of rollout")
     args = parser.parse_args()
-
-    simulate_policy(args)
+    for path in glob(args.path + "/*/"):
+        file = path + "params.pkl"
+        print(file)
+        simulate_policy(file)
