@@ -57,19 +57,8 @@ def experiment(variant):
         for _ in range(variant["num_expl_envs"])
     ]
 
-    eval_envs = [
-        Async(
-            lambda: make_env(
-                env_class=env_class_,
-                env_kwargs=variant["env_kwargs"],
-            ),
-            strategy="process",
-        )
-        for _ in range(variant["num_eval_envs"])
-    ]
-
     expl_env = VecEnv(expl_envs)
-    eval_env = VecEnv(eval_envs)
+    eval_env = VecEnv(expl_envs)
     max_path_length = expl_envs[0].max_steps
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
@@ -166,7 +155,7 @@ parser.add_argument("--mode", type=str, default="local")
 parser.add_argument("--debug", action="store_true", default=False)
 parser.add_argument("--tmux", action="store_true", default=False)
 parser.add_argument("--tmux_session_name", type=str, default="")
-parser.add_argument("--num_expl_envs", type=int, default=1)
+parser.add_argument("--num_expl_envs", type=int, default=10)
 args = parser.parse_args()
 
 if args.tmux:
@@ -187,7 +176,7 @@ if args.debug:
     exp_prefix = "test" + args.exp_prefix
 else:
     algorithm_kwargs = dict(
-        num_epochs=100,
+        num_epochs=25,
         num_eval_steps_per_epoch=30,
         num_trains_per_train_loop=200,
         num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -237,14 +226,18 @@ variant = dict(
 
 search_space = {
     "env_class": [
-        "microwave",
-        "kettle",
-        "top_burner",
-        "slide_cabinet",
-        "hinge_cabinet",
+        #"microwave",
+        #"kettle",
+        #"top_burner",
+        #"slide_cabinet",
+        #"hinge_cabinet",
         "light_switch",
     ],
-    "env_kwargs.delta": [0.025, 0.05, 0.1],
+    "env_kwargs.delta": [
+0.05, 
+0.1,
+0.15,
+],
 }
 sweeper = hyp.DeterministicHyperparameterSweeper(
     search_space,
