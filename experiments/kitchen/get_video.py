@@ -52,15 +52,14 @@ def simulate_policy(file):
         )
         env.step(a, render_every_step=True)
         path_length += 1
-        img_array.extend(env.img_array)
-
+        img_array.extend(env.envs[0].img_array)
     fourcc = cv2.VideoWriter_fourcc(*"DIVX")
-    out = cv2.VideoWriter(file[:-10] + "final.avi", fourcc, 20.0, (1000, 1000))
+    out = cv2.VideoWriter(file[:-10] + "final.avi", fourcc, 100.0, (1000, 1000))
     for i in range(len(img_array)):
-        for _ in range(20):
-            out.write(img_array[i])
+        out.write(img_array[i])
     out.release()
     print("video saved to :", file[:-10])
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
