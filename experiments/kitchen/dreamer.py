@@ -227,7 +227,7 @@ variant = dict(
         imagination_horizon=algorithm_kwargs["max_path_length"] + 1,
         free_nats=3.0,
         kl_scale=1.0,
-        optimizer_class="apex_adam",
+        optimizer_class="torch_adam",
         pcont_scale=10.0,
         use_pcont=True,
     ),
