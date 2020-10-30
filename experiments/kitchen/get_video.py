@@ -44,6 +44,7 @@ def simulate_policy(file):
     i = 0
     img_array = []
     o = env.reset()
+    policy.reset()
     path_length = 0
     while path_length < env.envs[0].max_steps:
         a, agent_info = policy.get_action(
@@ -54,19 +55,22 @@ def simulate_policy(file):
         img_array.extend(env.img_array)
 
     fourcc = cv2.VideoWriter_fourcc(*"DIVX")
-    out = cv2.VideoWriter(args.file[:-10] + "final.avi", fourcc, 20.0, (1000, 1000))
+    out = cv2.VideoWriter(file[:-10] + "final.avi", fourcc, 20.0, (1000, 1000))
     for i in range(len(img_array)):
         for _ in range(20):
             out.write(img_array[i])
     out.release()
-
+    print("video saved to :", file[:-10])
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--path", type=str, help="path to the snapshot file")
     parser.add_argument("--H", type=int, default=3, help="Max length of rollout")
     args = parser.parse_args()
-    for path in glob(args.path + "/*/"):
-        file = path + "params.pkl"
+    for p in glob(args.path + "/*/"):
+        file = p + "params.pkl"
         print(file)
-        simulate_policy(file)
+        try:
+            simulate_policy(file)
+        except Exception as e:
+            print(e)
