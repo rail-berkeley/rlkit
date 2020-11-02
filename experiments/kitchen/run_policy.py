@@ -1,3 +1,4 @@
+import cv2
 from d4rl.kitchen.kitchen_envs import *
 from hrl_exp.envs.mujoco_vec_wrappers import make_env, Async, VecEnv, DummyVecEnv
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
@@ -30,30 +31,27 @@ def simulate_policy(args):
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
 
-    eval_envs = [
-        make_env(
-            env_class=env_class_,
-            env_kwargs=env_params,
-        )
-    ]
-    eval_env = DummyVecEnv(eval_envs)
+    env = make_env(
+        env_class=env_class_,
+        env_kwargs=env_params,
+    )
     print("Policy loaded")
     set_gpu_mode(True)
     policy.actor.to(ptu.device)
     policy.world_model.to(ptu.device)
     i = 0
-    while True:
-        path = vec_rollout(
-            eval_env,
-            policy,
-            max_path_length=eval_env.envs[0].max_steps,
-            render=True,
+    o = env.reset()
+    policy.reset()
+    path_length = 0
+    while path_length < env.max_steps:
+        a, agent_info = policy.get_action(
+            [o],
         )
-        if hasattr(eval_env, "log_diagnostics"):
-            eval_env.log_diagnostics([path])
-        logger.dump_tabular()
-        i += 1
-        print("path: ", i)
+        env.step(a[0], render_every_step=True)
+        path_length += 1
+        for im in env.img_array:
+            cv2.imshow("vid", im)
+            cv2.waitKey(1)
 
 
 if __name__ == "__main__":
