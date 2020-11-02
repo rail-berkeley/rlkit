@@ -1,4 +1,6 @@
+from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
 import rlkit.util.hyperparameter as hyp
 import argparse
 import libtmux
@@ -58,18 +60,14 @@ def experiment(variant):
     ]
 
     eval_envs = [
-        Async(
-            lambda: make_env(
-                env_class=env_class_,
-                env_kwargs=variant["env_kwargs"],
-            ),
-            strategy="process",
+        make_env(
+            env_class=env_class_,
+            env_kwargs=variant["env_kwargs"],
         )
-        for _ in range(variant["num_eval_envs"])
     ]
 
     expl_env = VecEnv(expl_envs)
-    eval_env = VecEnv(eval_envs)
+    eval_env = DummyVecEnv(eval_envs)
     max_path_length = expl_envs[0].max_steps
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
@@ -155,8 +153,10 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
+    video_post_epoch_func(algorithm, -1)
 
 
 parser = argparse.ArgumentParser()
