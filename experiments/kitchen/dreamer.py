@@ -1,4 +1,4 @@
-from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv
+from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
 import rlkit.util.hyperparameter as hyp
@@ -7,7 +7,6 @@ import libtmux
 
 
 def experiment(variant):
-
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         DreamerPolicy,
@@ -22,7 +21,7 @@ def experiment(variant):
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     import torch
     import rlkit.torch.pytorch_util as ptu
-    from hrl_exp.envs.mujoco_vec_wrappers import Async, make_env, VecEnv
+    from hrl_exp.envs.mujoco_vec_wrappers import make_env
     from d4rl.kitchen.kitchen_envs import (
         KitchenKettleV0,
         KitchenLightSwitchV0,
@@ -48,16 +47,15 @@ def experiment(variant):
         env_class_ = KitchenLightSwitchV0
     else:
         raise EnvironmentError("invalid env provided")
-    expl_envs = [
-        Async(
-            lambda: make_env(
-                env_class=env_class_,
-                env_kwargs=variant["env_kwargs"],
-            ),
-            strategy="process",
+
+    env_fns = [
+        lambda: make_env(
+            env_class=KitchenKettleV0,
+            env_kwargs=dict(dense=False, delta=0.0, image_obs=True),
         )
         for _ in range(variant["num_expl_envs"])
     ]
+    expl_env = StableBaselinesVecEnv(env_fns=env_fns)
 
     eval_envs = [
         make_env(
@@ -66,10 +64,9 @@ def experiment(variant):
         )
     ]
 
-    expl_env = VecEnv(expl_envs)
     eval_env = DummyVecEnv(eval_envs)
 
-    max_path_length = expl_envs[0].max_steps
+    max_path_length = 3
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
 
@@ -261,7 +258,7 @@ for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         run_experiment(
             experiment,
             exp_prefix=args.exp_prefix,
-            mode="here_no_doodad",
+            mode="local",
             variant=variant,
             use_gpu=True,
             snapshot_mode="last",

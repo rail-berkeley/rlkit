@@ -65,8 +65,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 self.num_eval_steps_per_epoch,
                 discard_incomplete_paths=True,
             )
-            # gt.stamp("evaluation sampling")
-            gt.stamp("evaluation sampling", unique=False)
+            gt.stamp("evaluation sampling")
 
             for _ in range(self.num_train_loops_per_epoch):
                 if epoch == 0 and _ == 0:  # absolute first iteration

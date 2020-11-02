@@ -54,8 +54,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
     def _end_epoch(self, epoch):
         snapshot = self._get_snapshot()
         logger.save_itr_params(epoch, snapshot)
-        # gt.stamp("saving")
-        gt.stamp("saving", unique=False)
+        gt.stamp("saving")
         self._log_stats(epoch)
 
         self.expl_data_collector.end_epoch(epoch)
@@ -130,8 +129,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         """
         Misc
         """
-        # gt.stamp("logging")
-        gt.stamp("logging", unique=False)
+        gt.stamp("logging")
         logger.record_dict(_get_epoch_timings())
         logger.record_tabular("Epoch", epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
