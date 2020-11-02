@@ -85,4 +85,4 @@ RUN pip install boto3==1.4.8
 RUN pip install joblib==0.9.4
 RUN pip install sk-video==1.1.10
 RUN pip install torch torchvision
-RUN pip install opencv-python
+RUN pip install opencv-python==4.3.0.36
