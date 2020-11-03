@@ -7,6 +7,10 @@ import libtmux
 
 
 def experiment(variant):
+    import os
+    os.environ['D4RL_SUPPRESS_IMPORT_ERROR']='1'
+
+
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         DreamerPolicy,
@@ -30,7 +34,7 @@ def experiment(variant):
         KitchenSlideCabinetV0,
         KitchenMicrowaveV0,
     )
-
+    
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
     if env_class == "microwave":
@@ -153,7 +157,7 @@ def experiment(variant):
     )
     algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
-    # algorithm.train()
+    algorithm.train()
     video_post_epoch_func(algorithm, -1)
 
 
@@ -258,7 +262,7 @@ for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         run_experiment(
             experiment,
             exp_prefix=args.exp_prefix,
-            mode="local",
+            mode="args.mode",
             variant=variant,
             use_gpu=True,
             snapshot_mode="last",
