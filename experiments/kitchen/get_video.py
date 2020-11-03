@@ -1,6 +1,6 @@
 import cv2
 from d4rl.kitchen.kitchen_envs import *
-from hrl_exp.envs.mujoco_vec_wrappers import make_env, Async, VecEnv, DummyVecEnv
+from hrl_exp.envs.mujoco_vec_wrappers import make_env, DummyVecEnv
 from rlkit.torch.pytorch_util import set_gpu_mode
 import argparse
 import torch
