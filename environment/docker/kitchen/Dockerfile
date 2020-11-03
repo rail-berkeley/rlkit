@@ -94,3 +94,7 @@ RUN pip install git+git://github.com/deepmind/dm_control@master#egg=dm_control
 RUN pip install git+git://github.com/aravindr93/mjrl@master#egg=mjrl
 RUN pip install numba
 RUN pip install numpy-quaternion
+ENV LD_PRELOAD $LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libGLEW.so
+RUN mkdir /usr/lib/nvidia-000/
+ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/nvidia-000
+RUN python -c "import mujoco_py"
