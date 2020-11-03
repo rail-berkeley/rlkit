@@ -1,6 +1,5 @@
 import argparse
 import json
-
 from rlkit.launchers.launcher_util import run_experiment
 
 parser = argparse.ArgumentParser()
@@ -15,7 +14,10 @@ variant = json.loads(args.variant)
 
 
 def experiment(variant):
-    from hrl_exp.envs.mujoco_vec_wrappers import Async, make_env, VecEnv
+    import os
+
+    os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
+
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         DreamerPolicy,
@@ -30,6 +32,7 @@ def experiment(variant):
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     import torch
     import rlkit.torch.pytorch_util as ptu
+    from hrl_exp.envs.mujoco_vec_wrappers import make_env
     from d4rl.kitchen.kitchen_envs import (
         KitchenKettleV0,
         KitchenLightSwitchV0,
@@ -38,6 +41,9 @@ def experiment(variant):
         KitchenSlideCabinetV0,
         KitchenMicrowaveV0,
     )
+
+    from hrl_exp.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, DummyVecEnv
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
 
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
@@ -55,30 +61,28 @@ def experiment(variant):
         env_class_ = KitchenLightSwitchV0
     else:
         raise EnvironmentError("invalid env provided")
-    expl_envs = [
-        Async(
-            lambda: make_env(
-                env_class=env_class_,
-                env_kwargs=variant["env_kwargs"],
-            ),
-            strategy="process",
+
+    env_fns = [
+        lambda: make_env(
+            env_class=KitchenKettleV0,
+            env_kwargs=dict(dense=False, delta=0.0, image_obs=True),
         )
         for _ in range(variant["num_expl_envs"])
     ]
+    expl_env = StableBaselinesVecEnv(env_fns=env_fns)
 
     eval_envs = [
-        Async(
-            lambda: make_env(
-                env_class=env_class_,
-                env_kwargs=variant["env_kwargs"],
-            ),
-            strategy="process",
+        make_env(
+            env_class=env_class_,
+            env_kwargs=variant["env_kwargs"],
         )
-        for _ in range(variant["num_eval_envs"])
     ]
 
-    expl_env = VecEnv(expl_envs)
-    eval_env = VecEnv(eval_envs)
+    eval_env = DummyVecEnv(eval_envs)
+
+    max_path_length = 3
+    variant["algorithm_kwargs"]["max_path_length"] = max_path_length
+    variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
@@ -161,25 +165,28 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
+    video_post_epoch_func(algorithm, -1)
 
 
-for _ in range(args.num_seeds):
-    run_experiment(
-        experiment,
-        exp_prefix=args.exp_prefix,
-        mode=args.mode,
-        variant=variant,
-        use_gpu=True,
-        snapshot_mode="last",
-        gpu_id=args.gpu_id,
-    )
+if __name__ == "__main__":
+    for _ in range(args.num_seeds):
+        run_experiment(
+            experiment,
+            exp_prefix=args.exp_prefix,
+            mode=args.mode,
+            variant=variant,
+            use_gpu=True,
+            snapshot_mode="last",
+            gpu_id=args.gpu_id,
+        )
 
-if args.tmux_session_name:
-    import libtmux
+    if args.tmux_session_name:
+        import libtmux
 
-    server = libtmux.Server()
-    session = server.find_where({"session_name": args.tmux_session_name})
-    window = session.attached_window
-    window.kill_window()
+        server = libtmux.Server()
+        session = server.find_where({"session_name": args.tmux_session_name})
+        window = session.attached_window
+        window.kill_window()
