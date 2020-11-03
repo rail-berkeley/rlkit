@@ -262,7 +262,7 @@ for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         run_experiment(
             experiment,
             exp_prefix=args.exp_prefix,
-            mode="args.mode",
+            mode=args.mode,
             variant=variant,
             use_gpu=True,
             snapshot_mode="last",
