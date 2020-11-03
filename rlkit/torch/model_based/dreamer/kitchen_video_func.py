@@ -91,22 +91,22 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             if i >= len(img_array1):
                 im1 = img_array1[-1]
             else:
-                im1 = img_array1[1]
+                im1 = img_array1[i]
 
             if i >= len(img_array2):
                 im2 = img_array2[-1]
             else:
-                im2 = img_array2[1]
+                im2 = img_array2[i]
 
             if i >= len(img_array3):
                 im3 = img_array3[-1]
             else:
-                im3 = img_array3[1]
+                im3 = img_array3[i]
 
             if i >= len(img_array4):
                 im4 = img_array4[-1]
             else:
-                im4 = img_array4[1]
+                im4 = img_array4[i]
 
             im12 = np.concatenate((im1, im2), 1)
             im34 = np.concatenate((im3, im4), 1)
