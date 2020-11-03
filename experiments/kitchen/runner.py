@@ -69,7 +69,7 @@ def experiment(variant):
         )
         for _ in range(variant["num_expl_envs"])
     ]
-    expl_env = StableBaselinesVecEnv(env_fns=env_fns)
+    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
 
     eval_envs = [
         make_env(
