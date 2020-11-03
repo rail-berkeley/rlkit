@@ -8,8 +8,8 @@ import libtmux
 
 def experiment(variant):
     import os
-    os.environ['D4RL_SUPPRESS_IMPORT_ERROR']='1'
 
+    os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
@@ -34,7 +34,7 @@ def experiment(variant):
         KitchenSlideCabinetV0,
         KitchenMicrowaveV0,
     )
-    
+
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
     if env_class == "microwave":
