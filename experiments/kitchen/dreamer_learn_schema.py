@@ -99,9 +99,8 @@ if __name__ == "__main__":
         ],
         "env_kwargs.delta": [
             0.05,
-            0.1,
-            0.15,
         ],
+        "expl_amount": [0.3, 0.6, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
