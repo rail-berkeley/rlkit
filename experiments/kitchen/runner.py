@@ -123,7 +123,7 @@ def experiment(variant):
         obs_dim,
         action_dim,
         exploration=True,
-        expl_amount=variant.get("expl_amount", 0),
+        expl_amount=variant.get("expl_amount", 0.3),
     )
     eval_policy = DreamerPolicy(
         world_model,
