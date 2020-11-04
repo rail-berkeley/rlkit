@@ -57,6 +57,10 @@ if __name__ == "__main__":
             dense=False,
             delta=0.0,
             image_obs=True,
+            fixed_schema=True,
+        ),
+        actor_kwargs=dict(
+            split_dist=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,

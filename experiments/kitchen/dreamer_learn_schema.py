@@ -1,5 +1,6 @@
 import json
 import os
+
 import rlkit.util.hyperparameter as hyp
 import argparse
 import libtmux
@@ -51,23 +52,22 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1e5),
         algorithm_kwargs=algorithm_kwargs,
-        env_class="multitask_all",
+        env_class="microwave",
         env_kwargs=dict(
             dense=False,
             delta=0.0,
             image_obs=True,
-            fixed_schema=True,
+            fixed_schema=False,
+            multitask=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
-            embedding_size=1030,
         ),
         actor_kwargs=dict(
-            split_dist=False,
+            split_dist=True,
         ),
-        world_model_class="multitask",
         trainer_kwargs=dict(
             discount=0.99,
             reward_scale=1.0,
@@ -87,16 +87,22 @@ if __name__ == "__main__":
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
-        expl_amount=0.3,
     )
 
     search_space = {
+        "env_class": [
+            "microwave",
+            # "kettle",
+            # "top_burner",
+            # "slide_cabinet",
+            # "hinge_cabinet",
+            # "light_switch",
+        ],
         "env_kwargs.delta": [
-            0.0,
+            0.05,
             0.1,
             0.15,
         ],
-        "expl_amount": [0.3, 0.6, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

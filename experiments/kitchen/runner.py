@@ -72,7 +72,7 @@ def experiment(variant):
     env_fns = [
         lambda: make_env(
             env_class=env_class_,
-            env_kwargs=dict(dense=False, delta=0.0, image_obs=True),
+            env_kwargs=variant["env_kwargs"],
         )
         for _ in range(variant["num_expl_envs"])
     ]
@@ -108,6 +108,9 @@ def experiment(variant):
         + variant["model_kwargs"]["deterministic_state_size"],
         action_dim,
         hidden_activation=torch.nn.functional.elu,
+        split_size=eval_envs[0].num_primitives,
+        split_dist=variant["actor_kwargs"]["split_dist"]
+        and (not variant["env_kwargs"]["fixed_schema"]),
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
@@ -124,6 +127,9 @@ def experiment(variant):
         action_dim,
         exploration=True,
         expl_amount=variant.get("expl_amount", 0.3),
+        split_size=eval_envs[0].num_primitives,
+        split_dist=variant["actor_kwargs"]["split_dist"]
+        and (not variant["env_kwargs"]["fixed_schema"]),
     )
     eval_policy = DreamerPolicy(
         world_model,
@@ -131,6 +137,10 @@ def experiment(variant):
         obs_dim,
         action_dim,
         exploration=False,
+        expl_amount=0.0,
+        split_size=eval_envs[0].num_primitives,
+        split_dist=variant["actor_kwargs"]["split_dist"]
+        and (not variant["env_kwargs"]["fixed_schema"]),
     )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
