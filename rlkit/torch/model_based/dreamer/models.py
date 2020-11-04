@@ -47,16 +47,18 @@ class ActorModel(Mlp):
         last = self.last_fc(h)
         if self.split_dist:
             mean, std = last.split(self.action_dim, -1)
-            logits, cont_act_mean, extra = mean.split(self.split_size, -1)
+            logits, continuous_action_mean, extra = mean.split(self.split_size, -1)
             dist1 = OneHotDist(logits=logits)
 
-            cont_act_mean = torch.cat((cont_act_mean, extra), -1)
-            _, cont_act_std, extra = std.split(self.split_size, -1)
-            cont_act_std = torch.cat((cont_act_std, extra), -1)
+            continuous_action_mean = torch.cat((continuous_action_mean, extra), -1)
+            _, continuous_action_std, extra = std.split(self.split_size, -1)
+            continuous_action_std = torch.cat((continuous_action_std, extra), -1)
             action_mean = self._mean_scale * torch.tanh(
-                cont_act_mean / self._mean_scale
+                continuous_action_mean / self._mean_scale
             )
-            action_std = F.softplus(cont_act_std + raw_init_std) + self._min_std
+            action_std = (
+                F.softplus(continuous_action_std + raw_init_std) + self._min_std
+            )
 
             dist2 = Normal(action_mean, action_std)
             dist2 = TransformedDistribution(dist2, TanhBijector())

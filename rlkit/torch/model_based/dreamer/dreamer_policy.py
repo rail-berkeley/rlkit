@@ -48,18 +48,20 @@ class DreamerPolicy(Policy):
         if self.exploration:
             action = dist.rsample()
             if self.split_dist:
-                deter, cont, extra = action.split(self.split_size, -1)
-                cont = torch.cat((cont, extra), -1)
-                indices = torch.distributions.Categorical(logits=0 * deter).sample()
-                rand_action = F.one_hot(indices, deter.shape[-1])
-                probs = ptu.rand(deter.shape[:1])
-                deter = torch.where(
+                discrete, continuous, extra = action.split(self.split_size, -1)
+                continuous = torch.cat((continuous, extra), -1)
+                indices = torch.distributions.Categorical(logits=0 * discrete).sample()
+                rand_action = F.one_hot(indices, discrete.shape[-1])
+                probs = ptu.rand(discrete.shape[:1])
+                discrete = torch.where(
                     probs.reshape(-1, 1) < self.expl_amount,
                     rand_action.int(),
-                    deter.int(),
+                    discrete.int(),
                 )
-                cont = torch.clamp(Normal(cont, self.expl_amount).rsample(), -1, 1)
-                action = torch.cat((deter, cont), -1)
+                continuous = torch.clamp(
+                    Normal(continuous, self.expl_amount).rsample(), -1, 1
+                )
+                action = torch.cat((discrete, continuous), -1)
             else:
                 action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
         else:

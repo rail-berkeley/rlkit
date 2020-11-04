@@ -86,7 +86,7 @@ def experiment(variant):
     ]
 
     eval_env = DummyVecEnv(eval_envs)
-    max_path_length = 3
+    max_path_length = eval_envs[0].max_steps
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
 
