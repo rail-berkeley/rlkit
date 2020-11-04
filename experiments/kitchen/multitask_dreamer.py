@@ -92,7 +92,6 @@ if __name__ == "__main__":
 
     search_space = {
         "env_kwargs.delta": [
-            0.0,
             0.1,
             0.15,
         ],

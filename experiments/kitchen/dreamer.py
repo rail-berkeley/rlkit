@@ -1,6 +1,5 @@
 import json
 import os
-
 import rlkit.util.hyperparameter as hyp
 import argparse
 import libtmux
@@ -58,6 +57,7 @@ if __name__ == "__main__":
             delta=0.0,
             image_obs=True,
             fixed_schema=True,
+            multitask=False,
         ),
         actor_kwargs=dict(
             split_dist=False,
@@ -98,7 +98,6 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "env_kwargs.delta": [
-            0.05,
             0.1,
             0.15,
         ],
