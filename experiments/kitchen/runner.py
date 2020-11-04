@@ -27,23 +27,28 @@ def experiment(variant):
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
+    from rlkit.torch.model_based.dreamer.models import (
+        WorldModel,
+        MultitaskWorldModel,
+        ActorModel,
+    )
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     import torch
     import rlkit.torch.pytorch_util as ptu
     from hrl_exp.envs.mujoco_vec_wrappers import make_env
-    from d4rl.kitchen.kitchen_envs import (
-        KitchenKettleV0,
-        KitchenLightSwitchV0,
-        KitchenHingeCabinetV0,
-        KitchenTopBurnerV0,
-        KitchenSlideCabinetV0,
-        KitchenMicrowaveV0,
-    )
 
     from hrl_exp.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, DummyVecEnv
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+    from d4rl.kitchen.kitchen_envs import (
+        KitchenKettleV0,
+        KitchenMicrowaveV0,
+        KitchenSlideCabinetV0,
+        KitchenHingeCabinetV0,
+        KitchenTopBurnerV0,
+        KitchenLightSwitchV0,
+        KitchenMultitaskAllV0,
+    )
 
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
@@ -59,12 +64,14 @@ def experiment(variant):
         env_class_ = KitchenTopBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
+    elif env_class == "multitask_all":
+        env_class_ = KitchenMultitaskAllV0
     else:
         raise EnvironmentError("invalid env provided")
 
     env_fns = [
         lambda: make_env(
-            env_class=KitchenKettleV0,
+            env_class=env_class_,
             env_kwargs=dict(dense=False, delta=0.0, image_obs=True),
         )
         for _ in range(variant["num_expl_envs"])
@@ -79,15 +86,19 @@ def experiment(variant):
     ]
 
     eval_env = DummyVecEnv(eval_envs)
-
     max_path_length = 3
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
 
     obs_dim = expl_env.observation_space.low.size
-    action_dim = eval_env.action_space.low.size
+    action_dim = expl_env.action_space.low.size
 
-    world_model = WorldModel(
+    if variant.get("world_model_class", "world_model") == "multitask":
+        world_model_class = MultitaskWorldModel
+    else:
+        world_model_class = WorldModel
+
+    world_model = world_model_class(
         action_dim,
         **variant["model_kwargs"],
     )

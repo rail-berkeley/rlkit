@@ -394,6 +394,26 @@ class WorldModel(PyTorchModule):
         )
 
 
+class MultitaskWorldModel(WorldModel):
+    def preprocess(self, obs):
+        image_obs, one_hots = (
+            obs[:, : 64 * 64 * 3],
+            obs[:, 64 * 64 * 3 :],
+        )
+        image_obs = super(MultitaskWorldModel, self).preprocess(image_obs)
+        return image_obs
+
+    def encode(self, obs):
+        image_obs, one_hots = (
+            obs[:, : 64 * 64 * 3],
+            obs[:, 64 * 64 * 3 :],
+        )
+        image_obs = self.preprocess(obs)
+        encoded_obs = self.conv_encoder(image_obs)
+        latent = torch.cat((encoded_obs, one_hots), dim=1)
+        return latent
+
+
 # "get_parameters" and "FreezeParameters" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
 def get_parameters(modules):
