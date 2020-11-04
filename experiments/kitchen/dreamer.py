@@ -15,6 +15,7 @@ if __name__ == "__main__":
     parser.add_argument("--tmux", action="store_true", default=False)
     parser.add_argument("--tmux_session_name", type=str, default="")
     parser.add_argument("--num_expl_envs", type=int, default=10)
+    parser.add_argument("--gpu_id", type=int, default=0)
     args = parser.parse_args()
 
     if args.tmux:
@@ -110,22 +111,23 @@ if __name__ == "__main__":
 
     num_gpus = torch.cuda.device_count()
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        gpu_id = exp_id % num_gpus  # only matters for docker runs
-        json_var = json.dumps(variant)
-        cmd = "python experiments/kitchen/runner.py --variant '{}' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
-            json_var,
-            args.exp_prefix,
-            args.mode,
-            args.num_seeds,
-            gpu_id,
-        )
-        if args.tmux:
-            cmd = cmd + " --tmux_session_name " + args.tmux_session_name
-            w = session.new_window(
-                attach=False, window_name="exp_id:{} device:{}".format(exp_id, gpu_id)
+        if exp_id % num_gpus == args.gpu_id:
+            json_var = json.dumps(variant)
+            cmd = "python experiments/kitchen/runner.py --variant '{}' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
+                json_var,
+                args.exp_prefix,
+                args.mode,
+                args.num_seeds,
+                args.gpu_id,
             )
-            pane = w.split_window()
-            pane.send_keys("conda activate hrl-exp-env")
-            pane.send_keys(cmd)
-        else:
-            os.system(cmd)
+            if args.tmux:
+                cmd = cmd + " --tmux_session_name " + args.tmux_session_name
+                w = session.new_window(
+                    attach=False,
+                    window_name="exp_id:{} device:{}".format(exp_id, args.gpu_id),
+                )
+                pane = w.split_window()
+                pane.send_keys("conda activate hrl-exp-env")
+                pane.send_keys(cmd)
+            else:
+                os.system(cmd)
