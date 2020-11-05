@@ -693,6 +693,7 @@ def run_experiment(
                 skip_wait=skip_wait,
                 pre_cmd=conf.SINGULARITY_PRE_CMDS,
                 slurm_config=SlurmConfigMatrix(**slurm_config),
+                logdir=logger.get_snapshot_dir(),
             )
         elif mode == "slurm_singularity":
             dmode = doodad.mode.SlurmSingularity(
