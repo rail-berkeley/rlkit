@@ -1,10 +1,7 @@
-import json
-import os
+from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 import rlkit.util.hyperparameter as hyp
 import argparse
-import libtmux
-import torch
-
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -12,16 +9,9 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
-    parser.add_argument("--tmux", action="store_true", default=False)
-    parser.add_argument("--tmux_session_name", type=str, default="")
     parser.add_argument("--num_expl_envs", type=int, default=10)
-    parser.add_argument("--gpu_id", type=int, default=0)
-    parser.add_argument("--num_gpus", type=int, default=1)
     args = parser.parse_args()
 
-    if args.tmux:
-        server = libtmux.Server()
-        session = server.find_where({"session_name": args.tmux_session_name})
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=2,
@@ -94,40 +84,33 @@ if __name__ == "__main__":
         "env_class": [
             "microwave",
             "kettle",
-            # "top_burner",
-            # "slide_cabinet",
-            # "hinge_cabinet",
-            # "light_switch",
+            "top_burner",
+            "slide_cabinet",
+            "hinge_cabinet",
+            "light_switch",
         ],
         "env_kwargs.delta": [
-            0.05,
+            0.0,
         ],
-        "expl_amount": [0.3, 1],
+        "expl_amount": [0.3, 0.6, 0.9],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
 
-    num_gpus = args.num_gpus
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if exp_id % num_gpus == args.gpu_id:
-            json_var = json.dumps(variant)
-            cmd = "python experiments/kitchen/runner.py --variant '{}' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
-                json_var,
-                args.exp_prefix,
-                args.mode,
-                args.num_seeds,
-                args.gpu_id,
-            )
-            if args.tmux:
-                cmd = cmd + " --tmux_session_name " + args.tmux_session_name
-                w = session.new_window(
-                    attach=False,
-                    window_name="exp_id:{} device:{}".format(exp_id, args.gpu_id),
-                )
-                pane = w.split_window()
-                pane.send_keys("conda activate hrl-exp-env")
-                pane.send_keys(cmd)
+        for _ in range(args.num_seeds):
+            if args.mode == "slurm_singularity_matrix":
+                python_cmd = "~/miniconda3/envs/test/bin/python"
             else:
-                os.system(cmd)
+                python_cmd = "python"
+            run_experiment(
+                experiment,
+                exp_prefix=args.exp_prefix,
+                mode=args.mode,
+                variant=variant,
+                use_gpu=True,
+                snapshot_mode="last",
+                python_cmd=python_cmd,
+            )
