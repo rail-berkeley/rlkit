@@ -92,15 +92,15 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            # "kettle",
-            # "top_burner",
-            # "slide_cabinet",
-            # "hinge_cabinet",
-            # "light_switch",
+            "kettle",
+            "top_burner",
+            "slide_cabinet",
+            "hinge_cabinet",
+            "light_switch",
         ],
         "env_kwargs.delta": [
             0.1,
-            # 0.15,
+            0.15,
         ],
         "expl_amount": [0.3, 0.6, 1],
     }
