@@ -10,11 +10,11 @@ from collections import namedtuple
 
 import __main__ as main
 import dateutil.tz
+from doodad.slurm.slurm_util import SlurmConfigMatrix, SlurmConfig
 import numpy as np
 
 from rlkit.core import logger
 from rlkit.launchers import conf
-from rlkit.torch.pytorch_util import set_gpu_mode
 import rlkit.pythonplusplus as ppp
 
 GitInfo = namedtuple(
@@ -145,6 +145,8 @@ def run_experiment_here(
     )
 
     set_seed(seed)
+    from rlkit.torch.pytorch_util import set_gpu_mode
+
     set_gpu_mode(use_gpu)
 
     run_experiment_here_kwargs = dict(
@@ -447,8 +449,6 @@ def run_experiment(
     spot_price=None,
     verbose=False,
     num_exps_per_instance=1,
-    # sss settings
-    time_in_mins=None,
     # ssh settings
     ssh_host=None,
     # gcp
@@ -622,7 +622,7 @@ def run_experiment(
             spot_price = conf.SPOT_PRICE
     if mode == "sss":
         singularity_image = conf.SSS_IMAGE
-    elif mode in ["local_singularity", "slurm_singularity"]:
+    elif mode in ["local_singularity", "slurm_singularity", "slurm_singularity_matrix"]:
         singularity_image = conf.SINGULARITY_IMAGE
     else:
         singularity_image = None
@@ -677,29 +677,38 @@ def run_experiment(
         dmode = doodad.mode.LocalSingularity(
             image=singularity_image, gpu=use_gpu, pre_cmd=conf.SINGULARITY_PRE_CMDS
         )
-    elif mode == "slurm_singularity" or mode == "sss":
-        assert time_in_mins is not None, "Must approximate/set time in minutes"
+    elif (
+        mode == "slurm_singularity"
+        or mode == "sss"
+        or mode == "slurm_singularity_matrix"
+    ):
         if use_gpu:
-            kwargs = conf.SLURM_GPU_CONFIG
+            slurm_config = conf.SLURM_GPU_CONFIG
         else:
-            kwargs = conf.SLURM_CPU_CONFIG
-        if mode == "slurm_singularity":
+            slurm_config = conf.SLURM_CPU_CONFIG
+        if mode == "slurm_singularity_matrix":
+            dmode = doodad.mode.SlurmSingularityMatrix(
+                image=singularity_image,
+                gpu=use_gpu,
+                skip_wait=skip_wait,
+                pre_cmd=conf.SINGULARITY_PRE_CMDS,
+                slurm_config=SlurmConfigMatrix(**slurm_config),
+            )
+        elif mode == "slurm_singularity":
             dmode = doodad.mode.SlurmSingularity(
                 image=singularity_image,
                 gpu=use_gpu,
-                time_in_mins=time_in_mins,
                 skip_wait=skip_wait,
                 pre_cmd=conf.SINGULARITY_PRE_CMDS,
-                **kwargs
+                slurm_config=SlurmConfig(**slurm_config),
             )
         else:
             dmode = doodad.mode.ScriptSlurmSingularity(
                 image=singularity_image,
                 gpu=use_gpu,
-                time_in_mins=time_in_mins,
                 skip_wait=skip_wait,
                 pre_cmd=conf.SSS_PRE_CMDS,
-                **kwargs
+                slurm_config=SlurmConfig(**slurm_config),
             )
     elif mode == "ec2":
         # Do this separately in case someone does not have EC2 configured
@@ -776,7 +785,12 @@ def run_experiment(
         base_log_dir_for_script = conf.OUTPUT_DIR_FOR_DOODAD_TARGET
         # The snapshot dir will be automatically created
         snapshot_dir_for_script = None
-    elif mode in ["local_singularity", "slurm_singularity", "sss"]:
+    elif mode in [
+        "local_singularity",
+        "slurm_singularity",
+        "slurm_singularity_matrix",
+        "sss",
+    ]:
         base_log_dir_for_script = base_log_dir
         # The snapshot dir will be automatically created
         snapshot_dir_for_script = None
@@ -891,7 +905,13 @@ def create_mounts(
             ),
         )
 
-    elif mode in ["local", "local_singularity", "slurm_singularity", "sss"]:
+    elif mode in [
+        "local",
+        "local_singularity",
+        "slurm_singularity",
+        "slurm_singularity_matrix",
+        "sss",
+    ]:
         # To save directly to local files (singularity does this), skip mounting
         output_mount = mount.MountLocal(
             local_dir=base_log_dir,

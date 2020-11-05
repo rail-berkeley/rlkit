@@ -15,7 +15,6 @@ import csv
 import json
 import pickle
 import errno
-import torch
 
 from rlkit.core.tabulate import tabulate
 from collections import OrderedDict
@@ -323,6 +322,8 @@ class Logger(object):
         self._prefix_str = "".join(self._prefixes)
 
     def save_itr_params(self, itr, params):
+        import torch
+
         if self._snapshot_dir:
             if self._snapshot_mode == "all":
                 file_name = osp.join(self._snapshot_dir, "itr_%d.pkl" % itr)
