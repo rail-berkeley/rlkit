@@ -15,6 +15,8 @@ if __name__ == "__main__":
     parser.add_argument("--tmux", action="store_true", default=False)
     parser.add_argument("--tmux_session_name", type=str, default="")
     parser.add_argument("--num_expl_envs", type=int, default=10)
+    parser.add_argument("--gpu_id", type=int, default=0)
+    parser.add_argument("--num_gpus", type=int, default=1)
     args = parser.parse_args()
 
     if args.tmux:
@@ -102,7 +104,7 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
 
-    num_gpus = torch.cuda.device_count()
+    num_gpus = args.num_gpus
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         if exp_id % num_gpus == args.gpu_id:
             json_var = json.dumps(variant)
