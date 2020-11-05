@@ -94,15 +94,15 @@ if __name__ == "__main__":
         "env_class": [
             "microwave",
             "kettle",
-            "top_burner",
-            "slide_cabinet",
-            "hinge_cabinet",
-            "light_switch",
+            #"top_burner",
+            #"slide_cabinet",
+            #"hinge_cabinet",
+            #"light_switch",
         ],
         "env_kwargs.delta": [
             0.05,
         ],
-        "expl_amount": [0.3, 0.6, 1],
+        "expl_amount": [0.3, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

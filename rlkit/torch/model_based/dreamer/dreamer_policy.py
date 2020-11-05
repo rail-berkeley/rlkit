@@ -61,7 +61,7 @@ class DreamerPolicy(Policy):
                 continuous = torch.clamp(
                     Normal(continuous, self.expl_amount).rsample(), -1, 1
                 )
-                action = torch.cat((discrete, continuous), -1)
+                action = torch.cat((discrete.float(), continuous.float()), -1)
             else:
                 action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
         else:

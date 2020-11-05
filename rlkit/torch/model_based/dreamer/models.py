@@ -187,7 +187,7 @@ class SplitDist:
         return torch.cat((self._dist1.rsample(), self._dist2.rsample()), -1)
 
     def mode(self):
-        return torch.cat((self._dist1.mode(), self._dist2.mode()), -1)
+        return torch.cat((self._dist1.mode().float(), self._dist2.mode().float()), -1)
 
 
 class WorldModel(PyTorchModule):

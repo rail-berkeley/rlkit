@@ -97,7 +97,7 @@ if __name__ == "__main__":
             0.1,
             0.15,
         ],
-        "expl_amount": [0.3, 0.6, 1],
+        "expl_amount": [0.3, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
