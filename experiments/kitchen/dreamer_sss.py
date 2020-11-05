@@ -3,32 +3,42 @@ import rlkit.util.hyperparameter as hyp
 import argparse
 import os
 
-os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
-from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
-from rlkit.torch.model_based.dreamer.dreamer_policy import (
-    DreamerPolicy,
-    ActionSpaceSamplePolicy,
-)
-from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
-    EpisodeReplayBuffer,
-)
-from rlkit.torch.model_based.dreamer.mlp import Mlp
-from rlkit.torch.model_based.dreamer.models import (
-    WorldModel,
-    MultitaskWorldModel,
-    ActorModel,
-)
-from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-import torch
-import rlkit.torch.pytorch_util as ptu
-from hrl_exp.envs.mujoco_vec_wrappers import make_env
-from hrl_exp.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, DummyVecEnv
-from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-from d4rl.kitchen.kitchen_envs import *
-
-
 def experiment(variant):
+    import os
+
+    os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
+
+    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
+    from rlkit.torch.model_based.dreamer.dreamer_policy import (
+        DreamerPolicy,
+        ActionSpaceSamplePolicy,
+    )
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
+        EpisodeReplayBuffer,
+    )
+    from rlkit.torch.model_based.dreamer.mlp import Mlp
+    from rlkit.torch.model_based.dreamer.models import (
+        WorldModel,
+        MultitaskWorldModel,
+        ActorModel,
+    )
+    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    import torch
+    import rlkit.torch.pytorch_util as ptu
+    from hrl_exp.envs.mujoco_vec_wrappers import make_env
+
+    from hrl_exp.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, DummyVecEnv
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+    from d4rl.kitchen.kitchen_envs import (
+        KitchenKettleV0,
+        KitchenMicrowaveV0,
+        KitchenSlideCabinetV0,
+        KitchenHingeCabinetV0,
+        KitchenTopBurnerV0,
+        KitchenLightSwitchV0,
+        KitchenMultitaskAllV0,
+    )
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
     if env_class == "microwave":
@@ -256,7 +266,7 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.1,
         ],
-        "expl_amount": [0.3],
+        "expl_amount": [0.3, .6, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -271,5 +281,5 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="last",
-                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+                python_cmd="~/miniconda3/envs/test/bin/python",
             )
