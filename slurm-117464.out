@@ -1,0 +1,22 @@
+/var/spool/slurmd/job117464/slurm_script: line 2: setup_env: command not found
+/var/spool/slurmd/job117464/slurm_script: line 3: setup_python: command not found
+0
+1
+2
+3
+Traceback (most recent call last):
+  File "experiments/kitchen/dreamer.py", line 3, in <module>
+    import rlkit.util.hyperparameter as hyp
+ModuleNotFoundError: No module named 'rlkit'
+Traceback (most recent call last):
+  File "experiments/kitchen/dreamer.py", line 3, in <module>
+    import rlkit.util.hyperparameter as hyp
+ModuleNotFoundError: No module named 'rlkit'
+Traceback (most recent call last):
+  File "experiments/kitchen/dreamer.py", line 3, in <module>
+    import rlkit.util.hyperparameter as hyp
+ModuleNotFoundError: No module named 'rlkit'
+Traceback (most recent call last):
+  File "experiments/kitchen/dreamer.py", line 3, in <module>
+    import rlkit.util.hyperparameter as hyp
+ModuleNotFoundError: No module named 'rlkit'

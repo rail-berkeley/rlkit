@@ -1,4 +1,6 @@
 #!/bin/bash
+bash
+conda activate test
 for value in {0..1} # number of GPUs
 do
   echo $value
