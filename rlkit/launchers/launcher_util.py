@@ -436,6 +436,7 @@ def run_experiment(
     snapshot_gap=1,
     base_log_dir=None,
     local_input_dir_to_mount_point_dict=None,  # TODO(vitchyr): test this
+    python_cmd="python",
     # local settings
     skip_wait=False,
     gpu_id=0,
@@ -674,8 +675,7 @@ def run_experiment(
         )
     elif mode == "local_singularity":
         dmode = doodad.mode.LocalSingularity(
-            image=singularity_image,
-            gpu=use_gpu,
+            image=singularity_image, gpu=use_gpu, pre_cmd=conf.SINGULARITY_PRE_CMDS
         )
     elif mode == "slurm_singularity" or mode == "sss":
         assert time_in_mins is not None, "Must approximate/set time in minutes"
@@ -811,6 +811,7 @@ def run_experiment(
         target_mount=target_mount,
         verbose=verbose,
         launch_locally=launch_locally,
+        python_cmd=python_cmd,
     )
 
 
