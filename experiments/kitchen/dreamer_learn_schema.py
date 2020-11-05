@@ -94,10 +94,10 @@ if __name__ == "__main__":
         "env_class": [
             "microwave",
             "kettle",
-            #"top_burner",
-            #"slide_cabinet",
-            #"hinge_cabinet",
-            #"light_switch",
+            # "top_burner",
+            # "slide_cabinet",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
         "env_kwargs.delta": [
             0.05,
