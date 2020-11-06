@@ -687,13 +687,18 @@ def run_experiment(
         else:
             slurm_config = conf.SLURM_CPU_CONFIG
         if mode == "slurm_singularity_matrix":
+            logdir = create_log_dir(
+                exp_prefix=exp_prefix,
+                base_log_dir=base_log_dir,
+                seed=seed,
+            )
             dmode = doodad.mode.SlurmSingularityMatrix(
                 image=singularity_image,
                 gpu=use_gpu,
                 skip_wait=skip_wait,
                 pre_cmd=conf.SINGULARITY_PRE_CMDS,
                 slurm_config=SlurmConfigMatrix(**slurm_config),
-                logdir="/tmp/",  # TODO: figure out how to save this to correct logdir
+                logdir=logdir,
             )
         elif mode == "slurm_singularity":
             dmode = doodad.mode.SlurmSingularity(
@@ -792,9 +797,13 @@ def run_experiment(
         "slurm_singularity_matrix",
         "sss",
     ]:
+        if mode == "slurm_singularity_matrix":
+            snapshot_dir_for_script = logdir
+        else:
+            snapshot_dir_for_script = None
         base_log_dir_for_script = base_log_dir
         # The snapshot dir will be automatically created
-        snapshot_dir_for_script = None
+
         launch_locally = True
         if mode == "sss":
             dmode.set_first_time(first_sss_launch)
