@@ -9,7 +9,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
-    parser.add_argument("--num_expl_envs", type=int, default=10)
+    parser.add_argument("--num_expl_envs", type=int, default=4)
     args = parser.parse_args()
 
     if args.debug:
