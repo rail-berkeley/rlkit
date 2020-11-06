@@ -14,9 +14,6 @@ if __name__ == "__main__":
     parser.add_argument("--num_expl_envs", type=int, default=10)
     args = parser.parse_args()
 
-    if args.tmux:
-        server = libtmux.Server()
-        session = server.find_where({"session_name": args.tmux_session_name})
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=2,
