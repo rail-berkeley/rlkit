@@ -1,3 +1,5 @@
+import random
+
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 import rlkit.util.hyperparameter as hyp
@@ -112,4 +114,6 @@ if __name__ == "__main__":
                 use_gpu=True,
                 snapshot_mode="last",
                 python_cmd=python_cmd,
+                seed=random.randint(0, 100000),
+                exp_id=exp_id,
             )
