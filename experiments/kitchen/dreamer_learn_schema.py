@@ -102,10 +102,6 @@ if __name__ == "__main__":
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):
-            if args.mode == "slurm_singularity_matrix":
-                python_cmd = "~/miniconda3/envs/test/bin/python"
-            else:
-                python_cmd = "python"
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -113,7 +109,7 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="last",
-                python_cmd=python_cmd,
+                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=random.randint(0, 100000),
                 exp_id=exp_id,
             )
