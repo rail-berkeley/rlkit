@@ -42,8 +42,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         lam=0.95,
         imagination_horizon=4,
         free_nats=3.0,
-        kl_scale=1.0,
-        pcont_scale=10.0,
+        kl_loss_scale=1.0,
+        pcont_loss_scale=10.0,
+        image_loss_scale=1.0,
+        reward_loss_scale=1.0,
+        transition_loss_scale=0.0,
+        entropy_loss_scale=0.0,
         use_pcont=True,
         plotter=None,
         render_eval_paths=False,
@@ -107,8 +111,12 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.lam = lam
         self.imagination_horizon = imagination_horizon
         self.free_nats = free_nats
-        self.kl_scale = kl_scale
-        self.pcont_scale = pcont_scale
+        self.kl_loss_scale = kl_loss_scale
+        self.pcont_loss_scale = pcont_loss_scale
+        self.image_loss_scale = image_loss_scale
+        self.reward_loss_scale = reward_loss_scale
+        self.transition_loss_scale = transition_loss_scale
+        self.entropy_loss_scale = entropy_loss_scale
         self.use_pcont = use_pcont
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
@@ -188,9 +196,13 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
-        world_model_loss = self.kl_scale * div + image_pred_loss + reward_pred_loss
+        world_model_loss = (
+            self.kl_loss_scale * div
+            + self.image_loss_scale * image_pred_loss
+            + self.reward_loss_scale * reward_pred_loss
+        )
         if self.use_pcont:
-            world_model_loss += self.pcont_scale * pcont_loss
+            world_model_loss += self.pcont_loss_scale * pcont_loss
 
         zero_grad(self.world_model)
         if self.use_amp:
