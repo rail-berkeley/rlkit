@@ -30,6 +30,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         actor,
         vf,
         world_model,
+        target_vf=None,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -48,6 +49,13 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         reward_loss_scale=1.0,
         transition_loss_scale=0.0,
         entropy_loss_scale=0.0,
+        reinforce_loss_scale=0.0,
+        dynamics_backprop_loss_scale=1.0,
+        actor_entropy_loss_scale=0.0,
+        adam_eps=1e-7,
+        weight_decay=0.0,
+        soft_target_tau=1e-2,
+        target_update_period=100,
         use_pcont=True,
         plotter=None,
         render_eval_paths=False,
@@ -74,17 +82,20 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.actor_optimizer = optimizer_class(
             self.actor.parameters(),
             lr=actor_lr,
-            eps=1e-7,
+            eps=adam_eps,
+            weight_decay=weight_decay,
         )
         self.vf_optimizer = optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
-            eps=1e-7,
+            eps=adam_eps,
+            weight_decay=weight_decay,
         )
         self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
             lr=world_model_lr,
-            eps=1e-7,
+            eps=adam_eps,
+            weight_decay=weight_decay,
         )
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
@@ -117,10 +128,26 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.reward_loss_scale = reward_loss_scale
         self.transition_loss_scale = transition_loss_scale
         self.entropy_loss_scale = entropy_loss_scale
+        self.reinforce_loss_scale = reinforce_loss_scale
+        self.dynamics_backprop_loss_scale = dynamics_backprop_loss_scale
+        self.actor_entropy_loss_scale = actor_entropy_loss_scale
+        self.soft_target_tau = soft_target_tau
+        self.target_update_period = target_update_period
+        self.target_vf = target_vf
         self.use_pcont = use_pcont
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
+
+    def try_update_target_networks(self):
+        if (
+            self.target_vf
+            and self._n_train_steps_total % self.target_update_period == 0
+        ):
+            self.update_target_networks()
+
+    def update_target_networks(self):
+        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
 
     def train_from_torch(self, batch):
         gt.blank_stamp()
@@ -133,7 +160,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
 
         self._n_train_steps_total += 1
-
+        self.try_update_target_networks()
         if self._need_to_update_eval_statistics:
             self.eval_statistics = stats
             # Compute statistics using only one batch per epoch
@@ -148,13 +175,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                     v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         feats = []
+        actions = []
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state).detach()
             action = self.actor(feat).rsample()
             new_state = self.world_model.img_step(new_state, action)
             feats.append(self.world_model.get_feat(new_state).unsqueeze(0))
+            if i < self.imagination_horizon - 1:
+                actions.append(action)
         feats = torch.cat(feats)
-        return feats
+        actions = torch.cat(actions)
+        return feats, actions
 
     def compute_loss(
         self,
@@ -196,11 +227,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
+        transition_loss = 0  # TODO: implement
+        entropy_loss = 0  # TODO: implement
         world_model_loss = (
             self.kl_loss_scale * div
             + self.image_loss_scale * image_pred_loss
             + self.reward_loss_scale * reward_pred_loss
+            + self.transition_loss_scale * transition_loss
+            + self.entropy_loss_scale * entropy_loss
         )
+
         if self.use_pcont:
             world_model_loss += self.pcont_loss_scale * pcont_loss
 
@@ -229,7 +265,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         Actor Loss
         """
         with FreezeParameters(self.world_model.modules):
-            imag_feat = self.imagine_ahead(post)
+            imag_feat, imag_actions = self.imagine_ahead(post)
         with FreezeParameters(self.world_model.modules + self.vf.modules):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
@@ -239,7 +275,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                     ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
-            value = self.vf(imag_feat)
+            if self.target_vf:
+                with FreezeParameters(self.target_vf.modules):
+                    value = self.target_vf(imag_feat)
+            else:
+                value = self.vf(imag_feat)
         imag_returns = lambda_return(
             imag_reward[:-1],
             value[:-1],
@@ -250,7 +290,32 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         discount = torch.cumprod(
             torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0
         ).detach()
-        actor_loss = -(discount * imag_returns).mean()
+        dynamics_backprop_loss = -(discount * imag_returns).mean()
+
+        baseline_shifted_returns = discount * (imag_returns - self.vf(imag_feat)[:-1])
+        baseline_shifted_returns = baseline_shifted_returns.detach()
+        baseline_shifted_returns = baseline_shifted_returns.permute(1, 0, 2)
+        baseline_shifted_returns = torch.cat(
+            [
+                baseline_shifted_returns[:, i, :]
+                for i in range(baseline_shifted_returns.shape[1])
+            ]
+        )
+        imag_feat_a = imag_feat.permute(1, 0, 2)
+        imag_feat_a = torch.cat(
+            [imag_feat_a[:, i, :] for i in range(imag_feat_a.shape[1] - 1)]
+        )
+        imag_actor_dist = self.actor(imag_feat_a)
+        reinforce_loss = (
+            -1 * imag_actor_dist.log_prob(imag_actions) * baseline_shifted_returns
+        ).mean()
+        actor_entropy_loss = -1 * imag_actor_dist.entropy().mean()
+
+        actor_loss = (
+            self.dynamics_backprop_loss_scale * dynamics_backprop_loss
+            + self.reinforce_loss_scale * reinforce_loss
+            + self.actor_entropy_loss_scale * actor_entropy_loss
+        )
 
         zero_grad(self.actor)
         if self.use_amp:

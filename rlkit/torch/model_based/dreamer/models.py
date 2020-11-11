@@ -144,20 +144,25 @@ class SampleDist:
         )
         return torch.gather(sample, 0, indices).squeeze(0)
 
+    def log_prob(self, actions):
+        return self._dist.log_prob(actions)
+
     def entropy(self):
         dist = self._dist.expand((self._samples, *self._dist.batch_shape))
         sample = dist.rsample()
         logprob = dist.log_prob(sample)
         return -torch.mean(logprob, 0)
 
-    def rsample(self):
-        return self._dist.rsample()
+
+def rsample(self):
+    return self._dist.rsample()
 
 
 class OneHotDist:
-    def __init__(self, logits=None, probs=None):
+    def __init__(self, logits=None, probs=None, samples=100):
         self._dist = torch.distributions.Categorical(logits=logits, probs=probs)
         self._num_classes = self._dist.logits.shape[-1]
+        self._samples = samples
 
     @property
     def name(self):
@@ -183,6 +188,9 @@ class OneHotDist:
         sample += probs - (probs).detach()  # straight through estimator
         return sample
 
+    def entropy(self):
+        return self._dist.entropy()
+
     def _one_hot(self, indices):
         return F.one_hot(indices, self._num_classes)
 
@@ -198,6 +206,24 @@ class SplitDist:
     def mode(self):
         return torch.cat((self._dist1.mode().float(), self._dist2.mode().float()), -1)
 
+    def entropy(self):
+        return torch.cat(
+            (
+                self._dist1.entropy(),
+                self._dist2.entropy(),
+            ),
+            -1,
+        )
+
+    def log_prob(self, actions):
+        return torch.cat(
+            (
+                self._dist1.log_prob(actions[:, :13]),
+                self._dist2.log_prob(actions[:, 13:]),
+            ),
+            -1,
+        )
+
 
 class WorldModel(PyTorchModule):
     def __init__(
@@ -206,6 +232,7 @@ class WorldModel(PyTorchModule):
         stochastic_state_size=60,
         deterministic_state_size=400,
         embedding_size=1024,
+        rssm_hidden_size=400,
         model_hidden_size=400,
         model_act=F.elu,
         depth=32,
@@ -215,7 +242,7 @@ class WorldModel(PyTorchModule):
     ):
         super().__init__()
         self.obs_step_mlp = Mlp(
-            hidden_sizes=[model_hidden_size],
+            hidden_sizes=[rssm_hidden_size],
             input_size=embedding_size + deterministic_state_size,
             output_size=2 * stochastic_state_size,
             hidden_activation=model_act,
@@ -227,7 +254,7 @@ class WorldModel(PyTorchModule):
         torch.nn.init.xavier_uniform_(self.img_step_layer.weight)
         self.img_step_layer.bias.data.fill_(0)
         self.img_step_mlp = Mlp(
-            hidden_sizes=[model_hidden_size],
+            hidden_sizes=[rssm_hidden_size],
             input_size=deterministic_state_size,
             output_size=2 * stochastic_state_size,
             hidden_activation=model_act,

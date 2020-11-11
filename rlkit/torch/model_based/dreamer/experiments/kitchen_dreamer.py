@@ -114,6 +114,7 @@ def experiment(variant):
         action_dim,
         exploration=True,
         expl_amount=variant.get("expl_amount", 0.3),
+        discrete_action_dim=num_primitives,
         continuous_action_dim=max_arg_len,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
