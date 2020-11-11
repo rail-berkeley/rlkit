@@ -77,6 +77,8 @@ def experiment(variant):
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
+    num_primitives = eval_envs[0].num_primitives
+    max_arg_len = eval_envs[0].max_arg_len
 
     if variant.get("world_model_class", "world_model") == "multitask":
         world_model_class = MultitaskWorldModel
@@ -92,8 +94,8 @@ def experiment(variant):
         variant["model_kwargs"]["stochastic_state_size"]
         + variant["model_kwargs"]["deterministic_state_size"],
         hidden_activation=torch.nn.functional.elu,
-        discrete_action_dim=eval_envs[0].num_primitives,
-        continuous_action_dim=eval_envs[0].max_arg_len,
+        discrete_action_dim=num_primitives,
+        continuous_action_dim=max_arg_len,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
@@ -112,8 +114,7 @@ def experiment(variant):
         action_dim,
         exploration=True,
         expl_amount=variant.get("expl_amount", 0.3),
-        discrete_action_dim=eval_envs[0].num_primitives,
-        continuous_action_dim=eval_envs[0].max_arg_len,
+        continuous_action_dim=max_arg_len,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
@@ -124,8 +125,8 @@ def experiment(variant):
         action_dim,
         exploration=False,
         expl_amount=0.0,
-        discrete_action_dim=eval_envs[0].num_primitives,
-        continuous_action_dim=eval_envs[0].max_arg_len,
+        discrete_action_dim=num_primitives,
+        continuous_action_dim=max_arg_len,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
