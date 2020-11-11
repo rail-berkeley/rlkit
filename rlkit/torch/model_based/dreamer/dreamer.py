@@ -54,7 +54,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         actor_entropy_loss_scale=0.0,
         adam_eps=1e-7,
         weight_decay=0.0,
-        soft_target_tau=1e-2,
+        soft_target_tau=0,
         target_update_period=100,
         use_pcont=True,
         plotter=None,
