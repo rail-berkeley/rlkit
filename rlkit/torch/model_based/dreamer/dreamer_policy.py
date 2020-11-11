@@ -16,8 +16,9 @@ class DreamerPolicy(Policy):
         obs_dim,
         action_dim,
         expl_amount=0.3,
-        split_dist=False,
-        split_size=0,
+        discrete_continuous_dist=False,
+        discrete_action_dim=0,
+        continuous_action_dim=0,
         exploration=False,
     ):
         self.world_model = world_model
@@ -26,8 +27,9 @@ class DreamerPolicy(Policy):
         self.obs_dim = obs_dim
         self.action_dim = action_dim
         self.expl_amount = expl_amount
-        self.split_dist = split_dist
-        self.split_size = split_size
+        self.discrete_continuous_dist = discrete_continuous_dist
+        self.discrete_action_dim = discrete_action_dim
+        self.continuous_action_dim = continuous_action_dim
 
     def get_action(self, observation):
         """
@@ -47,12 +49,15 @@ class DreamerPolicy(Policy):
         dist = self.actor(feat)
         if self.exploration:
             action = dist.rsample()
-            if self.split_dist:
-                discrete, continuous, extra = action.split(self.split_size, -1)
-                continuous = torch.cat((continuous, extra), -1)
+            if self.discrete_continuous_dist:
+                discrete, continuous = (
+                    action[:, : self.discrete_action_dim],
+                    action[:, self.discrete_action_dim :],
+                )
                 indices = torch.distributions.Categorical(logits=0 * discrete).sample()
                 rand_action = F.one_hot(indices, discrete.shape[-1])
                 probs = ptu.rand(discrete.shape[:1])
+                # epsilon greedy
                 discrete = torch.where(
                     probs.reshape(-1, 1) < self.expl_amount,
                     rand_action.int(),
@@ -61,9 +66,12 @@ class DreamerPolicy(Policy):
                 continuous = torch.clamp(
                     Normal(continuous, self.expl_amount).rsample(), -1, 1
                 )
-                action = torch.cat((discrete.float(), continuous.float()), -1)
+                assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
+                action = torch.cat((discrete, continuous), -1)
             else:
-                action = torch.clamp(Normal(action, self.expl_amount).rsample(), -1, 1)
+                action = torch.clamp(
+                    Normal(action.float(), self.expl_amount).rsample(), -1, 1
+                )
         else:
             action = dist.mode()
         self.state = (latent, action)

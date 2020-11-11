@@ -60,7 +60,7 @@ if __name__ == "__main__":
             ee_upper=(0.55, 0.625, 0.05),
         ),
         actor_kwargs=dict(
-            split_dist=False,
+            discrete_continuous_dist=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,

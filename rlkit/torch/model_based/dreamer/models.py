@@ -14,26 +14,30 @@ class ActorModel(Mlp):
         self,
         hidden_sizes,
         obs_dim,
-        action_dim,
-        split_dist=False,
-        split_size=0,
+        discrete_continuous_dist=False,
+        discrete_action_dim=0,
+        continuous_action_dim=0,
         hidden_activation=F.elu,
         min_std=1e-4,
         init_std=5,
         mean_scale=5,
         **kwargs
     ):
-        self.split_dist = split_dist
-        self.split_size = split_size
+        self.discrete_continuous_dist = discrete_continuous_dist
+        self.discrete_action_dim = discrete_action_dim
+        self.continuous_action_dim = continuous_action_dim
+        if self.discrete_continuous_dist:
+            self.output_size = self.discrete_action_dim + self.continuous_action_dim * 2
+        else:
+            self.output_size = self.continuous_action_dim * 2
         super().__init__(
             hidden_sizes,
             input_size=obs_dim,
-            output_size=action_dim * 2,
+            output_size=self.output_size,
             hidden_activation=hidden_activation,
             hidden_init=torch.nn.init.xavier_uniform_,
             **kwargs
         )
-        self.action_dim = action_dim
         self._min_std = min_std
         self._init_std = ptu.from_numpy(np.array(init_std))
         self._mean_scale = mean_scale
@@ -45,14 +49,19 @@ class ActorModel(Mlp):
         for i, fc in enumerate(self.fcs):
             h = self.hidden_activation(fc(h))
         last = self.last_fc(h)
-        if self.split_dist:
-            mean, std = last.split(self.action_dim, -1)
-            logits, continuous_action_mean, extra = mean.split(self.split_size, -1)
-            dist1 = OneHotDist(logits=logits)
-
+        if self.discrete_continuous_dist:
+            assert last.shape[1] == self.output_size
+            mean, continuous_action_std = (
+                last[:, : self.discrete_action_dim + self.continuous_action_dim],
+                last[:, self.discrete_action_dim + self.continuous_action_dim :],
+            )
+            discrete_logits, continuous_action_mean, extra = mean.split(
+                self.discrete_action_dim, -1
+            )
             continuous_action_mean = torch.cat((continuous_action_mean, extra), -1)
-            _, continuous_action_std, extra = std.split(self.split_size, -1)
-            continuous_action_std = torch.cat((continuous_action_std, extra), -1)
+
+            dist1 = OneHotDist(logits=discrete_logits)
+
             action_mean = self._mean_scale * torch.tanh(
                 continuous_action_mean / self._mean_scale
             )
@@ -66,7 +75,7 @@ class ActorModel(Mlp):
             dist2 = SampleDist(dist2)
             dist = SplitDist(dist1, dist2)
         else:
-            action_mean, action_std_dev = last.split(self.action_dim, -1)
+            action_mean, action_std_dev = last.split(self.continuous_action_dim, -1)
             action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
             action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
 
@@ -141,8 +150,8 @@ class SampleDist:
         logprob = dist.log_prob(sample)
         return -torch.mean(logprob, 0)
 
-    def sample(self):
-        return self._dist.sample()
+    def rsample(self):
+        return self._dist.rsample()
 
 
 class OneHotDist:

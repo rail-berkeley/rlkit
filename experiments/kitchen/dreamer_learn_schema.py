@@ -59,7 +59,7 @@ if __name__ == "__main__":
             deterministic_state_size=400,
         ),
         actor_kwargs=dict(
-            split_dist=True,
+            discrete_continuous_dist=True,
         ),
         trainer_kwargs=dict(
             discount=0.99,

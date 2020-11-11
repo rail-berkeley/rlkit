@@ -53,7 +53,7 @@ if __name__ == "__main__":
             multitask=False,
         ),
         actor_kwargs=dict(
-            split_dist=False,
+            discrete_continuous_dist=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,

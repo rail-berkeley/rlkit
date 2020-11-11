@@ -117,7 +117,7 @@ def experiment(variant):
         action_dim,
         hidden_activation=torch.nn.functional.elu,
         split_size=expl_env.wrapped_env.num_primitives,
-        split_dist=variant["actor_kwargs"]["split_dist"]
+        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
     vf = Mlp(
@@ -133,7 +133,7 @@ def experiment(variant):
         actor,
         obs_dim,
         action_dim,
-        split_dist=variant["actor_kwargs"]["split_dist"]
+        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
         split_size=expl_env.wrapped_env.num_primitives,
         exploration=True,
@@ -144,7 +144,7 @@ def experiment(variant):
         actor,
         obs_dim,
         action_dim,
-        split_dist=variant["actor_kwargs"],
+        discrete_continuous_dist=variant["actor_kwargs"],
         split_size=expl_env.wrapped_env.num_primitives,
         exploration=False,
     )

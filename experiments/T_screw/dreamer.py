@@ -60,7 +60,7 @@ if __name__ == "__main__":
             target_screw_angle_tol=0.5,
         ),
         actor_kwargs=dict(
-            split_dist=False,
+            discrete_continuous_dist=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,

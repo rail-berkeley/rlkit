@@ -59,7 +59,7 @@ if __name__ == "__main__":
             embedding_size=1030,
         ),
         actor_kwargs=dict(
-            split_dist=False,
+            discrete_continuous_dist=False,
         ),
         world_model_class="multitask",
         trainer_kwargs=dict(
