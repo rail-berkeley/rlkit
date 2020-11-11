@@ -229,7 +229,6 @@ class WorldModel(PyTorchModule):
             64,
             64,
             3,
-            embedding_size,
             [4] * 4,
             [depth, depth * 2, depth * 4, depth * 8],
             [2] * 4,

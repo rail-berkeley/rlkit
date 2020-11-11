@@ -12,15 +12,11 @@ class CNN(nn.Module):
         input_width,
         input_height,
         input_channels,
-        output_size,
         kernel_sizes,
         n_channels,
         strides,
         paddings,
         hidden_sizes=None,
-        added_fc_input_size=0,
-        batch_norm_conv=False,
-        batch_norm_fc=False,
         hidden_init=nn.init.xavier_uniform_,
         hidden_activation=nn.ReLU(),
         output_activation=identity,
@@ -34,7 +30,6 @@ class CNN(nn.Module):
         self.input_width = input_width
         self.input_height = input_height
         self.input_channels = input_channels
-        self.output_size = output_size
         self.output_activation = output_activation
         self.hidden_activation = hidden_activation
         self.conv_input_length = (
