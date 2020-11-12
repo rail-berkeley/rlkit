@@ -25,8 +25,8 @@ def simulate_policy(file):
         env_class_ = KitchenSlideCabinetV0
     elif env_class == "hinge_cabinet":
         env_class_ = KitchenHingeCabinetV0
-    elif env_class == "top_burner":
-        env_class_ = KitchenTopBurnerV0
+    elif env_class == "top_left_burner":
+        env_class_ = KitchenTopLeftBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
 
