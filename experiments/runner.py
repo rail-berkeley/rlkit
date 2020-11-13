@@ -31,13 +31,15 @@ def experiment(variant):
     import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
-        ActionSpaceSamplePolicy, DreamerPolicy)
-    from rlkit.torch.model_based.dreamer.episode_replay_buffer import \
-        EpisodeReplayBuffer
+        ActionSpaceSamplePolicy,
+        DreamerPolicy,
+    )
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
+        EpisodeReplayBuffer,
+    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.models import ActorModel, WorldModel
-    from rlkit.torch.model_based.dreamer.path_collector import \
-        VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)

@@ -21,8 +21,6 @@ from rlkit.util.io import load_local_or_remote_file
 # import matplotlib.pyplot as plt
 
 
-
-
 def load_hdf5(dataset, replay_buffer):
     all_obs = dataset["observations"]
     all_act = dataset["actions"]

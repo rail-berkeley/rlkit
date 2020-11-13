@@ -21,8 +21,6 @@ from rlkit.util.io import load_local_or_remote_file
 # import matplotlib.pyplot as plt
 
 
-
-
 class PathLoader:
     """
     Loads demonstrations and/or off-policy data into a Trainer

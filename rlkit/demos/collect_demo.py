@@ -10,6 +10,7 @@ You will likely have to `pip install hidapi` and Spacemouse drivers.
 """
 import argparse
 import datetime
+
 # import cv2
 import os
 import pickle
@@ -28,7 +29,6 @@ import numpy as np
 # from multiworld.envs.mujoco.sawyer_xyz.sawyer_multiple_objects import MultiSawyerEnv
 # from multiworld.core.image_env import ImageEnv
 # from multiworld.envs.mujoco.cameras import sawyer_pusher_camera_upright_v2
-
 
 
 ### workaround to solve cv2 version conflicts (ROS adds Python2 version of cv2)
