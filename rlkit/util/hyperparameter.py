@@ -3,9 +3,9 @@ Custom hyperparameter functions.
 """
 import abc
 import copy
+import itertools
 import math
 import random
-import itertools
 from typing import List
 
 import rlkit.pythonplusplus as ppp

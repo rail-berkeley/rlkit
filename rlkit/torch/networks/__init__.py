@@ -3,30 +3,17 @@ General networks for pytorch.
 
 Algorithm-specific networks should go else-where.
 """
-from rlkit.torch.networks.basic import (
-    Clamp,
-    ConcatTuple,
-    Detach,
-    Flatten,
-    FlattenEach,
-    Split,
-    Reshape,
-)
-from rlkit.torch.networks.cnn import BasicCNN, CNN, MergedCNN, CNNPolicy
+from rlkit.torch.networks.basic import (Clamp, ConcatTuple, Detach, Flatten,
+                                        FlattenEach, Reshape, Split)
+from rlkit.torch.networks.cnn import CNN, BasicCNN, CNNPolicy, MergedCNN
 from rlkit.torch.networks.dcnn import DCNN, TwoHeadDCNN
 from rlkit.torch.networks.feat_point_mlp import FeatPointMlp
 from rlkit.torch.networks.image_state import ImageStatePolicy, ImageStateQ
 from rlkit.torch.networks.linear_transform import LinearTransform
+from rlkit.torch.networks.mlp import (ConcatMlp, ConcatMultiHeadedMlp, Mlp,
+                                      MlpPolicy, MlpQf, MlpQfWithObsProcessor,
+                                      TanhMlpPolicy)
 from rlkit.torch.networks.normalization import LayerNorm
-from rlkit.torch.networks.mlp import (
-    Mlp,
-    ConcatMlp,
-    MlpPolicy,
-    TanhMlpPolicy,
-    MlpQf,
-    MlpQfWithObsProcessor,
-    ConcatMultiHeadedMlp,
-)
 from rlkit.torch.networks.pretrained_cnn import PretrainedCNN
 from rlkit.torch.networks.two_headed_mlp import TwoHeadMlp
 

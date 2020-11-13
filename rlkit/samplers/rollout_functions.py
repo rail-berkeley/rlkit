@@ -1,7 +1,7 @@
+import copy
 from functools import partial
 
 import numpy as np
-import copy
 
 create_rollout_function = partial
 

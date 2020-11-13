@@ -15,30 +15,30 @@ variant = json.loads(args.variant)
 
 
 def experiment(variant):
+    import os
+    import pickle
+    from os.path import join
+
+    import torch
     from autolab_core import YamlConfig
+    from hrl_exp.envs.franka_blocks import GymFrankaBlocksVecEnv
     from hrl_exp.envs.franka_hex_screw import GymFrankaHexScrewVecEnv
     from hrl_exp.envs.franka_lift import GymFrankaLiftVecEnv
-    from hrl_exp.envs.franka_blocks import GymFrankaBlocksVecEnv
     from hrl_exp.envs.franka_T_screw import GymFrankaTScrewVecEnv
     from hrl_exp.envs.wrappers import ImageEnvWrapper
+
+    import rlkit
+    import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
-        DreamerPolicy,
-        ActionSpaceSamplePolicy,
-    )
-    from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
-        EpisodeReplayBuffer,
-    )
+        ActionSpaceSamplePolicy, DreamerPolicy)
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import \
+        EpisodeReplayBuffer
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.models import WorldModel, ActorModel
-    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.models import ActorModel, WorldModel
+    from rlkit.torch.model_based.dreamer.path_collector import \
+        VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-    import torch
-    import os
-    import rlkit
-    from os.path import join
-    import pickle
-    import rlkit.torch.pytorch_util as ptu
 
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)
 

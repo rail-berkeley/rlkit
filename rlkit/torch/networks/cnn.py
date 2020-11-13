@@ -6,8 +6,6 @@ from rlkit.policies.base import Policy
 from rlkit.pythonplusplus import identity
 from rlkit.torch.core import PyTorchModule, eval_np
 from rlkit.torch.data_management.normalizer import TorchFixedNormalizer
-
-
 from rlkit.torch.pytorch_util import activation_from_string
 
 

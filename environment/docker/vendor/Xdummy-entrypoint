@@ -1,8 +1,8 @@
 #!/usr/bin/python
 import argparse
 import os
-import sys
 import subprocess
+import sys
 
 parser = argparse.ArgumentParser()
 args, extra_args = parser.parse_known_args()

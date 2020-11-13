@@ -1,13 +1,16 @@
+import argparse
+import uuid
+
 import cv2
+import torch
 from d4rl.kitchen.kitchen_envs import *
-from hrl_exp.envs.mujoco_vec_wrappers import make_env, Async, VecEnv, DummyVecEnv
+from hrl_exp.envs.mujoco_vec_wrappers import (Async, DummyVecEnv, VecEnv,
+                                              make_env)
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
 from rlkit.torch.pytorch_util import set_gpu_mode
-import argparse
-import torch
-import uuid
-from rlkit.core import logger
-import rlkit.torch.pytorch_util as ptu
 
 filename = str(uuid.uuid4())
 

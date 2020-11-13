@@ -1,8 +1,7 @@
-from rlkit.demos.source.demo_source import DemoSource
 import pickle
 
 from rlkit.data_management.path_builder import PathBuilder
-
+from rlkit.demos.source.demo_source import DemoSource
 from rlkit.util.io import load_local_or_remote_file
 
 

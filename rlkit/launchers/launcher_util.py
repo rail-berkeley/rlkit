@@ -10,12 +10,12 @@ from collections import namedtuple
 
 import __main__ as main
 import dateutil.tz
-from doodad.slurm.slurm_util import SlurmConfigMatrix, SlurmConfig
 import numpy as np
+from doodad.slurm.slurm_util import SlurmConfig, SlurmConfigMatrix
 
+import rlkit.pythonplusplus as ppp
 from rlkit.core import logger
 from rlkit.launchers import conf
-import rlkit.pythonplusplus as ppp
 
 GitInfo = namedtuple(
     "GitInfo",

@@ -3,21 +3,22 @@ Based on rllab's logger.
 
 https://github.com/rll/rllab
 """
-from enum import Enum
-from contextlib import contextmanager
-import numpy as np
+import csv
+import datetime
+import errno
+import json
 import os
 import os.path as osp
-import sys
-import datetime
-import dateutil.tz
-import csv
-import json
 import pickle
-import errno
+import sys
+from collections import OrderedDict
+from contextlib import contextmanager
+from enum import Enum
+
+import dateutil.tz
+import numpy as np
 
 from rlkit.core.tabulate import tabulate
-from collections import OrderedDict
 
 
 def add_prefix(log_dict: OrderedDict, prefix: str, divider=""):

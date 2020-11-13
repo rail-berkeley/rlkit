@@ -1,11 +1,9 @@
+import rlkit.util.hyperparameter as hyp
 from rlkit.demos.source.dict_to_mdp_path_loader import DictToMDPPathLoader
 from rlkit.launchers.experiments.awac.awac_rl import experiment, process_args
-
-import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-
-from rlkit.torch.sac.policies import GaussianPolicy
 from rlkit.torch.networks import Clamp
+from rlkit.torch.sac.policies import GaussianPolicy
 
 if __name__ == "__main__":
     variant = dict(

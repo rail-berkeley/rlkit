@@ -1,8 +1,10 @@
-import torch
-import numpy as np
 import abc
+
+import numpy as np
+import torch
 from torch.distributions import Normal
 from torch.nn import functional as F
+
 from rlkit.torch import pytorch_util as ptu
 
 

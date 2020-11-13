@@ -1,4 +1,4 @@
-from collections import deque, OrderedDict
+from collections import OrderedDict, deque
 from functools import partial
 
 import numpy as np

@@ -5,15 +5,16 @@ import copy
 
 from gym.envs.mujoco import HalfCheetahEnv
 
+import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
 from rlkit.envs.wrappers import NormalizedBoxEnv
-from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import \
+    PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
-from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.ddpg.ddpg import DDPGTrainer
-import rlkit.torch.pytorch_util as ptu
+from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 

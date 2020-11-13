@@ -1,12 +1,14 @@
+import numpy as np
+import torch
+import torch.nn.functional as F
+from torch.distributions import Normal
+from torch.distributions.transformed_distribution import \
+    TransformedDistribution
+
+import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
-from torch.distributions import Normal
-import torch.nn.functional as F
-from torch.distributions.transformed_distribution import TransformedDistribution
-import torch
-import numpy as np
-import rlkit.torch.pytorch_util as ptu
 
 
 class ActorModel(Mlp):

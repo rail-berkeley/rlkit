@@ -1,9 +1,11 @@
-import torch
-import rlkit.util.hyperparameter as hyp
 import argparse
 import json
-import libtmux
 import os
+
+import libtmux
+import torch
+
+import rlkit.util.hyperparameter as hyp
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

@@ -1,9 +1,10 @@
-from rlkit.policies.base import Policy
 import numpy as np
-import rlkit.torch.pytorch_util as ptu
 import torch
-from torch.distributions import Normal
 import torch.nn.functional as F
+from torch.distributions import Normal
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.policies.base import Policy
 
 
 class DreamerPolicy(Policy):

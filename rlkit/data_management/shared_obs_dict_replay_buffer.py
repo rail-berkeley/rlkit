@@ -1,9 +1,10 @@
-import numpy as np
-
-from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
-
-import torch.multiprocessing as mp
 import ctypes
+
+import numpy as np
+import torch.multiprocessing as mp
+
+from rlkit.data_management.obs_dict_replay_buffer import \
+    ObsDictRelabelingBuffer
 
 
 class SharedObsDictRelabelingBuffer(ObsDictRelabelingBuffer):

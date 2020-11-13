@@ -1,11 +1,11 @@
-import joblib
-import numpy as np
+import os
 import pickle
 
 import boto3
+import joblib
+import numpy as np
 
-from rlkit.launchers.conf import LOCAL_LOG_DIR, AWS_S3_PATH
-import os
+from rlkit.launchers.conf import AWS_S3_PATH, LOCAL_LOG_DIR
 
 PICKLE = "pickle"
 NUMPY = "numpy"

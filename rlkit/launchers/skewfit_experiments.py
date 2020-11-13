@@ -1,15 +1,13 @@
+import os.path as osp
 import time
-from multiworld.core.image_env import ImageEnv
-from rlkit.core import logger
-from rlkit.envs.vae_wrapper import temporary_mode
 
 import cv2
 import numpy as np
-import os.path as osp
+from multiworld.core.image_env import ImageEnv
 
-from rlkit.samplers.data_collector.vae_env import (
-    VAEWrappedEnvPathCollector,
-)
+from rlkit.core import logger
+from rlkit.envs.vae_wrapper import temporary_mode
+from rlkit.samplers.data_collector.vae_env import VAEWrappedEnvPathCollector
 from rlkit.torch.her.her import HERTrainer
 from rlkit.torch.sac.policies import MakeDeterministic
 from rlkit.torch.sac.sac import SACTrainer
@@ -83,16 +81,15 @@ def train_vae_and_update_variant(variant):
 
 
 def train_vae(variant, return_data=False):
-    from rlkit.util.ml_util import PiecewiseLinearSchedule
-    from rlkit.torch.vae.conv_vae import (
-        ConvVAE,
-    )
-    import rlkit.torch.vae.conv_vae as conv_vae
-    from rlkit.torch.vae.vae_trainer import ConvVAETrainer
-    from rlkit.core import logger
-    import rlkit.torch.pytorch_util as ptu
-    from rlkit.pythonplusplus import identity
     import torch
+
+    import rlkit.torch.pytorch_util as ptu
+    import rlkit.torch.vae.conv_vae as conv_vae
+    from rlkit.core import logger
+    from rlkit.pythonplusplus import identity
+    from rlkit.torch.vae.conv_vae import ConvVAE
+    from rlkit.torch.vae.vae_trainer import ConvVAETrainer
+    from rlkit.util.ml_util import PiecewiseLinearSchedule
 
     beta = variant["beta"]
     representation_size = variant["representation_size"]
@@ -184,6 +181,7 @@ def generate_vae_dataset(variant):
     )
     tag = variant.get("tag", "")
     from multiworld.core.image_env import ImageEnv, unormalize_image
+
     import rlkit.torch.pytorch_util as ptu
 
     info = {}
@@ -304,6 +302,7 @@ def generate_vae_dataset(variant):
 
 def get_envs(variant):
     from multiworld.core.image_env import ImageEnv
+
     from rlkit.envs.vae_wrapper import VAEWrappedEnv
     from rlkit.util.io import load_local_or_remote_file
 
@@ -448,7 +447,8 @@ def skewfit_preprocess_variant(variant):
 
 def skewfit_experiment(variant):
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.data_management.online_vae_replay_buffer import OnlineVaeRelabelingBuffer
+    from rlkit.data_management.online_vae_replay_buffer import \
+        OnlineVaeRelabelingBuffer
     from rlkit.torch.networks import ConcatMlp
     from rlkit.torch.sac.policies import TanhGaussianPolicy
     from rlkit.torch.vae.vae_trainer import ConvVAETrainer

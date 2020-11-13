@@ -3,37 +3,33 @@ def experiment(variant):
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
+    import torch
+    from d4rl.kitchen.kitchen_envs import (KitchenHingeCabinetV0,
+                                           KitchenKettleV0,
+                                           KitchenLightSwitchV0,
+                                           KitchenMicrowaveV0,
+                                           KitchenMultitaskAllV0,
+                                           KitchenSlideCabinetV0,
+                                           KitchenTopLeftBurnerV0)
+    from hrl_exp.envs.mujoco_vec_wrappers import (DummyVecEnv,
+                                                  StableBaselinesVecEnv,
+                                                  make_env)
+
+    import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
-        DreamerPolicy,
-        ActionSpaceSamplePolicy,
-    )
-    from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
-        EpisodeReplayBuffer,
-    )
+        ActionSpaceSamplePolicy, DreamerPolicy)
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import \
+        EpisodeReplayBuffer
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import \
+        video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.models import (
-        WorldModel,
-        MultitaskWorldModel,
-        ActorModel,
-    )
-    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.models import (ActorModel,
+                                                        MultitaskWorldModel,
+                                                        WorldModel)
+    from rlkit.torch.model_based.dreamer.path_collector import \
+        VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-    import torch
-    import rlkit.torch.pytorch_util as ptu
-    from hrl_exp.envs.mujoco_vec_wrappers import make_env
-
-    from hrl_exp.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, DummyVecEnv
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-    from d4rl.kitchen.kitchen_envs import (
-        KitchenKettleV0,
-        KitchenMicrowaveV0,
-        KitchenSlideCabinetV0,
-        KitchenHingeCabinetV0,
-        KitchenTopLeftBurnerV0,
-        KitchenLightSwitchV0,
-        KitchenMultitaskAllV0,
-    )
 
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]

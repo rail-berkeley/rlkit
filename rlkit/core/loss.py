@@ -1,7 +1,6 @@
 import abc
 from collections import OrderedDict
 
-
 LossStatistics = OrderedDict
 
 

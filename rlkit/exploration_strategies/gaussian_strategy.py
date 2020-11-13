@@ -1,5 +1,6 @@
-from rlkit.exploration_strategies.base import RawExplorationStrategy
 import numpy as np
+
+from rlkit.exploration_strategies.base import RawExplorationStrategy
 
 
 class GaussianStrategy(RawExplorationStrategy):

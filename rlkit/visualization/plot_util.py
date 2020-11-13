@@ -1,22 +1,22 @@
-import matplotlib.pyplot as plt
-import numpy as np
-
 import json
 from pprint import pprint
+
+import matplotlib.pyplot as plt
+import numpy as np
 
 try:
     import rllab.viskit.core as core
 except:
     import viskit.core as core
+
 from rllab.misc import ext
 
 read_tb = lambda: None
 import glob
-import os
 import itertools
-
+import os
+import sys
 from contextlib import contextmanager
-import sys, os
 
 true_fn = lambda p: True
 identity_fn = lambda x: x

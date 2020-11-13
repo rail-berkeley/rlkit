@@ -1,7 +1,9 @@
-import cv2
-from rlkit.core import logger
 import os.path as osp
+
+import cv2
 import numpy as np
+
+from rlkit.core import logger
 
 
 def video_post_epoch_func(algorithm, epoch, img_size=256):

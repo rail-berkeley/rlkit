@@ -1,4 +1,5 @@
-from collections import deque, OrderedDict
+from collections import OrderedDict, deque
+
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.samplers.data_collector.base import PathCollector
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout

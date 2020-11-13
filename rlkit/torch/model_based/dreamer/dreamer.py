@@ -1,13 +1,15 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
+
+import gtimer as gt
 import numpy as np
-from rlkit.torch.model_based.dreamer.models import FreezeParameters
 import torch
 import torch.optim as optim
-from rlkit.core.loss import LossFunction, LossStatistics
+
 import rlkit.torch.pytorch_util as ptu
+from rlkit.core.loss import LossFunction, LossStatistics
+from rlkit.torch.model_based.dreamer.models import FreezeParameters
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
-import gtimer as gt
 
 try:
     import apex

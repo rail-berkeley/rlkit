@@ -1,20 +1,22 @@
 import pickle
+import time
 from collections import OrderedDict
+
 import numpy as np
 import torch
-import torch.optim as optim
-from rlkit.torch.sac.policies import MakeDeterministic
-from torch import nn as nn
-import rlkit.torch.pytorch_util as ptu
-from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.core import np_to_pytorch_batch
-from rlkit.torch.torch_rl_algorithm import TorchTrainer
-from rlkit.core import logger
-from rlkit.core.logging import add_prefix
-from rlkit.util.ml_util import PiecewiseLinearSchedule, ConstantSchedule
 import torch.nn.functional as F
+import torch.optim as optim
+from torch import nn as nn
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.core import logger
+from rlkit.core.eval_util import create_stats_ordered_dict
+from rlkit.core.logging import add_prefix
+from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.torch.networks import LinearTransform
-import time
+from rlkit.torch.sac.policies import MakeDeterministic
+from rlkit.torch.torch_rl_algorithm import TorchTrainer
+from rlkit.util.ml_util import ConstantSchedule, PiecewiseLinearSchedule
 
 
 class AWACTrainer(TorchTrainer):

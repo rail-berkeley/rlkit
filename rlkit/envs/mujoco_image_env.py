@@ -1,11 +1,11 @@
+from collections.__init__ import deque
+
 import cv2
 import numpy as np
 import torch
-from PIL import Image
-from collections.__init__ import deque
-
 from gym import Env
 from gym.spaces import Box
+from PIL import Image
 
 from rlkit.envs.wrappers import ProxyEnv
 

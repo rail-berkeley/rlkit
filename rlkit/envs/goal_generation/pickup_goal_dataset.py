@@ -1,10 +1,10 @@
-from multiworld.envs.mujoco.sawyer_xyz.sawyer_pick_and_place import (
-    get_image_presampled_goals,
-)
-import numpy as np
-import cv2
 import os.path as osp
 import random
+
+import cv2
+import numpy as np
+from multiworld.envs.mujoco.sawyer_xyz.sawyer_pick_and_place import \
+    get_image_presampled_goals
 
 from rlkit.util.io import local_path_from_s3_or_local_path
 
@@ -51,8 +51,9 @@ def generate_vae_dataset_from_params(
     vae_dataset_specific_env_kwargs=None,
     save_file_prefix=None,
 ):
-    from multiworld.core.image_env import ImageEnv, unormalize_image
     import time
+
+    from multiworld.core.image_env import ImageEnv, unormalize_image
 
     assert oracle_dataset == True
 

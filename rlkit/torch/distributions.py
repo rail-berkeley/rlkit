@@ -1,18 +1,21 @@
 """
 Add custom distributions in addition to th existing ones
 """
-import torch
-from torch.distributions import Categorical, OneHotCategorical, kl_divergence
-from torch.distributions import Normal as TorchNormal
-from torch.distributions import Beta as TorchBeta
-from torch.distributions import Distribution as TorchDistribution
-from torch.distributions import Bernoulli as TorchBernoulli
-from torch.distributions import Independent as TorchIndependent
-from torch.distributions.utils import _sum_rightmost
-from rlkit.core.eval_util import create_stats_ordered_dict
-import rlkit.torch.pytorch_util as ptu
-import numpy as np
 from collections import OrderedDict
+
+import numpy as np
+import torch
+from torch.distributions import Bernoulli as TorchBernoulli
+from torch.distributions import Beta as TorchBeta
+from torch.distributions import Categorical
+from torch.distributions import Distribution as TorchDistribution
+from torch.distributions import Independent as TorchIndependent
+from torch.distributions import Normal as TorchNormal
+from torch.distributions import OneHotCategorical, kl_divergence
+from torch.distributions.utils import _sum_rightmost
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.core.eval_util import create_stats_ordered_dict
 
 
 class Distribution(TorchDistribution):

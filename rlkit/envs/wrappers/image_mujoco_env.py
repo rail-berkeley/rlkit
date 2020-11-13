@@ -3,9 +3,9 @@ from collections import deque
 import mujoco_py
 import numpy as np
 import torch
-from PIL import Image
 from gym import Env
 from gym.spaces import Box
+from PIL import Image
 
 from rlkit.envs.proxy_env import ProxyEnv
 

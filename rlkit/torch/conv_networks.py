@@ -1,9 +1,8 @@
+import numpy as np
 import torch
 from torch import nn as nn
 
 from rlkit.pythonplusplus import identity
-
-import numpy as np
 
 
 class CNN(nn.Module):

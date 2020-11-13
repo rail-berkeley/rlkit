@@ -8,17 +8,18 @@ robosuite/devices/spacemouse.py
 
 You will likely have to `pip install hidapi` and Spacemouse drivers.
 """
-# import cv2
-import os
-import shutil
-import time
 import argparse
 import datetime
+# import cv2
+import os
+import pickle
+import shutil
+import sys
+import time
 
 # import h5py
 # from glob import glob
 import numpy as np
-import time
 
 # from robosuite.devices import SpaceMouse
 # import robosuite
@@ -29,8 +30,6 @@ import time
 # from multiworld.envs.mujoco.cameras import sawyer_pusher_camera_upright_v2
 
 
-import sys
-import pickle
 
 ### workaround to solve cv2 version conflicts (ROS adds Python2 version of cv2)
 # sys.path.remove('/opt/ros/kinetic/lib/python2.7/dist-packages')

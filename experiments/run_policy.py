@@ -1,11 +1,13 @@
+import argparse
+import uuid
+
+import torch
 from hrl_exp.envs.wrappers import ImageEnvWrapper
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
 from rlkit.torch.pytorch_util import set_gpu_mode
-import argparse
-import torch
-import uuid
-from rlkit.core import logger
-import rlkit.torch.pytorch_util as ptu
 
 filename = str(uuid.uuid4())
 

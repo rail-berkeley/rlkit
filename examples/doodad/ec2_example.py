@@ -2,12 +2,13 @@
 Example of running stuff on EC2
 """
 import time
+from datetime import datetime
+
+import pytz
+from pytz import timezone
 
 from rlkit.core import logger
 from rlkit.launchers.launcher_util import run_experiment
-from datetime import datetime
-from pytz import timezone
-import pytz
 
 
 def example(variant):

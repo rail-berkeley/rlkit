@@ -1,17 +1,17 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
 
+import gtimer as gt
 import numpy as np
 import torch
 import torch.optim as optim
-from rlkit.core.loss import LossFunction, LossStatistics
 from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.eval_util import create_stats_ordered_dict
-from rlkit.torch.torch_rl_algorithm import TorchTrainer
 from rlkit.core.logging import add_prefix
-import gtimer as gt
+from rlkit.core.loss import LossFunction, LossStatistics
+from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 SACLosses = namedtuple(
     "SACLosses",

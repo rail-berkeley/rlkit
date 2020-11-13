@@ -2,16 +2,18 @@
 Example of running stuff on GCP
 """
 import time
+from datetime import datetime
+
+import pytz
+from pytz import timezone
 
 from rlkit.core import logger
 from rlkit.launchers.launcher_util import run_experiment
-from datetime import datetime
-from pytz import timezone
-import pytz
 
 
 def example(variant):
     import torch
+
     import rlkit.torch.pytorch_util as ptu
 
     print("Starting")

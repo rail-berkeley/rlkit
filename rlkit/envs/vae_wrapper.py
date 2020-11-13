@@ -2,14 +2,15 @@ import copy
 import random
 import warnings
 
-import torch
-
 import cv2
 import numpy as np
+import torch
 from gym.spaces import Box, Dict
-import rlkit.torch.pytorch_util as ptu
 from multiworld.core.multitask_env import MultitaskEnv
-from multiworld.envs.env_util import get_stat_in_paths, create_stats_ordered_dict
+from multiworld.envs.env_util import (create_stats_ordered_dict,
+                                      get_stat_in_paths)
+
+import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.wrappers import ProxyEnv
 
 

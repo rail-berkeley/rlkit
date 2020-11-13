@@ -3,10 +3,10 @@ General purpose Python functions.
 
 TODO(vitchyr): I should probably move this to its own module
 """
-import math
-import sys
 import collections
 import itertools
+import math
+import sys
 
 
 def identity(x):

@@ -3,6 +3,7 @@ Copy this file to config.py and modify as needed.
 """
 import os
 from os.path import join
+
 import rlkit
 
 """

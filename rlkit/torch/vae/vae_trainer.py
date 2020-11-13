@@ -1,20 +1,19 @@
 from collections import OrderedDict
 from os import path as osp
+
 import numpy as np
 import torch
+from multiworld.core.image_env import normalize_image
 from torch import optim
 from torch.distributions import Normal
 from torch.utils.data import DataLoader
 from torchvision.utils import save_image
-from multiworld.core.image_env import normalize_image
+
 from rlkit.core import logger
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.data import (
-    ImageDataset,
-    InfiniteWeightedRandomSampler,
-    InfiniteRandomSampler,
-)
+from rlkit.torch.data import (ImageDataset, InfiniteRandomSampler,
+                              InfiniteWeightedRandomSampler)
 from rlkit.util.ml_util import ConstantSchedule
 
 

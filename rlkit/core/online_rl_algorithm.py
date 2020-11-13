@@ -1,12 +1,10 @@
 import abc
 
 import gtimer as gt
+
 from rlkit.core.rl_algorithm import BaseRLAlgorithm
 from rlkit.data_management.replay_buffer import ReplayBuffer
-from rlkit.samplers.data_collector import (
-    PathCollector,
-    StepCollector,
-)
+from rlkit.samplers.data_collector import PathCollector, StepCollector
 
 
 class OnlineRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):

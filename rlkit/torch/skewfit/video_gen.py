@@ -1,16 +1,16 @@
 import os
 import os.path as osp
-
 import uuid
+
 from rlkit.envs.vae_wrapper import VAEWrappedEnv
 
 filename = str(uuid.uuid4())
 
-import skvideo.io
-import numpy as np
 import time
 
+import numpy as np
 import scipy.misc
+import skvideo.io
 
 
 def add_border(img, pad_length, pad_color, imsize=84):

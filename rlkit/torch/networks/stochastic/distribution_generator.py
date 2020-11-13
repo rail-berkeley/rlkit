@@ -2,16 +2,13 @@ import abc
 
 from torch import nn
 
-from rlkit.torch.distributions import (
-    Bernoulli,
-    Beta,
-    Distribution,
-    Independent,
-    GaussianMixture as GaussianMixtureDistribution,
-    GaussianMixtureFull as GaussianMixtureFullDistribution,
-    MultivariateDiagonalNormal,
-    TanhNormal,
-)
+from rlkit.torch.distributions import Bernoulli, Beta, Distribution
+from rlkit.torch.distributions import \
+    GaussianMixture as GaussianMixtureDistribution
+from rlkit.torch.distributions import \
+    GaussianMixtureFull as GaussianMixtureFullDistribution
+from rlkit.torch.distributions import (Independent, MultivariateDiagonalNormal,
+                                       TanhNormal)
 from rlkit.torch.networks.basic import MultiInputSequential
 
 

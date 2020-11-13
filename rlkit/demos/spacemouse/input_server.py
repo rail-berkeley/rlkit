@@ -1,9 +1,11 @@
 # first to start the nameserver start: python -m Pyro4.naming
 
-import Pyro4
-from threading import Thread
 import time
+from threading import Thread
+
 import numpy as np
+import Pyro4
+
 from rlkit.launchers import conf as config
 
 Pyro4.config.SERIALIZERS_ACCEPTED = set(["pickle", "json", "marshal", "serpent"])

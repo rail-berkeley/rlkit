@@ -1,17 +1,14 @@
 import numpy as np
+from multiworld.core.image_env import normalize_image
 
 import rlkit.torch.pytorch_util as ptu
-from multiworld.core.image_env import normalize_image
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.data_management.obs_dict_replay_buffer import flatten_dict
-from rlkit.data_management.shared_obs_dict_replay_buffer import (
-    SharedObsDictRelabelingBuffer,
-)
+from rlkit.data_management.shared_obs_dict_replay_buffer import \
+    SharedObsDictRelabelingBuffer
 from rlkit.envs.vae_wrapper import VAEWrappedEnv
-from rlkit.torch.vae.vae_trainer import (
-    compute_p_x_np_to_np,
-    relative_probs_from_log_probs,
-)
+from rlkit.torch.vae.vae_trainer import (compute_p_x_np_to_np,
+                                         relative_probs_from_log_probs)
 
 
 class OnlineVaeRelabelingBuffer(SharedObsDictRelabelingBuffer):

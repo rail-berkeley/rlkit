@@ -1,13 +1,14 @@
-import numpy as np
-
 import sys
+
+import numpy as np
 
 # print(sys.path)
 sys.path.remove("/opt/ros/kinetic/lib/python2.7/dist-packages")
 
-import cv2
-import sys
 import pickle
+import sys
+
+import cv2
 
 
 def play_demos(path):

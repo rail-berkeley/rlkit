@@ -3,7 +3,7 @@ from collections import OrderedDict
 
 import gtimer as gt
 
-from rlkit.core import logger, eval_util
+from rlkit.core import eval_util, logger
 from rlkit.data_management.replay_buffer import ReplayBuffer
 from rlkit.samplers.data_collector import DataCollector
 

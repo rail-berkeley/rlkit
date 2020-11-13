@@ -3,6 +3,7 @@ Contain some self-contained modules. Maybe depend on pytorch_util.
 """
 import torch
 import torch.nn as nn
+
 from rlkit.torch import pytorch_util as ptu
 
 

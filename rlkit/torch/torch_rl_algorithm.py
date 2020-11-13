@@ -1,7 +1,7 @@
 import abc
 from collections import OrderedDict
-
 from typing import Iterable
+
 from torch import nn as nn
 
 from rlkit.core.batch_rl_algorithm import BatchRLAlgorithm
