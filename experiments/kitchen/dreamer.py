@@ -3,7 +3,8 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import \
+    experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -80,12 +81,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "slide_cabinet",
+            # "microwave",
+            # "kettle",
+            # "top_left_burner",
+            # "slide_cabinet",
             "hinge_cabinet",
-            "light_switch",
+            # "light_switch",
         ],
         "env_kwargs.delta": [
             0.3,
