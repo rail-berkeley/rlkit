@@ -32,6 +32,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         actor,
         vf,
         world_model,
+        target_vf=None,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -46,8 +47,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         free_nats=3.0,
         kl_loss_scale=1.0,
         pcont_loss_scale=10.0,
+        image_loss_scale=1.0,
+        reward_loss_scale=1.0,
+        transition_loss_scale=0.0,
+        entropy_loss_scale=0.0,
+        reinforce_loss_scale=0.0,
+        dynamics_backprop_loss_scale=1.0,
+        actor_entropy_loss_scale=0.0,
         adam_eps=1e-7,
         weight_decay=0.0,
+        soft_target_tau=0,
+        target_update_period=100,
         use_pcont=True,
         plotter=None,
         render_eval_paths=False,
@@ -112,10 +122,30 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.free_nats = free_nats
         self.kl_loss_scale = kl_loss_scale
         self.pcont_loss_scale = pcont_loss_scale
+        self.image_loss_scale = image_loss_scale
+        self.reward_loss_scale = reward_loss_scale
+        self.transition_loss_scale = transition_loss_scale
+        self.entropy_loss_scale = entropy_loss_scale
+        self.reinforce_loss_scale = reinforce_loss_scale
+        self.dynamics_backprop_loss_scale = dynamics_backprop_loss_scale
+        self.actor_entropy_loss_scale = actor_entropy_loss_scale
+        self.soft_target_tau = soft_target_tau
+        self.target_update_period = target_update_period
+        self.target_vf = target_vf
         self.use_pcont = use_pcont
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
+
+    def try_update_target_networks(self):
+        if (
+            self.target_vf
+            and self._n_train_steps_total % self.target_update_period == 0
+        ):
+            self.update_target_networks()
+
+    def update_target_networks(self):
+        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
 
     def train_from_torch(self, batch):
         gt.blank_stamp()
@@ -128,6 +158,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
 
         self._n_train_steps_total += 1
+        self.try_update_target_networks()
         if self._need_to_update_eval_statistics:
             self.eval_statistics = stats
             # Compute statistics using only one batch per epoch
@@ -164,6 +195,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         terminals = batch["terminals"]
         obs = batch["observations"]
         actions = batch["actions"]
+        next_obs = batch["next_observations"]
         """
         World Model Loss
         """
@@ -193,7 +225,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
-        world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
+        transition_loss = 0  # TODO: implement
+        entropy_loss = 0  # TODO: implement
+        world_model_loss = (
+            self.kl_loss_scale * div
+            + self.image_loss_scale * image_pred_loss
+            + self.reward_loss_scale * reward_pred_loss
+            + self.transition_loss_scale * transition_loss
+            + self.entropy_loss_scale * entropy_loss
+        )
 
         if self.use_pcont:
             world_model_loss += self.pcont_loss_scale * pcont_loss
@@ -233,7 +273,11 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                     ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
-            value = self.vf(imag_feat)
+            if self.target_vf:
+                with FreezeParameters(self.target_vf.modules):
+                    value = self.target_vf(imag_feat)
+            else:
+                value = self.vf(imag_feat)
         imag_returns = lambda_return(
             imag_reward[:-1],
             value[:-1],
@@ -246,7 +290,30 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         ).detach()
         dynamics_backprop_loss = -(discount * imag_returns).mean()
 
-        actor_loss = dynamics_backprop_loss
+        baseline_shifted_returns = discount * (imag_returns - self.vf(imag_feat)[:-1])
+        baseline_shifted_returns = baseline_shifted_returns.detach()
+        baseline_shifted_returns = baseline_shifted_returns.permute(1, 0, 2)
+        baseline_shifted_returns = torch.cat(
+            [
+                baseline_shifted_returns[:, i, :]
+                for i in range(baseline_shifted_returns.shape[1])
+            ]
+        )
+        imag_feat_a = imag_feat.permute(1, 0, 2)
+        imag_feat_a = torch.cat(
+            [imag_feat_a[:, i, :] for i in range(imag_feat_a.shape[1] - 1)]
+        )
+        imag_actor_dist = self.actor(imag_feat_a)
+        reinforce_loss = (
+            -1 * imag_actor_dist.log_prob(imag_actions) * baseline_shifted_returns
+        ).mean()
+        actor_entropy_loss = -1 * imag_actor_dist.entropy().mean()
+
+        actor_loss = (
+            self.dynamics_backprop_loss_scale * dynamics_backprop_loss
+            + self.reinforce_loss_scale * reinforce_loss
+            + self.actor_entropy_loss_scale * actor_entropy_loss
+        )
 
         zero_grad(self.actor)
         if self.use_amp:

@@ -16,6 +16,7 @@ def experiment(variant):
                                                   make_env)
 
     import rlkit.torch.pytorch_util as ptu
+    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy, DreamerPolicy)
@@ -24,8 +25,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.kitchen_video_func import \
         video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.models import (ActorModel,
-                                                        MultitaskWorldModel,
+    from rlkit.torch.model_based.dreamer.models import (MultitaskWorldModel,
                                                         WorldModel)
     from rlkit.torch.model_based.dreamer.path_collector import \
         VecMdpPathCollector
