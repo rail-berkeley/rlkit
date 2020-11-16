@@ -113,10 +113,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 self.vf_optimizer,
             ) = optimizers
 
-        # self.actor = DDP(self.actor, device_ids=[0])
-        # self.world_model = DDP(self.world_model, device_ids=[0])
-        # self.vf = DDP(self.vf, device_ids=[0])
-        #
         self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
