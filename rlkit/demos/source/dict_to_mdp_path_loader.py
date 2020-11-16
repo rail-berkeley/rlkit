@@ -16,12 +16,8 @@ from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.data_management.path_builder import PathBuilder
 from rlkit.torch.core import np_to_pytorch_batch
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
-from rlkit.util.io import (
-    get_absolute_path,
-    load_local_or_remote_file,
-    sync_down,
-    sync_down_folder,
-)
+from rlkit.util.io import (get_absolute_path, load_local_or_remote_file,
+                           sync_down, sync_down_folder)
 
 
 class DictToMDPPathLoader:

@@ -6,10 +6,10 @@ from torch.multiprocessing import Pipe, Process
 import rlkit.torch.pytorch_util as ptu
 import rlkit.torch.vae.vae_schedules as vae_schedules
 from rlkit.core import logger
-from rlkit.data_management.online_vae_replay_buffer import OnlineVaeRelabelingBuffer
-from rlkit.data_management.shared_obs_dict_replay_buffer import (
-    SharedObsDictRelabelingBuffer,
-)
+from rlkit.data_management.online_vae_replay_buffer import \
+    OnlineVaeRelabelingBuffer
+from rlkit.data_management.shared_obs_dict_replay_buffer import \
+    SharedObsDictRelabelingBuffer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 

@@ -447,7 +447,8 @@ def skewfit_preprocess_variant(variant):
 
 def skewfit_experiment(variant):
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.data_management.online_vae_replay_buffer import OnlineVaeRelabelingBuffer
+    from rlkit.data_management.online_vae_replay_buffer import \
+        OnlineVaeRelabelingBuffer
     from rlkit.torch.networks import ConcatMlp
     from rlkit.torch.sac.policies import TanhGaussianPolicy
     from rlkit.torch.vae.vae_trainer import ConvVAETrainer

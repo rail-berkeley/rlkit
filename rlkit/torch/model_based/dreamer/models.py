@@ -2,7 +2,8 @@ import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal
-from torch.distributions.transformed_distribution import TransformedDistribution
+from torch.distributions.transformed_distribution import \
+    TransformedDistribution
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule

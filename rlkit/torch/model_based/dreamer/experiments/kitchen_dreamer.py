@@ -4,38 +4,31 @@ def experiment(variant):
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     import torch
-    from d4rl.kitchen.kitchen_envs import (
-        KitchenHingeCabinetV0,
-        KitchenKettleV0,
-        KitchenLightSwitchV0,
-        KitchenMicrowaveV0,
-        KitchenMultitaskAllV0,
-        KitchenSlideCabinetV0,
-        KitchenTopLeftBurnerV0,
-    )
-    from hrl_exp.envs.mujoco_vec_wrappers import (
-        DummyVecEnv,
-        StableBaselinesVecEnv,
-        make_env,
-    )
+    from d4rl.kitchen.kitchen_envs import (KitchenHingeCabinetV0,
+                                           KitchenKettleV0,
+                                           KitchenLightSwitchV0,
+                                           KitchenMicrowaveV0,
+                                           KitchenMultitaskAllV0,
+                                           KitchenSlideCabinetV0,
+                                           KitchenTopLeftBurnerV0)
+    from hrl_exp.envs.mujoco_vec_wrappers import (DummyVecEnv,
+                                                  StableBaselinesVecEnv,
+                                                  make_env)
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
-        ActionSpaceSamplePolicy,
-        DreamerPolicy,
-    )
-    from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
-        EpisodeReplayBuffer,
-    )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+        ActionSpaceSamplePolicy, DreamerPolicy)
+    from rlkit.torch.model_based.dreamer.episode_replay_buffer import \
+        EpisodeReplayBuffer
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import \
+        video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.models import (
-        ActorModel,
-        MultitaskWorldModel,
-        WorldModel,
-    )
-    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.models import (ActorModel,
+                                                        MultitaskWorldModel,
+                                                        WorldModel)
+    from rlkit.torch.model_based.dreamer.path_collector import \
+        VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     env_class = variant["env_class"]

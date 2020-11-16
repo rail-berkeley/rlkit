@@ -1,14 +1,8 @@
 import gym
 from gym.envs.classic_control import PendulumEnv
-from gym.envs.mujoco import (
-    AntEnv,
-    HalfCheetahEnv,
-    HopperEnv,
-    HumanoidEnv,
-    InvertedDoublePendulumEnv,
-    SwimmerEnv,
-    Walker2dEnv,
-)
+from gym.envs.mujoco import (AntEnv, HalfCheetahEnv, HopperEnv, HumanoidEnv,
+                             InvertedDoublePendulumEnv, SwimmerEnv,
+                             Walker2dEnv)
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
@@ -19,7 +13,8 @@ from rlkit.samplers.data_collector.step_collector import MdpStepCollector
 from rlkit.torch.networks import ConcatMlp
 from rlkit.torch.sac.awac_trainer import AWACTrainer
 from rlkit.torch.sac.policies import MakeDeterministic, TanhGaussianPolicy
-from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm, TorchOnlineRLAlgorithm
+from rlkit.torch.torch_rl_algorithm import (TorchBatchRLAlgorithm,
+                                            TorchOnlineRLAlgorithm)
 from rlkit.visualization.video import save_paths
 
 ENV_PARAMS = {
