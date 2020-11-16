@@ -10,6 +10,7 @@ You will likely have to `pip install hidapi` and Spacemouse drivers.
 """
 import argparse
 import datetime
+
 # import cv2
 import os
 import pickle

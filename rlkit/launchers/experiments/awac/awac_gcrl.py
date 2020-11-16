@@ -6,38 +6,36 @@ import torch
 import rlkit.samplers.rollout_functions as rf
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
-from rlkit.data_management.obs_dict_replay_buffer import \
-    ObsDictRelabelingBuffer
-from rlkit.data_management.wrappers.concat_to_obs_wrapper import \
-    ConcatToObsWrapper
+from rlkit.data_management.obs_dict_replay_buffer import ObsDictRelabelingBuffer
+from rlkit.data_management.wrappers.concat_to_obs_wrapper import ConcatToObsWrapper
 from rlkit.demos.source.mdp_path_loader import MDPPathLoader
 from rlkit.envs.contextual import ContextualEnv
 from rlkit.envs.contextual.goal_conditioned import (
-    AddImageDistribution, ContextualRewardFnFromMultitaskEnv,
+    AddImageDistribution,
+    ContextualRewardFnFromMultitaskEnv,
     GoalConditionedDiagnosticsToContextualDiagnostics,
-    GoalDictDistributionFromMultitaskEnv, IndexIntoAchievedGoal)
+    GoalDictDistributionFromMultitaskEnv,
+    IndexIntoAchievedGoal,
+)
 from rlkit.envs.images import EnvRenderer, InsertImageEnv, Renderer
-from rlkit.envs.reward_mask_wrapper import (DiscreteDistribution,
-                                            RewardMaskWrapper)
+from rlkit.envs.reward_mask_wrapper import DiscreteDistribution, RewardMaskWrapper
 from rlkit.envs.wrappers import RewardWrapperEnv, StackObservationEnv
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
-from rlkit.exploration_strategies.gaussian_and_epislon import \
-    GaussianAndEpsilonStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.gaussian_and_epislon import GaussianAndEpsilonStrategy
 from rlkit.exploration_strategies.ou_strategy import OUStrategy
-from rlkit.launchers.contextual.util import (get_gym_env,
-                                             get_save_video_function)
+from rlkit.launchers.contextual.util import get_gym_env, get_save_video_function
 from rlkit.misc.asset_loader import load_local_or_remote_file
-from rlkit.samplers.data_collector.path_collector import \
-    GoalConditionedPathCollector
+from rlkit.samplers.data_collector.path_collector import GoalConditionedPathCollector
 from rlkit.samplers.data_collector.step_collector import MdpStepCollector
 from rlkit.torch.networks import ConcatMlp
 from rlkit.torch.sac.awac_trainer import AWACTrainer
 from rlkit.torch.sac.policies import MakeDeterministic, TanhGaussianPolicy
-from rlkit.torch.torch_rl_algorithm import (TorchBatchRLAlgorithm,
-                                            TorchOnlineRLAlgorithm)
-from rlkit.visualization.video import (RIGVideoSaveFunction, VideoSaveFunction,
-                                       save_paths)
+from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm, TorchOnlineRLAlgorithm
+from rlkit.visualization.video import (
+    RIGVideoSaveFunction,
+    VideoSaveFunction,
+    save_paths,
+)
 
 
 def compute_hand_sparse_reward(next_obs, reward, done, info):

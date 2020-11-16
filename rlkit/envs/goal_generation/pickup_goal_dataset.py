@@ -3,8 +3,9 @@ import random
 
 import cv2
 import numpy as np
-from multiworld.envs.mujoco.sawyer_xyz.sawyer_pick_and_place import \
-    get_image_presampled_goals
+from multiworld.envs.mujoco.sawyer_xyz.sawyer_pick_and_place import (
+    get_image_presampled_goals,
+)
 
 from rlkit.util.io import local_path_from_s3_or_local_path
 

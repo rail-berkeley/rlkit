@@ -12,8 +12,11 @@ from torchvision.utils import save_image
 from rlkit.core import logger
 from rlkit.core.eval_util import create_stats_ordered_dict
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.data import (ImageDataset, InfiniteRandomSampler,
-                              InfiniteWeightedRandomSampler)
+from rlkit.torch.data import (
+    ImageDataset,
+    InfiniteRandomSampler,
+    InfiniteWeightedRandomSampler,
+)
 from rlkit.util.ml_util import ConstantSchedule
 
 

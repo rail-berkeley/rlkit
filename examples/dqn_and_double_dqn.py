@@ -7,8 +7,7 @@ from torch import nn as nn
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
-from rlkit.exploration_strategies.base import \
-    PolicyWrappedWithExplorationStrategy
+from rlkit.exploration_strategies.base import PolicyWrappedWithExplorationStrategy
 from rlkit.exploration_strategies.epsilon_greedy import EpsilonGreedy
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.policies.argmax import ArgmaxDiscretePolicy
