@@ -8,7 +8,11 @@ import torch.optim as optim
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
-from rlkit.torch.model_based.dreamer.utils import FreezeParameters
+from rlkit.torch.model_based.dreamer.utils import (
+    FreezeParameters,
+    zero_grad,
+    lambda_return,
+)
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 try:
@@ -420,31 +424,3 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             world_model=self.world_model,
             vf=self.vf,
         )
-
-
-def lambda_return(reward, value, discount, bootstrap, lambda_=0.95):
-    # from: https://github.com/yusukeurakami/dreamer-pytorch
-    # Setting lambda=1 gives a discounted Monte Carlo return.
-    # Setting lambda=0 gives a fixed 1-step return.
-    """
-    Compute the discounted reward for a batch of data.
-    reward, value, and discount are all shape [horizon - 1, batch, 1] (last element is cut off)
-    Bootstrap is [batch, 1]
-    """
-    next_values = torch.cat([value[1:], bootstrap[None]], 0)
-    target = reward + discount * next_values * (1 - lambda_)
-    timesteps = list(range(reward.shape[0] - 1, -1, -1))
-    outputs = []
-    accumulated_reward = bootstrap
-    for t in timesteps:
-        inp = target[t]
-        discount_factor = discount[t]
-        accumulated_reward = inp + discount_factor * lambda_ * accumulated_reward
-        outputs.append(accumulated_reward)
-    returns = torch.flip(torch.stack(outputs), [0])
-    return returns
-
-
-def zero_grad(model):
-    for param in model.parameters():
-        param.grad = None
