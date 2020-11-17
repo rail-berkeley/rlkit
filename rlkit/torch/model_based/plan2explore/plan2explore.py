@@ -59,7 +59,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         plotter=None,
         render_eval_paths=False,
         debug=False,
-        intrinsic_reward_scale=10000,
+        exploration_reward_scale=10000,
     ):
         super().__init__()
 
@@ -145,7 +145,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         self.kl_loss_scale = kl_loss_scale
         self.pcont_loss_scale = pcont_loss_scale
         self.use_pcont = use_pcont
-        self.intrinsic_reward_scale = intrinsic_reward_scale
+        self.exploration_reward_scale = exploration_reward_scale
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
@@ -167,24 +167,26 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             self._need_to_update_eval_statistics = False
         gt.stamp("Plan2Explore training", unique=False)
 
-    def compute_intrinsic_reward(
-        self, exploration_imag_states, exploration_imag_actions
+    def compute_exploration_reward(
+        self, exploration_imag_deter_states, exploration_imag_actions
     ):
         pred_embeddings = []
         actions = exploration_imag_actions
-        input_state = exploration_imag_states
+        input_state = exploration_imag_deter_states
         for mdl in range(self.one_step_ensemble.num_models):
             inputs = torch.cat((input_state, actions), 1)
             pred_embeddings.append(
                 self.one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
             )
         pred_embeddings = torch.cat(pred_embeddings)
+
         assert pred_embeddings.shape[0] == self.one_step_ensemble.num_models
         assert pred_embeddings.shape[1] == input_state.shape[0]
         assert len(pred_embeddings.shape) == 3
+
         reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(
             dim=1
-        ) * self.intrinsic_reward_scale
+        ) * self.exploration_reward_scale
         return reward
 
     def imagine_ahead(self, state, actor):
@@ -238,6 +240,10 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
         terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
+        actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
+        deter = torch.cat(
+            [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
+        )
 
         image_pred_loss = (
             -1
@@ -359,30 +365,26 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         """
         One Step Ensemble Loss
         """
-        with FreezeParameters(self.world_model.modules):
-            batch_size = rewards.shape[0]
-            bagging_size = int(1 * batch_size)
-            indices = np.random.randint(
-                low=0,
-                high=batch_size,
-                size=[self.one_step_ensemble.num_models, bagging_size],
-            )
-            ensemble_loss = 0
-            actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
-            deter = torch.cat(
-                [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
-            )
-            for mdl in range(self.one_step_ensemble.num_models):
-                mdl_actions = actions[indices[mdl, :]].detach()
-                target_prediction = embed[indices[mdl, :]].detach()
-                input_state = deter[indices[mdl, :]].detach()
-                inputs = torch.cat((input_state, mdl_actions), 1)
-                member_pred = self.one_step_ensemble.forward_ith_model(
-                    inputs, mdl
-                )  # predict embedding of next state
-                member_loss = member_pred.log_prob(target_prediction).mean()
-                ensemble_loss += member_loss
-        ensemble_loss = -1 * ensemble_loss
+        batch_size = rewards.shape[0]
+        bagging_size = int(1 * batch_size)
+        indices = np.random.randint(
+            low=0,
+            high=batch_size,
+            size=[self.one_step_ensemble.num_models, bagging_size],
+        )
+        ensemble_loss = 0
+
+        for mdl in range(self.one_step_ensemble.num_models):
+            mdl_actions = actions[indices[mdl, :]].detach()
+            target_prediction = embed[indices[mdl, :]].detach()
+            input_state = deter[indices[mdl, :]].detach()
+            inputs = torch.cat((input_state, mdl_actions), 1)
+            member_pred = self.one_step_ensemble.forward_ith_model(
+                inputs, mdl
+            )  # predict embedding of next state
+            member_loss = -1 * member_pred.log_prob(target_prediction).mean()
+            ensemble_loss += member_loss
+
         zero_grad(self.one_step_ensemble)
         if self.use_amp:
             with amp.scale_loss(
@@ -411,23 +413,23 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             (
                 exploration_imag_feat,
                 exploration_imag_actions,
-                exploration_imag_states,
+                exploration_imag_deter_states,
             ) = self.imagine_ahead(
                 post,
                 actor=self.exploration_actor,
             )
         with FreezeParameters(self.world_model.modules + self.vf.modules):
-            intrinsic_reward = self.compute_intrinsic_reward(
-                exploration_imag_states, exploration_imag_actions
+            exploration_reward = self.compute_exploration_reward(
+                exploration_imag_deter_states, exploration_imag_actions
             )  # Compute Intrinsic Reward
 
-            intrinsic_reward = torch.cat(
+            exploration_reward = torch.cat(
                 [
-                    intrinsic_reward[i : i + exploration_imag_feat.shape[1]]
+                    exploration_reward[i : i + exploration_imag_feat.shape[1]]
                     .unsqueeze(0)
                     .unsqueeze(2)
                     for i in range(
-                        0, intrinsic_reward.shape[0], exploration_imag_feat.shape[1]
+                        0, exploration_reward.shape[0], exploration_imag_feat.shape[1]
                     )
                 ],
                 0,
@@ -441,10 +443,16 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
                         normal=False,
                     ).mean
             else:
-                exploration_discount = self.discount * torch.ones_like(intrinsic_reward)
+                exploration_discount = self.discount * torch.ones_like(
+                    exploration_reward
+                )
             exploration_value = self.exploration_vf(exploration_imag_feat)
+        assert (
+            exploration_reward.shape == exploration_value.shape
+            and exploration_reward.shape == exploration_discount.shape
+        )
         exploration_returns = lambda_return(
-            intrinsic_reward[:-1],
+            exploration_reward[:-1],
             exploration_value[:-1],
             exploration_discount[:-1],
             bootstrap=exploration_value[-1],
@@ -529,15 +537,20 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             eval_statistics["Divergence Loss"] = div.item()
             if self.use_pcont:
                 eval_statistics["Pcont Loss"] = pcont_loss.item()
+
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = value_dist.mean.mean().item()
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
+            eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
+            eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
+            eval_statistics["Exploration Actor Loss"] = exploration_actor_loss.item()
+
             eval_statistics[
                 "Exploration Imagined Returns"
             ] = exploration_returns.mean().item()
-            eval_statistics["Imagined Rewards"] = intrinsic_reward.mean().item()
+            eval_statistics["Imagined Rewards"] = exploration_reward.mean().item()
             eval_statistics[
                 "Imagined Values"
             ] = exploration_value_dist.mean.mean().item()

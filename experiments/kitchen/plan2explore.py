@@ -90,7 +90,7 @@ if __name__ == "__main__":
         "env_class": [
             "slide_cabinet",
         ],
-        "env_kwargs.delta": [0.05],
+        "env_kwargs.delta": [0.05, 0.1, 0.2, 0.3, 0.5, 75],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
