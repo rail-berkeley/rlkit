@@ -136,7 +136,14 @@ class WorldModel(PyTorchModule):
         image_params = self.decode(feat)
         reward_params = self.reward(feat)
         pcont_params = self.pcont(feat)
-        return post_params, prior_params, image_params, reward_params, pcont_params
+        return (
+            post_params,
+            prior_params,
+            image_params,
+            reward_params,
+            pcont_params,
+            embed,
+        )
 
     def forward(self, obs, action):
         original_batch_size = obs.shape[0]
@@ -145,7 +152,7 @@ class WorldModel(PyTorchModule):
         post, prior = dict(mean=[], std=[], stoch=[], deter=[]), dict(
             mean=[], std=[], stoch=[], deter=[]
         )
-        images, rewards, pconts = [], [], []
+        images, rewards, pconts, embeds = [], [], [], []
 
         for i in range(path_length):
             (
@@ -154,10 +161,12 @@ class WorldModel(PyTorchModule):
                 image_params,
                 reward_params,
                 pcont_params,
+                embed,
             ) = self.forward_batch(obs[:, i], action[:, i], state)
             images.append(image_params)
             rewards.append(reward_params)
             pconts.append(pcont_params)
+            embeds.append(embed)
             for k in post.keys():
                 post[k].append(post_params[k].unsqueeze(1))
 
@@ -168,6 +177,7 @@ class WorldModel(PyTorchModule):
         images = torch.cat(images)
         rewards = torch.cat(rewards)
         pconts = torch.cat(pconts)
+        embeds = torch.cat(embeds)
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
 
@@ -179,7 +189,16 @@ class WorldModel(PyTorchModule):
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pcont_dist = self.get_dist(pconts, None, normal=False)
-        return post, prior, post_dist, prior_dist, image_dist, reward_dist, pcont_dist
+        return (
+            post,
+            prior,
+            post_dist,
+            prior_dist,
+            image_dist,
+            reward_dist,
+            pcont_dist,
+            embeds,
+        )
 
     def get_feat(self, state):
         return torch.cat([state["stoch"], state["deter"]], -1)

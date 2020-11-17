@@ -1,8 +1,3 @@
-from rlkit.torch.model_based.plan2explore.latent_space_models import (
-    OneStepEnsembleModel,
-)
-
-
 def experiment(variant):
     import os
 
@@ -26,7 +21,6 @@ def experiment(variant):
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.actor_models import ActorModel
-    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -43,6 +37,9 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
+    from rlkit.torch.model_based.plan2explore.latent_space_models import (
+        OneStepEnsembleModel,
+    )
 
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
@@ -124,6 +121,8 @@ def experiment(variant):
     )
 
     one_step_ensemble = OneStepEnsembleModel(
+        action_dim=action_dim,
+        embedding_size=variant["model_kwargs"]["embedding_size"],
         deterministic_state_size=variant["model_kwargs"]["deterministic_state_size"],
         hidden_size=variant["one_step_ensemble_kwargs"]["hidden_size"],
         num_layers=variant["one_step_ensemble_kwargs"]["num_layers"],
