@@ -179,6 +179,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             image_dist,
             reward_dist,
             pcont_dist,
+            _,
         ) = self.world_model(obs, actions)
 
         # stack obs, rewards and terminals along path dimension

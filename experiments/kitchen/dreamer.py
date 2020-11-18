@@ -80,18 +80,19 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
-            # "top_left_burner",
-            # "slide_cabinet",
+            "microwave",
+            "kettle",
+            "top_left_burner",
+            "slide_cabinet",
             "hinge_cabinet",
-            # "light_switch",
+            "light_switch",
         ],
         "env_kwargs.delta": [
             0.3,
-            0.5,
-            0.75,
+            # 0.5,
+            # 0.75,
         ],
+        "env_kwargs.view": [3, 2, 1],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
