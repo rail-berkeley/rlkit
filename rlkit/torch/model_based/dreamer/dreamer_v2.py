@@ -10,8 +10,8 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
 from rlkit.torch.model_based.dreamer.utils import (
     FreezeParameters,
-    zero_grad,
     lambda_return,
+    zero_grad,
 )
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 

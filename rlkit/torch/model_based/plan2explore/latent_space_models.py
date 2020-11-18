@@ -1,8 +1,9 @@
-from rlkit.torch.core import PyTorchModule
-from rlkit.torch.model_based.dreamer.mlp import Mlp
 import torch
 import torch.nn.functional as F
+
 import rlkit.torch.pytorch_util as ptu
+from rlkit.torch.core import PyTorchModule
+from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
 class OneStepEnsembleModel(PyTorchModule):

@@ -38,8 +38,8 @@ def experiment(variant):
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
-    from rlkit.torch.model_based.dreamer.world_models import ActorModel, WorldModel
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.world_models import ActorModel, WorldModel
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     rlkit_project_dir = join(os.path.dirname(rlkit.__file__), os.pardir)

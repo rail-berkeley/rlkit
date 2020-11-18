@@ -30,16 +30,16 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
+    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
         MultitaskWorldModel,
         WorldModel,
     )
-    from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-    from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
         OneStepEnsembleModel,
     )
+    from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
+    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
