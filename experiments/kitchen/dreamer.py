@@ -92,7 +92,8 @@ if __name__ == "__main__":
             # 0.5,
             # 0.75,
         ],
-        "env_kwargs.view": [3, 2, 1],
+        "env_kwargs.view": [1],
+        "env_kwargs.use_wrist_cam": [True, False],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
