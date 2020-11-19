@@ -40,7 +40,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="Dreamer",
         version="normal",
-        replay_buffer_size=int(1e5),
+        replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
         env_class="microwave",
         env_kwargs=dict(
@@ -103,6 +103,8 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        if variant["trainer_kwargs"]["opt_level"] == "O0":
+            variant["num_expl_envs"] = 4
         for _ in range(args.num_seeds):
             run_experiment(
                 experiment,
