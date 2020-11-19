@@ -257,7 +257,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         pcont_target = self.discount * (1 - terminals.float())
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
+        div = torch.max(div, ptu.tensor(self.free_nats))
         world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
 
         if self.use_pcont:

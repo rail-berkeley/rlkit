@@ -228,7 +228,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_target = self.discount * (1 - terminals.float())
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
+        div = torch.max(div, ptu.tensor(self.free_nats))
         transition_loss = 0  # TODO: implement
         entropy_loss = 0  # TODO: implement
         world_model_loss = (

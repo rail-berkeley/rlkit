@@ -49,6 +49,7 @@ if __name__ == "__main__":
             image_obs=True,
             fixed_schema=True,
             multitask=False,
+            action_scale=1,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
@@ -65,7 +66,7 @@ if __name__ == "__main__":
             vf_lr=8e-5,
             world_model_lr=6e-4,
             use_amp=True,
-            opt_level="O2",
+            opt_level="O1",
             gradient_clip=100.0,
             lam=0.95,
             free_nats=3.0,
@@ -93,8 +94,9 @@ if __name__ == "__main__":
             # 0.75,
         ],
         "env_kwargs.view": [1],
-        # "env_kwargs.use_wrist_cam": [True, False],
         "expl_amount": [0.3],
+        "trainer_kwargs.use_ddp": [True, False],
+        "trainer_kwargs.opt_level": ["O1", "O2", "O0", "O3"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

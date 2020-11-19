@@ -1,8 +1,8 @@
+import os
 from collections import OrderedDict, namedtuple
 from typing import Tuple
 
 import gtimer as gt
-import numpy as np
 import torch
 import torch.optim as optim
 
@@ -27,6 +27,23 @@ DreamerLosses = namedtuple(
     "DreamerLosses",
     "actor_loss vf_loss world_model_loss",
 )
+import sys
+
+import torch.distributed as dist
+
+
+def setup(rank, world_size):
+    os.environ["MASTER_ADDR"] = "localhost"
+    os.environ["MASTER_PORT"] = "12355"
+    os.environ["RANK"] = str(rank)
+    os.environ["WORLD_SIZE"] = str(world_size)
+
+    # initialize the process group
+    torch.distributed.init_process_group(backend="nccl", init_method="env://")
+
+
+def cleanup():
+    dist.destroy_process_group()
 
 
 class DreamerTrainer(TorchTrainer, LossFunction):
@@ -56,6 +73,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         plotter=None,
         render_eval_paths=False,
         debug=False,
+        use_ddp=False,
     ):
         super().__init__()
 
@@ -110,6 +128,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 ],
                 [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
                 opt_level=opt_level,
+                num_losses=3,
             )
             (
                 self.world_model.img_step_layer,
@@ -128,7 +147,38 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 self.actor_optimizer,
                 self.vf_optimizer,
             ) = optimizers
-
+            if use_ddp:
+                setup(0, 1)
+                self.world_model.img_step_layer = apex.parallel.DistributedDataParallel(
+                    self.world_model.img_step_layer,
+                )
+                self.world_model.img_step_mlp = apex.parallel.DistributedDataParallel(
+                    self.world_model.img_step_mlp,
+                )
+                self.world_model.obs_step_mlp = apex.parallel.DistributedDataParallel(
+                    self.world_model.obs_step_mlp,
+                )
+                self.world_model.conv_decoder = apex.parallel.DistributedDataParallel(
+                    self.world_model.conv_decoder,
+                )
+                self.world_model.conv_encoder = apex.parallel.DistributedDataParallel(
+                    self.world_model.conv_encoder,
+                )
+                self.world_model.pcont = apex.parallel.DistributedDataParallel(
+                    self.world_model.pcont,
+                )
+                self.world_model.reward = apex.parallel.DistributedDataParallel(
+                    self.world_model.reward,
+                )
+                self.world_model.rnn = apex.parallel.DistributedDataParallel(
+                    self.world_model.rnn,
+                )
+                self.actor = apex.parallel.DistributedDataParallel(
+                    self.actor,
+                )
+                self.vf = apex.parallel.DistributedDataParallel(
+                    self.vf,
+                )
         self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
@@ -219,7 +269,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_target = self.discount * (1 - terminals.float())
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
+        div = torch.max(div, ptu.tensor(self.free_nats))
         world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
 
         if self.use_pcont:
@@ -228,7 +278,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         zero_grad(self.world_model)
         if self.use_amp:
             with amp.scale_loss(
-                world_model_loss, self.world_model_optimizer
+                world_model_loss,
+                self.world_model_optimizer,
+                loss_id=0,
             ) as scaled_world_model_loss:
                 scaled_world_model_loss.backward()
         else:
@@ -280,7 +332,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.actor)
         if self.use_amp:
-            with amp.scale_loss(actor_loss, self.actor_optimizer) as scaled_actor_loss:
+            with amp.scale_loss(
+                actor_loss, self.actor_optimizer, loss_id=1
+            ) as scaled_actor_loss:
                 scaled_actor_loss.backward()
         else:
             actor_loss.backward()
@@ -310,7 +364,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.vf)
         if self.use_amp:
-            with amp.scale_loss(vf_loss, self.vf_optimizer) as scaled_vf_loss:
+            with amp.scale_loss(
+                vf_loss, self.vf_optimizer, loss_id=2
+            ) as scaled_vf_loss:
                 scaled_vf_loss.backward()
         else:
             vf_loss.backward()
