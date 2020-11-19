@@ -227,12 +227,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Actor Loss
         """
-        with FreezeParameters(self.world_model.modules):
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        pcont_params = list(self.world_model.pcont.parameters())
+        with FreezeParameters(world_model_params):
             imag_feat, imag_actions = self.imagine_ahead(post)
-        with FreezeParameters(self.world_model.modules + self.vf.modules):
+        with FreezeParameters(world_model_params + vf_params):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
-                with FreezeParameters([self.world_model.pcont]):
+                with FreezeParameters(pcont_params):
                     discount = self.world_model.get_dist(
                         self.world_model.pcont(imag_feat), std=None, normal=False
                     ).mean

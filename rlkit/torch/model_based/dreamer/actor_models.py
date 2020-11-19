@@ -39,7 +39,6 @@ class ActorModel(Mlp):
         self._min_std = min_std
         self._init_std = ptu.from_numpy(np.array(init_std))
         self._mean_scale = mean_scale
-        self.modules = self.fcs + [self.last_fc]
 
     def forward(self, input):
         raw_init_std = torch.log(torch.exp(self._init_std) - 1)

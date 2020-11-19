@@ -91,16 +91,6 @@ class WorldModel(PyTorchModule):
         self.feature_size = stochastic_state_size + deterministic_state_size
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
-        self.modules = [
-            self.obs_step_mlp,
-            self.img_step_layer,
-            self.img_step_mlp,
-            self.rnn,
-            self.conv_encoder,
-            self.conv_decoder,
-            self.reward,
-            self.pcont,
-        ]
 
     def obs_step(self, prev_state, prev_action, embed):
         prior = self.img_step(prev_state, prev_action)
