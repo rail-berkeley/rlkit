@@ -96,11 +96,33 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
             models, optimizers = amp.initialize(
-                [self.world_model, self.actor, self.vf],
+                [
+                    self.world_model.img_step_layer,
+                    self.world_model.img_step_mlp,
+                    self.world_model.obs_step_mlp,
+                    self.world_model.conv_decoder,
+                    self.world_model.conv_encoder,
+                    self.world_model.pcont,
+                    self.world_model.reward,
+                    self.world_model.rnn,
+                    self.actor,
+                    self.vf,
+                ],
                 [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
                 opt_level=opt_level,
             )
-            self.world_model, self.actor, self.vf = models
+            (
+                self.world_model.img_step_layer,
+                self.world_model.img_step_mlp,
+                self.world_model.obs_step_mlp,
+                self.world_model.conv_decoder,
+                self.world_model.conv_encoder,
+                self.world_model.pcont,
+                self.world_model.reward,
+                self.world_model.rnn,
+                self.actor,
+                self.vf,
+            ) = models
             (
                 self.world_model_optimizer,
                 self.actor_optimizer,

@@ -67,17 +67,12 @@ class CNN(nn.Module):
             self.input_width,
         )
 
-        h = self.apply_forward(h, self.conv_layers)
+        for layer in self.conv_layers:
+            h = layer(h)
+            h = self.hidden_activation(h)
         # flatten channels for fc layers
         output = h.view(h.size(0), -1)
         return output
-
-    def apply_forward(self, input, hidden_layers):
-        h = input
-        for layer in hidden_layers:
-            h = layer(h)
-            h = self.hidden_activation(h)
-        return h
 
 
 class DCNN(nn.Module):
