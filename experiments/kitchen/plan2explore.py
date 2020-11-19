@@ -29,7 +29,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -51,6 +51,7 @@ if __name__ == "__main__":
             image_obs=True,
             fixed_schema=True,
             multitask=False,
+            action_scale=1,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
@@ -88,10 +89,19 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
+            "microwave",
+            "kettle",
+            "top_left_burner",
             "slide_cabinet",
+            "hinge_cabinet",
+            "light_switch",
         ],
-        "env_kwargs.delta": [0.05, 0.1, 0.2, 0.3, 0.5, 75],
-        "expl_amount": [0.3],
+        "env_kwargs.delta": [
+            0.3,
+            0.5,
+            0.75,
+        ],
+        "expl_amount": [0.3, 0.6],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
