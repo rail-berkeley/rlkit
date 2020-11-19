@@ -64,7 +64,7 @@ if __name__ == "__main__":
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=6e-4,
-            use_amp=False,
+            use_amp=True,
             opt_level="O1",
             gradient_clip=100.0,
             lam=0.95,
@@ -80,11 +80,11 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "slide_cabinet",
-            "hinge_cabinet",
+            # "microwave",
+            # "kettle",
+            # "top_left_burner",
+            # "slide_cabinet",
+            # "hinge_cabinet",
             "light_switch",
         ],
         "env_kwargs.delta": [
@@ -93,7 +93,7 @@ if __name__ == "__main__":
             # 0.75,
         ],
         "env_kwargs.view": [1],
-        "env_kwargs.use_wrist_cam": [True, False],
+        # "env_kwargs.use_wrist_cam": [True, False],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
