@@ -124,15 +124,54 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
             models, optimizers = amp.initialize(
-                [self.world_model, self.actor, self.vf],
-                [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
+                [
+                    self.world_model.img_step_layer,
+                    self.world_model.img_step_mlp,
+                    self.world_model.obs_step_mlp,
+                    self.world_model.conv_decoder,
+                    self.world_model.conv_encoder,
+                    self.world_model.pcont,
+                    self.world_model.reward,
+                    self.world_model.rnn,
+                    self.actor,
+                    self.vf,
+                    self.one_step_ensemble,
+                    self.exploration_actor,
+                    self.exploration_vf,
+                ],
+                [
+                    self.world_model_optimizer,
+                    self.actor_optimizer,
+                    self.vf_optimizer,
+                    self.one_step_ensemble_optimizer,
+                    self.exploration_actor_optimizer,
+                    self.exploration_vf_optimizer,
+                ],
                 opt_level=opt_level,
+                num_losses=6,
             )
-            self.world_model, self.actor, self.vf = models
+            (
+                self.world_model.img_step_layer,
+                self.world_model.img_step_mlp,
+                self.world_model.obs_step_mlp,
+                self.world_model.conv_decoder,
+                self.world_model.conv_encoder,
+                self.world_model.pcont,
+                self.world_model.reward,
+                self.world_model.rnn,
+                self.actor,
+                self.vf,
+                self.one_step_ensemble,
+                self.exploration_actor,
+                self.exploration_vf,
+            ) = models
             (
                 self.world_model_optimizer,
                 self.actor_optimizer,
                 self.vf_optimizer,
+                self.one_step_ensemble_optimizer,
+                self.exploration_actor_optimizer,
+                self.exploration_vf_optimizer,
             ) = optimizers
 
         self.opt_level = opt_level
@@ -266,7 +305,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         zero_grad(self.world_model)
         if self.use_amp:
             with amp.scale_loss(
-                world_model_loss, self.world_model_optimizer
+                world_model_loss, self.world_model_optimizer, loss_id=0
             ) as scaled_world_model_loss:
                 scaled_world_model_loss.backward()
         else:
@@ -287,12 +326,17 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         """
         Actor Loss
         """
-        with FreezeParameters(self.world_model.modules):
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        pcont_params = list(self.world_model.pcont.parameters())
+        one_step_ensemble_params = list(self.one_step_ensemble.parameters())
+        exploration_vf_params = list(self.exploration_vf.parameters())
+        with FreezeParameters(world_model_params):
             imag_feat, imag_actions, _ = self.imagine_ahead(post, actor=self.actor)
-        with FreezeParameters(self.world_model.modules + self.vf.modules):
+        with FreezeParameters(world_model_params + vf_params):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
-                with FreezeParameters([self.world_model.pcont]):
+                with FreezeParameters(pcont_params):
                     discount = self.world_model.get_dist(
                         self.world_model.pcont(imag_feat), std=None, normal=False
                     ).mean
@@ -315,7 +359,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.actor)
         if self.use_amp:
-            with amp.scale_loss(actor_loss, self.actor_optimizer) as scaled_actor_loss:
+            with amp.scale_loss(
+                actor_loss, self.actor_optimizer, loss_id=1
+            ) as scaled_actor_loss:
                 scaled_actor_loss.backward()
         else:
             actor_loss.backward()
@@ -345,7 +391,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.vf)
         if self.use_amp:
-            with amp.scale_loss(vf_loss, self.vf_optimizer) as scaled_vf_loss:
+            with amp.scale_loss(
+                vf_loss, self.vf_optimizer, loss_id=2
+            ) as scaled_vf_loss:
                 scaled_vf_loss.backward()
         else:
             vf_loss.backward()
@@ -388,7 +436,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         zero_grad(self.one_step_ensemble)
         if self.use_amp:
             with amp.scale_loss(
-                ensemble_loss, self.one_step_ensemble_optimizer
+                ensemble_loss, self.one_step_ensemble_optimizer, loss_id=3
             ) as scaled_ensemble_loss:
                 scaled_ensemble_loss.backward()
         else:
@@ -409,7 +457,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         """
         Exploration Actor Loss
         """
-        with FreezeParameters(self.world_model.modules):
+        with FreezeParameters(world_model_params):
             (
                 exploration_imag_feat,
                 exploration_imag_actions,
@@ -418,7 +466,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
                 post,
                 actor=self.exploration_actor,
             )
-        with FreezeParameters(self.world_model.modules + self.vf.modules):
+        with FreezeParameters(
+            world_model_params + exploration_vf_params + one_step_ensemble_params
+        ):
             exploration_reward = self.compute_exploration_reward(
                 exploration_imag_deter_states, exploration_imag_actions
             )  # Compute Intrinsic Reward
@@ -436,7 +486,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             )
 
             if self.use_pcont:
-                with FreezeParameters([self.world_model.pcont]):
+                with FreezeParameters(pcont_params):
                     exploration_discount = self.world_model.get_dist(
                         self.world_model.pcont(exploration_imag_feat),
                         std=None,
@@ -470,7 +520,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         zero_grad(self.exploration_actor)
         if self.use_amp:
             with amp.scale_loss(
-                exploration_actor_loss, self.exploration_actor_optimizer
+                exploration_actor_loss, self.exploration_actor_optimizer, loss_id=4
             ) as scaled_exploration_actor_loss:
                 scaled_exploration_actor_loss.backward()
         else:
@@ -506,7 +556,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         zero_grad(self.exploration_vf)
         if self.use_amp:
             with amp.scale_loss(
-                exploration_vf_loss, self.exploration_vf_optimizer
+                exploration_vf_loss,
+                self.exploration_vf_optimizer,
+                loss_id=5,
             ) as scaled_exploration_vf_loss:
                 scaled_exploration_vf_loss.backward()
         else:
