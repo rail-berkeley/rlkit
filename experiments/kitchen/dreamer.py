@@ -71,7 +71,7 @@ if __name__ == "__main__":
             lam=0.95,
             free_nats=3.0,
             kl_loss_scale=1.0,
-            optimizer_class="torch_adam",
+            optimizer_class="apex_adam",
             pcont_loss_scale=10.0,
             use_pcont=True,
         ),
@@ -95,16 +95,12 @@ if __name__ == "__main__":
         ],
         "env_kwargs.view": [1],
         "expl_amount": [0.3],
-        "trainer_kwargs.use_ddp": [True, False],
-        "trainer_kwargs.opt_level": ["O1", "O2", "O0", "O3"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if variant["trainer_kwargs"]["opt_level"] == "O0":
-            variant["num_expl_envs"] = 4
         for _ in range(args.num_seeds):
             run_experiment(
                 experiment,

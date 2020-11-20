@@ -1,4 +1,3 @@
-import os
 from collections import OrderedDict, namedtuple
 from typing import Tuple
 
@@ -27,23 +26,6 @@ DreamerLosses = namedtuple(
     "DreamerLosses",
     "actor_loss vf_loss world_model_loss",
 )
-import sys
-
-import torch.distributed as dist
-
-
-def setup(rank, world_size):
-    os.environ["MASTER_ADDR"] = "localhost"
-    os.environ["MASTER_PORT"] = "12355"
-    os.environ["RANK"] = str(rank)
-    os.environ["WORLD_SIZE"] = str(world_size)
-
-    # initialize the process group
-    torch.distributed.init_process_group(backend="nccl", init_method="env://")
-
-
-def cleanup():
-    dist.destroy_process_group()
 
 
 class DreamerTrainer(TorchTrainer, LossFunction):
@@ -73,7 +55,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         plotter=None,
         render_eval_paths=False,
         debug=False,
-        use_ddp=False,
     ):
         super().__init__()
 
@@ -147,38 +128,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 self.actor_optimizer,
                 self.vf_optimizer,
             ) = optimizers
-            if use_ddp:
-                setup(0, 1)
-                self.world_model.img_step_layer = apex.parallel.DistributedDataParallel(
-                    self.world_model.img_step_layer,
-                )
-                self.world_model.img_step_mlp = apex.parallel.DistributedDataParallel(
-                    self.world_model.img_step_mlp,
-                )
-                self.world_model.obs_step_mlp = apex.parallel.DistributedDataParallel(
-                    self.world_model.obs_step_mlp,
-                )
-                self.world_model.conv_decoder = apex.parallel.DistributedDataParallel(
-                    self.world_model.conv_decoder,
-                )
-                self.world_model.conv_encoder = apex.parallel.DistributedDataParallel(
-                    self.world_model.conv_encoder,
-                )
-                self.world_model.pcont = apex.parallel.DistributedDataParallel(
-                    self.world_model.pcont,
-                )
-                self.world_model.reward = apex.parallel.DistributedDataParallel(
-                    self.world_model.reward,
-                )
-                self.world_model.rnn = apex.parallel.DistributedDataParallel(
-                    self.world_model.rnn,
-                )
-                self.actor = apex.parallel.DistributedDataParallel(
-                    self.actor,
-                )
-                self.vf = apex.parallel.DistributedDataParallel(
-                    self.vf,
-                )
         self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
