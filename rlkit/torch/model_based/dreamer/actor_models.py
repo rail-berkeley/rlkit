@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch.distributions import Normal, TransformedDistribution
@@ -17,8 +16,8 @@ class ActorModel(Mlp):
         continuous_action_dim=0,
         hidden_activation=F.elu,
         min_std=1e-4,
-        init_std=5,
-        mean_scale=5,
+        init_std=5.0,
+        mean_scale=5.0,
         **kwargs
     ):
         self.discrete_continuous_dist = discrete_continuous_dist
@@ -37,9 +36,8 @@ class ActorModel(Mlp):
             **kwargs
         )
         self._min_std = min_std
-        self._init_std = ptu.from_numpy(np.array(init_std))
+        self._init_std = ptu.tensor(init_std)
         self._mean_scale = mean_scale
-        self.modules = self.fcs + [self.last_fc]
 
     def forward(self, input):
         raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -110,7 +108,7 @@ class TanhBijector(torch.distributions.Transform):
         return y
 
     def log_abs_det_jacobian(self, x, y):
-        return 2.0 * (torch.log(ptu.from_numpy(np.array(2))) - x - F.softplus(-2.0 * x))
+        return 2.0 * (torch.log(ptu.tensor(2.0)) - x - F.softplus(-2.0 * x))
 
 
 class SampleDist:

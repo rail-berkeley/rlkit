@@ -27,12 +27,6 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._observations = np.zeros(
             (max_replay_buffer_size, max_path_length, observation_dim), dtype=np.uint8
         )
-        # It's a bit memory inefficient to save the observations twice,
-        # but it makes the code *much* easier since you no longer have to
-        # worry about termination conditions.
-        self._next_obs = np.zeros(
-            (max_replay_buffer_size, max_path_length, observation_dim), dtype=np.uint8
-        )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
         # Make everything a 2D np array to make it easier for other code to
         # reason about the shape of the data
@@ -59,9 +53,6 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._terminals[self._top : self._top + self.env.n_envs] = np.expand_dims(
             path["terminals"].transpose(1, 0), -1
         )
-        self._next_obs[self._top : self._top + self.env.n_envs] = path[
-            "next_observations"
-        ].transpose(1, 0, 2)
 
         self._advance()
 
@@ -85,6 +76,5 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             actions=self._actions[indices],
             rewards=self._rewards[indices],
             terminals=self._terminals[indices],
-            next_observations=self._next_obs[indices],
         )
         return batch

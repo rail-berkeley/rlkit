@@ -40,7 +40,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="Dreamer",
         version="normal",
-        replay_buffer_size=int(1e5),
+        replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
         env_class="microwave",
         env_kwargs=dict(
@@ -49,6 +49,7 @@ if __name__ == "__main__":
             image_obs=True,
             fixed_schema=True,
             multitask=False,
+            action_scale=1,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
@@ -64,13 +65,13 @@ if __name__ == "__main__":
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=6e-4,
-            use_amp=False,
+            use_amp=True,
             opt_level="O1",
             gradient_clip=100.0,
             lam=0.95,
             free_nats=3.0,
             kl_loss_scale=1.0,
-            optimizer_class="torch_adam",
+            optimizer_class="apex_adam",
             pcont_loss_scale=10.0,
             use_pcont=True,
         ),
@@ -80,11 +81,11 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "slide_cabinet",
-            "hinge_cabinet",
+            # "microwave",
+            # "kettle",
+            # "top_left_burner",
+            # "slide_cabinet",
+            # "hinge_cabinet",
             "light_switch",
         ],
         "env_kwargs.delta": [
@@ -93,7 +94,6 @@ if __name__ == "__main__":
             # 0.75,
         ],
         "env_kwargs.view": [1],
-        "env_kwargs.use_wrist_cam": [True, False],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -108,7 +108,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",
+                snapshot_mode="none",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=random.randint(0, 100000),
                 exp_id=exp_id,

@@ -32,7 +32,6 @@ class OneStepEnsembleModel(PyTorchModule):
 
         self.num_models = num_models
         self.model_act = model_act
-        self.modules = self.ensemble
 
     def forward_ith_model(self, input, i):
         mean = self.ensemble[i](input)

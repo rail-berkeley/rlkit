@@ -2,7 +2,6 @@ from collections import OrderedDict, namedtuple
 from typing import Tuple
 
 import gtimer as gt
-import numpy as np
 import torch
 import torch.optim as optim
 
@@ -96,17 +95,39 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
             models, optimizers = amp.initialize(
-                [self.world_model, self.actor, self.vf],
+                [
+                    self.world_model.img_step_layer,
+                    self.world_model.img_step_mlp,
+                    self.world_model.obs_step_mlp,
+                    self.world_model.conv_decoder,
+                    self.world_model.conv_encoder,
+                    self.world_model.pcont,
+                    self.world_model.reward,
+                    self.world_model.rnn,
+                    self.actor,
+                    self.vf,
+                ],
                 [self.world_model_optimizer, self.actor_optimizer, self.vf_optimizer],
                 opt_level=opt_level,
+                num_losses=3,
             )
-            self.world_model, self.actor, self.vf = models
+            (
+                self.world_model.img_step_layer,
+                self.world_model.img_step_mlp,
+                self.world_model.obs_step_mlp,
+                self.world_model.conv_decoder,
+                self.world_model.conv_encoder,
+                self.world_model.pcont,
+                self.world_model.reward,
+                self.world_model.rnn,
+                self.actor,
+                self.vf,
+            ) = models
             (
                 self.world_model_optimizer,
                 self.actor_optimizer,
                 self.vf_optimizer,
             ) = optimizers
-
         self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
@@ -197,7 +218,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         pcont_target = self.discount * (1 - terminals.float())
         pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.from_numpy(np.array(self.free_nats)))
+        div = torch.max(div, ptu.tensor(self.free_nats))
         world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
 
         if self.use_pcont:
@@ -206,7 +227,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         zero_grad(self.world_model)
         if self.use_amp:
             with amp.scale_loss(
-                world_model_loss, self.world_model_optimizer
+                world_model_loss,
+                self.world_model_optimizer,
+                loss_id=0,
             ) as scaled_world_model_loss:
                 scaled_world_model_loss.backward()
         else:
@@ -227,12 +250,15 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         Actor Loss
         """
-        with FreezeParameters(self.world_model.modules):
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        pcont_params = list(self.world_model.pcont.parameters())
+        with FreezeParameters(world_model_params):
             imag_feat, imag_actions = self.imagine_ahead(post)
-        with FreezeParameters(self.world_model.modules + self.vf.modules):
+        with FreezeParameters(world_model_params + vf_params):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pcont:
-                with FreezeParameters([self.world_model.pcont]):
+                with FreezeParameters(pcont_params):
                     discount = self.world_model.get_dist(
                         self.world_model.pcont(imag_feat), std=None, normal=False
                     ).mean
@@ -255,7 +281,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.actor)
         if self.use_amp:
-            with amp.scale_loss(actor_loss, self.actor_optimizer) as scaled_actor_loss:
+            with amp.scale_loss(
+                actor_loss, self.actor_optimizer, loss_id=1
+            ) as scaled_actor_loss:
                 scaled_actor_loss.backward()
         else:
             actor_loss.backward()
@@ -285,7 +313,9 @@ class DreamerTrainer(TorchTrainer, LossFunction):
 
         zero_grad(self.vf)
         if self.use_amp:
-            with amp.scale_loss(vf_loss, self.vf_optimizer) as scaled_vf_loss:
+            with amp.scale_loss(
+                vf_loss, self.vf_optimizer, loss_id=2
+            ) as scaled_vf_loss:
                 scaled_vf_loss.backward()
         else:
             vf_loss.backward()

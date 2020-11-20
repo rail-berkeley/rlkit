@@ -3,20 +3,8 @@
 import torch
 
 
-def get_parameters(modules):
-    """
-    Given a list of torch modules, returns a list of their parameters.
-    :param modules: iterable of modules
-    :returns: a list of parameters
-    """
-    model_parameters = []
-    for module in modules:
-        model_parameters += list(module.parameters())
-    return model_parameters
-
-
 class FreezeParameters:
-    def __init__(self, modules):
+    def __init__(self, params):
         """
         Context manager to locally freeze gradients.
         In some cases with can speed up computation because gradients aren't calculated for these listed modules.
@@ -27,15 +15,15 @@ class FreezeParameters:
         ```
         :param modules: iterable of modules. used to call .parameters() to freeze gradients.
         """
-        self.modules = modules
-        self.param_states = [p.requires_grad for p in get_parameters(self.modules)]
+        self.params = params
+        self.param_states = [p.requires_grad for p in params]
 
     def __enter__(self):
-        for param in get_parameters(self.modules):
+        for param in self.params:
             param.requires_grad = False
 
     def __exit__(self, exc_type, exc_val, exc_tb):
-        for i, param in enumerate(get_parameters(self.modules)):
+        for i, param in enumerate(self.params):
             param.requires_grad = self.param_states[i]
 
 

@@ -39,8 +39,6 @@ class Mlp(PyTorchModule):
         torch.nn.init.xavier_uniform_(self.last_fc.weight)
         self.last_fc.bias.data.fill_(0)
 
-        self.modules = self.fcs + [self.last_fc]
-
     def forward(self, input):
         h = input
         for i, fc in enumerate(self.fcs):
