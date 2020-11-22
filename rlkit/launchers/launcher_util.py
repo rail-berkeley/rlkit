@@ -198,6 +198,7 @@ def create_log_dir(
     :return:
     """
     exp_name = create_exp_name(exp_prefix, exp_id=exp_id, seed=seed)
+    logger.set_exp_name(exp_name)
     if base_log_dir is None:
         base_log_dir = conf.LOCAL_LOG_DIR
     if include_exp_prefix_sub_dir:

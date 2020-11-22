@@ -43,14 +43,17 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
 
         :param path: Dict like one outputted by rlkit.samplers.util.rollout
         """
-        for i, (
-            obs,
-            action,
-            reward,
-            next_obs,
-            terminal,
-            agent_info,
-            env_info,
+        for (
+            i,
+            (
+                obs,
+                action,
+                reward,
+                next_obs,
+                terminal,
+                agent_info,
+                env_info,
+            ),
         ) in enumerate(
             zip(
                 path["observations"],

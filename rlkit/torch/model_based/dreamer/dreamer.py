@@ -4,6 +4,7 @@ from typing import Tuple
 import gtimer as gt
 import torch
 import torch.optim as optim
+import wandb
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics

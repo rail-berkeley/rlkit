@@ -139,8 +139,9 @@ class WorldModel(PyTorchModule):
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]
-        post, prior = dict(mean=[], std=[], stoch=[], deter=[]), dict(
-            mean=[], std=[], stoch=[], deter=[]
+        post, prior = (
+            dict(mean=[], std=[], stoch=[], deter=[]),
+            dict(mean=[], std=[], stoch=[], deter=[]),
         )
         images, rewards, pconts, embeds = [], [], [], []
 

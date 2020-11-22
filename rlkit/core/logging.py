@@ -142,6 +142,12 @@ class Logger(object):
             self._tabular_header_written.remove(self._tabular_fds[file_name])
         self._remove_output(file_name, self._tabular_outputs, self._tabular_fds)
 
+    def set_exp_name(self, exp_name):
+        self._exp_name = exp_name
+
+    def get_exp_name(self):
+        return self._exp_name
+
     def set_snapshot_dir(self, dir_name):
         self._snapshot_dir = dir_name
 

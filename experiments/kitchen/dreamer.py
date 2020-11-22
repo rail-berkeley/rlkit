@@ -15,7 +15,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.debug:
         algorithm_kwargs = dict(
-            num_epochs=2,
+            num_epochs=5,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=10,
             num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
