@@ -5,6 +5,70 @@ from torch import nn as nn
 from rlkit.pythonplusplus import identity
 
 
+class DepthWiseSeparableConv2D(nn.Module):
+    def __init__(
+        self,
+        input_channels,
+        out_channels,
+        kernel_size,
+        stride,
+        padding,
+    ):
+        super(DepthWiseSeparableConv2D, self).__init__()
+        self.depthwise = nn.Conv2d(
+            input_channels,
+            input_channels,
+            kernel_size=kernel_size,
+            padding=padding,
+            stride=stride,
+            groups=input_channels,
+        )
+        self.pointwise = nn.Conv2d(
+            input_channels,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=padding,
+        )
+
+    def forward(self, x):
+        out = self.depthwise(x)
+        out = self.pointwise(out)
+        return out
+
+
+class DepthWiseSeparableConvTranspose2D(nn.Module):
+    def __init__(
+        self,
+        input_channels,
+        out_channels,
+        kernel_size,
+        stride,
+        padding,
+    ):
+        super(DepthWiseSeparableConvTranspose2D, self).__init__()
+        self.depthwise = nn.ConvTranspose2d(
+            input_channels,
+            input_channels,
+            kernel_size=kernel_size,
+            padding=padding,
+            stride=stride,
+            groups=input_channels,
+        )
+        self.pointwise = nn.ConvTranspose2d(
+            input_channels,
+            out_channels,
+            kernel_size=1,
+            stride=1,
+            padding=padding,
+        )
+
+    def forward(self, x):
+        out = self.depthwise(x)
+        out = self.pointwise(out)
+        return out
+
+
 class CNN(nn.Module):
     def __init__(
         self,
@@ -19,6 +83,7 @@ class CNN(nn.Module):
         hidden_init=nn.init.xavier_uniform_,
         hidden_activation=nn.ReLU(),
         output_activation=identity,
+        use_depth_wise_separable_conv=False,
     ):
         if hidden_sizes is None:
             hidden_sizes = []
@@ -41,15 +106,29 @@ class CNN(nn.Module):
         for out_channels, kernel_size, stride, padding in zip(
             n_channels, kernel_sizes, strides, paddings
         ):
-            conv = nn.Conv2d(
-                input_channels,
-                out_channels,
-                kernel_size,
-                stride=stride,
-                padding=padding,
-            )
-            hidden_init(conv.weight)
-            conv.bias.data.fill_(0)
+            if use_depth_wise_separable_conv:
+                conv = DepthWiseSeparableConv2D(
+                    input_channels,
+                    out_channels,
+                    kernel_size,
+                    stride,
+                    padding,
+                )
+                hidden_init(conv.depthwise.weight)
+                conv.depthwise.bias.data.fill_(0)
+
+                hidden_init(conv.pointwise.weight)
+                conv.pointwise.bias.data.fill_(0)
+            else:
+                conv = nn.Conv2d(
+                    input_channels,
+                    out_channels,
+                    kernel_size,
+                    stride=stride,
+                    padding=padding,
+                )
+                hidden_init(conv.weight)
+                conv.bias.data.fill_(0)
 
             conv_layer = conv
             self.conv_layers.append(conv_layer)
@@ -95,6 +174,7 @@ class DCNN(nn.Module):
         hidden_init=nn.init.xavier_uniform_,
         hidden_activation=nn.ReLU(),
         output_activation=identity,
+        use_depth_wise_separable_conv=False,
     ):
         assert len(kernel_sizes) == len(n_channels) == len(strides) == len(paddings)
         super().__init__()
@@ -123,28 +203,55 @@ class DCNN(nn.Module):
         for out_channels, kernel_size, stride, padding in zip(
             n_channels, kernel_sizes, strides, paddings
         ):
-            deconv = nn.ConvTranspose2d(
-                deconv_input_channels,
-                out_channels,
-                kernel_size,
-                stride=stride,
-                padding=padding,
-            )
-            hidden_init(deconv.weight)
-            deconv.bias.data.fill_(0)
+            if use_depth_wise_separable_conv:
+                deconv = DepthWiseSeparableConvTranspose2D(
+                    deconv_input_channels,
+                    out_channels,
+                    kernel_size,
+                    stride,
+                    padding,
+                )
+                hidden_init(deconv.depthwise.weight)
+                deconv.depthwise.bias.data.fill_(0)
+
+                hidden_init(deconv.pointwise.weight)
+                deconv.pointwise.bias.data.fill_(0)
+            else:
+                deconv = nn.ConvTranspose2d(
+                    deconv_input_channels,
+                    out_channels,
+                    kernel_size,
+                    stride=stride,
+                    padding=padding,
+                )
+                hidden_init(deconv.weight)
+                deconv.bias.data.fill_(0)
 
             deconv_layer = deconv
             self.deconv_layers.append(deconv_layer)
             deconv_input_channels = out_channels
+        if use_depth_wise_separable_conv:
+            self.deconv_output = DepthWiseSeparableConvTranspose2D(
+                deconv_input_channels,
+                deconv_output_channels,
+                deconv_output_kernel_size,
+                stride=deconv_output_strides,
+                padding=0,
+            )
+            hidden_init(self.deconv_output.depthwise.weight)
+            self.deconv_output.depthwise.bias.data.fill_(0)
 
-        self.deconv_output = nn.ConvTranspose2d(
-            deconv_input_channels,
-            deconv_output_channels,
-            deconv_output_kernel_size,
-            stride=deconv_output_strides,
-        )
-        hidden_init(self.deconv_output.weight)
-        self.deconv_output.bias.data.fill_(0)
+            hidden_init(self.deconv_output.pointwise.weight)
+            self.deconv_output.pointwise.bias.data.fill_(0)
+        else:
+            self.deconv_output = nn.ConvTranspose2d(
+                deconv_input_channels,
+                deconv_output_channels,
+                deconv_output_kernel_size,
+                stride=deconv_output_strides,
+            )
+            hidden_init(self.deconv_output.weight)
+            self.deconv_output.bias.data.fill_(0)
 
     def forward(self, input):
         h = self.hidden_activation(self.last_fc(input))

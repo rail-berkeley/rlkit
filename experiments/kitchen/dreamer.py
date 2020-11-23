@@ -86,8 +86,8 @@ if __name__ == "__main__":
             # "microwave",
             # "kettle",
             # "top_left_burner",
-            # "slide_cabinet",
-            # "hinge_cabinet",
+            "slide_cabinet",
+            "hinge_cabinet",
             "light_switch",
         ],
         "env_kwargs.delta": [
@@ -95,8 +95,8 @@ if __name__ == "__main__":
             # 0.5,
             # 0.75,
         ],
-        "env_kwargs.view": [1],
         "expl_amount": [0.3],
+        "model_kwargs.use_depth_wise_separable_conv": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -21,6 +21,7 @@ class WorldModel(PyTorchModule):
         conv_act=F.relu,
         reward_num_layers=2,
         pcont_num_layers=3,
+        use_depth_wise_separable_conv=False,
     ):
         super().__init__()
         self.obs_step_mlp = Mlp(
@@ -53,6 +54,7 @@ class WorldModel(PyTorchModule):
             [0] * 4,
             hidden_activation=conv_act,
             hidden_init=torch.nn.init.xavier_uniform_,
+            use_depth_wise_separable_conv=use_depth_wise_separable_conv,
         )
 
         self.conv_decoder = DCNN(
@@ -70,6 +72,7 @@ class WorldModel(PyTorchModule):
             [0] * 3,
             hidden_activation=conv_act,
             hidden_init=torch.nn.init.xavier_uniform_,
+            use_depth_wise_separable_conv=use_depth_wise_separable_conv,
         )
 
         self.reward = Mlp(
