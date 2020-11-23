@@ -96,7 +96,7 @@ if __name__ == "__main__":
             # 0.75,
         ],
         "expl_amount": [0.3],
-        "model_kwargs.use_depth_wise_separable_conv": [True, False],
+        "model_kwargs.use_depth_wise_separable_conv": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -110,7 +110,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="last",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=random.randint(0, 100000),
                 exp_id=exp_id,
