@@ -20,7 +20,7 @@ class WorldModel(PyTorchModule):
         depth=32,
         conv_act=F.relu,
         reward_num_layers=2,
-        pcont_num_layers=3,
+        pred_discount_num_layers=3,
         use_depth_wise_separable_conv=False,
     ):
         super().__init__()
@@ -82,8 +82,8 @@ class WorldModel(PyTorchModule):
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
-        self.pcont = Mlp(
-            hidden_sizes=[model_hidden_size] * pcont_num_layers,
+        self.pred_discount = Mlp(
+            hidden_sizes=[model_hidden_size] * pred_discount_num_layers,
             input_size=stochastic_state_size + deterministic_state_size,
             output_size=1,
             hidden_activation=model_act,
@@ -127,13 +127,13 @@ class WorldModel(PyTorchModule):
         feat = self.get_feat(post_params)
         image_params = self.decode(feat)
         reward_params = self.reward(feat)
-        pcont_params = self.pcont(feat)
+        pred_discount_params = self.pred_discount(feat)
         return (
             post_params,
             prior_params,
             image_params,
             reward_params,
-            pcont_params,
+            pred_discount_params,
         )
 
     def forward(self, obs, action):
@@ -144,7 +144,7 @@ class WorldModel(PyTorchModule):
             dict(mean=[], std=[], stoch=[], deter=[]),
             dict(mean=[], std=[], stoch=[], deter=[]),
         )
-        images, rewards, pconts, embeds = [], [], [], []
+        images, rewards, pred_discounts, embeds = [], [], [], []
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
@@ -163,11 +163,11 @@ class WorldModel(PyTorchModule):
                 prior_params,
                 image_params,
                 reward_params,
-                pcont_params,
+                pred_discount_params,
             ) = self.forward_batch(embed[:, i], action[:, i], state)
             images.append(image_params)
             rewards.append(reward_params)
-            pconts.append(pcont_params)
+            pred_discounts.append(pred_discount_params)
             for k in post.keys():
                 post[k].append(post_params[k].unsqueeze(1))
 
@@ -177,7 +177,7 @@ class WorldModel(PyTorchModule):
 
         images = torch.cat(images)
         rewards = torch.cat(rewards)
-        pconts = torch.cat(pconts)
+        pred_discounts = torch.cat(pred_discounts)
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
 
@@ -188,7 +188,7 @@ class WorldModel(PyTorchModule):
         prior_dist = self.get_dist(prior["mean"], prior["std"])
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
-        pcont_dist = self.get_dist(pconts, None, normal=False)
+        pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
         return (
             post,
             prior,
@@ -196,7 +196,7 @@ class WorldModel(PyTorchModule):
             prior_dist,
             image_dist,
             reward_dist,
-            pcont_dist,
+            pred_discount_dist,
             embed,
         )
 

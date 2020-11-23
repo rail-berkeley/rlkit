@@ -138,7 +138,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             prior_dist,
             image_dist,
             reward_dist,
-            pcont_dist,
+            pred_discount_dist,
             embed,
         ) = algorithm.trainer.world_model(obs.detach(), actions.detach())
         reconstructions = image_dist.mean.detach()

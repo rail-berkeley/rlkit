@@ -49,10 +49,10 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         imagination_horizon=4,
         free_nats=3.0,
         kl_loss_scale=1.0,
-        pcont_loss_scale=10.0,
+        pred_discount_loss_scale=10.0,
         adam_eps=1e-7,
         weight_decay=0.0,
-        use_pcont=True,
+        use_pred_discount=True,
         plotter=None,
         render_eval_paths=False,
         debug=False,
@@ -102,7 +102,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                     self.world_model.obs_step_mlp,
                     self.world_model.conv_decoder,
                     self.world_model.conv_encoder,
-                    self.world_model.pcont,
+                    self.world_model.pred_discount,
                     self.world_model.reward,
                     self.world_model.rnn,
                     self.actor,
@@ -118,7 +118,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
                 self.world_model.obs_step_mlp,
                 self.world_model.conv_decoder,
                 self.world_model.conv_encoder,
-                self.world_model.pcont,
+                self.world_model.pred_discount,
                 self.world_model.reward,
                 self.world_model.rnn,
                 self.actor,
@@ -137,8 +137,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         self.imagination_horizon = imagination_horizon
         self.free_nats = free_nats
         self.kl_loss_scale = kl_loss_scale
-        self.pcont_loss_scale = pcont_loss_scale
-        self.use_pcont = use_pcont
+        self.pred_discount_loss_scale = pred_discount_loss_scale
+        self.use_pred_discount = use_pred_discount
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
@@ -164,7 +164,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
-                if self.use_pcont:  # Last step could be terminal.
+                if self.use_pred_discount:  # Last step could be terminal.
                     v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         feats = []
@@ -200,7 +200,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             prior_dist,
             image_dist,
             reward_dist,
-            pcont_dist,
+            pred_discount_dist,
             _,
         ) = self.world_model(obs, actions)
 
@@ -216,14 +216,16 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             ).mean()
         )
         reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
-        pcont_target = self.discount * (1 - terminals.float())
-        pcont_loss = -1 * pcont_dist.log_prob(pcont_target).mean()
+        pred_discount_target = self.discount * (1 - terminals.float())
+        pred_discount_loss = (
+            -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
+        )
         div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.tensor(self.free_nats))
         world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
 
-        if self.use_pcont:
-            world_model_loss += self.pcont_loss_scale * pcont_loss
+        if self.use_pred_discount:
+            world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
 
         zero_grad(self.world_model)
         if self.use_amp:
@@ -253,15 +255,17 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         """
         world_model_params = list(self.world_model.parameters())
         vf_params = list(self.vf.parameters())
-        pcont_params = list(self.world_model.pcont.parameters())
+        pred_discount_params = list(self.world_model.pred_discount.parameters())
         with FreezeParameters(world_model_params):
             imag_feat, imag_actions = self.imagine_ahead(post)
         with FreezeParameters(world_model_params + vf_params):
             imag_reward = self.world_model.reward(imag_feat)
-            if self.use_pcont:
-                with FreezeParameters(pcont_params):
+            if self.use_pred_discount:
+                with FreezeParameters(pred_discount_params):
                     discount = self.world_model.get_dist(
-                        self.world_model.pcont(imag_feat), std=None, normal=False
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
                     ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
@@ -344,8 +348,8 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             eval_statistics["Image Loss"] = image_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
-            if self.use_pcont:
-                eval_statistics["Pcont Loss"] = pcont_loss.item()
+            if self.use_pred_discount:
+                eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = value_dist.mean.mean().item()
