@@ -26,6 +26,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         min_num_steps_before_training=0,
         pretrain_policy=None,
         num_pretrain_steps=0,
+        use_wandb=False,
     ):
         super().__init__(
             trainer,
@@ -34,6 +35,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector,
             evaluation_data_collector,
             replay_buffer,
+            use_wandb=use_wandb,
         )
         self.batch_size = batch_size
         self.max_path_length = max_path_length

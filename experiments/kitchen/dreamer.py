@@ -23,6 +23,7 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             num_train_loops_per_epoch=1,
             batch_size=50,
+            use_wandb=False,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -35,6 +36,7 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             num_train_loops_per_epoch=5,
             batch_size=625,
+            use_wandb=False,
         )
         exp_prefix = args.exp_prefix
     variant = dict(

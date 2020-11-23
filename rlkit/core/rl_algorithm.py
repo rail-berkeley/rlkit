@@ -43,8 +43,9 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
 
         self.post_epoch_funcs = []
         self.use_wandb = use_wandb
-        for network in trainer.networks:
-            wandb.watch(network, log="all", log_freq=1)
+        if use_wandb:
+            for network in trainer.networks:
+                wandb.watch(network, log="all", log_freq=1)
 
     def train(self, start_epoch=0):
         self._start_epoch = start_epoch
