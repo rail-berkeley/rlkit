@@ -10,8 +10,7 @@ from rlkit.torch import pytorch_util as ptu
 
 class VAEBase(torch.nn.Module, metaclass=abc.ABCMeta):
     def __init__(
-        self,
-        representation_size,
+        self, representation_size,
     ):
         super().__init__()
         self.representation_size = representation_size
@@ -89,8 +88,7 @@ class VAEBase(torch.nn.Module, metaclass=abc.ABCMeta):
 
 class GaussianLatentVAE(VAEBase):
     def __init__(
-        self,
-        representation_size,
+        self, representation_size,
     ):
         super().__init__(representation_size)
         self.dist_mu = np.zeros(self.representation_size)

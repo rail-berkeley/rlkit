@@ -115,10 +115,7 @@ class WorldModel(PyTorchModule):
         return prior
 
     def forward_batch(
-        self,
-        obs,
-        action,
-        state=None,
+        self, obs, action, state=None,
     ):
         embed = self.encode(obs)
         post_params, prior_params = self.obs_step(state, action, embed)

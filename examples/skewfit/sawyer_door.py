@@ -20,17 +20,10 @@ if __name__ == "__main__":
         skewfit_variant=dict(
             save_video=True,
             custom_goal_sampler="replay_buffer",
-            online_vae_trainer_kwargs=dict(
-                beta=20,
-                lr=1e-3,
-            ),
+            online_vae_trainer_kwargs=dict(beta=20, lr=1e-3,),
             save_video_period=50,
-            qf_kwargs=dict(
-                hidden_sizes=[400, 300],
-            ),
-            policy_kwargs=dict(
-                hidden_sizes=[400, 300],
-            ),
+            qf_kwargs=dict(hidden_sizes=[400, 300],),
+            policy_kwargs=dict(hidden_sizes=[400, 300],),
             twin_sac_trainer_kwargs=dict(
                 reward_scale=1,
                 discount=0.99,
@@ -70,20 +63,14 @@ if __name__ == "__main__":
             evaluation_goal_sampling_mode="presampled",
             training_mode="train",
             testing_mode="test",
-            reward_params=dict(
-                type="latent_distance",
-            ),
+            reward_params=dict(type="latent_distance",),
             observation_key="latent_observation",
             desired_goal_key="latent_desired_goal",
             presampled_goals_path=osp.join(
-                osp.dirname(mwmj.__file__),
-                "goals",
-                "door_goals.npy",
+                osp.dirname(mwmj.__file__), "goals", "door_goals.npy",
             ),
             presample_goals=True,
-            vae_wrapped_env_kwargs=dict(
-                sample_from_true_prior=True,
-            ),
+            vae_wrapped_env_kwargs=dict(sample_from_true_prior=True,),
         ),
         train_vae_variant=dict(
             representation_size=16,
@@ -105,17 +92,14 @@ if __name__ == "__main__":
                 input_channels=3,
                 architecture=imsize48_default_architecture,
             ),
-            algo_kwargs=dict(
-                lr=1e-3,
-            ),
+            algo_kwargs=dict(lr=1e-3,),
             save_period=1,
         ),
     )
 
     search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
+        search_space, default_parameters=variant,
     )
 
     n_seeds = 1

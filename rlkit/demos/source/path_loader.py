@@ -26,7 +26,5 @@ class PathLoader:
     Loads demonstrations and/or off-policy data into a Trainer
     """
 
-    def load_demos(
-        self,
-    ):
+    def load_demos(self,):
         pass

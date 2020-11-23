@@ -104,10 +104,7 @@ class MultiHeadedMlp(Mlp):
             layer_norm=layer_norm,
             layer_norm_kwargs=layer_norm_kwargs,
         )
-        self._splitter = SplitIntoManyHeads(
-            output_sizes,
-            output_activations,
-        )
+        self._splitter = SplitIntoManyHeads(output_sizes, output_activations,)
 
     def forward(self, input):
         flat_outputs = super().forward(input)
@@ -238,9 +235,7 @@ class SplitIntoManyHeads(nn.Module):
     """
 
     def __init__(
-        self,
-        output_sizes,
-        output_activations=None,
+        self, output_sizes, output_activations=None,
     ):
         super().__init__()
         if output_activations is None:

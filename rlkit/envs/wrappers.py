@@ -62,10 +62,7 @@ class HistoryEnv(ProxyEnv, Env):
 
         high = np.inf * np.ones(self.history_len * self.observation_space.low.size)
         low = -high
-        self.observation_space = Box(
-            low=low,
-            high=high,
-        )
+        self.observation_space = Box(low=low, high=high,)
         self.history = deque(maxlen=self.history_len)
 
     def step(self, action):
@@ -117,11 +114,7 @@ class NormalizedBoxEnv(ProxyEnv):
     """
 
     def __init__(
-        self,
-        env,
-        reward_scale=1.0,
-        obs_mean=None,
-        obs_std=None,
+        self, env, reward_scale=1.0, obs_mean=None, obs_std=None,
     ):
         ProxyEnv.__init__(self, env)
         self._should_normalize = not (obs_mean is None and obs_std is None)

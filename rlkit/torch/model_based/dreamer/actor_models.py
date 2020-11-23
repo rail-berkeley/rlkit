@@ -202,13 +202,7 @@ class SplitDist:
         return torch.cat((self._dist1.mode().float(), self._dist2.mode().float()), -1)
 
     def entropy(self):
-        return torch.cat(
-            (
-                self._dist1.entropy(),
-                self._dist2.entropy(),
-            ),
-            -1,
-        )
+        return torch.cat((self._dist1.entropy(), self._dist2.entropy(),), -1,)
 
     def log_prob(self, actions):
         return torch.cat(

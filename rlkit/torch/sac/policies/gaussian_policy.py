@@ -42,11 +42,7 @@ class TanhGaussianPolicyAdapter(TorchStochasticPolicy):
     """
 
     def __init__(
-        self,
-        obs_processor,
-        obs_processor_output_dim,
-        action_dim,
-        hidden_sizes,
+        self, obs_processor, obs_processor_output_dim, action_dim, hidden_sizes,
     ):
         super().__init__()
         self.obs_processor = obs_processor
@@ -111,25 +107,13 @@ class TanhGaussianPolicy(Mlp, TorchStochasticPolicy):
             log_std = torch.clamp(log_std, LOG_SIG_MIN, LOG_SIG_MAX)
             std = torch.exp(log_std)
         else:
-            std = (
-                torch.from_numpy(
-                    np.array(
-                        [
-                            self.std,
-                        ]
-                    )
-                )
-                .float()
-                .to(ptu.device)
-            )
+            std = torch.from_numpy(np.array([self.std,])).float().to(ptu.device)
 
         return TanhNormal(mean, std)
 
     def logprob(self, action, mean, std):
         tanh_normal = TanhNormal(mean, std)
-        log_prob = tanh_normal.log_prob(
-            action,
-        )
+        log_prob = tanh_normal.log_prob(action,)
         log_prob = log_prob.sum(dim=1, keepdim=True)
         return log_prob
 
@@ -194,17 +178,7 @@ class GaussianPolicy(Mlp, TorchStochasticPolicy):
             log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
-            std = (
-                torch.from_numpy(
-                    np.array(
-                        [
-                            self.std,
-                        ]
-                    )
-                )
-                .float()
-                .to(ptu.device)
-            )
+            std = torch.from_numpy(np.array([self.std,])).float().to(ptu.device)
 
         return MultivariateDiagonalNormal(mean, std)
 
@@ -266,17 +240,7 @@ class GaussianCNNPolicy(CNN, TorchStochasticPolicy):
             log_std = self.min_log_std + log_std * (self.max_log_std - self.min_log_std)
             std = torch.exp(log_std)
         else:
-            std = (
-                torch.from_numpy(
-                    np.array(
-                        [
-                            self.std,
-                        ]
-                    )
-                )
-                .float()
-                .to(ptu.device)
-            )
+            std = torch.from_numpy(np.array([self.std,])).float().to(ptu.device)
 
         return MultivariateDiagonalNormal(mean, std)
 
@@ -359,20 +323,8 @@ class GaussianMixturePolicy(Mlp, TorchStochasticPolicy):
         weights = F.softmax(self.last_fc_weights(h)).reshape(
             (-1, self.num_gaussians, 1)
         )
-        mixture_means = mean.reshape(
-            (
-                -1,
-                self.action_dim,
-                self.num_gaussians,
-            )
-        )
-        mixture_stds = std.reshape(
-            (
-                -1,
-                self.action_dim,
-                self.num_gaussians,
-            )
-        )
+        mixture_means = mean.reshape((-1, self.action_dim, self.num_gaussians,))
+        mixture_stds = std.reshape((-1, self.action_dim, self.num_gaussians,))
         dist = GaussianMixture(mixture_means, mixture_stds, weights)
         return dist
 
@@ -453,24 +405,14 @@ class BinnedGMMPolicy(Mlp, TorchStochasticPolicy):
             log_std = self.log_std
         batch_size = len(obs)
         logits = self.last_fc_weights(h).reshape(
-            (
-                -1,
-                self.action_dim,
-                self.num_gaussians,
-            )
+            (-1, self.action_dim, self.num_gaussians,)
         )
         weights = F.softmax(logits, dim=2)
         linspace = np.tile(
             np.linspace(-1, 1, self.num_gaussians), (batch_size, self.action_dim, 1)
         )
         mixture_means = ptu.from_numpy(linspace)
-        mixture_stds = std.reshape(
-            (
-                -1,
-                self.action_dim,
-                self.num_gaussians,
-            )
-        )
+        mixture_stds = std.reshape((-1, self.action_dim, self.num_gaussians,))
         dist = GaussianMixtureFull(mixture_means, mixture_stds, weights)
         return dist
 

@@ -28,10 +28,7 @@ class DQNTrainer(TorchTrainer):
         self.learning_rate = learning_rate
         self.soft_target_tau = soft_target_tau
         self.target_update_period = target_update_period
-        self.qf_optimizer = optim.Adam(
-            self.qf.parameters(),
-            lr=self.learning_rate,
-        )
+        self.qf_optimizer = optim.Adam(self.qf.parameters(), lr=self.learning_rate,)
         self.discount = discount
         self.reward_scale = reward_scale
         self.qf_criterion = qf_criterion or nn.MSELoss()
@@ -77,10 +74,7 @@ class DQNTrainer(TorchTrainer):
             self._need_to_update_eval_statistics = False
             self.eval_statistics["QF Loss"] = np.mean(ptu.get_numpy(qf_loss))
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Y Predictions",
-                    ptu.get_numpy(y_pred),
-                )
+                create_stats_ordered_dict("Y Predictions", ptu.get_numpy(y_pred),)
             )
         self._n_train_steps_total += 1
 
@@ -98,7 +92,4 @@ class DQNTrainer(TorchTrainer):
         ]
 
     def get_snapshot(self):
-        return dict(
-            qf=self.qf,
-            target_qf=self.target_qf,
-        )
+        return dict(qf=self.qf, target_qf=self.target_qf,)

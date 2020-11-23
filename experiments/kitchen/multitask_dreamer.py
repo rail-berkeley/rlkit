@@ -46,21 +46,14 @@ if __name__ == "__main__":
         replay_buffer_size=int(1e5),
         algorithm_kwargs=algorithm_kwargs,
         env_class="multitask_all",
-        env_kwargs=dict(
-            dense=False,
-            delta=0.0,
-            image_obs=True,
-            fixed_schema=True,
-        ),
+        env_kwargs=dict(dense=False, delta=0.0, image_obs=True, fixed_schema=True,),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
             embedding_size=1030,
         ),
-        actor_kwargs=dict(
-            discrete_continuous_dist=False,
-        ),
+        actor_kwargs=dict(discrete_continuous_dist=False,),
         world_model_class="multitask",
         trainer_kwargs=dict(
             discount=0.99,
@@ -89,8 +82,7 @@ if __name__ == "__main__":
         "expl_amount": [0.3, 0.6, 0.9],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
+        search_space, default_parameters=variant,
     )
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):

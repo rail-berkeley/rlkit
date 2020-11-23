@@ -250,9 +250,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
             stats = get_stat_in_paths(paths, "env_infos", stat_name_in_paths)
             statistics.update(
                 create_stats_ordered_dict(
-                    stat_name_in_paths,
-                    stats,
-                    always_show_all_stats=True,
+                    stat_name_in_paths, stats, always_show_all_stats=True,
                 )
             )
             final_stats = [s[-1] for s in stats]
@@ -318,10 +316,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
         """
         return dict(
             mode_map=self._mode_map,
-            gpu_info=dict(
-                use_gpu=ptu._use_gpu,
-                gpu_id=ptu._gpu_id,
-            ),
+            gpu_info=dict(use_gpu=ptu._use_gpu, gpu_id=ptu._gpu_id,),
             vae_state=self.vae.__getstate__(),
         )
 
@@ -347,11 +342,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
         if self.render_rollouts:
             img = (
                 obs["image_observation"]
-                .reshape(
-                    self.input_channels,
-                    self.imsize,
-                    self.imsize,
-                )
+                .reshape(self.input_channels, self.imsize, self.imsize,)
                 .transpose()
             )
             cv2.imshow("env", img)
@@ -361,11 +352,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
             cv2.waitKey(1)
             init_img = (
                 self._initial_obs["image_observation"]
-                .reshape(
-                    self.input_channels,
-                    self.imsize,
-                    self.imsize,
-                )
+                .reshape(self.input_channels, self.imsize, self.imsize,)
                 .transpose()
             )
             cv2.imshow("initial_state", init_img)
@@ -379,11 +366,7 @@ class VAEWrappedEnv(ProxyEnv, MultitaskEnv):
         if self.render_goals:
             goal = (
                 obs["image_desired_goal"]
-                .reshape(
-                    self.input_channels,
-                    self.imsize,
-                    self.imsize,
-                )
+                .reshape(self.input_channels, self.imsize, self.imsize,)
                 .transpose()
             )
             cv2.imshow("goal", goal)

@@ -33,10 +33,7 @@ def simulate_policy(args):
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
 
-    env = make_env(
-        env_class=env_class_,
-        env_kwargs=env_params,
-    )
+    env = make_env(env_class=env_class_, env_kwargs=env_params,)
     print("Policy loaded")
     set_gpu_mode(True)
     policy.actor.to(ptu.device)
@@ -46,9 +43,7 @@ def simulate_policy(args):
     policy.reset()
     path_length = 0
     while path_length < env.max_steps:
-        a, agent_info = policy.get_action(
-            [o],
-        )
+        a, agent_info = policy.get_action([o],)
         env.step(a[0], render_every_step=True)
         path_length += 1
         for im in env.img_array:

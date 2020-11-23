@@ -23,10 +23,7 @@ try:
 except ModuleNotFoundError:
     APEX_AVAILABLE = False
 
-DreamerLosses = namedtuple(
-    "DreamerLosses",
-    "actor_loss vf_loss world_model_loss",
-)
+DreamerLosses = namedtuple("DreamerLosses", "actor_loss vf_loss world_model_loss",)
 
 
 class DreamerTrainer(TorchTrainer, LossFunction):
@@ -92,10 +89,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             weight_decay=weight_decay,
         )
         self.vf_optimizer = optimizer_class(
-            self.vf.parameters(),
-            lr=vf_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
+            self.vf.parameters(), lr=vf_lr, eps=adam_eps, weight_decay=weight_decay,
         )
         self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
@@ -177,8 +171,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
     def train_from_torch(self, batch):
         gt.blank_stamp()
         losses, stats = self.compute_loss(
-            batch,
-            skip_statistics=not self._need_to_update_eval_statistics,
+            batch, skip_statistics=not self._need_to_update_eval_statistics,
         )
         """
         Update networks
@@ -213,10 +206,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         return feats, actions
 
     def compute_loss(
-        self,
-        batch,
-        skip_statistics=False,
-        **kwargs,
+        self, batch, skip_statistics=False, **kwargs,
     ) -> Tuple[DreamerLosses, LossStatistics]:
         rewards = batch["rewards"]
         terminals = batch["terminals"]
@@ -268,9 +258,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         zero_grad(self.world_model)
         if self.use_amp:
             with amp.scale_loss(
-                world_model_loss,
-                self.world_model_optimizer,
-                loss_id=0,
+                world_model_loss, self.world_model_optimizer, loss_id=0,
             ) as scaled_world_model_loss:
                 scaled_world_model_loss.backward()
         else:
@@ -419,9 +407,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
         loss = DreamerLosses(
-            actor_loss=actor_loss,
-            world_model_loss=world_model_loss,
-            vf_loss=vf_loss,
+            actor_loss=actor_loss, world_model_loss=world_model_loss, vf_loss=vf_loss,
         )
 
         return loss, eval_statistics
@@ -451,8 +437,4 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         ]
 
     def get_snapshot(self):
-        return dict(
-            actor=self.actor,
-            world_model=self.world_model,
-            vf=self.vf,
-        )
+        return dict(actor=self.actor, world_model=self.world_model, vf=self.vf,)

@@ -14,10 +14,7 @@ class HistoryEnv(ProxyEnv, Env):
 
         high = np.inf * np.ones(self.history_len * self.observation_space.low.size)
         low = -high
-        self.observation_space = Box(
-            low=low,
-            high=high,
-        )
+        self.observation_space = Box(low=low, high=high,)
         self.history = deque(maxlen=self.history_len)
 
     def step(self, action):

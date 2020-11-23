@@ -24,10 +24,7 @@ from rlkit.torch.networks.stochastic.distribution_generator import DistributionG
 
 class VAEPolicy(LatentVariableModel):
     def __init__(
-        self,
-        obs_dim,
-        action_dim,
-        latent_dim,
+        self, obs_dim, action_dim, latent_dim,
     ):
         encoder = Encoder(obs_dim, latent_dim, action_dim)
         decoder = Decoder(obs_dim, latent_dim, action_dim)

@@ -5,9 +5,7 @@ class RewardWrapperEnv(ProxyEnv):
     """Substitute a different reward function"""
 
     def __init__(
-        self,
-        env,
-        compute_reward_fn,
+        self, env, compute_reward_fn,
     ):
         ProxyEnv.__init__(self, env)
         self.spec = env.spec  # hack for hand envs

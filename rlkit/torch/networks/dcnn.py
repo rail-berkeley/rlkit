@@ -233,10 +233,7 @@ class BasicDCNN(PyTorchModule):
                     self.pool_layers.append(None)
 
         test_mat = torch.zeros(
-            1,
-            self.input_channels,
-            self.input_width,
-            self.input_height,
+            1, self.input_channels, self.input_width, self.input_height,
         )
         for layer in self.layers:
             test_mat = layer(test_mat)

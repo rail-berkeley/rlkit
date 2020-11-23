@@ -64,8 +64,7 @@ class IndependentGenerator(ModuleToDistributionGenerator):
     def forward(self, *input):
         distribution = super().forward(*input)
         return Independent(
-            distribution,
-            reinterpreted_batch_ndims=self.reinterpreted_batch_ndims,
+            distribution, reinterpreted_batch_ndims=self.reinterpreted_batch_ndims,
         )
 
 

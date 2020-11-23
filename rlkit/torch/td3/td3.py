@@ -54,16 +54,13 @@ class TD3Trainer(TorchTrainer):
         self.qf_criterion = qf_criterion
 
         self.qf1_optimizer = optimizer_class(
-            self.qf1.parameters(),
-            lr=qf_learning_rate,
+            self.qf1.parameters(), lr=qf_learning_rate,
         )
         self.qf2_optimizer = optimizer_class(
-            self.qf2.parameters(),
-            lr=qf_learning_rate,
+            self.qf2.parameters(), lr=qf_learning_rate,
         )
         self.policy_optimizer = optimizer_class(
-            self.policy.parameters(),
-            lr=policy_learning_rate,
+            self.policy.parameters(), lr=policy_learning_rate,
         )
 
         self.eval_statistics = OrderedDict()
@@ -141,39 +138,27 @@ class TD3Trainer(TorchTrainer):
             self.eval_statistics["QF2 Loss"] = np.mean(ptu.get_numpy(qf2_loss))
             self.eval_statistics["Policy Loss"] = np.mean(ptu.get_numpy(policy_loss))
             self.eval_statistics.update(
+                create_stats_ordered_dict("Q1 Predictions", ptu.get_numpy(q1_pred),)
+            )
+            self.eval_statistics.update(
+                create_stats_ordered_dict("Q2 Predictions", ptu.get_numpy(q2_pred),)
+            )
+            self.eval_statistics.update(
+                create_stats_ordered_dict("Q Targets", ptu.get_numpy(q_target),)
+            )
+            self.eval_statistics.update(
                 create_stats_ordered_dict(
-                    "Q1 Predictions",
-                    ptu.get_numpy(q1_pred),
+                    "Bellman Errors 1", ptu.get_numpy(bellman_errors_1),
                 )
             )
             self.eval_statistics.update(
                 create_stats_ordered_dict(
-                    "Q2 Predictions",
-                    ptu.get_numpy(q2_pred),
+                    "Bellman Errors 2", ptu.get_numpy(bellman_errors_2),
                 )
             )
             self.eval_statistics.update(
                 create_stats_ordered_dict(
-                    "Q Targets",
-                    ptu.get_numpy(q_target),
-                )
-            )
-            self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Bellman Errors 1",
-                    ptu.get_numpy(bellman_errors_1),
-                )
-            )
-            self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Bellman Errors 2",
-                    ptu.get_numpy(bellman_errors_2),
-                )
-            )
-            self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Policy Action",
-                    ptu.get_numpy(policy_actions),
+                    "Policy Action", ptu.get_numpy(policy_actions),
                 )
             )
         self._n_train_steps_total += 1

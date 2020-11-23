@@ -166,11 +166,7 @@ class ConvVAETrainer(object):
 
         self.lr = lr
         params = list(self.model.parameters())
-        self.optimizer = optim.Adam(
-            params,
-            lr=self.lr,
-            weight_decay=weight_decay,
-        )
+        self.optimizer = optim.Adam(params, lr=self.lr, weight_decay=weight_decay,)
         self.train_dataset, self.test_dataset = train_dataset, test_dataset
         assert self.train_dataset.dtype == np.uint8
         assert self.test_dataset.dtype == np.uint8
@@ -301,11 +297,7 @@ class ConvVAETrainer(object):
             skew = self.start_skew_epoch < epoch
         if train and self.skew_dataset and skew:
             probs = self._train_weights / np.sum(self._train_weights)
-            ind = np.random.choice(
-                len(probs),
-                self.batch_size,
-                p=probs,
-            )
+            ind = np.random.choice(len(probs), self.batch_size, p=probs,)
         else:
             ind = np.random.randint(0, len(dataset), self.batch_size)
         samples = normalize_image(dataset[ind, :])
@@ -388,11 +380,7 @@ class ConvVAETrainer(object):
         return self.eval_statistics
 
     def test_epoch(
-        self,
-        epoch,
-        save_reconstruction=True,
-        save_vae=True,
-        from_rl=False,
+        self, epoch, save_reconstruction=True, save_vae=True, from_rl=False,
     ):
         self.model.eval()
         losses = []
@@ -476,13 +464,11 @@ class ConvVAETrainer(object):
         random_mses = (random_imgs - img_repeated) ** 2
         mse_improvement = ptu.get_numpy(random_mses.mean(dim=1) - recon_mse)
         stats = create_stats_ordered_dict(
-            "debug/MSE improvement over random",
-            mse_improvement,
+            "debug/MSE improvement over random", mse_improvement,
         )
         stats.update(
             create_stats_ordered_dict(
-                "debug/MSE of random decoding",
-                ptu.get_numpy(random_mses),
+                "debug/MSE of random decoding", ptu.get_numpy(random_mses),
             )
         )
         stats["debug/MSE of reconstruction"] = ptu.get_numpy(recon_mse)[0]
@@ -521,9 +507,7 @@ class ConvVAETrainer(object):
         all_imgs = torch.stack(imgs + recons)
         save_file = osp.join(logger.get_snapshot_dir(), filename)
         save_image(
-            all_imgs.data,
-            save_file,
-            nrow=len(idxs),
+            all_imgs.data, save_file, nrow=len(idxs),
         )
 
     def log_loss_under_uniform(self, model, data, priority_function_kwargs):
@@ -602,7 +586,5 @@ class ConvVAETrainer(object):
         all_imgs = torch.stack(imgs + recons)
         save_file = osp.join(logger.get_snapshot_dir(), filename)
         save_image(
-            all_imgs.data,
-            save_file,
-            nrow=4,
+            all_imgs.data, save_file, nrow=4,
         )

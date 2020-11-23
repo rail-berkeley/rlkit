@@ -40,10 +40,7 @@ CODE_DIRS_TO_MOUNT = [
 HOME = os.getenv("HOME") if os.getenv("HOME") is not None else os.getenv("USERPROFILE")
 
 DIR_AND_MOUNT_POINT_MAPPINGS = [
-    dict(
-        local_dir=join(HOME, ".mujoco/"),
-        mount_point="/root/.mujoco",
-    ),
+    dict(local_dir=join(HOME, ".mujoco/"), mount_point="/root/.mujoco",),
 ]
 RUN_DOODAD_EXPERIMENT_SCRIPT_PATH = (
     join(rlkit_project_dir, "scripts", "run_experiment_from_doodad.py")
@@ -87,18 +84,10 @@ SINGULARITY_PRE_CMDS = [
     "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:$HOME/.mujoco/mjpro150/bin"
 ]
 SLURM_CPU_CONFIG = dict(
-    account_name="TODO",
-    partition="savio",
-    nodes=1,
-    n_tasks=1,
-    n_gpus=1,
+    account_name="TODO", partition="savio", nodes=1, n_tasks=1, n_gpus=1,
 )
 SLURM_GPU_CONFIG = dict(
-    account_name="TODO",
-    partition="savio2_1080ti",
-    nodes=1,
-    n_tasks=1,
-    n_gpus=1,
+    account_name="TODO", partition="savio2_1080ti", nodes=1, n_tasks=1, n_gpus=1,
 )
 
 
@@ -110,10 +99,7 @@ where you will be running the generated script.
 """
 SSS_CODE_DIRS_TO_MOUNT = []
 SSS_DIR_AND_MOUNT_POINT_MAPPINGS = [
-    dict(
-        local_dir="/global/home/users/USERNAME/.mujoco",
-        mount_point="/root/.mujoco",
-    ),
+    dict(local_dir="/global/home/users/USERNAME/.mujoco", mount_point="/root/.mujoco",),
 ]
 SSS_LOG_DIR = "/global/scratch/USERNAME/doodad-log"
 
@@ -139,10 +125,7 @@ GCP_DEFAULT_KWARGS = dict(
     image_project="TODO",
     terminate=True,
     preemptible=True,
-    gpu_kwargs=dict(
-        gpu_model="nvidia-tesla-p4",
-        num_gpu=1,
-    ),
+    gpu_kwargs=dict(gpu_model="nvidia-tesla-p4", num_gpu=1,),
 )
 
 try:

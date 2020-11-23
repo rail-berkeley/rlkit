@@ -159,12 +159,7 @@ def collect_one_rollout(
 
 
 def collect_one_rollout_mdp(
-    env,
-    expert,
-    horizon=200,
-    render=False,
-    pause=0,
-    threshold=-1,
+    env, expert, horizon=200, render=False, pause=0, threshold=-1,
 ):
     o = env.reset()
 
@@ -334,19 +329,11 @@ def collect_one_rollout_goal_conditioned(
         # accept = False
         # return accept, traj
     if render:
-        img = img.reshape(
-            3,
-            env.imsize,
-            env.imsize,
-        ).transpose()[::-1]
+        img = img.reshape(3, env.imsize, env.imsize,).transpose()[::-1]
         cv2.imshow("env", img)
         cv2.waitKey(1)
 
-        img = img_goal.reshape(
-            3,
-            env.imsize,
-            env.imsize,
-        ).transpose()[::-1]
+        img = img_goal.reshape(3, env.imsize, env.imsize,).transpose()[::-1]
         cv2.imshow("goal_env", img)
         cv2.waitKey(1)
     if threshold == -1:

@@ -116,12 +116,8 @@ if __name__ == "__main__":
             fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
             fraction_goals_env_goals=0,
         ),
-        qf_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        policy_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
+        qf_kwargs=dict(hidden_sizes=[400, 300],),
+        policy_kwargs=dict(hidden_sizes=[400, 300],),
     )
     setup_logger("her-sac-fetch-experiment", variant=variant)
     experiment(variant)

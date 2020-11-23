@@ -67,20 +67,12 @@ def experiment(variant):
         raise EnvironmentError("invalid env provided")
 
     env_fns = [
-        lambda: make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
-        )
+        lambda: make_env(env_class=env_class_, env_kwargs=variant["env_kwargs"],)
         for _ in range(variant["num_expl_envs"])
     ]
     expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
 
-    eval_envs = [
-        make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
-        )
-    ]
+    eval_envs = [make_env(env_class=env_class_, env_kwargs=variant["env_kwargs"],)]
 
     eval_env = DummyVecEnv(eval_envs)
     max_path_length = eval_envs[0].max_steps
@@ -104,10 +96,7 @@ def experiment(variant):
     else:
         world_model_class = WorldModel
 
-    world_model = world_model_class(
-        action_dim,
-        **variant["model_kwargs"],
-    )
+    world_model = world_model_class(action_dim, **variant["model_kwargs"],)
     actor = ActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         variant["model_kwargs"]["stochastic_state_size"]

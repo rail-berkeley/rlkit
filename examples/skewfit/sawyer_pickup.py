@@ -23,23 +23,12 @@ if __name__ == "__main__":
             save_video_period=50,
             presample_goals=True,
             custom_goal_sampler="replay_buffer",
-            online_vae_trainer_kwargs=dict(
-                beta=30,
-                lr=1e-3,
-            ),
+            online_vae_trainer_kwargs=dict(beta=30, lr=1e-3,),
             generate_goal_dataset_fctn=get_image_presampled_goals_from_vae_env,
-            goal_generation_kwargs=dict(
-                num_presampled_goals=500,
-            ),
-            qf_kwargs=dict(
-                hidden_sizes=[400, 300],
-            ),
-            policy_kwargs=dict(
-                hidden_sizes=[400, 300],
-            ),
-            vf_kwargs=dict(
-                hidden_sizes=[400, 300],
-            ),
+            goal_generation_kwargs=dict(num_presampled_goals=500,),
+            qf_kwargs=dict(hidden_sizes=[400, 300],),
+            policy_kwargs=dict(hidden_sizes=[400, 300],),
+            vf_kwargs=dict(hidden_sizes=[400, 300],),
             max_path_length=50,
             algo_kwargs=dict(
                 batch_size=1024,
@@ -83,14 +72,10 @@ if __name__ == "__main__":
             exploration_type="ou",
             training_mode="train",
             testing_mode="test",
-            reward_params=dict(
-                type="latent_distance",
-            ),
+            reward_params=dict(type="latent_distance",),
             observation_key="latent_observation",
             desired_goal_key="latent_desired_goal",
-            vae_wrapped_env_kwargs=dict(
-                sample_from_true_prior=False,
-            ),
+            vae_wrapped_env_kwargs=dict(sample_from_true_prior=False,),
         ),
         train_vae_variant=dict(
             representation_size=16,
@@ -115,10 +100,7 @@ if __name__ == "__main__":
                 is_auto_encoder=False,
                 batch_size=64,
                 lr=1e-3,
-                skew_config=dict(
-                    method="vae_prob",
-                    power=0,
-                ),
+                skew_config=dict(method="vae_prob", power=0,),
                 skew_dataset=True,
                 priority_function_kwargs=dict(
                     decoder_distribution="gaussian_identity_variance",
@@ -134,8 +116,7 @@ if __name__ == "__main__":
 
     search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
+        search_space, default_parameters=variant,
     )
 
     n_seeds = 1
@@ -159,7 +140,5 @@ if __name__ == "__main__":
                 snapshot_gap=200,
                 snapshot_mode="gap_and_last",
                 num_exps_per_instance=3,
-                gcp_kwargs=dict(
-                    zone="us-west1-b",
-                ),
+                gcp_kwargs=dict(zone="us-west1-b",),
             )

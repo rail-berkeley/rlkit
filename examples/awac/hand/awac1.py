@@ -18,19 +18,13 @@ if __name__ == "__main__":
         replay_buffer_size=int(1e6),
         policy_class=GaussianPolicy,
         policy_kwargs=dict(
-            hidden_sizes=[
-                256,
-                256,
-            ],
+            hidden_sizes=[256, 256,],
             max_log_std=0,
             min_log_std=-6,
             std_architecture="values",
         ),
         qf_kwargs=dict(
-            hidden_sizes=[
-                256,
-                256,
-            ],
+            hidden_sizes=[256, 256,],
             output_activation=Clamp(max=0),  # rewards are <= 0
         ),
         version="normal",
@@ -61,10 +55,7 @@ if __name__ == "__main__":
             reward_transform_kwargs=None,
             terminal_transform_kwargs=dict(m=0, b=0),
         ),
-        launcher_config=dict(
-            num_exps_per_instance=1,
-            region="us-west-2",
-        ),
+        launcher_config=dict(num_exps_per_instance=1, region="us-west-2",),
         path_loader_class=DictToMDPPathLoader,
         path_loader_kwargs=dict(
             obs_key="state_observation",
@@ -86,25 +77,14 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_id": [
-            "pen-binary-v0",
-            "door-binary-v0",
-            "relocate-binary-v0",
-        ],
-        "trainer_kwargs.beta": [
-            0.5,
-        ],
-        "trainer_kwargs.clip_score": [
-            0.5,
-        ],
-        "trainer_kwargs.awr_use_mle_for_vf": [
-            True,
-        ],
+        "env_id": ["pen-binary-v0", "door-binary-v0", "relocate-binary-v0",],
+        "trainer_kwargs.beta": [0.5,],
+        "trainer_kwargs.clip_score": [0.5,],
+        "trainer_kwargs.awr_use_mle_for_vf": [True,],
     }
 
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
+        search_space, default_parameters=variant,
     )
 
     # n_seeds = 1
@@ -128,9 +108,7 @@ if __name__ == "__main__":
                 snapshot_gap=200,
                 snapshot_mode="gap_and_last",
                 num_exps_per_instance=3,
-                gcp_kwargs=dict(
-                    zone="us-west1-b",
-                ),
+                gcp_kwargs=dict(zone="us-west1-b",),
             )
 
     # variants = []

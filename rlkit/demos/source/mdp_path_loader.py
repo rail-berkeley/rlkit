@@ -86,10 +86,7 @@ class MDPPathLoader:
             env_info = path["env_infos"][i]
 
             if self.recompute_reward:
-                reward = self.env.compute_reward(
-                    action,
-                    next_ob,
-                )
+                reward = self.env.compute_reward(action, next_ob,)
 
             reward = np.array([reward])
             rewards.append(reward)
@@ -107,9 +104,7 @@ class MDPPathLoader:
         path = path_builder.get_all_stacked()
         replay_buffer.add_path(path)
 
-    def load_demos(
-        self,
-    ):
+    def load_demos(self,):
         # Off policy
         if type(self.demo_off_policy_path) is list:
             for demo_pattern in self.demo_off_policy_path:

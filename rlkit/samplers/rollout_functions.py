@@ -149,11 +149,7 @@ def rollout(
 
 
 def deprecated_rollout(
-    env,
-    agent,
-    max_path_length=np.inf,
-    render=False,
-    render_kwargs=None,
+    env, agent, max_path_length=np.inf, render=False, render_kwargs=None,
 ):
     """
     The following value for the following keys will be a 2D array, with the

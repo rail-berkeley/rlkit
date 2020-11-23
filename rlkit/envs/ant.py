@@ -11,9 +11,7 @@ class AntEnv(MujocoEnv):
         else:
             xml_path = "normal_gear_ratio_ant.xml"
         super().__init__(
-            xml_path,
-            frame_skip=5,
-            automatically_set_obs_and_action_space=True,
+            xml_path, frame_skip=5, automatically_set_obs_and_action_space=True,
         )
 
     def step(self, a):
@@ -46,12 +44,7 @@ class AntEnv(MujocoEnv):
         )
 
     def _get_obs(self):
-        return np.concatenate(
-            [
-                self.sim.data.qpos.flat[2:],
-                self.sim.data.qvel.flat,
-            ]
-        )
+        return np.concatenate([self.sim.data.qpos.flat[2:], self.sim.data.qvel.flat,])
 
     def reset_model(self):
         qpos = self.init_qpos + self.np_random.uniform(

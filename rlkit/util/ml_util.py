@@ -27,10 +27,7 @@ class LinearSchedule(ScalarSchedule):
     """
 
     def __init__(
-        self,
-        init_value,
-        final_value,
-        ramp_duration,
+        self, init_value, final_value, ramp_duration,
     ):
         self._init_value = init_value
         self._final_value = final_value
@@ -58,9 +55,7 @@ class PiecewiseLinearSchedule(ScalarSchedule):
     """
 
     def __init__(
-        self,
-        x_values,
-        y_values,
+        self, x_values, y_values,
     ):
         self._x_values = x_values
         self._y_values = y_values

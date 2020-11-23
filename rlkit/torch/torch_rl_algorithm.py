@@ -40,11 +40,7 @@ class TorchTrainer(Trainer, metaclass=abc.ABCMeta):
         self.train_from_torch(batch)
 
     def get_diagnostics(self):
-        return OrderedDict(
-            [
-                ("num train calls", self._num_train_steps),
-            ]
-        )
+        return OrderedDict([("num train calls", self._num_train_steps),])
 
     @abc.abstractmethod
     def train_from_torch(self, batch):

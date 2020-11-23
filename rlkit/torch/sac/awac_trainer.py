@@ -106,10 +106,7 @@ class AWACTrainer(TorchTrainer):
                     self.env.action_space.shape
                 ).item()  # heuristic value from Tuomas
             self.log_alpha = ptu.zeros(1, requires_grad=True)
-            self.alpha_optimizer = optimizer_class(
-                [self.log_alpha],
-                lr=policy_lr,
-            )
+            self.alpha_optimizer = optimizer_class([self.log_alpha], lr=policy_lr,)
 
         self.awr_use_mle_for_vf = awr_use_mle_for_vf
         self.vf_K = vf_K
@@ -125,20 +122,14 @@ class AWACTrainer(TorchTrainer):
         self.optimizers = {}
 
         self.policy_optimizer = optimizer_class(
-            self.policy.parameters(),
-            weight_decay=policy_weight_decay,
-            lr=policy_lr,
+            self.policy.parameters(), weight_decay=policy_weight_decay, lr=policy_lr,
         )
         self.optimizers[self.policy] = self.policy_optimizer
         self.qf1_optimizer = optimizer_class(
-            self.qf1.parameters(),
-            weight_decay=q_weight_decay,
-            lr=qf_lr,
+            self.qf1.parameters(), weight_decay=q_weight_decay, lr=qf_lr,
         )
         self.qf2_optimizer = optimizer_class(
-            self.qf2.parameters(),
-            weight_decay=q_weight_decay,
-            lr=qf_lr,
+            self.qf2.parameters(), weight_decay=q_weight_decay, lr=qf_lr,
         )
 
         if buffer_policy and train_bc_on_rl_buffer:
@@ -158,10 +149,7 @@ class AWACTrainer(TorchTrainer):
         self.beta_epsilon = beta_epsilon
         if self.use_automatic_beta_tuning:
             self.log_beta = ptu.zeros(1, requires_grad=True)
-            self.beta_optimizer = optimizer_class(
-                [self.log_beta],
-                lr=policy_lr,
-            )
+            self.beta_optimizer = optimizer_class([self.log_beta], lr=policy_lr,)
         else:
             self.beta = beta
             self.beta_schedule_kwargs = beta_schedule_kwargs
@@ -246,29 +234,20 @@ class AWACTrainer(TorchTrainer):
         mse = (pred_u - u) ** 2
         mse_loss = mse.mean()
 
-        policy_logpp = dist.log_prob(
-            u,
-        )
+        policy_logpp = dist.log_prob(u,)
         logp_loss = -policy_logpp.mean()
         policy_loss = logp_loss
 
         return policy_loss, logp_loss, mse_loss, stats
 
     def pretrain_policy_with_bc(
-        self,
-        policy,
-        train_buffer,
-        test_buffer,
-        steps,
-        label="policy",
+        self, policy, train_buffer, test_buffer, steps, label="policy",
     ):
         logger.remove_tabular_output(
-            "progress.csv",
-            relative_to_snapshot_dir=True,
+            "progress.csv", relative_to_snapshot_dir=True,
         )
         logger.add_tabular_output(
-            "pretrain_%s.csv" % label,
-            relative_to_snapshot_dir=True,
+            "pretrain_%s.csv" % label, relative_to_snapshot_dir=True,
         )
 
         optimizer = self.optimizers[policy]
@@ -315,12 +294,10 @@ class AWACTrainer(TorchTrainer):
                 prev_time = time.time()
 
         logger.remove_tabular_output(
-            "pretrain_%s.csv" % label,
-            relative_to_snapshot_dir=True,
+            "pretrain_%s.csv" % label, relative_to_snapshot_dir=True,
         )
         logger.add_tabular_output(
-            "progress.csv",
-            relative_to_snapshot_dir=True,
+            "progress.csv", relative_to_snapshot_dir=True,
         )
 
         if self.post_bc_pretrain_hyperparams:
@@ -377,12 +354,10 @@ class AWACTrainer(TorchTrainer):
                 prev_time = time.time()
 
         logger.remove_tabular_output(
-            "pretrain_q.csv",
-            relative_to_snapshot_dir=True,
+            "pretrain_q.csv", relative_to_snapshot_dir=True,
         )
         logger.add_tabular_output(
-            "progress.csv",
-            relative_to_snapshot_dir=True,
+            "progress.csv", relative_to_snapshot_dir=True,
         )
 
         self._need_to_update_eval_statistics = True
@@ -446,10 +421,7 @@ class AWACTrainer(TorchTrainer):
 
         qf1_new_actions = self.qf1(obs, new_obs_actions)
         qf2_new_actions = self.qf2(obs, new_obs_actions)
-        q_new_actions = torch.min(
-            qf1_new_actions,
-            qf2_new_actions,
-        )
+        q_new_actions = torch.min(qf1_new_actions, qf2_new_actions,)
 
         policy_loss = (log_pi - q_new_actions).mean()
 
@@ -460,36 +432,25 @@ class AWACTrainer(TorchTrainer):
         )
         self.eval_statistics.update(
             create_stats_ordered_dict(
-                "validation/Q1 Predictions",
-                ptu.get_numpy(q1_pred),
+                "validation/Q1 Predictions", ptu.get_numpy(q1_pred),
             )
         )
         self.eval_statistics.update(
             create_stats_ordered_dict(
-                "validation/Q2 Predictions",
-                ptu.get_numpy(q2_pred),
+                "validation/Q2 Predictions", ptu.get_numpy(q2_pred),
             )
         )
         self.eval_statistics.update(
-            create_stats_ordered_dict(
-                "validation/Q Targets",
-                ptu.get_numpy(q_target),
-            )
+            create_stats_ordered_dict("validation/Q Targets", ptu.get_numpy(q_target),)
         )
         self.eval_statistics.update(
-            create_stats_ordered_dict(
-                "validation/Log Pis",
-                ptu.get_numpy(log_pi),
-            )
+            create_stats_ordered_dict("validation/Log Pis", ptu.get_numpy(log_pi),)
         )
         policy_statistics = add_prefix(dist.get_diagnostics(), "validation/policy/")
         self.eval_statistics.update(policy_statistics)
 
     def train_from_torch(
-        self,
-        batch,
-        train=True,
-        pretrain=False,
+        self, batch, train=True, pretrain=False,
     ):
         rewards = batch["rewards"]
         terminals = batch["terminals"]
@@ -554,10 +515,7 @@ class AWACTrainer(TorchTrainer):
         """
         qf1_new_actions = self.qf1(obs, new_obs_actions)
         qf2_new_actions = self.qf2(obs, new_obs_actions)
-        q_new_actions = torch.min(
-            qf1_new_actions,
-            qf2_new_actions,
-        )
+        q_new_actions = torch.min(qf1_new_actions, qf2_new_actions,)
 
         # Advantage-weighted regression
         if self.awr_use_mle_for_vf:
@@ -592,10 +550,7 @@ class AWACTrainer(TorchTrainer):
             u, _ = buf_dist.rsample_and_logprob()
             qf1_buffer_actions = self.qf1(obs, u)
             qf2_buffer_actions = self.qf2(obs, u)
-            q_buffer_actions = torch.min(
-                qf1_buffer_actions,
-                qf2_buffer_actions,
-            )
+            q_buffer_actions = torch.min(qf1_buffer_actions, qf2_buffer_actions,)
             if self.awr_min_q:
                 q_adv = q_buffer_actions
             else:
@@ -642,15 +597,9 @@ class AWACTrainer(TorchTrainer):
                 log_pis.append(log_pi)
             buffer_obs = torch.cat(buffer_obs, 0)
             buffer_actions = torch.cat(buffer_actions, 0)
-            p_buffer = torch.exp(
-                torch.cat(log_bs, 0).sum(
-                    dim=1,
-                )
-            )
+            p_buffer = torch.exp(torch.cat(log_bs, 0).sum(dim=1,))
             log_pi = torch.cat(log_pis, 0)
-            log_pi = log_pi.sum(
-                dim=1,
-            )
+            log_pi = log_pi.sum(dim=1,)
             q1_b = self.qf1(buffer_obs, buffer_actions)
             q2_b = self.qf2(buffer_obs, buffer_actions)
             q_b = torch.min(q1_b, q2_b)
@@ -851,62 +800,35 @@ class AWACTrainer(TorchTrainer):
             self.eval_statistics["QF2 Loss"] = np.mean(ptu.get_numpy(qf2_loss))
             self.eval_statistics["Policy Loss"] = np.mean(ptu.get_numpy(policy_loss))
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Q1 Predictions",
-                    ptu.get_numpy(q1_pred),
-                )
+                create_stats_ordered_dict("Q1 Predictions", ptu.get_numpy(q1_pred),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Q2 Predictions",
-                    ptu.get_numpy(q2_pred),
-                )
+                create_stats_ordered_dict("Q2 Predictions", ptu.get_numpy(q2_pred),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Q Targets",
-                    ptu.get_numpy(q_target),
-                )
+                create_stats_ordered_dict("Q Targets", ptu.get_numpy(q_target),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Log Pis",
-                    ptu.get_numpy(log_pi),
-                )
+                create_stats_ordered_dict("Log Pis", ptu.get_numpy(log_pi),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "rewards",
-                    ptu.get_numpy(rewards),
-                )
+                create_stats_ordered_dict("rewards", ptu.get_numpy(rewards),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "terminals",
-                    ptu.get_numpy(terminals),
-                )
+                create_stats_ordered_dict("terminals", ptu.get_numpy(terminals),)
             )
             policy_statistics = add_prefix(dist.get_diagnostics(), "policy/")
             self.eval_statistics.update(policy_statistics)
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Advantage Weights",
-                    ptu.get_numpy(weights),
-                )
+                create_stats_ordered_dict("Advantage Weights", ptu.get_numpy(weights),)
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict(
-                    "Advantage Score",
-                    ptu.get_numpy(score),
-                )
+                create_stats_ordered_dict("Advantage Score", ptu.get_numpy(score),)
             )
 
             if self.normalize_over_state == "Z":
                 self.eval_statistics.update(
-                    create_stats_ordered_dict(
-                        "logZ",
-                        ptu.get_numpy(logZ),
-                    )
+                    create_stats_ordered_dict("logZ", ptu.get_numpy(logZ),)
                 )
 
             if self.use_automatic_entropy_tuning:

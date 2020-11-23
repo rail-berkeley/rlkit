@@ -108,10 +108,7 @@ def experiment(variant):
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
 
-    world_model = WorldModel(
-        action_dim,
-        **variant["model_kwargs"],
-    )
+    world_model = WorldModel(action_dim, **variant["model_kwargs"],)
     actor = ActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         variant["model_kwargs"]["stochastic_state_size"]

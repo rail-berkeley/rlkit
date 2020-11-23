@@ -23,40 +23,22 @@ def experiment(variant):
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.n
 
-    qf = Mlp(
-        hidden_sizes=[32, 32],
-        input_size=obs_dim,
-        output_size=action_dim,
-    )
-    target_qf = Mlp(
-        hidden_sizes=[32, 32],
-        input_size=obs_dim,
-        output_size=action_dim,
-    )
+    qf = Mlp(hidden_sizes=[32, 32], input_size=obs_dim, output_size=action_dim,)
+    target_qf = Mlp(hidden_sizes=[32, 32], input_size=obs_dim, output_size=action_dim,)
     qf_criterion = nn.MSELoss()
     eval_policy = ArgmaxDiscretePolicy(qf)
     expl_policy = PolicyWrappedWithExplorationStrategy(
-        EpsilonGreedy(expl_env.action_space),
-        eval_policy,
+        EpsilonGreedy(expl_env.action_space), eval_policy,
     )
-    eval_path_collector = MdpPathCollector(
-        eval_env,
-        eval_policy,
-    )
-    expl_path_collector = MdpPathCollector(
-        expl_env,
-        expl_policy,
-    )
+    eval_path_collector = MdpPathCollector(eval_env, eval_policy,)
+    expl_path_collector = MdpPathCollector(expl_env, expl_policy,)
     trainer = DQNTrainer(
         qf=qf,
         target_qf=target_qf,
         qf_criterion=qf_criterion,
         **variant["trainer_kwargs"]
     )
-    replay_buffer = EnvReplayBuffer(
-        variant["replay_buffer_size"],
-        expl_env,
-    )
+    replay_buffer = EnvReplayBuffer(variant["replay_buffer_size"], expl_env,)
     algorithm = TorchBatchRLAlgorithm(
         trainer=trainer,
         exploration_env=expl_env,
@@ -86,10 +68,7 @@ if __name__ == "__main__":
             max_path_length=1000,
             batch_size=256,
         ),
-        trainer_kwargs=dict(
-            discount=0.99,
-            learning_rate=3e-4,
-        ),
+        trainer_kwargs=dict(discount=0.99, learning_rate=3e-4,),
     )
     setup_logger("name-of-experiment", variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)

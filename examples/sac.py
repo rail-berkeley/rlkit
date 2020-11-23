@@ -19,43 +19,24 @@ def experiment(variant):
 
     M = variant["layer_size"]
     qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
     )
     qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
     )
     target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
     )
     target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
     )
     policy = TanhGaussianPolicy(
-        obs_dim=obs_dim,
-        action_dim=action_dim,
-        hidden_sizes=[M, M],
+        obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=[M, M],
     )
     eval_policy = MakeDeterministic(policy)
-    eval_path_collector = MdpPathCollector(
-        eval_env,
-        eval_policy,
-    )
-    expl_path_collector = MdpPathCollector(
-        expl_env,
-        policy,
-    )
-    replay_buffer = EnvReplayBuffer(
-        variant["replay_buffer_size"],
-        expl_env,
-    )
+    eval_path_collector = MdpPathCollector(eval_env, eval_policy,)
+    expl_path_collector = MdpPathCollector(expl_env, policy,)
+    replay_buffer = EnvReplayBuffer(variant["replay_buffer_size"], expl_env,)
     trainer = SACTrainer(
         env=eval_env,
         policy=policy,

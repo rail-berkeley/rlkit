@@ -19,13 +19,7 @@ from rlkit.launchers import conf
 
 GitInfo = namedtuple(
     "GitInfo",
-    [
-        "directory",
-        "code_diff",
-        "code_diff_staged",
-        "commit_hash",
-        "branch_name",
-    ],
+    ["directory", "code_diff", "code_diff_staged", "commit_hash", "branch_name",],
 )
 
 
@@ -181,11 +175,7 @@ def create_exp_name(exp_prefix, exp_id=0, seed=0):
 
 
 def create_log_dir(
-    exp_prefix,
-    exp_id=0,
-    seed=0,
-    base_log_dir=None,
-    include_exp_prefix_sub_dir=True,
+    exp_prefix, exp_id=0, seed=0, base_log_dir=None, include_exp_prefix_sub_dir=True,
 ):
     """
     Creates and returns a unique log directory.
@@ -637,9 +627,7 @@ def run_experiment(
         if region == "us-east-1":
             avail_zone = conf.REGION_TO_GPU_AWS_AVAIL_ZONE.get(region, "us-east-1b")
             mode_kwargs["extra_ec2_instance_kwargs"] = dict(
-                Placement=dict(
-                    AvailabilityZone=avail_zone,
-                ),
+                Placement=dict(AvailabilityZone=avail_zone,),
             )
     else:
         image_id = None
@@ -654,11 +642,7 @@ def run_experiment(
     if mode == "local":
         dmode = doodad.mode.Local(skip_wait=skip_wait)
     elif mode == "local_docker":
-        dmode = doodad.mode.LocalDocker(
-            image=docker_image,
-            gpu=use_gpu,
-            gpu_id=gpu_id,
-        )
+        dmode = doodad.mode.LocalDocker(image=docker_image, gpu=use_gpu, gpu_id=gpu_id,)
     elif mode == "ssh":
         if ssh_host == None:
             ssh_dict = conf.SSH_HOSTS[conf.SSH_DEFAULT_HOST]
@@ -670,9 +654,7 @@ def run_experiment(
             identity_file=conf.SSH_PRIVATE_KEY,
         )
         dmode = doodad.mode.SSHDocker(
-            credentials=credentials,
-            image=docker_image,
-            gpu=use_gpu,
+            credentials=credentials, image=docker_image, gpu=use_gpu,
         )
     elif mode == "local_singularity":
         dmode = doodad.mode.LocalSingularity(
@@ -689,9 +671,7 @@ def run_experiment(
             slurm_config = conf.SLURM_CPU_CONFIG
         if mode == "slurm_singularity_matrix":
             logdir = create_log_dir(
-                exp_prefix=exp_prefix,
-                base_log_dir=base_log_dir,
-                seed=seed,
+                exp_prefix=exp_prefix, base_log_dir=base_log_dir, seed=seed,
             )
             dmode = doodad.mode.SlurmSingularityMatrix(
                 image=singularity_image,
@@ -841,10 +821,7 @@ def run_experiment(
 
 
 def create_mounts(
-    mode,
-    base_log_dir,
-    sync_interval=180,
-    local_input_dir_to_mount_point_dict=None,
+    mode, base_log_dir, sync_interval=180, local_input_dir_to_mount_point_dict=None,
 ):
     if mode == "sss":
         code_mounts = SSS_CODE_MOUNTS
@@ -861,11 +838,7 @@ def create_mounts(
     mounts = [m for m in code_mounts]
     for dir, mount_point in local_input_dir_to_mount_point_dict.items():
         mounts.append(
-            mount.MountLocal(
-                local_dir=dir,
-                mount_point=mount_point,
-                pythonpath=False,
-            )
+            mount.MountLocal(local_dir=dir, mount_point=mount_point, pythonpath=False,)
         )
 
     if mode != "local":
@@ -925,9 +898,7 @@ def create_mounts(
     ]:
         # To save directly to local files (singularity does this), skip mounting
         output_mount = mount.MountLocal(
-            local_dir=base_log_dir,
-            mount_point=None,
-            output=True,
+            local_dir=base_log_dir, mount_point=None, output=True,
         )
     elif mode == "local_docker":
         output_mount = mount.MountLocal(

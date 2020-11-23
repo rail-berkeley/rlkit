@@ -99,11 +99,7 @@ def generate_vae_dataset_from_params(
             env = env_class(**vae_dataset_specific_env_kwargs)
         if not isinstance(env, ImageEnv):
             env = ImageEnv(
-                env,
-                imsize,
-                init_camera=init_camera,
-                transpose=True,
-                normalize=True,
+                env, imsize, init_camera=init_camera, transpose=True, normalize=True,
             )
         setup_pickup_image_env(env, num_presampled_goals=N)
         env.reset()

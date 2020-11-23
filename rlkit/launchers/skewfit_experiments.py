@@ -63,12 +63,10 @@ def train_vae_and_update_variant(variant):
             skewfit_variant["vae_test_data"] = vae_test_data
         logger.save_extra_data(vae, "vae.pkl", mode="pickle")
         logger.remove_tabular_output(
-            "vae_progress.csv",
-            relative_to_snapshot_dir=True,
+            "vae_progress.csv", relative_to_snapshot_dir=True,
         )
         logger.add_tabular_output(
-            "progress.csv",
-            relative_to_snapshot_dir=True,
+            "progress.csv", relative_to_snapshot_dir=True,
         )
         skewfit_variant["vae_path"] = vae  # just pass the VAE directly
     else:
@@ -259,10 +257,7 @@ def generate_vae_dataset(variant):
                         policy.reset()
                         for _ in range(n_random_steps):
                             policy_obs = np.hstack(
-                                (
-                                    obs["state_observation"],
-                                    obs["state_desired_goal"],
-                                )
+                                (obs["state_observation"], obs["state_desired_goal"],)
                             )
                             action, _ = policy.get_action(policy_obs)
                             obs, _, _, _ = env.step(action)
@@ -430,8 +425,7 @@ def get_exploration_strategy(variant, env):
         )
     elif exploration_type == "epsilon":
         es = EpsilonGreedy(
-            action_space=env.action_space,
-            prob_random_action=exploration_noise,
+            action_space=env.action_space, prob_random_action=exploration_noise,
         )
     else:
         raise Exception("Invalid type: " + exploration_type)
@@ -473,29 +467,19 @@ def skewfit_experiment(variant):
     action_dim = env.action_space.low.size
     hidden_sizes = variant.get("hidden_sizes", [400, 300])
     qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=hidden_sizes,
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=hidden_sizes,
     )
     qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=hidden_sizes,
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=hidden_sizes,
     )
     target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=hidden_sizes,
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=hidden_sizes,
     )
     target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim,
-        output_size=1,
-        hidden_sizes=hidden_sizes,
+        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=hidden_sizes,
     )
     policy = TanhGaussianPolicy(
-        obs_dim=obs_dim,
-        action_dim=action_dim,
-        hidden_sizes=hidden_sizes,
+        obs_dim=obs_dim, action_dim=action_dim, hidden_sizes=hidden_sizes,
     )
 
     vae = env.vae

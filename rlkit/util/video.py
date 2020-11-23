@@ -31,12 +31,7 @@ def dump_video(
     N = rows * columns
     for i in range(N):
         start = time.time()
-        path = rollout_function(
-            env,
-            policy,
-            max_path_length=horizon,
-            render=False,
-        )
+        path = rollout_function(env, policy, max_path_length=horizon, render=False,)
         is_vae_env = isinstance(env, VAEWrappedEnv)
         l = []
         for d in path["full_observations"]:

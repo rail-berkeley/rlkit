@@ -10,9 +10,7 @@ class StackObservationEnv(ProxyEnv):
     """
 
     def __init__(
-        self,
-        env,
-        stack_obs=1,
+        self, env, stack_obs=1,
     ):
         ProxyEnv.__init__(self, env)
         self.stack_obs = stack_obs
@@ -21,8 +19,7 @@ class StackObservationEnv(ProxyEnv):
         self.obs_dim = low.size
         self._last_obs = np.zeros((self.stack_obs, self.obs_dim))
         self.observation_space = Box(
-            low=np.repeat(low, stack_obs),
-            high=np.repeat(high, stack_obs),
+            low=np.repeat(low, stack_obs), high=np.repeat(high, stack_obs),
         )
 
     def reset(self):

@@ -36,22 +36,15 @@ def experiment(variant):
     goal_dim = expl_env.observation_space.spaces["desired_goal"].low.size
     action_dim = expl_env.action_space.n
     qf = ConcatMlp(
-        input_size=obs_dim + goal_dim,
-        output_size=action_dim,
-        hidden_sizes=[400, 300],
+        input_size=obs_dim + goal_dim, output_size=action_dim, hidden_sizes=[400, 300],
     )
     target_qf = ConcatMlp(
-        input_size=obs_dim + goal_dim,
-        output_size=action_dim,
-        hidden_sizes=[400, 300],
+        input_size=obs_dim + goal_dim, output_size=action_dim, hidden_sizes=[400, 300],
     )
     eval_policy = ArgmaxDiscretePolicy(qf)
-    exploration_strategy = EpsilonGreedy(
-        action_space=expl_env.action_space,
-    )
+    exploration_strategy = EpsilonGreedy(action_space=expl_env.action_space,)
     expl_policy = PolicyWrappedWithExplorationStrategy(
-        exploration_strategy=exploration_strategy,
-        policy=eval_policy,
+        exploration_strategy=exploration_strategy, policy=eval_policy,
     )
 
     replay_buffer = ObsDictRelabelingBuffer(
@@ -97,9 +90,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=1000,
             batch_size=128,
         ),
-        trainer_kwargs=dict(
-            discount=0.99,
-        ),
+        trainer_kwargs=dict(discount=0.99,),
         replay_buffer_kwargs=dict(
             max_size=100000,
             fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
