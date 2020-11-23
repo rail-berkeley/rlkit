@@ -280,6 +280,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
         terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
         actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
+        embed = torch.cat([embed[:, i, :] for i in range(embed.shape[1])])
         deter = torch.cat(
             [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
         )

@@ -116,11 +116,10 @@ class WorldModel(PyTorchModule):
 
     def forward_batch(
         self,
-        obs,
+        embed,
         action,
         state=None,
     ):
-        embed = self.encode(obs)
         post_params, prior_params = self.obs_step(state, action, embed)
         feat = self.get_feat(post_params)
         image_params = self.decode(feat)
@@ -132,7 +131,6 @@ class WorldModel(PyTorchModule):
             image_params,
             reward_params,
             pcont_params,
-            embed,
         )
 
     def forward(self, obs, action):
@@ -144,7 +142,18 @@ class WorldModel(PyTorchModule):
             dict(mean=[], std=[], stoch=[], deter=[]),
         )
         images, rewards, pconts, embeds = [], [], [], []
-
+        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
+        embed = self.encode(obs)
+        embedding_size = embed.shape[1]
+        embed = torch.cat(
+            [
+                embed[
+                    i * original_batch_size : (i + 1) * original_batch_size, :
+                ].reshape(original_batch_size, 1, embedding_size)
+                for i in range(path_length)
+            ],
+            dim=1,
+        )
         for i in range(path_length):
             (
                 post_params,
@@ -152,12 +161,10 @@ class WorldModel(PyTorchModule):
                 image_params,
                 reward_params,
                 pcont_params,
-                embed,
-            ) = self.forward_batch(obs[:, i], action[:, i], state)
+            ) = self.forward_batch(embed[:, i], action[:, i], state)
             images.append(image_params)
             rewards.append(reward_params)
             pconts.append(pcont_params)
-            embeds.append(embed)
             for k in post.keys():
                 post[k].append(post_params[k].unsqueeze(1))
 
@@ -168,7 +175,6 @@ class WorldModel(PyTorchModule):
         images = torch.cat(images)
         rewards = torch.cat(rewards)
         pconts = torch.cat(pconts)
-        embeds = torch.cat(embeds)
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
 
@@ -188,7 +194,7 @@ class WorldModel(PyTorchModule):
             image_dist,
             reward_dist,
             pcont_dist,
-            embeds,
+            embed,
         )
 
     def get_feat(self, state):
