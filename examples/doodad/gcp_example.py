@@ -57,7 +57,10 @@ if __name__ == "__main__":
     date_format = "%m/%d/%Y %H:%M:%S %Z"
     date = datetime.now(tz=pytz.utc)
     logger.log("start")
-    variant = dict(num_seconds=10, launch_time=str(date.strftime(date_format)),)
+    variant = dict(
+        num_seconds=10,
+        launch_time=str(date.strftime(date_format)),
+    )
     run_experiment(
         example,
         exp_prefix="gcp-test",

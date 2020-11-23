@@ -12,8 +12,16 @@ from rlkit.torch.vae.vae_base import GaussianLatentVAE
 ###### DEFAULT ARCHITECTURES #########
 
 imsize48_default_architecture = dict(
-    conv_args=dict(kernel_sizes=[5, 3, 3], n_channels=[16, 32, 64], strides=[3, 2, 2],),
-    conv_kwargs=dict(hidden_sizes=[], batch_norm_conv=False, batch_norm_fc=False,),
+    conv_args=dict(
+        kernel_sizes=[5, 3, 3],
+        n_channels=[16, 32, 64],
+        strides=[3, 2, 2],
+    ),
+    conv_kwargs=dict(
+        hidden_sizes=[],
+        batch_norm_conv=False,
+        batch_norm_fc=False,
+    ),
     deconv_args=dict(
         hidden_sizes=[],
         deconv_input_width=3,
@@ -26,12 +34,21 @@ imsize48_default_architecture = dict(
         n_channels=[32, 16],
         strides=[2, 2],
     ),
-    deconv_kwargs=dict(batch_norm_deconv=False, batch_norm_fc=False,),
+    deconv_kwargs=dict(
+        batch_norm_deconv=False,
+        batch_norm_fc=False,
+    ),
 )
 
 imsize48_default_architecture_with_more_hidden_layers = dict(
-    conv_args=dict(kernel_sizes=[5, 3, 3], n_channels=[16, 32, 64], strides=[3, 2, 2],),
-    conv_kwargs=dict(hidden_sizes=[500, 300, 150],),
+    conv_args=dict(
+        kernel_sizes=[5, 3, 3],
+        n_channels=[16, 32, 64],
+        strides=[3, 2, 2],
+    ),
+    conv_kwargs=dict(
+        hidden_sizes=[500, 300, 150],
+    ),
     deconv_args=dict(
         hidden_sizes=[150, 300, 500],
         deconv_input_width=3,
@@ -48,8 +65,16 @@ imsize48_default_architecture_with_more_hidden_layers = dict(
 )
 
 imsize84_default_architecture = dict(
-    conv_args=dict(kernel_sizes=[5, 5, 5], n_channels=[16, 32, 32], strides=[3, 3, 3],),
-    conv_kwargs=dict(hidden_sizes=[], batch_norm_conv=True, batch_norm_fc=False,),
+    conv_args=dict(
+        kernel_sizes=[5, 5, 5],
+        n_channels=[16, 32, 32],
+        strides=[3, 3, 3],
+    ),
+    conv_kwargs=dict(
+        hidden_sizes=[],
+        batch_norm_conv=True,
+        batch_norm_fc=False,
+    ),
     deconv_args=dict(
         hidden_sizes=[],
         deconv_input_width=2,
@@ -62,7 +87,10 @@ imsize84_default_architecture = dict(
         n_channels=[32, 16],
         strides=[3, 3],
     ),
-    deconv_kwargs=dict(batch_norm_deconv=False, batch_norm_fc=False,),
+    deconv_kwargs=dict(
+        batch_norm_deconv=False,
+        batch_norm_fc=False,
+    ),
 )
 
 
@@ -190,7 +218,10 @@ class ConvVAE(GaussianLatentVAE):
         elif self.decoder_distribution == "gaussian_identity_variance":
             return (
                 torch.clamp(decoded, 0, 1),
-                [torch.clamp(decoded, 0, 1), torch.ones_like(decoded),],
+                [
+                    torch.clamp(decoded, 0, 1),
+                    torch.ones_like(decoded),
+                ],
             )
         else:
             raise NotImplementedError(

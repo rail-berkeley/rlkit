@@ -125,7 +125,10 @@ class Bernoulli(Distribution, TorchBernoulli):
     def get_diagnostics(self):
         stats = OrderedDict()
         stats.update(
-            create_stats_ordered_dict("probability", ptu.get_numpy(self.probs),)
+            create_stats_ordered_dict(
+                "probability",
+                ptu.get_numpy(self.probs),
+            )
         )
         return stats
 
@@ -139,13 +142,22 @@ class Beta(Distribution, TorchBeta):
     def get_diagnostics(self):
         stats = OrderedDict()
         stats.update(
-            create_stats_ordered_dict("alpha", ptu.get_numpy(self.concentration0),)
+            create_stats_ordered_dict(
+                "alpha",
+                ptu.get_numpy(self.concentration0),
+            )
         )
         stats.update(
-            create_stats_ordered_dict("beta", ptu.get_numpy(self.concentration1),)
+            create_stats_ordered_dict(
+                "beta",
+                ptu.get_numpy(self.concentration1),
+            )
         )
         stats.update(
-            create_stats_ordered_dict("entropy", ptu.get_numpy(self.entropy()),)
+            create_stats_ordered_dict(
+                "entropy",
+                ptu.get_numpy(self.entropy()),
+            )
         )
         return stats
 
@@ -172,7 +184,10 @@ class MultivariateDiagonalNormal(TorchDistributionWrapper):
             )
         )
         stats.update(
-            create_stats_ordered_dict("std", ptu.get_numpy(self.distribution.stddev),)
+            create_stats_ordered_dict(
+                "std",
+                ptu.get_numpy(self.distribution.stddev),
+            )
         )
         return stats
 
@@ -210,7 +225,8 @@ class GaussianMixture(Distribution):
         self.categorical = OneHotCategorical(self.weights[:, :, 0])
 
     def log_prob(
-        self, value,
+        self,
+        value,
     ):
         log_p = [self.normals[i].log_prob(value) for i in range(self.num_gaussians)]
         log_p = torch.stack(log_p, -1)
@@ -274,7 +290,8 @@ class GaussianMixtureFull(Distribution):
         self.categorical = Categorical(self.weights)
 
     def log_prob(
-        self, value,
+        self,
+        value,
     ):
         log_p = [self.normals[i].log_prob(value) for i in range(self.num_gaussians)]
         log_p = torch.stack(log_p, -1)
@@ -431,13 +448,19 @@ class TanhNormal(Distribution):
 
     def get_diagnostics(self):
         stats = OrderedDict()
-        stats.update(create_stats_ordered_dict("mean", ptu.get_numpy(self.mean),))
+        stats.update(
+            create_stats_ordered_dict(
+                "mean",
+                ptu.get_numpy(self.mean),
+            )
+        )
         stats.update(
             create_stats_ordered_dict("normal/std", ptu.get_numpy(self.normal_std))
         )
         stats.update(
             create_stats_ordered_dict(
-                "normal/log_std", ptu.get_numpy(torch.log(self.normal_std)),
+                "normal/log_std",
+                ptu.get_numpy(torch.log(self.normal_std)),
             )
         )
         return stats

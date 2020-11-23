@@ -61,7 +61,9 @@ if __name__ == "__main__":
             target_screw_angle=0.05,
             target_screw_angle_tol=0.5,
         ),
-        actor_kwargs=dict(discrete_continuous_dist=False,),
+        actor_kwargs=dict(
+            discrete_continuous_dist=False,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
@@ -88,7 +90,8 @@ if __name__ == "__main__":
 
     search_space = {"env_kwargs.target_screw_angle": [0.05, 0.5, 1, 1.5]}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     num_gpus = torch.cuda.device_count()
@@ -96,7 +99,11 @@ if __name__ == "__main__":
         gpu_id = exp_id % num_gpus  # only matters for docker runs
         json_var = json.dumps(variant)
         cmd = "python experiments/runner.py --variant '{}' --exp_prefix {} --mode {} --num_seeds {} --gpu_id {}".format(
-            json_var, args.exp_prefix, args.mode, args.num_seeds, gpu_id,
+            json_var,
+            args.exp_prefix,
+            args.mode,
+            args.num_seeds,
+            gpu_id,
         )
         if args.tmux:
             cmd = cmd + " --tmux_session_name " + args.tmux_session_name

@@ -79,8 +79,12 @@ if __name__ == "__main__":
             qf_learning_rate=1e-3,
             policy_learning_rate=1e-4,
         ),
-        qf_kwargs=dict(hidden_sizes=[400, 300],),
-        policy_kwargs=dict(hidden_sizes=[400, 300],),
+        qf_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
+        policy_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
         replay_buffer_size=int(1e6),
     )
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)

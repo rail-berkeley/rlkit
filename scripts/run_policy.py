@@ -19,7 +19,12 @@ def simulate_policy(args):
         set_gpu_mode(True)
         policy.cuda()
     while True:
-        path = rollout(env, policy, max_path_length=args.H, render=True,)
+        path = rollout(
+            env,
+            policy,
+            max_path_length=args.H,
+            render=True,
+        )
         if hasattr(env, "log_diagnostics"):
             env.log_diagnostics([path])
         logger.dump_tabular()

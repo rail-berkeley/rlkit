@@ -76,11 +76,15 @@ def load_exps(
             return core.load_exps_data(dirnames)
         elif progress_filename == "tensorboard_log.npy":
             return load_exps_data_numpy(
-                dirnames, NumpyLogReader(), progress_filename=progress_filename,
+                dirnames,
+                NumpyLogReader(),
+                progress_filename=progress_filename,
             )
         elif custom_log_reader:
             return load_exps_data_numpy(
-                dirnames, custom_log_reader, progress_filename=progress_filename,
+                dirnames,
+                custom_log_reader,
+                progress_filename=progress_filename,
             )
         else:
             return core.load_exps_data(dirnames, progress_filename=progress_filename)
@@ -379,7 +383,8 @@ def comparison(
             stds.append(s[-1])
         plt.barh(range(len(values)), values, 0.5, xerr=stds)
         plt.yticks(
-            range(len(values)), labels,
+            range(len(values)),
+            labels,
         )
         plt.ylim(-0.5, len(values) - 0.5)
         plt.xlabel(key)

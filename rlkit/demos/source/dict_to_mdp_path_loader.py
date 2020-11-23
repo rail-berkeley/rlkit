@@ -101,7 +101,10 @@ class DictToMDPPathLoader:
             env_info = path["env_infos"][i]
 
             if self.recompute_reward:
-                reward = self.env.compute_reward(action, next_ob,)
+                reward = self.env.compute_reward(
+                    action,
+                    next_ob,
+                )
 
             reward = np.array([reward]).flatten()
             rewards.append(reward)

@@ -115,7 +115,10 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
             actions = np.eye(self._action_dim)[actions]
             actions = actions.reshape((-1, self._action_dim))
         obs = flatten_dict(obs, self.ob_keys_to_save + self.internal_keys)
-        next_obs = flatten_dict(next_obs, self.ob_keys_to_save + self.internal_keys,)
+        next_obs = flatten_dict(
+            next_obs,
+            self.ob_keys_to_save + self.internal_keys,
+        )
         obs = preprocess_obs_dict(obs)
         next_obs = preprocess_obs_dict(next_obs)
 
@@ -153,7 +156,10 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
                 )
             # Pointers after the wrap
             for i in range(0, num_post_wrap_steps):
-                self._idx_to_future_obs_idx[i] = np.arange(i, num_post_wrap_steps,)
+                self._idx_to_future_obs_idx[i] = np.arange(
+                    i,
+                    num_post_wrap_steps,
+                )
         else:
             slc = np.s_[self._top : self._top + path_len, :]
             self._actions[slc] = actions
@@ -237,7 +243,10 @@ class ObsDictRelabelingBuffer(ReplayBuffer):
         """
 
         if hasattr(self.env, "compute_rewards"):
-            new_rewards = self.env.compute_rewards(new_actions, new_next_obs_dict,)
+            new_rewards = self.env.compute_rewards(
+                new_actions,
+                new_next_obs_dict,
+            )
         else:  # Assuming it's a (possibly wrapped) gym GoalEnv
             new_rewards = np.ones((batch_size, 1))
             for i in range(batch_size):

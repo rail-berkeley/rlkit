@@ -145,28 +145,45 @@ def experiment(variant):
     )
     replay_buffer_kwargs.update(variant.get("replay_buffer_kwargs", dict()))
     replay_buffer = ConcatToObsWrapper(
-        ObsDictRelabelingBuffer(**replay_buffer_kwargs), ["resampled_goals",],
+        ObsDictRelabelingBuffer(**replay_buffer_kwargs),
+        [
+            "resampled_goals",
+        ],
     )
     replay_buffer_kwargs.update(variant.get("demo_replay_buffer_kwargs", dict()))
     demo_train_buffer = ConcatToObsWrapper(
-        ObsDictRelabelingBuffer(**replay_buffer_kwargs), ["resampled_goals",],
+        ObsDictRelabelingBuffer(**replay_buffer_kwargs),
+        [
+            "resampled_goals",
+        ],
     )
     demo_test_buffer = ConcatToObsWrapper(
-        ObsDictRelabelingBuffer(**replay_buffer_kwargs), ["resampled_goals",],
+        ObsDictRelabelingBuffer(**replay_buffer_kwargs),
+        [
+            "resampled_goals",
+        ],
     )
 
     M = variant["layer_size"]
     qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
 
     policy_class = variant.get("policy_class", TanhGaussianPolicy)
@@ -175,7 +192,11 @@ def experiment(variant):
     if policy_path:
         policy = load_local_or_remote_file(policy_path)
     else:
-        policy = policy_class(obs_dim=obs_dim, action_dim=action_dim, **policy_kwargs,)
+        policy = policy_class(
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            **policy_kwargs,
+        )
     buffer_policy_path = variant.get("buffer_policy_path", False)
     if buffer_policy_path:
         buffer_policy = load_local_or_remote_file(buffer_policy_path)
@@ -203,7 +224,8 @@ def experiment(variant):
                 min_sigma=exploration_kwargs["noise"],
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
-                exploration_strategy=es, policy=expl_policy,
+                exploration_strategy=es,
+                policy=expl_policy,
             )
         elif exploration_strategy == "gauss_eps":
             es = GaussianAndEpsilonStrategy(
@@ -213,7 +235,8 @@ def experiment(variant):
                 epsilon=0,
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
-                exploration_strategy=es, policy=expl_policy,
+                exploration_strategy=es,
+                policy=expl_policy,
             )
         else:
             error
@@ -229,7 +252,10 @@ def experiment(variant):
         **variant["trainer_kwargs"],
     )
     if variant["collection_mode"] == "online":
-        expl_path_collector = MdpStepCollector(expl_env, policy,)
+        expl_path_collector = MdpStepCollector(
+            expl_env,
+            policy,
+        )
         algorithm = TorchOnlineRLAlgorithm(
             trainer=trainer,
             exploration_env=expl_env,
@@ -282,11 +308,14 @@ def experiment(variant):
         save_video_kwargs = variant.get("save_video_kwargs", {})
 
         def get_video_func(
-            env, policy, tag,
+            env,
+            policy,
+            tag,
         ):
             renderer = EnvRenderer(**renderer_kwargs)
             state_goal_distribution = GoalDictDistributionFromMultitaskEnv(
-                env, desired_goal_keys=[desired_goal_key],
+                env,
+                desired_goal_keys=[desired_goal_key],
             )
             image_goal_distribution = AddImageDistribution(
                 env=env,
@@ -345,7 +374,10 @@ def experiment(variant):
         path_loader.load_demos()
     if variant.get("pretrain_policy", False):
         trainer.pretrain_policy_with_bc(
-            policy, demo_train_buffer, demo_test_buffer, trainer.bc_num_pretrain_steps,
+            policy,
+            demo_train_buffer,
+            demo_test_buffer,
+            trainer.bc_num_pretrain_steps,
         )
     if variant.get("pretrain_rl", False):
         trainer.pretrain_q_with_bc_data()

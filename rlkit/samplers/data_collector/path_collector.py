@@ -35,13 +35,17 @@ class MdpPathCollector(PathCollector):
         self._save_env_in_snapshot = save_env_in_snapshot
 
     def collect_new_paths(
-        self, max_path_length, num_steps, discard_incomplete_paths,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
     ):
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:
             max_path_length_this_loop = min(  # Do not go over num_steps
-                max_path_length, num_steps - num_steps_collected,
+                max_path_length,
+                num_steps - num_steps_collected,
             )
             path = self._rollout_fn(
                 self._env,
@@ -80,13 +84,17 @@ class MdpPathCollector(PathCollector):
         )
         stats.update(
             create_stats_ordered_dict(
-                "path length", path_lens, always_show_all_stats=True,
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
             )
         )
         return stats
 
     def get_snapshot(self):
-        snapshot_dict = dict(policy=self._policy,)
+        snapshot_dict = dict(
+            policy=self._policy,
+        )
         if self._save_env_in_snapshot:
             snapshot_dict["env"] = self._env
         return snapshot_dict
@@ -104,7 +112,10 @@ class GoalConditionedPathCollector(MdpPathCollector):
         def obs_processor(o):
             return np.hstack((o[observation_key], o[desired_goal_key]))
 
-        rollout_fn = partial(rollout, preprocess_obs_for_policy_fn=obs_processor,)
+        rollout_fn = partial(
+            rollout,
+            preprocess_obs_for_policy_fn=obs_processor,
+        )
         super().__init__(*args, rollout_fn=rollout_fn, **kwargs)
         self._observation_key = observation_key
         self._desired_goal_key = desired_goal_key
@@ -128,13 +139,18 @@ class ObsDictPathCollector(MdpPathCollector):
         def obs_processor(obs):
             return obs[observation_key]
 
-        rollout_fn = partial(rollout, preprocess_obs_for_policy_fn=obs_processor,)
+        rollout_fn = partial(
+            rollout,
+            preprocess_obs_for_policy_fn=obs_processor,
+        )
         super().__init__(*args, rollout_fn=rollout_fn, **kwargs)
         self._observation_key = observation_key
 
     def get_snapshot(self):
         snapshot = super().get_snapshot()
-        snapshot.update(observation_key=self._observation_key,)
+        snapshot.update(
+            observation_key=self._observation_key,
+        )
         return snapshot
 
 

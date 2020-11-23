@@ -58,10 +58,12 @@ class DDPGTrainer(TorchTrainer):
         self.max_q_value = max_q_value
 
         self.qf_optimizer = optimizer_class(
-            self.qf.parameters(), lr=self.qf_learning_rate,
+            self.qf.parameters(),
+            lr=self.qf_learning_rate,
         )
         self.policy_optimizer = optimizer_class(
-            self.policy.parameters(), lr=self.policy_learning_rate,
+            self.policy.parameters(),
+            lr=self.policy_learning_rate,
         )
 
         self.eval_statistics = OrderedDict()
@@ -80,7 +82,8 @@ class DDPGTrainer(TorchTrainer):
         """
         if self.policy_pre_activation_weight > 0:
             policy_actions, pre_tanh_value = self.policy(
-                obs, return_preactivations=True,
+                obs,
+                return_preactivations=True,
             )
             pre_activation_policy_loss = (pre_tanh_value ** 2).sum(dim=1).mean()
             q_output = self.qf(obs, policy_actions)
@@ -101,7 +104,10 @@ class DDPGTrainer(TorchTrainer):
         next_actions = self.target_policy(next_obs)
         # speed up computation by not backpropping these gradients
         next_actions.detach()
-        target_q_values = self.target_qf(next_obs, next_actions,)
+        target_q_values = self.target_qf(
+            next_obs,
+            next_actions,
+        )
         q_target = rewards + (1.0 - terminals) * self.discount * target_q_values
         q_target = q_target.detach()
         q_target = torch.clamp(q_target, self.min_q_value, self.max_q_value)
@@ -146,19 +152,27 @@ class DDPGTrainer(TorchTrainer):
                 - self.eval_statistics["Raw Policy Loss"]
             )
             self.eval_statistics.update(
-                create_stats_ordered_dict("Q Predictions", ptu.get_numpy(q_pred),)
-            )
-            self.eval_statistics.update(
-                create_stats_ordered_dict("Q Targets", ptu.get_numpy(q_target),)
-            )
-            self.eval_statistics.update(
                 create_stats_ordered_dict(
-                    "Bellman Errors", ptu.get_numpy(bellman_errors),
+                    "Q Predictions",
+                    ptu.get_numpy(q_pred),
                 )
             )
             self.eval_statistics.update(
                 create_stats_ordered_dict(
-                    "Policy Action", ptu.get_numpy(policy_actions),
+                    "Q Targets",
+                    ptu.get_numpy(q_target),
+                )
+            )
+            self.eval_statistics.update(
+                create_stats_ordered_dict(
+                    "Bellman Errors",
+                    ptu.get_numpy(bellman_errors),
+                )
+            )
+            self.eval_statistics.update(
+                create_stats_ordered_dict(
+                    "Policy Action",
+                    ptu.get_numpy(policy_actions),
                 )
             )
         self._n_train_steps_total += 1

@@ -64,7 +64,8 @@ class OnlineRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.num_trains_per_train_loop // self.num_expl_steps_per_train_loop
         )
         for epoch in gt.timed_for(
-            range(self._start_epoch, self.num_epochs), save_itrs=True,
+            range(self._start_epoch, self.num_epochs),
+            save_itrs=True,
         ):
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,

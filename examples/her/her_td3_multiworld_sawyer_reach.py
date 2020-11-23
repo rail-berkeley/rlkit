@@ -71,7 +71,8 @@ def experiment(variant):
         **variant["policy_kwargs"]
     )
     expl_policy = PolicyWrappedWithExplorationStrategy(
-        exploration_strategy=es, policy=policy,
+        exploration_strategy=es,
+        policy=policy,
     )
     replay_buffer = ObsDictRelabelingBuffer(
         env=eval_env,
@@ -125,14 +126,20 @@ if __name__ == "__main__":
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1000,
         ),
-        trainer_kwargs=dict(discount=0.99,),
+        trainer_kwargs=dict(
+            discount=0.99,
+        ),
         replay_buffer_kwargs=dict(
             max_size=100000,
             fraction_goals_rollout_goals=0.2,
             fraction_goals_env_goals=0.0,
         ),
-        qf_kwargs=dict(hidden_sizes=[400, 300],),
-        policy_kwargs=dict(hidden_sizes=[400, 300],),
+        qf_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
+        policy_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
     )
     setup_logger("her-td3-sawyer-experiment", variant=variant)
     experiment(variant)

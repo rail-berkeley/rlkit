@@ -27,7 +27,9 @@ class RawExplorationStrategy(ExplorationStrategy, metaclass=abc.ABCMeta):
 
 class PolicyWrappedWithExplorationStrategy(ExplorationPolicy):
     def __init__(
-        self, exploration_strategy: ExplorationStrategy, policy,
+        self,
+        exploration_strategy: ExplorationStrategy,
+        policy,
     ):
         self.es = exploration_strategy
         self.policy = policy

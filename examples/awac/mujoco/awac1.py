@@ -70,14 +70,21 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "trainer_kwargs.beta": [2,],
+        "trainer_kwargs.beta": [
+            2,
+        ],
         "train_rl": [True],
         "pretrain_rl": [True],
         "pretrain_policy": [False],
-        "env_id": ["HalfCheetah-v2", "Ant-v2", "Walker2d-v2",],
+        "env_id": [
+            "HalfCheetah-v2",
+            "Ant-v2",
+            "Walker2d-v2",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     n_seeds = 1
@@ -101,7 +108,9 @@ if __name__ == "__main__":
                 snapshot_gap=200,
                 snapshot_mode="gap_and_last",
                 num_exps_per_instance=3,
-                gcp_kwargs=dict(zone="us-west1-b",),
+                gcp_kwargs=dict(
+                    zone="us-west1-b",
+                ),
             )
 
     # variants = []

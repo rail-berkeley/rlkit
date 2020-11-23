@@ -25,13 +25,15 @@ class TorchStochasticPolicy(
     DistributionGenerator, ExplorationPolicy, metaclass=abc.ABCMeta
 ):
     def get_action(
-        self, obs_np,
+        self,
+        obs_np,
     ):
         actions = self.get_actions(obs_np[None])
         return actions[0, :], {}
 
     def get_actions(
-        self, obs_np,
+        self,
+        obs_np,
     ):
         dist = self._get_dist_from_np(obs_np)
         actions = dist.sample()
@@ -45,7 +47,8 @@ class TorchStochasticPolicy(
 
 
 class PolicyFromDistributionGenerator(
-    MultiInputSequential, TorchStochasticPolicy,
+    MultiInputSequential,
+    TorchStochasticPolicy,
 ):
     """
     Usage:
@@ -60,7 +63,8 @@ class PolicyFromDistributionGenerator(
 
 class MakeDeterministic(TorchStochasticPolicy):
     def __init__(
-        self, action_distribution_generator: DistributionGenerator,
+        self,
+        action_distribution_generator: DistributionGenerator,
     ):
         super().__init__()
         self._action_distribution_generator = action_distribution_generator

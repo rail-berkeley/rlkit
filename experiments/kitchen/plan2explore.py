@@ -53,14 +53,20 @@ if __name__ == "__main__":
             multitask=False,
             action_scale=1,
         ),
-        actor_kwargs=dict(discrete_continuous_dist=False,),
+        actor_kwargs=dict(
+            discrete_continuous_dist=False,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
             embedding_size=1024,
         ),
-        one_step_ensemble_kwargs=dict(hidden_size=32 * 32, num_layers=2, num_models=5,),
+        one_step_ensemble_kwargs=dict(
+            hidden_size=32 * 32,
+            num_layers=2,
+            num_models=5,
+        ),
         trainer_kwargs=dict(
             discount=0.99,
             reward_scale=1.0,
@@ -90,11 +96,16 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "env_kwargs.delta": [0.3, 0.5, 0.75,],
+        "env_kwargs.delta": [
+            0.3,
+            0.5,
+            0.75,
+        ],
         "expl_amount": [0.3, 0.6],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):

@@ -60,7 +60,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.expl_data_collector.end_epoch(-1)
 
         for epoch in gt.timed_for(
-            range(self._start_epoch, self.num_epochs), save_itrs=True,
+            range(self._start_epoch, self.num_epochs),
+            save_itrs=True,
         ):
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,

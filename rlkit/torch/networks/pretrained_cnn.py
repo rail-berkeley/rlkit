@@ -57,7 +57,10 @@ class PretrainedCNN(PyTorchModule):
 
         # use torch rather than ptu because initially the model is on CPU
         test_mat = torch.zeros(
-            1, self.input_channels, self.input_width, self.input_height,
+            1,
+            self.input_channels,
+            self.input_width,
+            self.input_height,
         )
         # find output dim of conv_layers by trial and add norm conv layers
         test_mat = self.pretrained_model(test_mat)
@@ -107,7 +110,9 @@ class PretrainedCNN(PyTorchModule):
         h = h.view(h.size(0), -1)
         if self.added_fc_input_size != 0:
             extra_fc_input = input.narrow(
-                start=self.conv_input_length, length=self.added_fc_input_size, dim=1,
+                start=self.conv_input_length,
+                length=self.added_fc_input_size,
+                dim=1,
             )
             h = torch.cat((h, extra_fc_input), dim=1)
         h = self.apply_forward_fc(h)

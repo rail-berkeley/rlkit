@@ -105,19 +105,27 @@ class OnlineVaeRelabelingBuffer(SharedObsDictRelabelingBuffer):
     def get_diagnostics(self):
         if self._vae_sample_probs is None or self._vae_sample_priorities is None:
             stats = create_stats_ordered_dict(
-                "VAE Sample Weights", np.zeros(self._size),
+                "VAE Sample Weights",
+                np.zeros(self._size),
             )
             stats.update(
-                create_stats_ordered_dict("VAE Sample Probs", np.zeros(self._size),)
+                create_stats_ordered_dict(
+                    "VAE Sample Probs",
+                    np.zeros(self._size),
+                )
             )
         else:
             vae_sample_priorities = self._vae_sample_priorities[: self._size]
             vae_sample_probs = self._vae_sample_probs[: self._size]
             stats = create_stats_ordered_dict(
-                "VAE Sample Weights", vae_sample_priorities,
+                "VAE Sample Weights",
+                vae_sample_priorities,
             )
             stats.update(
-                create_stats_ordered_dict("VAE Sample Probs", vae_sample_probs,)
+                create_stats_ordered_dict(
+                    "VAE Sample Probs",
+                    vae_sample_probs,
+                )
             )
         return stats
 
@@ -221,7 +229,9 @@ class OnlineVaeRelabelingBuffer(SharedObsDictRelabelingBuffer):
             and self.skew
         ):
             indices = np.random.choice(
-                len(self._vae_sample_probs), batch_size, p=self._vae_sample_probs,
+                len(self._vae_sample_probs),
+                batch_size,
+                p=self._vae_sample_probs,
             )
             assert (
                 np.max(self._vae_sample_probs) <= 1
@@ -248,7 +258,9 @@ class OnlineVaeRelabelingBuffer(SharedObsDictRelabelingBuffer):
         """
         if self._size == 0:
             return None
-        weighted_idxs = self.sample_weighted_indices(batch_size,)
+        weighted_idxs = self.sample_weighted_indices(
+            batch_size,
+        )
         next_image_obs = normalize_image(
             self._next_obs[self.decoded_obs_key][weighted_idxs]
         )
@@ -261,7 +273,9 @@ class OnlineVaeRelabelingBuffer(SharedObsDictRelabelingBuffer):
     def random_vae_training_data(self, batch_size, epoch):
         # epoch no longer needed. Using self.skew in sample_weighted_indices
         # instead.
-        weighted_idxs = self.sample_weighted_indices(batch_size,)
+        weighted_idxs = self.sample_weighted_indices(
+            batch_size,
+        )
 
         next_image_obs = normalize_image(
             self._next_obs[self.decoded_obs_key][weighted_idxs]

@@ -45,7 +45,15 @@ class ReplayBuffer(object, metaclass=abc.ABCMeta):
         """
         for (
             i,
-            (obs, action, reward, next_obs, terminal, agent_info, env_info,),
+            (
+                obs,
+                action,
+                reward,
+                next_obs,
+                terminal,
+                agent_info,
+                env_info,
+            ),
         ) in enumerate(
             zip(
                 path["observations"],

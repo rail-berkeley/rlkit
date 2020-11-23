@@ -13,7 +13,10 @@ from rlkit.core.logging import add_prefix
 from rlkit.core.loss import LossFunction, LossStatistics
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
-SACLosses = namedtuple("SACLosses", "policy_loss qf1_loss qf2_loss alpha_loss",)
+SACLosses = namedtuple(
+    "SACLosses",
+    "policy_loss qf1_loss qf2_loss alpha_loss",
+)
 
 
 class SACTrainer(TorchTrainer, LossFunction):
@@ -55,7 +58,10 @@ class SACTrainer(TorchTrainer, LossFunction):
             else:
                 self.target_entropy = target_entropy
             self.log_alpha = ptu.zeros(1, requires_grad=True)
-            self.alpha_optimizer = optimizer_class([self.log_alpha], lr=policy_lr,)
+            self.alpha_optimizer = optimizer_class(
+                [self.log_alpha],
+                lr=policy_lr,
+            )
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
@@ -63,9 +69,18 @@ class SACTrainer(TorchTrainer, LossFunction):
         self.qf_criterion = nn.MSELoss()
         self.vf_criterion = nn.MSELoss()
 
-        self.policy_optimizer = optimizer_class(self.policy.parameters(), lr=policy_lr,)
-        self.qf1_optimizer = optimizer_class(self.qf1.parameters(), lr=qf_lr,)
-        self.qf2_optimizer = optimizer_class(self.qf2.parameters(), lr=qf_lr,)
+        self.policy_optimizer = optimizer_class(
+            self.policy.parameters(),
+            lr=policy_lr,
+        )
+        self.qf1_optimizer = optimizer_class(
+            self.qf1.parameters(),
+            lr=qf_lr,
+        )
+        self.qf2_optimizer = optimizer_class(
+            self.qf2.parameters(),
+            lr=qf_lr,
+        )
 
         self.discount = discount
         self.reward_scale = reward_scale
@@ -76,7 +91,8 @@ class SACTrainer(TorchTrainer, LossFunction):
     def train_from_torch(self, batch):
         gt.blank_stamp()
         losses, stats = self.compute_loss(
-            batch, skip_statistics=not self._need_to_update_eval_statistics,
+            batch,
+            skip_statistics=not self._need_to_update_eval_statistics,
         )
         """
         Update networks
@@ -116,7 +132,9 @@ class SACTrainer(TorchTrainer, LossFunction):
         ptu.soft_update_from_to(self.qf2, self.target_qf2, self.soft_target_tau)
 
     def compute_loss(
-        self, batch, skip_statistics=False,
+        self,
+        batch,
+        skip_statistics=False,
     ) -> Tuple[SACLosses, LossStatistics]:
         rewards = batch["rewards"]
         terminals = batch["terminals"]
@@ -140,7 +158,8 @@ class SACTrainer(TorchTrainer, LossFunction):
             alpha = 1
 
         q_new_actions = torch.min(
-            self.qf1(obs, new_obs_actions), self.qf2(obs, new_obs_actions),
+            self.qf1(obs, new_obs_actions),
+            self.qf2(obs, new_obs_actions),
         )
         policy_loss = (alpha * log_pi - q_new_actions).mean()
 
@@ -176,16 +195,28 @@ class SACTrainer(TorchTrainer, LossFunction):
             eval_statistics["QF2 Loss"] = np.mean(ptu.get_numpy(qf2_loss))
             eval_statistics["Policy Loss"] = np.mean(ptu.get_numpy(policy_loss))
             eval_statistics.update(
-                create_stats_ordered_dict("Q1 Predictions", ptu.get_numpy(q1_pred),)
+                create_stats_ordered_dict(
+                    "Q1 Predictions",
+                    ptu.get_numpy(q1_pred),
+                )
             )
             eval_statistics.update(
-                create_stats_ordered_dict("Q2 Predictions", ptu.get_numpy(q2_pred),)
+                create_stats_ordered_dict(
+                    "Q2 Predictions",
+                    ptu.get_numpy(q2_pred),
+                )
             )
             eval_statistics.update(
-                create_stats_ordered_dict("Q Targets", ptu.get_numpy(q_target),)
+                create_stats_ordered_dict(
+                    "Q Targets",
+                    ptu.get_numpy(q_target),
+                )
             )
             eval_statistics.update(
-                create_stats_ordered_dict("Log Pis", ptu.get_numpy(log_pi),)
+                create_stats_ordered_dict(
+                    "Log Pis",
+                    ptu.get_numpy(log_pi),
+                )
             )
             policy_statistics = add_prefix(dist.get_diagnostics(), "policy/")
             eval_statistics.update(policy_statistics)

@@ -17,11 +17,20 @@ if __name__ == "__main__":
         skewfit_variant=dict(
             save_video=True,
             custom_goal_sampler="replay_buffer",
-            online_vae_trainer_kwargs=dict(beta=20, lr=1e-3,),
+            online_vae_trainer_kwargs=dict(
+                beta=20,
+                lr=1e-3,
+            ),
             save_video_period=100,
-            qf_kwargs=dict(hidden_sizes=[400, 300],),
-            policy_kwargs=dict(hidden_sizes=[400, 300],),
-            vf_kwargs=dict(hidden_sizes=[400, 300],),
+            qf_kwargs=dict(
+                hidden_sizes=[400, 300],
+            ),
+            policy_kwargs=dict(
+                hidden_sizes=[400, 300],
+            ),
+            vf_kwargs=dict(
+                hidden_sizes=[400, 300],
+            ),
             max_path_length=50,
             algo_kwargs=dict(
                 batch_size=1024,
@@ -65,10 +74,14 @@ if __name__ == "__main__":
             exploration_type="ou",
             training_mode="train",
             testing_mode="test",
-            reward_params=dict(type="latent_distance",),
+            reward_params=dict(
+                type="latent_distance",
+            ),
             observation_key="latent_observation",
             desired_goal_key="latent_desired_goal",
-            vae_wrapped_env_kwargs=dict(sample_from_true_prior=True,),
+            vae_wrapped_env_kwargs=dict(
+                sample_from_true_prior=True,
+            ),
         ),
         train_vae_variant=dict(
             representation_size=4,
@@ -97,7 +110,10 @@ if __name__ == "__main__":
                 is_auto_encoder=False,
                 batch_size=64,
                 lr=1e-3,
-                skew_config=dict(method="vae_prob", power=-1,),
+                skew_config=dict(
+                    method="vae_prob",
+                    power=-1,
+                ),
                 skew_dataset=True,
                 priority_function_kwargs=dict(
                     decoder_distribution="gaussian_identity_variance",
@@ -111,7 +127,8 @@ if __name__ == "__main__":
     )
     search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     n_seeds = 1
@@ -136,6 +153,9 @@ if __name__ == "__main__":
                 gcp_kwargs=dict(
                     terminate=True,
                     zone="us-east1-c",
-                    gpu_kwargs=dict(gpu_model="nvidia-tesla-k80", num_gpu=1,),
+                    gpu_kwargs=dict(
+                        gpu_model="nvidia-tesla-k80",
+                        num_gpu=1,
+                    ),
                 ),
             )

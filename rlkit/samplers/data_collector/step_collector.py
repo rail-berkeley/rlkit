@@ -46,22 +46,32 @@ class MdpStepCollector(StepCollector):
         )
         stats.update(
             create_stats_ordered_dict(
-                "path length", path_lens, always_show_all_stats=True,
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
             )
         )
         return stats
 
     def get_snapshot(self):
-        return dict(env=self._env, policy=self._policy,)
+        return dict(
+            env=self._env,
+            policy=self._policy,
+        )
 
     def collect_new_steps(
-        self, max_path_length, num_steps, discard_incomplete_paths,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
     ):
         for _ in range(num_steps):
             self.collect_one_step(max_path_length, discard_incomplete_paths)
 
     def collect_one_step(
-        self, max_path_length, discard_incomplete_paths,
+        self,
+        max_path_length,
+        discard_incomplete_paths,
     ):
         if self._obs is None:
             self._start_new_rollout()
@@ -150,7 +160,9 @@ class GoalConditionedStepCollector(StepCollector):
         )
         stats.update(
             create_stats_ordered_dict(
-                "path length", path_lens, always_show_all_stats=True,
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
             )
         )
         return stats
@@ -171,19 +183,27 @@ class GoalConditionedStepCollector(StepCollector):
         return epoch_paths
 
     def collect_new_steps(
-        self, max_path_length, num_steps, discard_incomplete_paths,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
     ):
         for _ in range(num_steps):
             self.collect_one_step(max_path_length, discard_incomplete_paths)
 
     def collect_one_step(
-        self, max_path_length, discard_incomplete_paths,
+        self,
+        max_path_length,
+        discard_incomplete_paths,
     ):
         if self._obs is None:
             self._start_new_rollout()
 
         new_obs = np.hstack(
-            (self._obs[self._observation_key], self._obs[self._desired_goal_key],)
+            (
+                self._obs[self._observation_key],
+                self._obs[self._desired_goal_key],
+            )
         )
         action, agent_info = self._policy.get_action(new_obs)
         next_ob, reward, terminal, env_info = self._env.step(action)
@@ -267,14 +287,18 @@ class ObsDictStepCollector(StepCollector):
         )
         stats.update(
             create_stats_ordered_dict(
-                "path length", path_lens, always_show_all_stats=True,
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
             )
         )
         return stats
 
     def get_snapshot(self):
         return dict(
-            env=self._env, policy=self._policy, observation_key=self._observation_key,
+            env=self._env,
+            policy=self._policy,
+            observation_key=self._observation_key,
         )
 
     def start_collection(self):
@@ -285,13 +309,18 @@ class ObsDictStepCollector(StepCollector):
         return epoch_paths
 
     def collect_new_steps(
-        self, max_path_length, num_steps, discard_incomplete_paths,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
     ):
         for _ in range(num_steps):
             self.collect_one_step(max_path_length, discard_incomplete_paths)
 
     def collect_one_step(
-        self, max_path_length, discard_incomplete_paths,
+        self,
+        max_path_length,
+        discard_incomplete_paths,
     ):
         if self._obs is None:
             self._start_new_rollout()

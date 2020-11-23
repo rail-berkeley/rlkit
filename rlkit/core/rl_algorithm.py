@@ -129,7 +129,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         expl_paths = self.expl_data_collector.get_epoch_paths()
         if hasattr(self.expl_env, "get_diagnostics"):
             logger.record_dict(
-                self.expl_env.get_diagnostics(expl_paths), prefix="exploration/",
+                self.expl_env.get_diagnostics(expl_paths),
+                prefix="exploration/",
             )
             if self.use_wandb:
                 self._log_wandb(
@@ -138,7 +139,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
                     epoch=epoch,
                 )
         logger.record_dict(
-            eval_util.get_generic_path_information(expl_paths), prefix="exploration/",
+            eval_util.get_generic_path_information(expl_paths),
+            prefix="exploration/",
         )
         if self.use_wandb:
             self._log_wandb(
@@ -150,7 +152,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         Evaluation
         """
         logger.record_dict(
-            self.eval_data_collector.get_diagnostics(), prefix="evaluation/",
+            self.eval_data_collector.get_diagnostics(),
+            prefix="evaluation/",
         )
         if self.use_wandb:
             self._log_wandb(
@@ -161,7 +164,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         eval_paths = self.eval_data_collector.get_epoch_paths()
         if hasattr(self.eval_env, "get_diagnostics"):
             logger.record_dict(
-                self.eval_env.get_diagnostics(eval_paths), prefix="evaluation/",
+                self.eval_env.get_diagnostics(eval_paths),
+                prefix="evaluation/",
             )
             if self.use_wandb:
                 self._log_wandb(
@@ -170,7 +174,8 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
                     epoch=epoch,
                 )
         logger.record_dict(
-            eval_util.get_generic_path_information(eval_paths), prefix="evaluation/",
+            eval_util.get_generic_path_information(eval_paths),
+            prefix="evaluation/",
         )
         if self.use_wandb:
             self._log_wandb(
@@ -186,7 +191,9 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(_get_epoch_timings())
         if self.use_wandb:
             self._log_wandb(
-                _get_epoch_timings(), prefix="", epoch=epoch,
+                _get_epoch_timings(),
+                prefix="",
+                epoch=epoch,
             )
         logger.record_tabular("Epoch", epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)

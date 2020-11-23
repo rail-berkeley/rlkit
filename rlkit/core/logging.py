@@ -151,16 +151,22 @@ class Logger(object):
     def set_snapshot_dir(self, dir_name):
         self._snapshot_dir = dir_name
 
-    def get_snapshot_dir(self,):
+    def get_snapshot_dir(
+        self,
+    ):
         return self._snapshot_dir
 
-    def get_snapshot_mode(self,):
+    def get_snapshot_mode(
+        self,
+    ):
         return self._snapshot_mode
 
     def set_snapshot_mode(self, mode):
         self._snapshot_mode = mode
 
-    def get_snapshot_gap(self,):
+    def get_snapshot_gap(
+        self,
+    ):
         return self._snapshot_gap
 
     def set_snapshot_gap(self, gap):
@@ -169,7 +175,9 @@ class Logger(object):
     def set_log_tabular_only(self, log_tabular_only):
         self._log_tabular_only = log_tabular_only
 
-    def get_log_tabular_only(self,):
+    def get_log_tabular_only(
+        self,
+    ):
         return self._log_tabular_only
 
     def log(self, s, with_prefix=True, with_timestamp=True):
@@ -203,7 +211,9 @@ class Logger(object):
         self._tabular_prefixes.append(key)
         self._tabular_prefix_str = "".join(self._tabular_prefixes)
 
-    def pop_tabular_prefix(self,):
+    def pop_tabular_prefix(
+        self,
+    ):
         del self._tabular_prefixes[-1]
         self._tabular_prefix_str = "".join(self._tabular_prefixes)
 
@@ -224,10 +234,14 @@ class Logger(object):
             raise ValueError("Invalid mode: {}".format(mode))
         return file_name
 
-    def get_table_dict(self,):
+    def get_table_dict(
+        self,
+    ):
         return dict(self._tabular)
 
-    def get_table_key_set(self,):
+    def get_table_key_set(
+        self,
+    ):
         return set(key for key, value in self._tabular)
 
     @contextmanager
@@ -295,7 +309,9 @@ class Logger(object):
                         print("extra keys in cur iter", curr_keys - prev_keys)
 
                 writer = csv.DictWriter(
-                    tabular_fd, fieldnames=itr0_keys, extrasaction="ignore",
+                    tabular_fd,
+                    fieldnames=itr0_keys,
+                    extrasaction="ignore",
                 )
                 if wh or (
                     wh is None and tabular_fd not in self._tabular_header_written
@@ -306,7 +322,9 @@ class Logger(object):
                 tabular_fd.flush()
             del self._tabular[:]
 
-    def pop_prefix(self,):
+    def pop_prefix(
+        self,
+    ):
         del self._prefixes[-1]
         self._prefix_str = "".join(self._prefixes)
 

@@ -105,7 +105,8 @@ class OnlineVaeAlgorithm(TorchBatchRLAlgorithm):
 
     def _log_vae_stats(self):
         logger.record_dict(
-            self.vae_trainer.get_diagnostics(), prefix="vae_trainer/",
+            self.vae_trainer.get_diagnostics(),
+            prefix="vae_trainer/",
         )
 
     def _cleanup(self):
@@ -148,7 +149,10 @@ def _train_vae(vae_trainer, replay_buffer, epoch, batches=50, oracle_data=False)
     if oracle_data:
         batch_sampler = None
     vae_trainer.train_epoch(
-        epoch, sample_batch=batch_sampler, batches=batches, from_rl=True,
+        epoch,
+        sample_batch=batch_sampler,
+        batches=batches,
+        from_rl=True,
     )
 
 
@@ -166,7 +170,9 @@ def _test_vae(
             rl_logger=vae_trainer.vae_logger_stats_for_rl,
         )
     vae_trainer.test_epoch(
-        epoch, from_rl=True, save_reconstruction=save_imgs,
+        epoch,
+        from_rl=True,
+        save_reconstruction=save_imgs,
     )
     if save_imgs:
         vae_trainer.dump_samples(epoch)
@@ -183,7 +189,12 @@ def _test_vae(
 
 
 def subprocess_train_vae_loop(
-    conn_pipe, vae, vae_params, replay_buffer, mp_info, device,
+    conn_pipe,
+    vae,
+    vae_params,
+    replay_buffer,
+    mp_info,
+    device,
 ):
     """
     The observations and next_observations of the replay buffer are stored in

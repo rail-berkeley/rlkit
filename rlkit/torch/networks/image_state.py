@@ -6,7 +6,9 @@ class ImageStatePolicy(PyTorchModule, Policy):
     """Switches between image or state inputs"""
 
     def __init__(
-        self, image_conv_net, state_fc_net,
+        self,
+        image_conv_net,
+        state_fc_net,
     ):
         super().__init__()
 

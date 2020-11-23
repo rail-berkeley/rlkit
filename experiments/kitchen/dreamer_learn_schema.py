@@ -47,14 +47,20 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         env_class="microwave",
         env_kwargs=dict(
-            dense=False, delta=0.0, image_obs=True, fixed_schema=False, multitask=False,
+            dense=False,
+            delta=0.0,
+            image_obs=True,
+            fixed_schema=False,
+            multitask=False,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
         ),
-        actor_kwargs=dict(discrete_continuous_dist=False,),
+        actor_kwargs=dict(
+            discrete_continuous_dist=False,
+        ),
         trainer_kwargs=dict(
             discount=0.99,
             reward_scale=1.0,
@@ -88,7 +94,8 @@ if __name__ == "__main__":
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
 
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):

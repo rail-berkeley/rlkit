@@ -60,7 +60,9 @@ def get_generic_path_information(paths, stat_prefix=""):
                 )
                 statistics.update(
                     create_stats_ordered_dict(
-                        stat_prefix + k, all_ks, stat_prefix="{}/".format(info_key),
+                        stat_prefix + k,
+                        all_ks,
+                        stat_prefix="{}/".format(info_key),
                     )
                 )
 
@@ -73,7 +75,11 @@ def get_average_returns(paths):
 
 
 def create_stats_ordered_dict(
-    name, data, stat_prefix=None, always_show_all_stats=True, exclude_max_min=False,
+    name,
+    data,
+    stat_prefix=None,
+    always_show_all_stats=True,
+    exclude_max_min=False,
 ):
     if stat_prefix is not None:
         name = "{}{}".format(stat_prefix, name)
@@ -86,7 +92,10 @@ def create_stats_ordered_dict(
     if isinstance(data, tuple):
         ordered_dict = OrderedDict()
         for number, d in enumerate(data):
-            sub_dict = create_stats_ordered_dict("{0}_{1}".format(name, number), d,)
+            sub_dict = create_stats_ordered_dict(
+                "{0}_{1}".format(name, number),
+                d,
+            )
             ordered_dict.update(sub_dict)
         return ordered_dict
 
@@ -102,7 +111,10 @@ def create_stats_ordered_dict(
         return OrderedDict({name: float(data)})
 
     stats = OrderedDict(
-        [(name + " Mean", np.mean(data)), (name + " Std", np.std(data)),]
+        [
+            (name + " Mean", np.mean(data)),
+            (name + " Std", np.std(data)),
+        ]
     )
     if not exclude_max_min:
         stats[name + " Max"] = np.max(data)

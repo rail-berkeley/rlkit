@@ -12,7 +12,11 @@ class NormalizedBoxEnv(ProxyEnv):
     """
 
     def __init__(
-        self, env, reward_scale=1.0, obs_mean=None, obs_std=None,
+        self,
+        env,
+        reward_scale=1.0,
+        obs_mean=None,
+        obs_std=None,
     ):
         ProxyEnv.__init__(self, env)
         self._should_normalize = not (obs_mean is None and obs_std is None)

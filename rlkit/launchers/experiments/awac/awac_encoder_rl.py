@@ -125,28 +125,44 @@ def experiment(variant):
         env_info_sizes = dict()
 
     replay_buffer_kwargs = dict(
-        max_replay_buffer_size=variant["replay_buffer_size"], env=expl_env,
+        max_replay_buffer_size=variant["replay_buffer_size"],
+        env=expl_env,
     )
 
     M = variant["layer_size"]
     qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     target_qf1 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     target_qf2 = ConcatMlp(
-        input_size=obs_dim + action_dim, output_size=1, hidden_sizes=[M, M],
+        input_size=obs_dim + action_dim,
+        output_size=1,
+        hidden_sizes=[M, M],
     )
     policy = TanhGaussianPolicy(
-        obs_dim=obs_dim, action_dim=action_dim, **variant["policy_kwargs"],
+        obs_dim=obs_dim,
+        action_dim=action_dim,
+        **variant["policy_kwargs"],
     )
     eval_policy = MakeDeterministic(policy)
-    eval_path_collector = MdpPathCollector(eval_env, eval_policy,)
-    replay_buffer = EnvReplayBuffer(**replay_buffer_kwargs,)
+    eval_path_collector = MdpPathCollector(
+        eval_env,
+        eval_policy,
+    )
+    replay_buffer = EnvReplayBuffer(
+        **replay_buffer_kwargs,
+    )
     trainer = AWACTrainer(
         env=eval_env,
         policy=policy,
@@ -157,7 +173,10 @@ def experiment(variant):
         **variant["trainer_kwargs"],
     )
     if variant["collection_mode"] == "online":
-        expl_path_collector = MdpStepCollector(expl_env, policy,)
+        expl_path_collector = MdpStepCollector(
+            expl_env,
+            policy,
+        )
         algorithm = TorchOnlineRLAlgorithm(
             trainer=trainer,
             exploration_env=expl_env,
@@ -178,7 +197,10 @@ def experiment(variant):
             expl_policy = eval_policy
         else:
             expl_policy = policy
-        expl_path_collector = MdpPathCollector(expl_env, expl_policy,)
+        expl_path_collector = MdpPathCollector(
+            expl_env,
+            expl_policy,
+        )
         algorithm = TorchBatchRLAlgorithm(
             trainer=trainer,
             exploration_env=expl_env,
@@ -196,8 +218,12 @@ def experiment(variant):
         )
     algorithm.to(ptu.device)
 
-    demo_train_buffer = EnvReplayBuffer(**replay_buffer_kwargs,)
-    demo_test_buffer = EnvReplayBuffer(**replay_buffer_kwargs,)
+    demo_train_buffer = EnvReplayBuffer(
+        **replay_buffer_kwargs,
+    )
+    demo_test_buffer = EnvReplayBuffer(
+        **replay_buffer_kwargs,
+    )
 
     if variant.get("save_paths", False):
         algorithm.post_train_funcs.append(save_paths)

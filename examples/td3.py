@@ -49,11 +49,21 @@ def experiment(variant):
         min_sigma=0.1,  # Constant sigma
     )
     exploration_policy = PolicyWrappedWithExplorationStrategy(
-        exploration_strategy=es, policy=policy,
+        exploration_strategy=es,
+        policy=policy,
     )
-    eval_path_collector = MdpPathCollector(eval_env, policy,)
-    expl_path_collector = MdpPathCollector(expl_env, exploration_policy,)
-    replay_buffer = EnvReplayBuffer(variant["replay_buffer_size"], expl_env,)
+    eval_path_collector = MdpPathCollector(
+        eval_env,
+        policy,
+    )
+    expl_path_collector = MdpPathCollector(
+        expl_env,
+        exploration_policy,
+    )
+    replay_buffer = EnvReplayBuffer(
+        variant["replay_buffer_size"],
+        expl_env,
+    )
     trainer = TD3Trainer(
         policy=policy,
         qf1=qf1,
@@ -87,9 +97,15 @@ if __name__ == "__main__":
             max_path_length=1000,
             batch_size=256,
         ),
-        trainer_kwargs=dict(discount=0.99,),
-        qf_kwargs=dict(hidden_sizes=[400, 300],),
-        policy_kwargs=dict(hidden_sizes=[400, 300],),
+        trainer_kwargs=dict(
+            discount=0.99,
+        ),
+        qf_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
+        policy_kwargs=dict(
+            hidden_sizes=[400, 300],
+        ),
         replay_buffer_size=int(1e6),
     )
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)

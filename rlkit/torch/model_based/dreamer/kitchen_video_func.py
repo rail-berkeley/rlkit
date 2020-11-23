@@ -26,7 +26,9 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         )
         actions = np.zeros((4, algorithm.max_path_length, env.action_space.shape[0]))
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(o,)
+            a, agent_info = policy.get_action(
+                o,
+            )
             o, r, d, i = env.step(
                 a,
                 render_every_step=True,
@@ -43,7 +45,9 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         o = env.reset()
         policy.reset()
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(o,)
+            a, agent_info = policy.get_action(
+                o,
+            )
             o, r, d, i = env.step(
                 a,
                 render_every_step=True,
@@ -60,7 +64,9 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         o = env.reset()
         policy.reset()
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(o,)
+            a, agent_info = policy.get_action(
+                o,
+            )
             o, r, d, i = env.step(
                 a,
                 render_every_step=True,
@@ -77,7 +83,9 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         o = env.reset()
         policy.reset()
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(o,)
+            a, agent_info = policy.get_action(
+                o,
+            )
             o, r, d, i = env.step(
                 a,
                 render_every_step=True,

@@ -32,7 +32,9 @@ class JointPathCollector(PathCollector):
     def get_snapshot(self):
         snapshot = {}
         for name, collector in self.path_collectors.items():
-            snapshot.update(add_prefix(collector.get_snapshot(), name, divider="/"),)
+            snapshot.update(
+                add_prefix(collector.get_snapshot(), name, divider="/"),
+            )
         return snapshot
 
     def get_epoch_paths(self):

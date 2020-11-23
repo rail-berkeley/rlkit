@@ -44,9 +44,15 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         env_class="microwave",
         env_kwargs=dict(
-            dense=False, delta=0.0, image_obs=True, fixed_schema=True, multitask=False,
+            dense=False,
+            delta=0.0,
+            image_obs=True,
+            fixed_schema=True,
+            multitask=False,
         ),
-        actor_kwargs=dict(discrete_continuous_dist=False,),
+        actor_kwargs=dict(
+            discrete_continuous_dist=False,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
@@ -86,9 +92,13 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "env_kwargs.delta": [0.3,],
+        "env_kwargs.delta": [
+            0.3,
+        ],
         "expl_amount": [0.3],
-        "trainer_kwargs.image_loss_scale": [1.0 / (64 * 64 * 3),],
+        "trainer_kwargs.image_loss_scale": [
+            1.0 / (64 * 64 * 3),
+        ],
         "trainer_kwargs.pcont_loss_scale": [1.0],
         "trainer_kwargs.transition_loss_scale": [0.08],
         "trainer_kwargs.entropy_loss_scale": [0.2],
@@ -107,7 +117,8 @@ if __name__ == "__main__":
         "model_kwargs.rssm_hidden_size": [600],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space, default_parameters=variant,
+        search_space,
+        default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):

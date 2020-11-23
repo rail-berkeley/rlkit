@@ -74,7 +74,8 @@ class SharedObsDictRelabelingBuffer(ObsDictRelabelingBuffer):
         )
 
     def init_from_mp_info(
-        self, mp_info,
+        self,
+        mp_info,
     ):
         """
         The intended use is to have a subprocess serialize/copy a

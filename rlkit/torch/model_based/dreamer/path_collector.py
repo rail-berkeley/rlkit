@@ -36,7 +36,11 @@ class VecMdpPathCollector(PathCollector):
         self.env_class = env_class
 
     def collect_new_paths(
-        self, max_path_length, num_steps, discard_incomplete_paths, runtime_policy=None,
+        self,
+        max_path_length,
+        num_steps,
+        discard_incomplete_paths,
+        runtime_policy=None,
     ):
         paths = []
         num_steps_collected = 0
@@ -86,13 +90,17 @@ class VecMdpPathCollector(PathCollector):
         )
         stats.update(
             create_stats_ordered_dict(
-                "path length", path_lens, always_show_all_stats=True,
+                "path length",
+                path_lens,
+                always_show_all_stats=True,
             )
         )
         return stats
 
     def get_snapshot(self):
-        snapshot_dict = dict(policy=self._policy,)
+        snapshot_dict = dict(
+            policy=self._policy,
+        )
         if self._save_env_in_snapshot:
             snapshot_dict["env"] = self._env
         if self.env_params:

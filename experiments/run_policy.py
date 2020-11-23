@@ -25,7 +25,12 @@ def simulate_policy(args):
     policy.actor.to(ptu.device)
     policy.world_model.to(ptu.device)
     while True:
-        path = vec_rollout(eval_env, policy, max_path_length=args.H, render=True,)
+        path = vec_rollout(
+            eval_env,
+            policy,
+            max_path_length=args.H,
+            render=True,
+        )
         if hasattr(eval_env, "log_diagnostics"):
             eval_env.log_diagnostics([path])
         logger.dump_tabular()

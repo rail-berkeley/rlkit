@@ -94,7 +94,9 @@ ENV_PARAMS = {
         "env_id": "pen-binary-v0",
         "max_path_length": 200,
         "env_demo_path": dict(
-            path="demos/icml2020/hand/pen2_sparse.npy", obs_dict=True, is_demo=True,
+            path="demos/icml2020/hand/pen2_sparse.npy",
+            obs_dict=True,
+            is_demo=True,
         ),
         "env_offpolicy_data_path": dict(
             path="demos/icml2020/hand/pen_bc_sparse4.npy",
@@ -107,7 +109,9 @@ ENV_PARAMS = {
         "env_id": "door-binary-v0",
         "max_path_length": 200,
         "env_demo_path": dict(
-            path="demos/icml2020/hand/door2_sparse.npy", obs_dict=True, is_demo=True,
+            path="demos/icml2020/hand/door2_sparse.npy",
+            obs_dict=True,
+            is_demo=True,
         ),
         "env_offpolicy_data_path": dict(
             path="demos/icml2020/hand/door_bc_sparse4.npy",
@@ -218,7 +222,11 @@ def experiment(variant):
     if policy_path:
         policy = load_local_or_remote_file(policy_path)
     else:
-        policy = policy_class(obs_dim=obs_dim, action_dim=action_dim, **policy_kwargs,)
+        policy = policy_class(
+            obs_dim=obs_dim,
+            action_dim=action_dim,
+            **policy_kwargs,
+        )
     buffer_policy_path = variant.get("buffer_policy_path", False)
     if buffer_policy_path:
         buffer_policy = load_local_or_remote_file(buffer_policy_path)
@@ -231,7 +239,10 @@ def experiment(variant):
         )
 
     eval_policy = MakeDeterministic(policy)
-    eval_path_collector = MdpPathCollector(eval_env, eval_policy,)
+    eval_path_collector = MdpPathCollector(
+        eval_env,
+        eval_policy,
+    )
 
     expl_policy = policy
     exploration_kwargs = variant.get("exploration_kwargs", {})
@@ -249,7 +260,8 @@ def experiment(variant):
                 min_sigma=exploration_kwargs["noise"],
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
-                exploration_strategy=es, policy=expl_policy,
+                exploration_strategy=es,
+                policy=expl_policy,
             )
         elif exploration_strategy == "gauss_eps":
             es = GaussianAndEpsilonStrategy(
@@ -259,16 +271,19 @@ def experiment(variant):
                 epsilon=0,
             )
             expl_policy = PolicyWrappedWithExplorationStrategy(
-                exploration_strategy=es, policy=expl_policy,
+                exploration_strategy=es,
+                policy=expl_policy,
             )
         else:
             error
 
     main_replay_buffer_kwargs = dict(
-        max_replay_buffer_size=variant["replay_buffer_size"], env=expl_env,
+        max_replay_buffer_size=variant["replay_buffer_size"],
+        env=expl_env,
     )
     replay_buffer_kwargs = dict(
-        max_replay_buffer_size=variant["replay_buffer_size"], env=expl_env,
+        max_replay_buffer_size=variant["replay_buffer_size"],
+        env=expl_env,
     )
 
     replay_buffer = variant.get("replay_buffer_class", EnvReplayBuffer)(
@@ -295,7 +310,10 @@ def experiment(variant):
         **variant["trainer_kwargs"],
     )
     if variant["collection_mode"] == "online":
-        expl_path_collector = MdpStepCollector(expl_env, policy,)
+        expl_path_collector = MdpStepCollector(
+            expl_env,
+            policy,
+        )
         algorithm = TorchOnlineRLAlgorithm(
             trainer=trainer,
             exploration_env=expl_env,
@@ -312,7 +330,10 @@ def experiment(variant):
             min_num_steps_before_training=variant["min_num_steps_before_training"],
         )
     else:
-        expl_path_collector = MdpPathCollector(expl_env, expl_policy,)
+        expl_path_collector = MdpPathCollector(
+            expl_env,
+            expl_policy,
+        )
         algorithm = TorchBatchRLAlgorithm(
             trainer=trainer,
             exploration_env=expl_env,
@@ -330,8 +351,12 @@ def experiment(variant):
         )
     algorithm.to(ptu.device)
 
-    demo_train_buffer = EnvReplayBuffer(**replay_buffer_kwargs,)
-    demo_test_buffer = EnvReplayBuffer(**replay_buffer_kwargs,)
+    demo_train_buffer = EnvReplayBuffer(
+        **replay_buffer_kwargs,
+    )
+    demo_test_buffer = EnvReplayBuffer(
+        **replay_buffer_kwargs,
+    )
 
     if variant.get("save_video", False):
         if variant.get("presampled_goals", None):
@@ -348,14 +373,18 @@ def experiment(variant):
         )
         # image_eval_env = get_img_env(eval_env)
         image_eval_path_collector = ObsDictPathCollector(
-            image_eval_env, eval_policy, observation_key="state_observation",
+            image_eval_env,
+            eval_policy,
+            observation_key="state_observation",
         )
         image_expl_env = ImageEnv(
             GymToMultiEnv(expl_env), **variant["image_env_kwargs"]
         )
         # image_expl_env = get_img_env(expl_env)
         image_expl_path_collector = ObsDictPathCollector(
-            image_expl_env, expl_policy, observation_key="state_observation",
+            image_expl_env,
+            expl_policy,
+            observation_key="state_observation",
         )
         video_func = VideoSaveFunction(
             image_eval_env,
@@ -404,7 +433,10 @@ def experiment(variant):
         )
     if variant.get("pretrain_policy", False):
         trainer.pretrain_policy_with_bc(
-            policy, demo_train_buffer, demo_test_buffer, trainer.bc_num_pretrain_steps,
+            policy,
+            demo_train_buffer,
+            demo_test_buffer,
+            trainer.bc_num_pretrain_steps,
         )
     if variant.get("pretrain_rl", False):
         trainer.pretrain_q_with_bc_data()

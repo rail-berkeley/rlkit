@@ -24,7 +24,8 @@ except ModuleNotFoundError:
     APEX_AVAILABLE = False
 
 Plan2ExploreLosses = namedtuple(
-    "Plan2ExploreLosses", "actor_loss vf_loss world_model_loss",
+    "Plan2ExploreLosses",
+    "actor_loss vf_loss world_model_loss",
 )
 
 
@@ -89,7 +90,10 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             weight_decay=weight_decay,
         )
         self.vf_optimizer = optimizer_class(
-            self.vf.parameters(), lr=vf_lr, eps=adam_eps, weight_decay=weight_decay,
+            self.vf.parameters(),
+            lr=vf_lr,
+            eps=adam_eps,
+            weight_decay=weight_decay,
         )
         self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
@@ -188,7 +192,8 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
     def train_from_torch(self, batch):
         gt.blank_stamp()
         losses, stats = self.compute_loss(
-            batch, skip_statistics=not self._need_to_update_eval_statistics,
+            batch,
+            skip_statistics=not self._need_to_update_eval_statistics,
         )
         """
         Update networks
@@ -247,7 +252,10 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         return feats, actions, states
 
     def compute_loss(
-        self, batch, skip_statistics=False, **kwargs,
+        self,
+        batch,
+        skip_statistics=False,
+        **kwargs,
     ) -> Tuple[Plan2ExploreLosses, LossStatistics]:
         rewards = batch["rewards"]
         terminals = batch["terminals"]
@@ -454,7 +462,10 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
                 exploration_imag_feat,
                 exploration_imag_actions,
                 exploration_imag_deter_states,
-            ) = self.imagine_ahead(post, actor=self.exploration_actor,)
+            ) = self.imagine_ahead(
+                post,
+                actor=self.exploration_actor,
+            )
         with FreezeParameters(
             world_model_params + exploration_vf_params + one_step_ensemble_params
         ):
@@ -545,7 +556,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         zero_grad(self.exploration_vf)
         if self.use_amp:
             with amp.scale_loss(
-                exploration_vf_loss, self.exploration_vf_optimizer, loss_id=5,
+                exploration_vf_loss,
+                self.exploration_vf_optimizer,
+                loss_id=5,
             ) as scaled_exploration_vf_loss:
                 scaled_exploration_vf_loss.backward()
         else:
@@ -595,7 +608,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             ] = exploration_value_dist.mean.mean().item()
 
         loss = Plan2ExploreLosses(
-            actor_loss=actor_loss, world_model_loss=world_model_loss, vf_loss=vf_loss,
+            actor_loss=actor_loss,
+            world_model_loss=world_model_loss,
+            vf_loss=vf_loss,
         )
 
         return loss, eval_statistics
@@ -625,4 +640,8 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         ]
 
     def get_snapshot(self):
-        return dict(actor=self.actor, world_model=self.world_model, vf=self.vf,)
+        return dict(
+            actor=self.actor,
+            world_model=self.world_model,
+            vf=self.vf,
+        )
