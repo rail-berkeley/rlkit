@@ -99,7 +99,7 @@ if __name__ == "__main__":
             #     "microwave",
             #     "kettle",
             #     "top_left_burner",
-            #     "slide_cabinet",
+            "slide_cabinet",
             "hinge_cabinet",
             #     "light_switch",
         ],
