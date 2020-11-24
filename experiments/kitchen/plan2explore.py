@@ -1,6 +1,18 @@
 import argparse
 import random
 
+from d4rl.kitchen.kitchen_envs import (
+    KitchenBottomLeftBurnerV0,
+    KitchenHingeCabinetV0,
+    KitchenKettleV0,
+    KitchenLightSwitchV0,
+    KitchenMicrowaveV0,
+    KitchenMultitaskAllV0,
+    KitchenSlideCabinetV0,
+    KitchenTopLeftBurnerV0,
+)
+from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv, make_env
+
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
@@ -87,17 +99,18 @@ if __name__ == "__main__":
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
+        debug=args.debug,
     )
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "bottom_left_burner",
-            "slide_cabinet",
+            # "microwave",
+            # "kettle",
+            # "top_left_burner",
+            # "bottom_left_burner",
+            # "slide_cabinet",
             "hinge_cabinet",
-            "light_switch",
+            # "light_switch",
         ],
         "expl_amount": [0.3],
     }
@@ -107,6 +120,52 @@ if __name__ == "__main__":
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):
+            env_class = variant["env_class"]
+            env_kwargs = variant["env_kwargs"]
+            if env_class == "microwave":
+                env_class_ = KitchenMicrowaveV0
+            elif env_class == "kettle":
+                env_class_ = KitchenKettleV0
+            elif env_class == "slide_cabinet":
+                env_class_ = KitchenSlideCabinetV0
+            elif env_class == "hinge_cabinet":
+                env_class_ = KitchenHingeCabinetV0
+            elif env_class == "top_left_burner":
+                env_class_ = KitchenTopLeftBurnerV0
+            elif env_class == "bottom_left_burner":
+                env_class_ = KitchenBottomLeftBurnerV0
+            elif env_class == "light_switch":
+                env_class_ = KitchenLightSwitchV0
+            elif env_class == "multitask_all":
+                env_class_ = KitchenMultitaskAllV0
+            else:
+                raise EnvironmentError("invalid env provided")
+
+            eval_envs = [
+                make_env(
+                    env_class=env_class_,
+                    env_kwargs=variant["env_kwargs"],
+                )
+            ]
+
+            eval_env = DummyVecEnv(eval_envs)
+            max_path_length = eval_envs[0].max_steps
+            variant["algorithm_kwargs"]["max_path_length"] = max_path_length
+            variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
+            num_steps_per_epoch = 1000
+            num_expl_envs = variant["num_expl_envs"]
+            num_expl_steps_per_train_loop = 50 * (max_path_length + 1)
+            num_train_loops_per_epoch = (
+                num_steps_per_epoch // num_expl_steps_per_train_loop
+            )
+            if num_steps_per_epoch % num_expl_steps_per_train_loop != 0:
+                num_train_loops_per_epoch += 1
+            variant["algorithm_kwargs"][
+                "num_train_loops_per_epoch"
+            ] = num_train_loops_per_epoch
+            variant["algorithm_kwargs"][
+                "num_expl_steps_per_train_loop"
+            ] = num_expl_steps_per_train_loop
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
