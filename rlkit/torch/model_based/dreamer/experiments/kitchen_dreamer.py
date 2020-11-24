@@ -107,6 +107,14 @@ def experiment(variant):
 
     if variant.get("algorithm", "dreamer") == "dreamer_v2":
         trainer_class = DreamerV2Trainer
+        target_vf = Mlp(
+            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+            * variant["vf_kwargs"]["num_layers"],
+            output_size=1,
+            input_size=variant["model_kwargs"]["stochastic_state_size"]
+            + variant["model_kwargs"]["deterministic_state_size"],
+            hidden_activation=torch.nn.functional.elu,
+        )
     else:
         trainer_class = DreamerTrainer
 

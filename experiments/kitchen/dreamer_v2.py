@@ -90,6 +90,8 @@ if __name__ == "__main__":
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
+        expl_amount=0.3,
+        path_length_specific_discount=True,
     )
 
     search_space = {
@@ -104,20 +106,21 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.3,
         ],
-        "expl_amount": [0.3],
+        # "expl_amount": [0],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0 / (64 * 64 * 3),
         # ],
         # "trainer_kwargs.pred_discount_loss_scale": [1.0],
         # "trainer_kwargs.transition_loss_scale": [0.08],
-        # "trainer_kwargs.entropy_loss_scale": [0.2],
+        # "trainer_kwargs.entropy_loss_scale": [0.02],
         # "trainer_kwargs.kl_loss_scale": [0.0],
         # "trainer_kwargs.discount": [0.995],
         # "trainer_kwargs.reinforce_loss_scale": [0.9],
         # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1],
-        # "trainer_kwargs.actor_entropy_loss_scale": [
-        #     3e-4,
-        # ],  # todo might want to schedule this?
+        # "trainer_kwargs.actor_entropy_loss_schedule": [
+        #     "linear(3e-3,3e-4,2.5e6)",
+        #     "1e-4",
+        # ],
         # "trainer_kwargs.world_model_lr": [2e-4],
         # "trainer_kwargs.actor_lr": [4e-5],
         # "trainer_kwargs.vf_lr": [1e-4],
@@ -125,10 +128,10 @@ if __name__ == "__main__":
         # "trainer_kwargs.weight_decay": [1e-6],
         # "model_kwargs.rssm_hidden_size": [600],
         # "model_kwargs.gru_layer_norm": [True],
-        #     "model_kwargs.reward_num_layers": [4],
-        #     "model_kwargs.pred_discount_num_layers": [4],
-        #     "model_kwargs.pred_discount_num_layers": [4],
-        #     "vf_kwargs.num_layers": [4],
+        # "model_kwargs.reward_num_layers": [4],
+        # "model_kwargs.pred_discount_num_layers": [4],
+        # "model_kwargs.pred_discount_num_layers": [4],
+        # "vf_kwargs.num_layers": [4],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

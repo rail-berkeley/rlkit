@@ -1,8 +1,11 @@
-# "get_parameters" and "FreezeParameters" are from the following repo
-# https://github.com/juliusfrost/dreamer-pytorch
+import re
+
+import numpy as np
 import torch
 
 
+# "get_parameters" and "FreezeParameters" are from the following repo
+# https://github.com/juliusfrost/dreamer-pytorch
 class FreezeParameters:
     def __init__(self, params):
         """
@@ -53,3 +56,25 @@ def lambda_return(reward, value, discount, bootstrap, lambda_=0.95):
 def zero_grad(model):
     for param in model.parameters():
         param.grad = None
+
+
+# from dreamer_v2 repo
+def schedule(string, step):
+    try:
+        return float(string)
+    except ValueError:
+        match = re.match(r"linear\((.+),(.+),(.+)\)", string)
+        if match:
+            initial, final, duration = [float(group) for group in match.groups()]
+            mix = np.clip(step / duration, 0, 1)
+            return (1 - mix) * initial + mix * final
+        match = re.match(r"warmup\((.+),(.+)\)", string)
+        if match:
+            warmup, value = [float(group) for group in match.groups()]
+            scale = np.clip(step / warmup, 0, 1)
+            return scale * value
+        match = re.match(r"exp\((.+),(.+),(.+)\)", string)
+        if match:
+            initial, final, halflife = [float(group) for group in match.groups()]
+            return (initial - final) * 0.5 ** (step / halflife) + final
+        raise NotImplementedError(string)

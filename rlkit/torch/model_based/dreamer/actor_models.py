@@ -4,6 +4,7 @@ from torch.distributions import Normal, TransformedDistribution
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.model_based.dreamer.mlp import Mlp
+from rlkit.torch.model_based.dreamer.truncated_normal import TruncatedNormal
 
 
 class ActorModel(Mlp):
@@ -218,3 +219,19 @@ class SplitDist:
             ),
             -1,
         )
+
+
+class SafeTruncatedNormal(TruncatedNormal):
+    def __init__(self, loc, scale, low, high, clip=1e-6, mult=1):
+        super().__init__(loc, scale, low, high)
+        self._clip = clip
+        self._mult = mult
+
+    def sample(self, *args, **kwargs):
+        event = super().sample(*args, **kwargs)
+        if self._clip:
+            clipped = torch.clamp(event, self.low + self._clip, self.high - self._clip)
+            event = event - event.detach() + clipped.detach()
+        if self._mult:
+            event *= self._mult
+        return event

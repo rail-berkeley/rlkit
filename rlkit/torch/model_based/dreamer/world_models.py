@@ -223,6 +223,16 @@ class WorldModel(PyTorchModule):
                 torch.distributions.Bernoulli(logits=mean), dims
             )
 
+    def get_detached_dist(self, mean, std, dims=1, normal=True):
+        if normal:
+            return torch.distributions.Independent(
+                torch.distributions.Normal(mean.detach(), std.detach()), dims
+            )
+        else:
+            return torch.distributions.Independent(
+                torch.distributions.Bernoulli(logits=mean.detach()), dims
+            )
+
     def encode(self, obs):
         return self.conv_encoder(self.preprocess(obs))
 
