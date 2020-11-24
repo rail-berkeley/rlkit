@@ -1,5 +1,7 @@
 import torch
 import torch.nn.functional as F
+from torch import nn
+from torch.nn.modules.rnn import GRU
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
@@ -22,6 +24,7 @@ class WorldModel(PyTorchModule):
         reward_num_layers=2,
         pred_discount_num_layers=3,
         use_depth_wise_separable_conv=False,
+        gru_layer_norm=False,
     ):
         super().__init__()
         self.obs_step_mlp = Mlp(
@@ -43,7 +46,14 @@ class WorldModel(PyTorchModule):
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
-        self.rnn = torch.nn.GRUCell(deterministic_state_size, deterministic_state_size)
+        if gru_layer_norm:
+            self.rnn = GRUCell(
+                deterministic_state_size, deterministic_state_size, norm=True
+            )
+        else:
+            self.rnn = torch.nn.GRUCell(
+                deterministic_state_size, deterministic_state_size
+            )
         self.conv_encoder = CNN(
             input_width=64,
             input_height=64,
@@ -250,3 +260,38 @@ class MultitaskWorldModel(WorldModel):
         encoded_obs = self.conv_encoder(image_obs)
         latent = torch.cat((encoded_obs, one_hots), dim=1)
         return latent
+
+
+class GRUCell(nn.GRUCell):
+    def __init__(
+        self, input_size, output_size, norm=False, act=torch.tanh, update_bias=-1
+    ):
+        super(GRUCell, self).__init__(input_size, output_size)
+        self._size = output_size
+        self._act = act
+        self._norm = norm
+        self._update_bias = update_bias
+        self._layer = nn.Linear(
+            input_size * 2,
+            3 * output_size,
+        )
+        if norm:
+            self._norm = nn.LayerNorm((output_size * 3))
+
+    def forward(self, inputs, hx=None):
+        if hx is None:
+            hx = torch.zeros(
+                inputs.size(0),
+                self.hidden_size,
+                dtype=inputs.dtype,
+                device=inputs.device,
+            )
+        parts = self._layer(torch.cat([inputs, hx], -1))
+        if self._norm:
+            parts = self._norm(parts)
+        reset, cand, update = torch.split(parts, self._size, -1)
+        reset = torch.sigmoid(reset)
+        cand = self._act(reset * cand)
+        update = torch.sigmoid(update + self._update_bias)
+        output = update * cand + (1 - update) * hx
+        return output

@@ -35,6 +35,7 @@ def experiment(variant):
         ActionSpaceSamplePolicy,
         DreamerPolicy,
     )
+    from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
@@ -104,6 +105,11 @@ def experiment(variant):
     else:
         world_model_class = WorldModel
 
+    if variant.get("algorithm", "dreamer") == "dreamer_v2":
+        trainer_class = DreamerV2Trainer
+    else:
+        trainer_class = DreamerTrainer
+
     world_model = world_model_class(
         action_dim,
         **variant["model_kwargs"],
@@ -119,7 +125,8 @@ def experiment(variant):
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
     vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=variant["model_kwargs"]["stochastic_state_size"]
         + variant["model_kwargs"]["deterministic_state_size"],
@@ -177,7 +184,7 @@ def experiment(variant):
         action_dim,
         replace=False,
     )
-    trainer = DreamerTrainer(
+    trainer = trainer_class(
         env=eval_env,
         world_model=world_model,
         actor=actor,

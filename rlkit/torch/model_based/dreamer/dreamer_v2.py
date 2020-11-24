@@ -29,7 +29,7 @@ DreamerLosses = namedtuple(
 )
 
 
-class DreamerTrainer(TorchTrainer, LossFunction):
+class DreamerV2Trainer(TorchTrainer, LossFunction):
     def __init__(
         self,
         env,
@@ -222,7 +222,6 @@ class DreamerTrainer(TorchTrainer, LossFunction):
         terminals = batch["terminals"]
         obs = batch["observations"]
         actions = batch["actions"]
-        next_obs = batch["next_observations"]
         """
         World Model Loss
         """
@@ -234,6 +233,7 @@ class DreamerTrainer(TorchTrainer, LossFunction):
             image_dist,
             reward_dist,
             pred_discount_dist,
+            embed,
         ) = self.world_model(obs, actions)
 
         # stack obs, rewards and terminals along path dimension

@@ -18,7 +18,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.debug:
         algorithm_kwargs = dict(
-            num_epochs=2,
+            num_epochs=5,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=10,
             num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
@@ -26,6 +26,7 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             num_train_loops_per_epoch=1,
             batch_size=50,
+            use_wandb=False,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -38,12 +39,13 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             num_train_loops_per_epoch=5,
             batch_size=625,
+            use_wandb=False,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="Dreamer",
+        algorithm="dreamer_v2",
         version="normal",
-        replay_buffer_size=int(1e5),
+        replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
         env_class="microwave",
         env_kwargs=dict(
@@ -52,6 +54,10 @@ if __name__ == "__main__":
             image_obs=True,
             fixed_schema=True,
             multitask=False,
+            action_scale=1.4,
+        ),
+        vf_kwargs=dict(
+            num_layers=3,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
@@ -60,7 +66,7 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
-            rssm_hidden_size=400,
+            gru_layer_norm=False,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -88,36 +94,41 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "slide_cabinet",
+            #     "microwave",
+            #     "kettle",
+            #     "top_left_burner",
+            #     "slide_cabinet",
             "hinge_cabinet",
-            "light_switch",
+            #     "light_switch",
         ],
         "env_kwargs.delta": [
             0.3,
         ],
         "expl_amount": [0.3],
-        "trainer_kwargs.image_loss_scale": [
-            1.0 / (64 * 64 * 3),
-        ],
-        "trainer_kwargs.pred_discount_loss_scale": [1.0],
-        "trainer_kwargs.transition_loss_scale": [0.08],
-        "trainer_kwargs.entropy_loss_scale": [0.2],
-        "trainer_kwargs.kl_loss_scale": [0.0],
-        "trainer_kwargs.world_model_lr": [2e-4],
-        "trainer_kwargs.discount": [0.995],
-        "trainer_kwargs.reinforce_loss_scale": [0.9],
-        "trainer_kwargs.dynamics_backprop_loss_scale": [0.1],
-        "trainer_kwargs.actor_entropy_loss_scale": [
-            3e-4,
-        ],  # todo might want to schedule this?
-        "trainer_kwargs.actor_lr": [4e-5],
-        "trainer_kwargs.vf_lr": [1e-4],
-        "trainer_kwargs.adam_eps": [1e-5],
-        "trainer_kwargs.weight_decay": [1e-6],
-        "model_kwargs.rssm_hidden_size": [600],
+        # "trainer_kwargs.image_loss_scale": [
+        #     1.0 / (64 * 64 * 3),
+        # ],
+        # "trainer_kwargs.pred_discount_loss_scale": [1.0],
+        # "trainer_kwargs.transition_loss_scale": [0.08],
+        # "trainer_kwargs.entropy_loss_scale": [0.2],
+        # "trainer_kwargs.kl_loss_scale": [0.0],
+        # "trainer_kwargs.discount": [0.995],
+        # "trainer_kwargs.reinforce_loss_scale": [0.9],
+        # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1],
+        # "trainer_kwargs.actor_entropy_loss_scale": [
+        #     3e-4,
+        # ],  # todo might want to schedule this?
+        # "trainer_kwargs.world_model_lr": [2e-4],
+        # "trainer_kwargs.actor_lr": [4e-5],
+        # "trainer_kwargs.vf_lr": [1e-4],
+        # "trainer_kwargs.adam_eps": [1e-5],
+        # "trainer_kwargs.weight_decay": [1e-6],
+        # "model_kwargs.rssm_hidden_size": [600],
+        # "model_kwargs.gru_layer_norm": [True],
+        #     "model_kwargs.reward_num_layers": [4],
+        #     "model_kwargs.pred_discount_num_layers": [4],
+        #     "model_kwargs.pred_discount_num_layers": [4],
+        #     "vf_kwargs.num_layers": [4],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
