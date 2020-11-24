@@ -1,18 +1,6 @@
 import argparse
 import random
 
-from d4rl.kitchen.kitchen_envs import (
-    KitchenBottomLeftBurnerV0,
-    KitchenHingeCabinetV0,
-    KitchenKettleV0,
-    KitchenLightSwitchV0,
-    KitchenMicrowaveV0,
-    KitchenMultitaskAllV0,
-    KitchenSlideCabinetV0,
-    KitchenTopLeftBurnerV0,
-)
-from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv, make_env
-
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
@@ -99,7 +87,6 @@ if __name__ == "__main__":
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
-        debug=args.debug,
     )
 
     search_space = {
@@ -123,33 +110,24 @@ if __name__ == "__main__":
             env_class = variant["env_class"]
             env_kwargs = variant["env_kwargs"]
             if env_class == "microwave":
-                env_class_ = KitchenMicrowaveV0
+                max_path_length = 3
             elif env_class == "kettle":
-                env_class_ = KitchenKettleV0
+                max_path_length = 5
             elif env_class == "slide_cabinet":
-                env_class_ = KitchenSlideCabinetV0
+                max_path_length = 3
             elif env_class == "hinge_cabinet":
-                env_class_ = KitchenHingeCabinetV0
+                max_path_length = 6
             elif env_class == "top_left_burner":
-                env_class_ = KitchenTopLeftBurnerV0
+                max_path_length = 3
             elif env_class == "bottom_left_burner":
-                env_class_ = KitchenBottomLeftBurnerV0
+                max_path_length = 3
             elif env_class == "light_switch":
-                env_class_ = KitchenLightSwitchV0
+                max_path_length = 5
             elif env_class == "multitask_all":
-                env_class_ = KitchenMultitaskAllV0
+                max_path_length = 6
             else:
                 raise EnvironmentError("invalid env provided")
 
-            eval_envs = [
-                make_env(
-                    env_class=env_class_,
-                    env_kwargs=variant["env_kwargs"],
-                )
-            ]
-
-            eval_env = DummyVecEnv(eval_envs)
-            max_path_length = eval_envs[0].max_steps
             variant["algorithm_kwargs"]["max_path_length"] = max_path_length
             variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
             num_steps_per_epoch = 1000
@@ -160,12 +138,19 @@ if __name__ == "__main__":
             )
             if num_steps_per_epoch % num_expl_steps_per_train_loop != 0:
                 num_train_loops_per_epoch += 1
-            variant["algorithm_kwargs"][
-                "num_train_loops_per_epoch"
-            ] = num_train_loops_per_epoch
+
+            total_batch_size = 2500
+            effective_batch_size = total_batch_size // (max_path_length + 1)
+
             variant["algorithm_kwargs"][
                 "num_expl_steps_per_train_loop"
             ] = num_expl_steps_per_train_loop
+
+            if not args.debug:
+                variant["algorithm_kwargs"]["batch_size"] = effective_batch_size
+                variant["algorithm_kwargs"][
+                    "num_train_loops_per_epoch"
+                ] = num_train_loops_per_epoch
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
