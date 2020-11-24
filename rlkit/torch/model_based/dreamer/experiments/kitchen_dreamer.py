@@ -115,6 +115,7 @@ def experiment(variant):
             + variant["model_kwargs"]["deterministic_state_size"],
             hidden_activation=torch.nn.functional.elu,
         )
+        variant["trainer_kwargs"]["target_vf"] = target_vf
     else:
         trainer_class = DreamerTrainer
 

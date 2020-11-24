@@ -79,6 +79,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.actor = actor.to(ptu.device)
         self.world_model = world_model.to(ptu.device)
         self.vf = vf.to(ptu.device)
+        self.target_vf = target_vf.to(ptu.device)
 
         self.plotter = plotter
         self.render_eval_paths = render_eval_paths
@@ -162,7 +163,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         )
         self.soft_target_tau = soft_target_tau
         self.target_update_period = target_update_period
-        self.target_vf = target_vf
         self.use_pred_discount = use_pred_discount
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
@@ -528,6 +528,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.actor,
             self.vf,
             self.world_model,
+            self.target_vf,
         ]
 
     @property
