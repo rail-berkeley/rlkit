@@ -5,6 +5,7 @@ def experiment(variant):
 
     import torch
     from d4rl.kitchen.kitchen_envs import (
+        KitchenBottomLeftBurnerV0,
         KitchenHingeCabinetV0,
         KitchenKettleV0,
         KitchenLightSwitchV0,
@@ -53,6 +54,8 @@ def experiment(variant):
         env_class_ = KitchenHingeCabinetV0
     elif env_class == "top_left_burner":
         env_class_ = KitchenTopLeftBurnerV0
+    elif env_class == "bottom_left_burner":
+        env_class_ = KitchenBottomLeftBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
     elif env_class == "multitask_all":
