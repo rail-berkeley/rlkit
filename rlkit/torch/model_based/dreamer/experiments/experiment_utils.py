@@ -41,4 +41,6 @@ def preprocess_variant(variant, debug):
         variant["algorithm_kwargs"][
             "num_train_loops_per_epoch"
         ] = num_train_loops_per_epoch
+    if variant.get("path_length_specific_discount", False):
+        variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
     return variant

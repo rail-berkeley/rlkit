@@ -21,7 +21,6 @@ if __name__ == "__main__":
             num_epochs=5,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=10,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
             min_num_steps_before_training=100,
             num_pretrain_steps=100,
             num_train_loops_per_epoch=1,
@@ -34,11 +33,8 @@ if __name__ == "__main__":
             num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
-            num_train_loops_per_epoch=5,
-            batch_size=625,
             use_wandb=False,
         )
         exp_prefix = args.exp_prefix
@@ -59,10 +55,14 @@ if __name__ == "__main__":
         actor_kwargs=dict(
             discrete_continuous_dist=False,
         ),
+        vf_kwargs=dict(
+            num_layers=3,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
+            use_depth_wise_separable_conv=False,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -86,9 +86,9 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
-            # "top_left_burner",
+            "microwave",
+            "kettle",
+            "top_left_burner",
             "slide_cabinet",
             "hinge_cabinet",
             "light_switch",
@@ -99,7 +99,10 @@ if __name__ == "__main__":
             # 0.75,
         ],
         "expl_amount": [0.3],
-        "model_kwargs.use_depth_wise_separable_conv": [False],
+        "path_length_specific_discount": [
+            True,
+            False,
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
