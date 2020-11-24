@@ -51,7 +51,8 @@ if __name__ == "__main__":
             image_obs=True,
             fixed_schema=True,
             multitask=False,
-            action_scale=1,
+            action_scale=1.4,
+            use_combined_action_space=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
@@ -61,6 +62,7 @@ if __name__ == "__main__":
             stochastic_state_size=60,
             deterministic_state_size=400,
             embedding_size=1024,
+            use_depth_wise_separable_conv=False,
         ),
         one_step_ensemble_kwargs=dict(
             hidden_size=32 * 32,
@@ -92,16 +94,12 @@ if __name__ == "__main__":
             "microwave",
             "kettle",
             "top_left_burner",
+            "bottom_left_burner",
             "slide_cabinet",
             "hinge_cabinet",
             "light_switch",
         ],
-        "env_kwargs.delta": [
-            0.3,
-            0.5,
-            0.75,
-        ],
-        "expl_amount": [0.3, 0.6],
+        "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
