@@ -431,6 +431,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         """
         world_model_params = list(self.world_model.parameters())
         vf_params = list(self.vf.parameters())
+        target_vf_params = list(self.target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
         with FreezeParameters(world_model_params):
             imag_feat, imag_actions = self.imagine_ahead(post)
@@ -446,7 +447,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
             if self.target_vf:
-                with FreezeParameters(self.target_vf.modules):
+                with FreezeParameters(target_vf_params):
                     value = self.target_vf(imag_feat)
             else:
                 value = self.vf(imag_feat)
