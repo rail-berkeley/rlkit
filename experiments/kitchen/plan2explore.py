@@ -94,13 +94,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
-            # "top_left_burner",
-            # "bottom_left_burner",
-            # "slide_cabinet",
+            "microwave",
+            "kettle",
+            "top_left_burner",
+            "slide_cabinet",
             "hinge_cabinet",
-            # "light_switch",
+            "light_switch",
         ],
         "expl_amount": [0.3],
     }
