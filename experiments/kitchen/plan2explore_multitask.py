@@ -3,6 +3,9 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+    preprocess_variant,
+)
 from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
     experiment,
 )
@@ -101,6 +104,7 @@ if __name__ == "__main__":
             and variant["env_kwargs"]["delta"] != 0.0
         ):
             continue
+        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             run_experiment(
                 experiment,

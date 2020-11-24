@@ -3,6 +3,9 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+    preprocess_variant,
+)
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
@@ -121,6 +124,7 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             run_experiment(
                 experiment,
