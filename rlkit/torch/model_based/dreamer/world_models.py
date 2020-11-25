@@ -1,9 +1,9 @@
-from math import e
-
 import torch
 import torch.nn.functional as F
 from torch import nn
-from torch.nn.modules.rnn import GRU
+from torch.distributions.bernoulli import Bernoulli
+from torch.distributions.independent import Independent
+from torch.distributions.normal import Normal
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
@@ -270,15 +270,11 @@ class WorldModel(PyTorchModule):
     def get_dist(self, mean, std, dims=1, normal=True, latent=False):
         if normal:
             if latent and self.discrete_latents:
-                dist = torch.distributions.Independent(OneHotDist(logits=mean), dims)
+                dist = Independent(OneHotDist(logits=mean), dims)
                 return dist
-            return torch.distributions.Independent(
-                torch.distributions.Normal(mean, std), dims
-            )
+            return Independent(Normal(mean, std), dims)
         else:
-            return torch.distributions.Independent(
-                torch.distributions.Bernoulli(logits=mean), dims
-            )
+            return Independent(Bernoulli(logits=mean), dims)
 
     def get_detached_dist(self, mean, std, dims=1, normal=True, latent=False):
         return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)

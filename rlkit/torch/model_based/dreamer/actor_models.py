@@ -1,6 +1,7 @@
 import torch
 import torch.nn.functional as F
-from torch.distributions import Normal, TransformedDistribution
+from torch.distributions import Independent, Normal, Transform, TransformedDistribution
+from torch.distributions.one_hot_categorical import OneHotCategorical
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.model_based.dreamer.mlp import Mlp
@@ -68,7 +69,7 @@ class ActorModel(Mlp):
 
             dist2 = Normal(action_mean, action_std)
             dist2 = TransformedDistribution(dist2, TanhBijector())
-            dist2 = torch.distributions.Independent(dist2, 1)
+            dist2 = Independent(dist2, 1)
             dist2 = SampleDist(dist2)
             dist = SplitDist(dist1, dist2)
         else:
@@ -89,7 +90,7 @@ def atanh(x):
     return 0.5 * torch.log((1 + x) / (1 - x))
 
 
-class TanhBijector(torch.distributions.Transform):
+class TanhBijector(Transform):
     def __init__(self):
         super().__init__()
         self.bijective = True
@@ -154,7 +155,7 @@ class SampleDist:
         return self._dist.rsample()
 
 
-class OneHotDist(torch.distributions.one_hot_categorical.OneHotCategorical):
+class OneHotDist(OneHotCategorical):
     def mode(self):
         return self._one_hot(torch.argmax(self.probs, dim=-1))
 

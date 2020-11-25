@@ -71,7 +71,7 @@ class DreamerPolicy(Policy):
                 action = torch.cat((discrete, continuous), -1)
             else:
                 action = torch.clamp(
-                    Normal(action.float(), self.expl_amount).rsample(), -1.4, 1.4
+                    Normal(action.float(), self.expl_amount).rsample(), -1, 1
                 )
         else:
             action = dist.mode()
