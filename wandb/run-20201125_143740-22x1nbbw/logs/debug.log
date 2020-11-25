@@ -1,5 +1,0 @@
-2020-11-25 14:37:40,836 INFO    MainThread:3351701 [wandb_setup.py:_flush():70] setting env: {}
-2020-11-25 14:37:40,836 INFO    MainThread:3351701 [wandb_setup.py:_flush():70] multiprocessing start_methods=fork,spawn,forkserver
-2020-11-25 14:37:40,836 INFO    MainThread:3351701 [wandb_setup.py:_flush():70] setting login settings: {}
-2020-11-25 14:37:40,836 INFO    MainThread:3351701 [wandb_init.py:_log_setup():303] Logging user logs to /home/mdalal/research/rlkit/wandb/run-20201125_143740-22x1nbbw/logs/debug.log
-2020-11-25 14:37:40,836 INFO    MainThread:3351701 [wandb_init.py:_log_setup():304] Logging internal logs to /home/mdalal/research/rlkit/wandb/run-20201125_143740-22x1nbbw/logs/debug-internal.log
