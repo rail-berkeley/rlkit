@@ -1,6 +1,5 @@
 def preprocess_variant(variant, debug):
     env_class = variant["env_class"]
-    env_kwargs = variant["env_kwargs"]
     if env_class == "microwave":
         max_path_length = 3
     elif env_class == "kettle":
@@ -31,11 +30,10 @@ def preprocess_variant(variant, debug):
     total_batch_size = 2500
     effective_batch_size = total_batch_size // (max_path_length + 1)
 
-    variant["algorithm_kwargs"][
-        "num_expl_steps_per_train_loop"
-    ] = num_expl_steps_per_train_loop
-
     if not debug:
+        variant["algorithm_kwargs"][
+            "num_expl_steps_per_train_loop"
+        ] = num_expl_steps_per_train_loop
         variant["algorithm_kwargs"]["batch_size"] = effective_batch_size
         variant["algorithm_kwargs"][
             "num_train_loops_per_epoch"
