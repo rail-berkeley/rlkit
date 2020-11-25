@@ -2,7 +2,7 @@ import argparse
 import random
 
 import rlkit.util.hyperparameter as hyp
-from rlkit.launchers.launcher_util import run_experiment
+from rlkit.launchers.launcher_util import create_exp_name, run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
@@ -143,14 +143,32 @@ if __name__ == "__main__":
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
-            run_experiment(
-                experiment,
-                exp_prefix=args.exp_prefix,
-                mode=args.mode,
-                variant=variant,
-                use_gpu=True,
-                snapshot_mode="last",
-                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
-                seed=random.randint(0, 100000),
-                exp_id=exp_id,
-            )
+            seed = random.randint(0, 100000)
+            exp_name = create_exp_name(exp_prefix, exp_id=exp_id, seed=seed)
+            if args.use_wandb:
+                import wandb
+
+                wandb.init(project=args.exp_prefix, name=exp_name, config=variant)
+                run_experiment(
+                    experiment,
+                    exp_prefix=args.exp_prefix,
+                    mode=args.mode,
+                    variant=variant,
+                    use_gpu=True,
+                    snapshot_mode="none",
+                    python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+                    seed=seed,
+                    exp_id=exp_id,
+                )
+            else:
+                run_experiment(
+                    experiment,
+                    exp_prefix=args.exp_prefix,
+                    mode=args.mode,
+                    variant=variant,
+                    use_gpu=True,
+                    snapshot_mode="none",
+                    python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+                    seed=seed,
+                    exp_id=exp_id,
+                )

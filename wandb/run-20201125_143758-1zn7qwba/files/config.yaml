@@ -1,0 +1,94 @@
+wandb_version: 1
+
+_wandb:
+  desc: null
+  value:
+    cli_version: 0.10.11
+    code_path: code/experiments/kitchen/dreamer_v2.py
+    is_jupyter_run: false
+    is_kaggle_kernel: false
+    python_version: 3.7.9
+actor_kwargs:
+  desc: null
+  value:
+    discrete_continuous_dist: false
+algorithm:
+  desc: null
+  value: dreamer_v2
+algorithm_kwargs:
+  desc: null
+  value:
+    batch_size: 30
+    max_path_length: 6
+    min_num_steps_before_training: 10
+    num_epochs: 5
+    num_eval_steps_per_epoch: 10
+    num_expl_steps_per_train_loop: 50
+    num_pretrain_steps: 10
+    num_train_loops_per_epoch: 1
+    num_trains_per_train_loop: 10
+    use_wandb: true
+env_class:
+  desc: null
+  value: hinge_cabinet
+env_kwargs:
+  desc: null
+  value:
+    action_scale: 1.4
+    delta: 0.3
+    dense: false
+    fixed_schema: true
+    image_obs: true
+    multitask: false
+expl_amount:
+  desc: null
+  value: 0.3
+model_kwargs:
+  desc: null
+  value:
+    deterministic_state_size: 400
+    gru_layer_norm: false
+    model_hidden_size: 400
+    stochastic_state_size: 60
+num_eval_envs:
+  desc: null
+  value: 1
+num_expl_envs:
+  desc: null
+  value: 8
+path_length_specific_discount:
+  desc: null
+  value: true
+replay_buffer_size:
+  desc: null
+  value: 1000000
+trainer_kwargs:
+  desc: null
+  value:
+    actor_lr: 8.0e-05
+    discount: 0.8333333333333334
+    entropy_loss_scale: 0.0
+    free_nats: 3.0
+    gradient_clip: 100.0
+    image_loss_scale: 1.0
+    imagination_horizon: 7
+    kl_loss_scale: 1.0
+    lam: 0.95
+    opt_level: O1
+    optimizer_class: apex_adam
+    pred_discount_loss_scale: 10.0
+    reward_loss_scale: 1.0
+    reward_scale: 1.0
+    target_update_period: 1
+    transition_loss_scale: 0.0
+    use_amp: true
+    use_pred_discount: true
+    vf_lr: 8.0e-05
+    world_model_lr: 0.0006
+version:
+  desc: null
+  value: normal
+vf_kwargs:
+  desc: null
+  value:
+    num_layers: 3

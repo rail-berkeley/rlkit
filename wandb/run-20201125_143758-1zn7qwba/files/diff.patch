@@ -1,0 +1,101 @@
+diff --git a/experiments/kitchen/dreamer_v2.py b/experiments/kitchen/dreamer_v2.py
+index 2005f0a..5d53fab 100644
+--- a/experiments/kitchen/dreamer_v2.py
++++ b/experiments/kitchen/dreamer_v2.py
+@@ -2,7 +2,7 @@ import argparse
+ import random
+ 
+ import rlkit.util.hyperparameter as hyp
+-from rlkit.launchers.launcher_util import run_experiment
++from rlkit.launchers.launcher_util import create_exp_name, run_experiment
+ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+     preprocess_variant,
+ )
+@@ -14,6 +14,7 @@ if __name__ == "__main__":
+     parser.add_argument("--num_seeds", type=int, default=1)
+     parser.add_argument("--mode", type=str, default="local")
+     parser.add_argument("--debug", action="store_true", default=False)
++    parser.add_argument("--use_wandb", action="store_true", default=False)
+     parser.add_argument("--num_expl_envs", type=int, default=4)
+     args = parser.parse_args()
+     if args.debug:
+@@ -26,7 +27,7 @@ if __name__ == "__main__":
+             num_pretrain_steps=10,
+             num_train_loops_per_epoch=1,
+             batch_size=30,
+-            use_wandb=False,
++            use_wandb=args.use_wandb,
+         )
+         exp_prefix = "test" + args.exp_prefix
+     else:
+@@ -37,7 +38,7 @@ if __name__ == "__main__":
+             min_num_steps_before_training=5000,
+             num_pretrain_steps=100,
+             batch_size=625,
+-            use_wandb=False,
++            use_wandb=args.use_wandb,
+         )
+         exp_prefix = args.exp_prefix
+     variant = dict(
+@@ -142,14 +143,32 @@ if __name__ == "__main__":
+     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+         variant = preprocess_variant(variant, args.debug)
+         for _ in range(args.num_seeds):
+-            run_experiment(
+-                experiment,
+-                exp_prefix=args.exp_prefix,
+-                mode=args.mode,
+-                variant=variant,
+-                use_gpu=True,
+-                snapshot_mode="last",
+-                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+-                seed=random.randint(0, 100000),
+-                exp_id=exp_id,
+-            )
++            seed = random.randint(0, 100000)
++            exp_name = create_exp_name(exp_prefix, exp_id=exp_id, seed=seed)
++            if args.use_wandb:
++                import wandb
++
++                wandb.init(project=args.exp_prefix, name=exp_name, config=variant)
++                run_experiment(
++                    experiment,
++                    exp_prefix=args.exp_prefix,
++                    mode=args.mode,
++                    variant=variant,
++                    use_gpu=True,
++                    snapshot_mode="none",
++                    python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
++                    seed=seed,
++                    exp_id=exp_id,
++                )
++            else:
++                run_experiment(
++                    experiment,
++                    exp_prefix=args.exp_prefix,
++                    mode=args.mode,
++                    variant=variant,
++                    use_gpu=True,
++                    snapshot_mode="none",
++                    python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
++                    seed=seed,
++                    exp_id=exp_id,
++                )
+diff --git a/rlkit/torch/model_based/dreamer/experiments/kitchen_dreamer.py b/rlkit/torch/model_based/dreamer/experiments/kitchen_dreamer.py
+index 6e570e2..48f2dcd 100644
+--- a/rlkit/torch/model_based/dreamer/experiments/kitchen_dreamer.py
++++ b/rlkit/torch/model_based/dreamer/experiments/kitchen_dreamer.py
+@@ -1,13 +1,4 @@
+ def experiment(variant):
+-
+-    from rlkit.core import logger
+-
+-    if variant["algorithm_kwargs"]["use_wandb"]:
+-        import wandb
+-
+-        wandb.init(
+-            project=variant["exp_prefix"], name=logger.get_exp_name(), config=variant
+-        )
+     import os
+ 
+     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
