@@ -154,7 +154,7 @@ class WorldModel(PyTorchModule):
             dict(mean=[], std=[], stoch=[], deter=[]),
             dict(mean=[], std=[], stoch=[], deter=[]),
         )
-        images, rewards, pred_discounts, embeds = [], [], [], []
+        images, rewards, pred_discounts = [], [], [], []
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
