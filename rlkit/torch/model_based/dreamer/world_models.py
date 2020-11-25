@@ -5,6 +5,7 @@ from torch.nn.modules.rnn import GRU
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
+from rlkit.torch.model_based.dreamer.actor_models import OneHotDist
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 
@@ -25,6 +26,8 @@ class WorldModel(PyTorchModule):
         pred_discount_num_layers=3,
         use_depth_wise_separable_conv=False,
         gru_layer_norm=False,
+        discrete_latents=False,
+        discrete_latent_size=32,
     ):
         super().__init__()
         self.obs_step_mlp = Mlp(
@@ -39,10 +42,14 @@ class WorldModel(PyTorchModule):
         )
         torch.nn.init.xavier_uniform_(self.img_step_layer.weight)
         self.img_step_layer.bias.data.fill_(0)
+        if discrete_latents:
+            img_step_mlp_output_size = stochastic_state_size * discrete_latent_size
+        else:
+            img_step_mlp_output_size = 2 * stochastic_state_size
         self.img_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
             input_size=deterministic_state_size,
-            output_size=2 * stochastic_state_size,
+            output_size=img_step_mlp_output_size,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
@@ -104,6 +111,8 @@ class WorldModel(PyTorchModule):
         self.feature_size = stochastic_state_size + deterministic_state_size
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
+        self.discrete_latents = discrete_latents
+        self.discrete_latent_size = discrete_latent_size
 
     def obs_step(self, prev_state, prev_action, embed):
         prior = self.img_step(prev_state, prev_action)
@@ -116,15 +125,26 @@ class WorldModel(PyTorchModule):
         return post, prior
 
     def img_step(self, prev_state, prev_action):
-        x = torch.cat([prev_state["stoch"], prev_action], -1)
+        prev_stoch = prev_state["stoch"]
+        if self.discrete_latents:
+            shape = prev_stoch.shape[:-2] + [self._stoch * self._discrete]
+            prev_stoch = prev_stoch.reshape(shape)
+        x = torch.cat([prev_stoch, prev_action], -1)
         x = self.img_step_layer(x)
         x = self.model_act(x)
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.img_step_mlp(deter_new)
-        mean, std = x.split(self.stochastic_state_size, -1)
-        std = F.softplus(std) + 0.1
-        stoch = self.get_dist(mean, std).rsample()
-        prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
+        if self.discrete_latents:
+            logits = x.reshape(
+                x.shape[:-1] + [self.stochastic_state_size, self.discrete_latent_size]
+            )
+            stoch = self.get_dist(logits, None).rsample()
+            prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
+        else:
+            mean, std = x.split(self.stochastic_state_size, -1)
+            std = F.softplus(std) + 0.1
+            stoch = self.get_dist(mean, std).rsample()
+            prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
     def forward_batch(
@@ -211,9 +231,17 @@ class WorldModel(PyTorchModule):
         )
 
     def get_feat(self, state):
-        return torch.cat([state["stoch"], state["deter"]], -1)
+        stoch = state["stoch"]
+        if self.discrete_latents:
+            shape = stoch.shape[:-2] + [self._stoch * self.discrete_latent_size]
+            stoch = stoch.reshape(shape)
+        return torch.cat([state["deter"], state["stoch"]], -1)
 
     def get_dist(self, mean, std, dims=1, normal=True):
+        if self.discrete_latents:
+            logits = mean
+            dist = torch.distributions.Independent(OneHotDist(logits), dims)
+            return dist
         if normal:
             return torch.distributions.Independent(
                 torch.distributions.Normal(mean, std), dims
@@ -244,12 +272,22 @@ class WorldModel(PyTorchModule):
         return obs
 
     def initial(self, batch_size):
-        return dict(
-            mean=ptu.zeros([batch_size, self.stochastic_state_size]),
-            std=ptu.zeros([batch_size, self.stochastic_state_size]),
-            stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
-            deter=ptu.zeros([batch_size, self.deterministic_state_size]),
-        )
+        if self.discrete_latents:
+            state = dict(
+                logits=ptu.zeros(
+                    [batch_size, self._stoch, self.discrete_latent_size],
+                ),
+                stoch=ptu.zeros([batch_size, self._stoch, self.discrete_latent_size]),
+                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
+            )
+        else:
+            state = dict(
+                mean=ptu.zeros([batch_size, self.stochastic_state_size]),
+                std=ptu.zeros([batch_size, self.stochastic_state_size]),
+                stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
+                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
+            )
+        return state
 
 
 class MultitaskWorldModel(WorldModel):

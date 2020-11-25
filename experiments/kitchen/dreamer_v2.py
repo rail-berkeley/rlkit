@@ -107,6 +107,8 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.3,
         ],
+        # "model_kwargs.discrete_latents":[True,],
+        # "model_kwargs.discrete_latent_size":[32],
         # "expl_amount": [0],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0 / (64 * 64 * 3),

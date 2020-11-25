@@ -241,12 +241,20 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         )
         div = kld(post_dist, prior_dist).mean()
         div = torch.max(div, ptu.tensor(self.free_nats))
-        post_detached_dist = self.world_model.get_detached_dist(
-            post["mean"], post["std"]
-        )
-        prior_detached_dist = self.world_model.get_detached_dist(
-            prior["mean"], prior["std"]
-        )
+        if self.world_model.discrete_latents:
+            post_detached_dist = self.world_model.get_detached_dist(
+                post["logits"].detach(), None
+            )
+            prior_detached_dist = self.world_model.get_detached_dist(
+                prior["logits"].detach(), None
+            )
+        else:
+            post_detached_dist = self.world_model.get_detached_dist(
+                post["mean"].detach(), post["std"].detach()
+            )
+            prior_detached_dist = self.world_model.get_detached_dist(
+                prior["mean"].detach(), prior["std"].detach()
+            )
         prior_kld = kld(prior_dist, post_detached_dist).mean()
         post_kld = kld(prior_detached_dist, post_dist).mean()
         transition_loss = torch.max(prior_kld, ptu.tensor(self.free_nats))
