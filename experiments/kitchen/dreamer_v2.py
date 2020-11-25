@@ -19,13 +19,13 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=30,
+            num_eval_steps_per_epoch=10,
             num_trains_per_train_loop=10,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
-            min_num_steps_before_training=100,
-            num_pretrain_steps=100,
+            num_expl_steps_per_train_loop=50,
+            min_num_steps_before_training=10,
+            num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            batch_size=50,
+            batch_size=30,
             use_wandb=False,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -34,10 +34,8 @@ if __name__ == "__main__":
             num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
-            num_train_loops_per_epoch=5,
             batch_size=625,
             use_wandb=False,
         )
