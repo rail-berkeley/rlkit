@@ -154,41 +154,21 @@ class SampleDist:
         return self._dist.rsample()
 
 
-class OneHotDist:
-    def __init__(self, logits=None, probs=None, samples=100):
-        self._dist = torch.distributions.Categorical(logits=logits, probs=probs)
-        self._num_classes = self._dist.logits.shape[-1]
-        self._samples = samples
-
-    @property
-    def name(self):
-        return "OneHotDist"
-
-    def __getattr__(self, name):
-        return getattr(self._dist, name)
-
-    def log_prob(self, values):
-        indices = torch.argmax(values, dim=-1)
-        return self._dist.log_prob(indices)
-
-    def mean(self):
-        return self._dist.mean
-
+class OneHotDist(torch.distributions.one_hot_categorical.OneHotCategorical):
     def mode(self):
-        return self._one_hot(torch.argmax(self._dist.probs, dim=-1))
+        return self._one_hot(torch.argmax(self.probs, dim=-1))
 
-    def rsample(self):
-        indices = self._dist.sample()
+    def rsample(self, sample_shape=torch.Size()):
+        sample_shape = torch.Size(sample_shape)
+        probs = self._categorical.probs
+        indices = self._categorical.sample(sample_shape)
         sample = self._one_hot(indices).float()
-        probs = self._dist.probs
+        probs = self.probs
         sample += probs - (probs).detach()  # straight through estimator
         return sample
 
-    def entropy(self):
-        return self._dist.entropy()
-
     def _one_hot(self, indices):
-        return F.one_hot(indices, self._num_classes)
+        return F.one_hot(indices, self._categorical._num_events)
 
 
 class SplitDist:
@@ -203,21 +183,11 @@ class SplitDist:
         return torch.cat((self._dist1.mode().float(), self._dist2.mode().float()), -1)
 
     def entropy(self):
-        return torch.cat(
-            (
-                self._dist1.entropy(),
-                self._dist2.entropy(),
-            ),
-            -1,
-        )
+        return self._dist1.entropy() + self._dist2.entropy()
 
     def log_prob(self, actions):
-        return torch.cat(
-            (
-                self._dist1.log_prob(actions[:, :13]),
-                self._dist2.log_prob(actions[:, 13:]),
-            ),
-            -1,
+        return self._dist1.log_prob(actions[:, :13]) + self._dist2.log_prob(
+            actions[:, 13:]
         )
 
 
