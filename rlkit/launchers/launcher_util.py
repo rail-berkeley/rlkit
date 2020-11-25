@@ -181,6 +181,7 @@ def create_exp_name(exp_prefix, exp_id=0, seed=0):
 
 
 def create_log_dir(
+    variant,
     exp_prefix,
     exp_id=0,
     seed=0,
@@ -198,7 +199,7 @@ def create_log_dir(
     :return:
     """
     exp_name = create_exp_name(exp_prefix, exp_id=exp_id, seed=seed)
-    logger.set_exp_name(exp_name)
+    variant["exp_name"] = exp_name
     if base_log_dir is None:
         base_log_dir = conf.LOCAL_LOG_DIR
     if include_exp_prefix_sub_dir:
@@ -253,7 +254,7 @@ def setup_logger(
         git_infos = get_git_infos(conf.CODE_DIRS_TO_MOUNT)
     first_time = log_dir is None
     if first_time:
-        log_dir = create_log_dir(exp_prefix, **create_log_dir_kwargs)
+        log_dir = create_log_dir(variant, exp_prefix, **create_log_dir_kwargs)
 
     if variant is not None:
         logger.log("Variant:")
@@ -689,6 +690,7 @@ def run_experiment(
             slurm_config = conf.SLURM_CPU_CONFIG
         if mode == "slurm_singularity_matrix":
             logdir = create_log_dir(
+                variant=variant,
                 exp_prefix=exp_prefix,
                 base_log_dir=base_log_dir,
                 seed=seed,

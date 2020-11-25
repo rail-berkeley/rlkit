@@ -2,14 +2,10 @@ def experiment(variant):
     from rlkit.core import logger
 
     if variant["algorithm_kwargs"]["use_wandb"]:
-        import os
-
         import wandb
 
-        os.environ["WANDB_SILENT"] = "true"
-
         with wandb.init(
-            project=variant["exp_prefix"], name=logger.get_exp_name(), config=variant
+            project=variant["exp_prefix"], name=variant["exp_name"], config=variant
         ):
             run_experiment(variant)
     else:
