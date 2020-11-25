@@ -1,3 +1,5 @@
+from math import e
+
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -30,26 +32,38 @@ class WorldModel(PyTorchModule):
         discrete_latent_size=32,
     ):
         super().__init__()
+        self.model_act = model_act
+        self.stochastic_state_size = stochastic_state_size
+        self.deterministic_state_size = deterministic_state_size
+        self.discrete_latents = discrete_latents
+        self.discrete_latent_size = discrete_latent_size
+        if discrete_latents:
+            img_and_obs_step_mlp_output_size = (
+                stochastic_state_size * discrete_latent_size
+            )
+            full_stochastic_state_size = img_and_obs_step_mlp_output_size
+            self.feature_size = full_stochastic_state_size + deterministic_state_size
+        else:
+            img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
+            full_stochastic_state_size = stochastic_state_size
+        self.feature_size = deterministic_state_size + full_stochastic_state_size
+
         self.obs_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
             input_size=embedding_size + deterministic_state_size,
-            output_size=2 * stochastic_state_size,
+            output_size=img_and_obs_step_mlp_output_size,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         self.img_step_layer = torch.nn.Linear(
-            stochastic_state_size + action_dim, deterministic_state_size
+            full_stochastic_state_size + action_dim, deterministic_state_size
         )
         torch.nn.init.xavier_uniform_(self.img_step_layer.weight)
         self.img_step_layer.bias.data.fill_(0)
-        if discrete_latents:
-            img_step_mlp_output_size = stochastic_state_size * discrete_latent_size
-        else:
-            img_step_mlp_output_size = 2 * stochastic_state_size
         self.img_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
             input_size=deterministic_state_size,
-            output_size=img_step_mlp_output_size,
+            output_size=img_and_obs_step_mlp_output_size,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
@@ -75,7 +89,7 @@ class WorldModel(PyTorchModule):
         )
 
         self.conv_decoder = DCNN(
-            fc_input_size=stochastic_state_size + deterministic_state_size,
+            fc_input_size=self.feature_size,
             hidden_sizes=[],
             deconv_input_width=1,
             deconv_input_height=1,
@@ -94,40 +108,43 @@ class WorldModel(PyTorchModule):
 
         self.reward = Mlp(
             hidden_sizes=[model_hidden_size] * reward_num_layers,
-            input_size=stochastic_state_size + deterministic_state_size,
+            input_size=self.feature_size,
             output_size=1,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         self.pred_discount = Mlp(
             hidden_sizes=[model_hidden_size] * pred_discount_num_layers,
-            input_size=stochastic_state_size + deterministic_state_size,
+            input_size=self.feature_size,
             output_size=1,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
 
-        self.model_act = model_act
-        self.feature_size = stochastic_state_size + deterministic_state_size
-        self.stochastic_state_size = stochastic_state_size
-        self.deterministic_state_size = deterministic_state_size
-        self.discrete_latents = discrete_latents
-        self.discrete_latent_size = discrete_latent_size
-
     def obs_step(self, prev_state, prev_action, embed):
         prior = self.img_step(prev_state, prev_action)
         x = torch.cat([prior["deter"], embed], -1)
         x = self.obs_step_mlp(x)
-        mean, std = x.split(self.stochastic_state_size, -1)
-        std = F.softplus(std) + 0.1
-        stoch = self.get_dist(mean, std).rsample()
-        post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
+        if self.discrete_latents:
+            logits = x.reshape(
+                list(x.shape[:-1])
+                + [self.stochastic_state_size, self.discrete_latent_size]
+            )
+            stoch = self.get_dist(logits, logits, latent=True).rsample()
+            post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
+        else:
+            mean, std = x.split(self.stochastic_state_size, -1)
+            std = F.softplus(std) + 0.1
+            stoch = self.get_dist(mean, std, latent=True).rsample()
+            post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
 
     def img_step(self, prev_state, prev_action):
         prev_stoch = prev_state["stoch"]
         if self.discrete_latents:
-            shape = prev_stoch.shape[:-2] + [self._stoch * self._discrete]
+            shape = list(prev_stoch.shape[:-2]) + [
+                self.stochastic_state_size * self.discrete_latent_size
+            ]
             prev_stoch = prev_stoch.reshape(shape)
         x = torch.cat([prev_stoch, prev_action], -1)
         x = self.img_step_layer(x)
@@ -136,14 +153,15 @@ class WorldModel(PyTorchModule):
         x = self.img_step_mlp(deter_new)
         if self.discrete_latents:
             logits = x.reshape(
-                x.shape[:-1] + [self.stochastic_state_size, self.discrete_latent_size]
+                list(x.shape[:-1])
+                + [self.stochastic_state_size, self.discrete_latent_size]
             )
-            stoch = self.get_dist(logits, None).rsample()
+            stoch = self.get_dist(logits, None, latent=True).rsample()
             prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
         else:
             mean, std = x.split(self.stochastic_state_size, -1)
             std = F.softplus(std) + 0.1
-            stoch = self.get_dist(mean, std).rsample()
+            stoch = self.get_dist(mean, std, latent=True).rsample()
             prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
@@ -170,10 +188,16 @@ class WorldModel(PyTorchModule):
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]
-        post, prior = (
-            dict(mean=[], std=[], stoch=[], deter=[]),
-            dict(mean=[], std=[], stoch=[], deter=[]),
-        )
+        if self.discrete_latents:
+            post, prior = (
+                dict(logits=[], stoch=[], deter=[]),
+                dict(logits=[], stoch=[], deter=[]),
+            )
+        else:
+            post, prior = (
+                dict(mean=[], std=[], stoch=[], deter=[]),
+                dict(mean=[], std=[], stoch=[], deter=[]),
+            )
         images, rewards, pred_discounts = [], [], []
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         embed = self.encode(obs)
@@ -214,8 +238,12 @@ class WorldModel(PyTorchModule):
         for k in prior.keys():
             prior[k] = torch.cat(prior[k], dim=1)
 
-        post_dist = self.get_dist(post["mean"], post["std"])
-        prior_dist = self.get_dist(prior["mean"], prior["std"])
+        if self.discrete_latents:
+            post_dist = self.get_dist(post["logits"], None, latent=True)
+            prior_dist = self.get_dist(prior["logits"], None, latent=True)
+        else:
+            post_dist = self.get_dist(post["mean"], post["std"], latent=True)
+            prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
@@ -233,16 +261,17 @@ class WorldModel(PyTorchModule):
     def get_feat(self, state):
         stoch = state["stoch"]
         if self.discrete_latents:
-            shape = stoch.shape[:-2] + [self._stoch * self.discrete_latent_size]
+            shape = list(stoch.shape[:-2]) + [
+                self.stochastic_state_size * self.discrete_latent_size
+            ]
             stoch = stoch.reshape(shape)
-        return torch.cat([state["deter"], state["stoch"]], -1)
+        return torch.cat([state["deter"], stoch], -1)
 
-    def get_dist(self, mean, std, dims=1, normal=True):
-        if self.discrete_latents:
-            logits = mean
-            dist = torch.distributions.Independent(OneHotDist(logits), dims)
-            return dist
+    def get_dist(self, mean, std, dims=1, normal=True, latent=False):
         if normal:
+            if latent and self.discrete_latents:
+                dist = torch.distributions.Independent(OneHotDist(logits=mean), dims)
+                return dist
             return torch.distributions.Independent(
                 torch.distributions.Normal(mean, std), dims
             )
@@ -251,15 +280,8 @@ class WorldModel(PyTorchModule):
                 torch.distributions.Bernoulli(logits=mean), dims
             )
 
-    def get_detached_dist(self, mean, std, dims=1, normal=True):
-        if normal:
-            return torch.distributions.Independent(
-                torch.distributions.Normal(mean.detach(), std.detach()), dims
-            )
-        else:
-            return torch.distributions.Independent(
-                torch.distributions.Bernoulli(logits=mean.detach()), dims
-            )
+    def get_detached_dist(self, mean, std, dims=1, normal=True, latent=False):
+        return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)
 
     def encode(self, obs):
         return self.conv_encoder(self.preprocess(obs))
@@ -275,9 +297,11 @@ class WorldModel(PyTorchModule):
         if self.discrete_latents:
             state = dict(
                 logits=ptu.zeros(
-                    [batch_size, self._stoch, self.discrete_latent_size],
+                    [batch_size, self.stochastic_state_size, self.discrete_latent_size],
                 ),
-                stoch=ptu.zeros([batch_size, self._stoch, self.discrete_latent_size]),
+                stoch=ptu.zeros(
+                    [batch_size, self.stochastic_state_size, self.discrete_latent_size]
+                ),
                 deter=ptu.zeros([batch_size, self.deterministic_state_size]),
             )
         else:

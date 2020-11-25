@@ -6,6 +6,8 @@ import torch
 from torch.distributions import Distribution, constraints
 from torch.distributions.utils import broadcast_all
 
+import rlkit.torch.pytorch_util as ptu
+
 CONST_SQRT_2 = math.sqrt(2)
 CONST_INV_SQRT_2PI = 1 / math.sqrt(2 * math.pi)
 CONST_INV_SQRT_2 = 1 / math.sqrt(2)
@@ -45,10 +47,10 @@ class TruncatedStandardNormal(Distribution):
             .tolist()
         ):
             raise ValueError("Incorrect truncation range")
-        self._dtype_min_gt_0 = torch.tensor(
+        self._dtype_min_gt_0 = ptu.tensor(
             torch.finfo(self.a.dtype).eps, dtype=self.a.dtype
         )
-        self._dtype_max_lt_1 = torch.tensor(
+        self._dtype_max_lt_1 = ptu.tensor(
             1 - torch.finfo(self.a.dtype).eps, dtype=self.a.dtype
         )
         self._little_phi_a = self._little_phi(self.a)

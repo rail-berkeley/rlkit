@@ -159,11 +159,10 @@ class OneHotDist(torch.distributions.one_hot_categorical.OneHotCategorical):
         return self._one_hot(torch.argmax(self.probs, dim=-1))
 
     def rsample(self, sample_shape=torch.Size()):
-        sample_shape = torch.Size(sample_shape)
-        probs = self._categorical.probs
-        indices = self._categorical.sample(sample_shape)
-        sample = self._one_hot(indices).float()
+        sample = super().sample(sample_shape)
         probs = self.probs
+        while len(probs.shape) < len(sample.shape):
+            probs = probs[None]
         sample += probs - (probs).detach()  # straight through estimator
         return sample
 
@@ -200,7 +199,7 @@ class SafeTruncatedNormal(TruncatedNormal):
     def sample(self, *args, **kwargs):
         event = super().sample(*args, **kwargs)
         if self._clip:
-            clipped = torch.clamp(event, self.low + self._clip, self.high - self._clip)
+            clipped = torch.clamp(event, self.a + self._clip, self.b - self._clip)
             event = event - event.detach() + clipped.detach()
         if self._mult:
             event *= self._mult

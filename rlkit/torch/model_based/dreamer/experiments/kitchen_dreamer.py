@@ -93,6 +93,15 @@ def experiment(variant):
     num_primitives = eval_envs[0].num_primitives
     max_arg_len = eval_envs[0].max_arg_len
 
+    if variant.get("world_model_class", "world_model") == "multitask":
+        world_model_class = MultitaskWorldModel
+    else:
+        world_model_class = WorldModel
+    world_model = world_model_class(
+        action_dim,
+        **variant["model_kwargs"],
+    )
+
     if (
         variant["actor_kwargs"]["discrete_continuous_dist"]
         or variant["env_kwargs"]["fixed_schema"]
@@ -100,10 +109,6 @@ def experiment(variant):
         continuous_action_dim = max_arg_len
     else:
         continuous_action_dim = max_arg_len + num_primitives
-    if variant.get("world_model_class", "world_model") == "multitask":
-        world_model_class = MultitaskWorldModel
-    else:
-        world_model_class = WorldModel
 
     if variant.get("algorithm", "dreamer") == "dreamer_v2":
         trainer_class = DreamerV2Trainer
@@ -111,22 +116,16 @@ def experiment(variant):
             hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
             * variant["vf_kwargs"]["num_layers"],
             output_size=1,
-            input_size=variant["model_kwargs"]["stochastic_state_size"]
-            + variant["model_kwargs"]["deterministic_state_size"],
+            input_size=world_model.feature_size,
             hidden_activation=torch.nn.functional.elu,
         )
         variant["trainer_kwargs"]["target_vf"] = target_vf
     else:
         trainer_class = DreamerTrainer
 
-    world_model = world_model_class(
-        action_dim,
-        **variant["model_kwargs"],
-    )
     actor = ActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
-        variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,
         continuous_action_dim=continuous_action_dim,
@@ -137,8 +136,7 @@ def experiment(variant):
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
         * variant["vf_kwargs"]["num_layers"],
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
 

@@ -243,17 +243,25 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         div = torch.max(div, ptu.tensor(self.free_nats))
         if self.world_model.discrete_latents:
             post_detached_dist = self.world_model.get_detached_dist(
-                post["logits"].detach(), None
+                post["logits"],
+                post["logits"],
+                latent=True,
             )
             prior_detached_dist = self.world_model.get_detached_dist(
-                prior["logits"].detach(), None
+                prior["logits"],
+                prior["logits"],
+                latent=True,
             )
         else:
             post_detached_dist = self.world_model.get_detached_dist(
-                post["mean"].detach(), post["std"].detach()
+                post["mean"],
+                post["std"],
+                latent=True,
             )
             prior_detached_dist = self.world_model.get_detached_dist(
-                prior["mean"].detach(), prior["std"].detach()
+                prior["mean"],
+                prior["std"],
+                latent=True,
             )
         prior_kld = kld(prior_dist, post_detached_dist).mean()
         post_kld = kld(prior_detached_dist, post_dist).mean()
@@ -403,7 +411,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             pred_discount_dist,
             embed,
         ) = self.world_model(obs, actions)
-
         # stack obs, rewards and terminals along path dimension
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
