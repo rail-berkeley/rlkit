@@ -31,7 +31,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         exploration_data_collector: DataCollector,
         evaluation_data_collector: DataCollector,
         replay_buffer: ReplayBuffer,
-        use_wandb: bool = True,
+        use_wandb: bool = False,
     ):
         self.trainer = trainer
         self.expl_env = exploration_env
@@ -45,7 +45,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         self.use_wandb = use_wandb
         if use_wandb:
             for network in trainer.networks:
-                wandb.watch(network, log="all", log_freq=1)
+                wandb.watch(network, log="all")
 
     def train(self, start_epoch=0):
         self._start_epoch = start_epoch

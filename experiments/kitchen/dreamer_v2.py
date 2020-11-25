@@ -149,7 +149,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",
+                snapshot_mode="none",  # saving doesn't seem to work with wandb atm
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=random.randint(0, 100000),
                 exp_id=exp_id,

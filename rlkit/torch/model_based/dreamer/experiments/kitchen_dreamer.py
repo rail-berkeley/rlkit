@@ -1,15 +1,23 @@
 def experiment(variant):
-
-    import os
-
     from rlkit.core import logger
 
     if variant["algorithm_kwargs"]["use_wandb"]:
+        import os
+
         import wandb
 
-        wandb.init(
+        os.environ["WANDB_SILENT"] = "true"
+
+        with wandb.init(
             project=variant["exp_prefix"], name=logger.get_exp_name(), config=variant
-        )
+        ):
+            run_experiment(variant)
+    else:
+        run_experiment(variant)
+
+
+def run_experiment(variant):
+    import os
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
