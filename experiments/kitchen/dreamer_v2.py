@@ -122,18 +122,21 @@ if __name__ == "__main__":
         #     "linear(3e-3,3e-4,5e4)",
         #     "1e-4",
         # ],
-        # "trainer_kwargs.world_model_lr": [2e-4],
+        "trainer_kwargs.world_model_lr": [
+            2e-4,
+            6e-4,
+        ],
         # "trainer_kwargs.actor_lr": [4e-5],
         # "trainer_kwargs.vf_lr": [1e-4],
         # "trainer_kwargs.adam_eps": [1e-5],
         # "trainer_kwargs.weight_decay": [1e-6],
-        # "model_kwargs.rssm_hidden_size": [600],
-        # "model_kwargs.gru_layer_norm": [True],
-        # "model_kwargs.reward_num_layers": [4],
-        # "model_kwargs.pred_discount_num_layers": [4],
-        # "model_kwargs.pred_discount_num_layers": [4],
-        # "model_kwargs.discrete_latents": [True, False],
-        # "model_kwargs.discrete_latent_size": [32],
+        "model_kwargs.rssm_hidden_size": [600],
+        "model_kwargs.gru_layer_norm": [True],
+        "model_kwargs.reward_num_layers": [4],
+        "model_kwargs.pred_discount_num_layers": [4],
+        "model_kwargs.pred_discount_num_layers": [4],
+        "model_kwargs.discrete_latents": [False],
+        "model_kwargs.discrete_latent_size": [32],
         # "vf_kwargs.num_layers": [4],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -143,6 +146,9 @@ if __name__ == "__main__":
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -151,6 +157,6 @@ if __name__ == "__main__":
                 use_gpu=True,
                 snapshot_mode="none",  # saving doesn't seem to work with wandb atm
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
-                seed=random.randint(0, 100000),
+                seed=seed,
                 exp_id=exp_id,
             )
