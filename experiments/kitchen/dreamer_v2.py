@@ -126,17 +126,17 @@ if __name__ == "__main__":
         "trainer_kwargs.adam_eps": [1e-5, 1e-7],
         "trainer_kwargs.weight_decay": [1e-6, 0],
         "vf_kwargs.num_layers": [4],
-        # "model_kwargs.rssm_hidden_size": [600],
-        # "model_kwargs.gru_layer_norm": [True, False],
-        # "model_kwargs.reward_num_layers": [4],
-        # "model_kwargs.pred_discount_num_layers": [4],
-        # "model_kwargs.pred_discount_num_layers": [4],
-        # "model_kwargs.discrete_latents": [False],
-        # "model_kwargs.discrete_latent_size": [32],
-        # "trainer_kwargs.world_model_lr": [
-        #     2e-4,
-        #     6e-4,
-        # ],
+        "model_kwargs.rssm_hidden_size": [600],
+        "model_kwargs.gru_layer_norm": [True],
+        "model_kwargs.reward_num_layers": [4],
+        "model_kwargs.pred_discount_num_layers": [4],
+        "model_kwargs.pred_discount_num_layers": [4],
+        "model_kwargs.discrete_latents": [False],
+        "model_kwargs.discrete_latent_size": [32],
+        "trainer_kwargs.world_model_lr": [
+            2e-4,
+            6e-4,
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
