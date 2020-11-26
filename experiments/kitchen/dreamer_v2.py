@@ -107,26 +107,26 @@ if __name__ == "__main__":
         # "env_kwargs.delta": [
         #     0.3,
         # ],
-        "trainer_kwargs.image_loss_scale": [
-            1.0,
-            1.0 / (64 * 64 * 3),
+        # "trainer_kwargs.image_loss_scale": [
+        #     1.0,
+        #     1.0 / (64 * 64 * 3),
+        # ],
+        # "trainer_kwargs.pred_discount_loss_scale": [1.0, 10.0],
+        # "trainer_kwargs.transition_loss_scale": [0.08, 0.8],
+        # "trainer_kwargs.entropy_loss_scale": [0.02, 0.2],
+        # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
+        "trainer_kwargs.reinforce_loss_scale": [0.9, 1.0, 0.0],
+        "trainer_kwargs.dynamics_backprop_loss_scale": [0.1, 1.0],
+        "trainer_kwargs.actor_entropy_loss_schedule": [
+            "linear(3e-3,3e-4,2.5e4)",
+            "linear(3e-3,3e-4,5e4)",
+            "1e-4",
         ],
-        "trainer_kwargs.pred_discount_loss_scale": [1.0, 10.0],
-        "trainer_kwargs.transition_loss_scale": [0.08, 0.8],
-        "trainer_kwargs.entropy_loss_scale": [0.02, 0.2],
-        "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
-        # "trainer_kwargs.reinforce_loss_scale": [0.9, 1.0, 0.0],
-        # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1, 1.0],
-        # "trainer_kwargs.actor_entropy_loss_schedule": [
-        #     "linear(3e-3,3e-4,2.5e4)",
-        #     "linear(3e-3,3e-4,5e4)",
-        #     "1e-4",
-        # ],
-        # "trainer_kwargs.actor_lr": [
-        #     4e-5,
-        #     8e-5,
-        #     1e-4,
-        # ],
+        "trainer_kwargs.actor_lr": [
+            4e-5,
+            8e-5,
+            1e-4,
+        ],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         "trainer_kwargs.target_update_period": [100],
         "trainer_kwargs.vf_lr": [1e-4],
