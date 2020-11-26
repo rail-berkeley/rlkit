@@ -87,6 +87,7 @@ if __name__ == "__main__":
             entropy_loss_scale=0.0,
             use_pred_discount=True,
             target_update_period=1,
+            discrete_latents=False,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -106,36 +107,39 @@ if __name__ == "__main__":
         # "env_kwargs.delta": [
         #     0.3,
         # ],
-        # "trainer_kwargs.image_loss_scale": [
-        #     1.0 / (64 * 64 * 3),
-        # ],
-        # "trainer_kwargs.pred_discount_loss_scale": [1.0, 10.0],
-        # "trainer_kwargs.transition_loss_scale": [0.08],
-        # "trainer_kwargs.entropy_loss_scale": [0.02],
-        # "trainer_kwargs.kl_loss_scale": [0.0],
-        # "trainer_kwargs.reinforce_loss_scale": [0.9],
-        # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1],
+        "trainer_kwargs.image_loss_scale": [
+            1.0,
+            1.0 / (64 * 64 * 3),
+        ],
+        "trainer_kwargs.pred_discount_loss_scale": [1.0, 10.0],
+        "trainer_kwargs.transition_loss_scale": [0.08, 0.8],
+        "trainer_kwargs.entropy_loss_scale": [0.02, 0.2],
+        "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
+        # "trainer_kwargs.reinforce_loss_scale": [0.9, 1.0, 0.0],
+        # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1, 1.0],
         # "trainer_kwargs.actor_entropy_loss_schedule": [
         #     "linear(3e-3,3e-4,2.5e4)",
         #     "linear(3e-3,3e-4,5e4)",
         #     "1e-4",
         # ],
-        # "trainer_kwargs.actor_lr": [4e-5],
-        "trainer_kwargs.target_update_period": [1, 100],
-        "trainer_kwargs.vf_lr": [1e-4, 8e-5],
-        "trainer_kwargs.adam_eps": [1e-5, 1e-7],
-        "trainer_kwargs.weight_decay": [1e-6, 0],
+        # "trainer_kwargs.actor_lr": [
+        #     4e-5,
+        #     8e-5,
+        #     1e-4,
+        # ],
+        # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
+        "trainer_kwargs.target_update_period": [100],
+        "trainer_kwargs.vf_lr": [1e-4],
+        "trainer_kwargs.adam_eps": [1e-5],
+        "trainer_kwargs.weight_decay": [1e-6],
         "vf_kwargs.num_layers": [4],
         "model_kwargs.rssm_hidden_size": [600],
         "model_kwargs.gru_layer_norm": [True],
         "model_kwargs.reward_num_layers": [4],
         "model_kwargs.pred_discount_num_layers": [4],
-        "model_kwargs.pred_discount_num_layers": [4],
-        "model_kwargs.discrete_latents": [False],
         "model_kwargs.discrete_latent_size": [32],
         "trainer_kwargs.world_model_lr": [
             2e-4,
-            6e-4,
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -154,7 +158,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",  # saving doesn't seem to work with wandb atm
+                snapshot_mode="last",  # saving doesn't seem to work with wandb atm
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
