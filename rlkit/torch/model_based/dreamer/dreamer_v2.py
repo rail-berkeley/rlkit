@@ -337,9 +337,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             == weights.shape
         )
         actor_entropy_loss_scale = self.actor_entropy_loss_scale()
+        dynamics_backprop_loss_scale = 1 - self.reinforce_loss_scale
         actor_loss = (
             (
-                self.dynamics_backprop_loss_scale * dynamics_backprop_loss
+                dynamics_backprop_loss_scale * dynamics_backprop_loss
                 + self.reinforce_loss_scale * reinforce_loss
                 + actor_entropy_loss_scale * actor_entropy_loss
             )
