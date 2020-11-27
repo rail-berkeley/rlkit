@@ -96,17 +96,20 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        # "env_class": [
-        #     # "microwave",
-        #     # "kettle",
-        #     # "top_left_burner",
-        #     # "slide_cabinet",
-        #     "hinge_cabinet",
-        #     # "light_switch",
-        # ],
-        # "env_kwargs.delta": [
-        #     0.3,
-        # ],
+        "env_class": [
+            "microwave",
+            "kettle",
+            "top_left_burner",
+            "slide_cabinet",
+            "hinge_cabinet",
+            "light_switch",
+        ],
+        "env_kwargs.delta": [
+            0.3,
+        ],
+        "env_kwargs.fixed_schema": [True, False],
+        "env_kwargs.use_combined_action_space": [True, False],
+        "env_kwargs.discrete_continuous_dist": [True, False],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0,
         #     1.0 / (64 * 64 * 3),
@@ -115,32 +118,32 @@ if __name__ == "__main__":
         # "trainer_kwargs.transition_loss_scale": [0.08, 0.8],
         # "trainer_kwargs.entropy_loss_scale": [0.02, 0.2],
         # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
-        "trainer_kwargs.reinforce_loss_scale": [0.9, 1.0, 0.0],
-        "trainer_kwargs.dynamics_backprop_loss_scale": [0.1, 1.0],
-        "trainer_kwargs.actor_entropy_loss_schedule": [
-            "linear(3e-3,3e-4,2.5e4)",
-            "linear(3e-3,3e-4,5e4)",
-            "1e-4",
-        ],
-        "trainer_kwargs.actor_lr": [
-            4e-5,
-            8e-5,
-            1e-4,
-        ],
+        # "trainer_kwargs.reinforce_loss_scale": [0.9, 1.0, 0.0],
+        # "trainer_kwargs.dynamics_backprop_loss_scale": [0.1, 1.0],
+        # "trainer_kwargs.actor_entropy_loss_schedule": [
+        #     "linear(3e-3,3e-4,2.5e4)",
+        #     "linear(3e-3,3e-4,5e4)",
+        #     "1e-4",
+        # ],
+        # "trainer_kwargs.actor_lr": [
+        #     4e-5,
+        #     8e-5,
+        #     1e-4,
+        # ],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
-        "trainer_kwargs.target_update_period": [100],
-        "trainer_kwargs.vf_lr": [1e-4],
-        "trainer_kwargs.adam_eps": [1e-5],
-        "trainer_kwargs.weight_decay": [1e-6],
-        "vf_kwargs.num_layers": [4],
-        "model_kwargs.rssm_hidden_size": [600],
-        "model_kwargs.gru_layer_norm": [True],
-        "model_kwargs.reward_num_layers": [4],
-        "model_kwargs.pred_discount_num_layers": [4],
-        "model_kwargs.discrete_latent_size": [32],
-        "trainer_kwargs.world_model_lr": [
-            2e-4,
-        ],
+        # "trainer_kwargs.target_update_period": [100],
+        # "trainer_kwargs.vf_lr": [1e-4],
+        # "trainer_kwargs.adam_eps": [1e-5],
+        # "trainer_kwargs.weight_decay": [1e-6],
+        # "vf_kwargs.num_layers": [4],
+        # "model_kwargs.rssm_hidden_size": [600],
+        # "model_kwargs.gru_layer_norm": [True],
+        # "model_kwargs.reward_num_layers": [4],
+        # "model_kwargs.pred_discount_num_layers": [4],
+        # "model_kwargs.discrete_latent_size": [32],
+        # "trainer_kwargs.world_model_lr": [
+        #     2e-4,
+        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
