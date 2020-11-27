@@ -87,7 +87,6 @@ if __name__ == "__main__":
             entropy_loss_scale=0.0,
             use_pred_discount=True,
             target_update_period=1,
-            discrete_latents=False,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
