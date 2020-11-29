@@ -96,38 +96,40 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
+            # "microwave",
             "kettle",
-            "top_left_burner",
+            # "top_left_burner",
             "slide_cabinet",
             "hinge_cabinet",
-            "light_switch",
+            # "light_switch",
         ],
         "env_kwargs.delta": [
             # 0.025,
-            0.05,
+            # 0.05,
             # 0.075,
+            0.3,
         ],
         "env_kwargs.fixed_schema": [True],
         # "env_kwargs.use_combined_action_space": [True, False],
         # "actor_kwargs.discrete_continuous_dist": [True, False],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0,
-        #     1.0 / (64 * 64 * 3),
+        #     1.0 / (64 * 64 * 3), #his seems like a bad idea
         # ],
         # "trainer_kwargs.pred_discount_loss_scale": [1.0, 10.0],
-        # "trainer_kwargs.transition_loss_scale": [0.08, 0.8],
-        # "trainer_kwargs.entropy_loss_scale": [0.02, 0.2],
-        # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
-        "trainer_kwargs.reinforce_loss_scale": [1.0, 0.5, 0.0],
-        "trainer_kwargs.actor_entropy_loss_schedule": [
-            # "linear(3e-3,3e-4,2.5e4)",
-            # "linear(3e-3,3e-4,5e4)",
-            # "1e-4",
-            "0.0"
-        ],
-        "trainer_kwargs.actor_lr": [1e-4],
-        # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
+        "trainer_kwargs.transition_loss_scale": [0.02, 0.08],
+        "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
+        "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
+        "trainer_kwargs.forward_kl": [True, False],
+        # "trainer_kwargs.reinforce_loss_scale": [1.0, 0.5, 0.0],
+        # "trainer_kwargs.actor_entropy_loss_schedule": [
+        # "linear(3e-3,3e-4,2.5e4)",
+        # "linear(3e-3,3e-4,5e4)",
+        # "1e-4",
+        # "0.0"
+        # ],
+        # "trainer_kwargs.actor_lr": [1e-4],
+        "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
         # "trainer_kwargs.vf_lr": [1e-4],
         # "trainer_kwargs.adam_eps": [1e-5],

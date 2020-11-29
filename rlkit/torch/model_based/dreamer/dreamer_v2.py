@@ -57,6 +57,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         reward_loss_scale=1.0,
         transition_loss_scale=0.0,
         entropy_loss_scale=0.0,
+        forward_kl=True,
         reinforce_loss_scale=0.0,
         dynamics_backprop_loss_scale=1.0,
         actor_entropy_loss_schedule="0.0",
@@ -161,6 +162,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.actor_entropy_loss_scale = lambda x=actor_entropy_loss_schedule: schedule(
             x, self._n_train_steps_total
         )
+        self.forward_kl = forward_kl
         self.soft_target_tau = soft_target_tau
         self.target_update_period = target_update_period
         self.use_pred_discount = use_pred_discount
@@ -239,8 +241,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         pred_discount_loss = (
             -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
         )
-        div = kld(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.tensor(self.free_nats))
+
         if self.world_model.discrete_latents:
             post_detached_dist = self.world_model.get_detached_dist(
                 post["logits"],
@@ -263,16 +264,27 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 prior["std"],
                 latent=True,
             )
-        prior_kld = kld(prior_dist, post_detached_dist).mean()
-        post_kld = kld(prior_detached_dist, post_dist).mean()
+        if self.forward_kl:
+            div = kld(post_dist, prior_dist).mean()
+            div = torch.max(div, ptu.tensor(self.free_nats))
+            prior_kld = kld(post_detached_dist, prior_dist).mean()
+            post_kld = kld(post_dist, prior_detached_dist).mean()
+        else:
+            div = kld(prior_dist, post_dist).mean()
+            div = torch.max(div, ptu.tensor(self.free_nats))
+            prior_kld = kld(prior_dist, post_detached_dist).mean()
+            post_kld = kld(prior_detached_dist, post_dist).mean()
         transition_loss = torch.max(prior_kld, ptu.tensor(self.free_nats))
         entropy_loss = torch.max(post_kld, ptu.tensor(self.free_nats))
+        entropy_loss_scale = 0.1 - self.transition_loss_scale
+        entropy_loss_scale = (1 - self.kl_loss_scale) * entropy_loss_scale
+        transition_loss_scale = (1 - self.kl_loss_scale) * self.transition_loss_scale
         world_model_loss = (
             self.kl_loss_scale * div
             + self.image_loss_scale * image_pred_loss
             + self.reward_loss_scale * reward_pred_loss
-            + self.transition_loss_scale * transition_loss
-            + self.entropy_loss_scale * entropy_loss
+            + transition_loss_scale * transition_loss
+            + entropy_loss_scale * entropy_loss
         )
 
         if self.use_pred_discount:
