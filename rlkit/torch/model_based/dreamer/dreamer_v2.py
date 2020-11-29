@@ -293,7 +293,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         assert len(imag_feat.shape) == 3, imag_feat.shape
         assert len(imag_actions.shape) == 3, imag_actions.shape
         assert len(weights.shape) == 3 and weights.shape[-1] == 1, weights.shape
-
+        assert imag_actions.max() <= 1.0 and imag_actions.min() >= -1.0
         baseline_shifted_returns = imag_returns - value[:-1]
         baseline_shifted_returns = (
             torch.cat(
@@ -483,7 +483,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             reinforce_loss,
             actor_entropy_loss,
             actor_entropy_loss_scale,
-        ) = self.actor_loss(imag_returns, value, imag_feat, imag_actions, weights)
+        ) = self.actor_loss(
+            imag_returns, self.vf(imag_feat), imag_feat, imag_actions, weights
+        )
 
         self.update_network(self.actor, self.actor_optimizer, actor_loss, 1)
 
