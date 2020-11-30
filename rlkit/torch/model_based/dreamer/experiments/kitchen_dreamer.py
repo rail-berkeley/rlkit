@@ -117,14 +117,6 @@ def run_experiment(variant):
 
     if variant.get("algorithm", "dreamer") == "dreamer_v2":
         trainer_class = DreamerV2Trainer
-        target_vf = Mlp(
-            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-            * variant["vf_kwargs"]["num_layers"],
-            output_size=1,
-            input_size=world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-        )
-        variant["trainer_kwargs"]["target_vf"] = target_vf
     else:
         trainer_class = DreamerTrainer
 
@@ -144,6 +136,14 @@ def run_experiment(variant):
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
+    target_vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+    variant["trainer_kwargs"]["target_vf"] = target_vf
 
     expl_policy = DreamerPolicy(
         world_model,

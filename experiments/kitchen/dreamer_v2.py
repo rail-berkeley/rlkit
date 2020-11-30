@@ -42,7 +42,7 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="dreamer_v2",
+        algorithm="dreamer_v1",
         version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
@@ -79,14 +79,14 @@ if __name__ == "__main__":
             lam=0.95,
             free_nats=3.0,
             optimizer_class="apex_adam",
-            kl_loss_scale=1.0,
-            image_loss_scale=1.0,
-            reward_loss_scale=1.0,
-            pred_discount_loss_scale=10.0,
-            transition_loss_scale=0.0,
-            entropy_loss_scale=0.0,
-            use_pred_discount=True,
-            target_update_period=1,
+            # kl_loss_scale=1.0,
+            # image_loss_scale=1.0,
+            # reward_loss_scale=1.0,
+            # pred_discount_loss_scale=10.0,
+            # transition_loss_scale=0.0,
+            # entropy_loss_scale=0.0,
+            # use_pred_discount=True,
+            # target_update_period=1,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -129,7 +129,7 @@ if __name__ == "__main__":
         # "0.0"
         # ],
         # "trainer_kwargs.actor_lr": [1e-4],
-        "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
+        # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
         # "trainer_kwargs.vf_lr": [1e-4],
         # "trainer_kwargs.adam_eps": [1e-5],

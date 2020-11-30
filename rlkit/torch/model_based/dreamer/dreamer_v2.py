@@ -38,7 +38,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         actor,
         vf,
         world_model,
-        target_vf=None,
+        imagination_horizon,
+        target_vf,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -49,7 +50,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         opt_level="O1",
         gradient_clip=100.0,
         lam=0.95,
-        imagination_horizon=4,
         free_nats=3.0,
         kl_loss_scale=1.0,
         pred_discount_loss_scale=10.0,
@@ -64,10 +64,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         adam_eps=1e-7,
         weight_decay=0.0,
         soft_target_tau=1,
-        target_update_period=100,
+        target_update_period=1,
         use_pred_discount=True,
-        plotter=None,
-        render_eval_paths=False,
         debug=False,
     ):
         super().__init__()
@@ -82,8 +80,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.vf = vf.to(ptu.device)
         self.target_vf = target_vf.to(ptu.device)
 
-        self.plotter = plotter
-        self.render_eval_paths = render_eval_paths
         if optimizer_class == "torch_adam":
             optimizer_class = optim.Adam
         elif optimizer_class == "apex_adam" and APEX_AVAILABLE:
@@ -422,7 +418,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             image_dist,
             reward_dist,
             pred_discount_dist,
-            embed,
+            _,
         ) = self.world_model(obs, actions)
         # stack obs, rewards and terminals along path dimension
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
@@ -575,4 +571,5 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             actor=self.actor,
             world_model=self.world_model,
             vf=self.vf,
+            target_vf=self.target_vf,
         )
