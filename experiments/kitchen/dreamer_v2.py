@@ -54,7 +54,7 @@ if __name__ == "__main__":
             fixed_schema=True,
             multitask=False,
             action_scale=1.4,
-            wrist_cam_concat_with_fixed_view=True,
+            wrist_cam_concat_with_fixed_view=False,
         ),
         vf_kwargs=dict(
             num_layers=3,
