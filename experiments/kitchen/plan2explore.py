@@ -60,6 +60,9 @@ if __name__ == "__main__":
         actor_kwargs=dict(
             discrete_continuous_dist=False,
         ),
+        vf_kwargs=dict(
+            num_layers=3,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
@@ -102,6 +105,9 @@ if __name__ == "__main__":
             "light_switch",
         ],
         "expl_amount": [0.3],
+        "env_kwargs.fixed_schema": [True, False],
+        "env_kwargs.use_combined_action_space": [True, False],
+        "actor_kwargs.discrete_continuous_dist": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

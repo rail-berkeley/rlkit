@@ -8,6 +8,7 @@ import torch.optim as optim
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
+from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
 from rlkit.torch.model_based.dreamer.utils import (
     FreezeParameters,
     lambda_return,
@@ -25,20 +26,23 @@ except ModuleNotFoundError:
 
 Plan2ExploreLosses = namedtuple(
     "Plan2ExploreLosses",
-    "actor_loss vf_loss world_model_loss",
+    "actor_loss vf_loss world_model_loss one_step_ensemble_loss exploration_actor_loss exploration_vf_loss",
 )
 
 
-class Plan2ExploreTrainer(TorchTrainer, LossFunction):
+class Plan2ExploreTrainer(DreamerV2Trainer):
     def __init__(
         self,
         env,
         actor,
         vf,
         world_model,
+        imagination_horizon,
+        image_shape,
         exploration_actor,
         exploration_vf,
         one_step_ensemble,
+        target_vf=None,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -49,79 +53,75 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         opt_level="O1",
         gradient_clip=100.0,
         lam=0.95,
-        imagination_horizon=4,
         free_nats=3.0,
         kl_loss_scale=1.0,
         pred_discount_loss_scale=10.0,
         adam_eps=1e-7,
         weight_decay=0.0,
         use_pred_discount=True,
-        plotter=None,
-        render_eval_paths=False,
         debug=False,
         exploration_reward_scale=10000,
     ):
-        super().__init__()
-
-        torch.autograd.set_detect_anomaly(debug)
-
-        torch.backends.cudnn.benchmark = True
-
-        self.env = env
-        self.actor = actor.to(ptu.device)
-        self.world_model = world_model.to(ptu.device)
-        self.vf = vf.to(ptu.device)
-
+        super(Plan2ExploreTrainer, self).__init__(
+            env,
+            actor,
+            vf,
+            world_model,
+            imagination_horizon,
+            image_shape,
+            target_vf=target_vf,
+            discount=discount,
+            reward_scale=reward_scale,
+            actor_lr=actor_lr,
+            vf_lr=vf_lr,
+            world_model_lr=world_model_lr,
+            optimizer_class=optimizer_class,
+            use_amp=use_amp,
+            opt_level=opt_level,
+            gradient_clip=gradient_clip,
+            lam=lam,
+            free_nats=free_nats,
+            kl_loss_scale=kl_loss_scale,
+            pred_discount_loss_scale=pred_discount_loss_scale,
+            adam_eps=adam_eps,
+            weight_decay=weight_decay,
+            use_pred_discount=use_pred_discount,
+            debug=debug,
+            image_loss_scale=1.0,
+            reward_loss_scale=1.0,
+            transition_loss_scale=0.0,
+            entropy_loss_scale=0.0,
+            forward_kl=True,
+            reinforce_loss_scale=0.0,
+            dynamics_backprop_loss_scale=1.0,
+            actor_entropy_loss_schedule="0.0",
+            soft_target_tau=1,
+            target_update_period=1,
+            initialize_amp=False,
+        )
         self.exploration_actor = exploration_actor.to(ptu.device)
         self.exploration_vf = exploration_vf.to(ptu.device)
         self.one_step_ensemble = one_step_ensemble.to(ptu.device)
 
-        self.plotter = plotter
-        self.render_eval_paths = render_eval_paths
-        if optimizer_class == "torch_adam":
-            optimizer_class = optim.Adam
-        elif optimizer_class == "apex_adam" and APEX_AVAILABLE:
-            optimizer_class = apex.optimizers.FusedAdam
-
-        self.actor_optimizer = optimizer_class(
-            self.actor.parameters(),
-            lr=actor_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-        self.vf_optimizer = optimizer_class(
-            self.vf.parameters(),
-            lr=vf_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-        self.world_model_optimizer = optimizer_class(
-            self.world_model.parameters(),
-            lr=world_model_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-
-        self.one_step_ensemble_optimizer = optimizer_class(
+        self.one_step_ensemble_optimizer = self.optimizer_class(
             self.one_step_ensemble.parameters(),
             lr=world_model_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
 
-        self.exploration_actor_optimizer = optimizer_class(
+        self.exploration_actor_optimizer = self.optimizer_class(
             self.exploration_actor.parameters(),
             lr=actor_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.exploration_vf_optimizer = optimizer_class(
+        self.exploration_vf_optimizer = self.optimizer_class(
             self.exploration_vf.parameters(),
             lr=vf_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.use_amp = use_amp and APEX_AVAILABLE
         if self.use_amp:
             models, optimizers = amp.initialize(
                 [
@@ -174,46 +174,21 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
                 self.exploration_vf_optimizer,
             ) = optimizers
 
-        self.opt_level = opt_level
-        self.discount = discount
-        self.reward_scale = reward_scale
-        self.gradient_clip = gradient_clip
-        self.lam = lam
-        self.imagination_horizon = imagination_horizon
-        self.free_nats = free_nats
-        self.kl_loss_scale = kl_loss_scale
-        self.pred_discount_loss_scale = pred_discount_loss_scale
-        self.use_pred_discount = use_pred_discount
         self.exploration_reward_scale = exploration_reward_scale
-        self._n_train_steps_total = 0
-        self._need_to_update_eval_statistics = True
-        self.eval_statistics = OrderedDict()
-
-    def train_from_torch(self, batch):
-        gt.blank_stamp()
-        losses, stats = self.compute_loss(
-            batch,
-            skip_statistics=not self._need_to_update_eval_statistics,
-        )
-        """
-        Update networks
-        """
-
-        self._n_train_steps_total += 1
-        if self._need_to_update_eval_statistics:
-            self.eval_statistics = stats
-            # Compute statistics using only one batch per epoch
-            self._need_to_update_eval_statistics = False
-        gt.stamp("Plan2Explore training", unique=False)
 
     def compute_exploration_reward(
         self, exploration_imag_deter_states, exploration_imag_actions
     ):
         pred_embeddings = []
-        actions = exploration_imag_actions
         input_state = exploration_imag_deter_states
+        exploration_imag_actions = torch.cat(
+            [
+                exploration_imag_actions[i, :, :]
+                for i in range(exploration_imag_actions.shape[0])
+            ]
+        )
         for mdl in range(self.one_step_ensemble.num_models):
-            inputs = torch.cat((input_state, actions), 1)
+            inputs = torch.cat((input_state, exploration_imag_actions), 1)
             pred_embeddings.append(
                 self.one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
             )
@@ -243,7 +218,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             action = actor(feat).rsample()
             new_state = self.world_model.img_step(new_state, action)
             feats.append(self.world_model.get_feat(new_state).unsqueeze(0))
-            actions.append(action)
+            actions.append(action.unsqueeze(0))
             states.append(new_state["deter"])
 
         feats = torch.cat(feats)
@@ -274,7 +249,6 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             pred_discount_dist,
             embed,
         ) = self.world_model(obs, actions)
-
         # stack obs, rewards and terminals along path dimension
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
@@ -282,61 +256,48 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
         embed = torch.cat([embed[:, i, :] for i in range(embed.shape[1])])
         deter = torch.cat(
-            [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
+            [
+                prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])
+            ]  # should take prior deter because we need the value before the embedding is incorporated
+        )
+        (
+            world_model_loss,
+            div,
+            image_pred_loss,
+            reward_pred_loss,
+            transition_loss,
+            entropy_loss,
+            pred_discount_loss,
+        ) = self.world_model_loss(
+            image_dist,
+            reward_dist,
+            prior,
+            post,
+            prior_dist,
+            post_dist,
+            pred_discount_dist,
+            obs,
+            rewards,
+            terminals,
         )
 
-        image_pred_loss = (
-            -1
-            * image_dist.log_prob(
-                self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)
-            ).mean()
+        self.update_network(
+            self.world_model, self.world_model_optimizer, world_model_loss, 0
         )
-        reward_pred_loss = (
-            -1 * reward_dist.log_prob(rewards.detach()).mean()
-        )  # in plan2explore we only update the reward head do NOT propagate the reward back into the world model
-        pred_discount_target = self.discount * (1 - terminals.float())
-        pred_discount_loss = (
-            -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
-        )
-        div = torch.distributions.kl_divergence(post_dist, prior_dist).mean()
-        div = torch.max(div, ptu.tensor(self.free_nats))
-        world_model_loss = self.kl_loss_scale * div + image_pred_loss + reward_pred_loss
-
-        if self.use_pred_discount:
-            world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
-
-        zero_grad(self.world_model)
-        if self.use_amp:
-            with amp.scale_loss(
-                world_model_loss, self.world_model_optimizer, loss_id=0
-            ) as scaled_world_model_loss:
-                scaled_world_model_loss.backward()
-        else:
-            world_model_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.world_model.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.world_model_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.world_model_optimizer.step()
 
         """
         Actor Loss
         """
         world_model_params = list(self.world_model.parameters())
         vf_params = list(self.vf.parameters())
-        pred_discount_params = list(self.world_model.pred_discount.parameters())
+        target_vf_params = list(self.target_vf.parameters())
         one_step_ensemble_params = list(self.one_step_ensemble.parameters())
         exploration_vf_params = list(self.exploration_vf.parameters())
+        pred_discount_params = list(self.world_model.pred_discount.parameters())
+
         with FreezeParameters(world_model_params):
             imag_feat, imag_actions, _ = self.imagine_ahead(post, actor=self.actor)
-        with FreezeParameters(world_model_params + vf_params):
+        with FreezeParameters(world_model_params + vf_params + target_vf_params):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
@@ -347,7 +308,11 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
                     ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
-            value = self.vf(imag_feat)
+            if self.target_vf:
+                with FreezeParameters(target_vf_params):
+                    value = self.target_vf(imag_feat)
+            else:
+                value = self.vf(imag_feat)
         imag_returns = lambda_return(
             imag_reward[:-1],
             value[:-1],
@@ -355,33 +320,20 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             bootstrap=value[-1],
             lambda_=self.lam,
         )
-        discount = torch.cumprod(
-            torch.cat([torch.ones_like(discount[:1]), discount[:-2]], 0), 0
-        ).detach()
-        dynamics_backprop_loss = -(discount * imag_returns).mean()
+        weights = torch.cumprod(
+            torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
+        ).detach()[:-1]
+        (
+            actor_loss,
+            dynamics_backprop_loss,
+            reinforce_loss,
+            actor_entropy_loss,
+            actor_entropy_loss_scale,
+        ) = self.actor_loss(
+            imag_returns, self.vf(imag_feat), imag_feat, imag_actions, weights
+        )
 
-        actor_loss = dynamics_backprop_loss
-
-        zero_grad(self.actor)
-        if self.use_amp:
-            with amp.scale_loss(
-                actor_loss, self.actor_optimizer, loss_id=1
-            ) as scaled_actor_loss:
-                scaled_actor_loss.backward()
-        else:
-            actor_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.actor.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.actor_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.actor_optimizer.step()
+        self.update_network(self.actor, self.actor_optimizer, actor_loss, 1)
 
         """
         Value Loss
@@ -389,31 +341,11 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
         with torch.no_grad():
             imag_feat_v = imag_feat.detach()
             target = imag_returns.detach()
-            discount = discount.detach()
+            weights = weights.detach()
 
-        value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
-        vf_loss = -(discount.squeeze(-1) * value_dist.log_prob(target)).mean()
+        vf_loss, value_dist = self.value_loss(imag_feat_v, weights, target)
 
-        zero_grad(self.vf)
-        if self.use_amp:
-            with amp.scale_loss(
-                vf_loss, self.vf_optimizer, loss_id=2
-            ) as scaled_vf_loss:
-                scaled_vf_loss.backward()
-        else:
-            vf_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.vf.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.vf_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.vf_optimizer.step()
+        self.update_network(self.vf, self.vf_optimizer, vf_loss, 2)
 
         """
         One Step Ensemble Loss
@@ -438,26 +370,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             member_loss = -1 * member_pred.log_prob(target_prediction).mean()
             ensemble_loss += member_loss
 
-        zero_grad(self.one_step_ensemble)
-        if self.use_amp:
-            with amp.scale_loss(
-                ensemble_loss, self.one_step_ensemble_optimizer, loss_id=3
-            ) as scaled_ensemble_loss:
-                scaled_ensemble_loss.backward()
-        else:
-            ensemble_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.one_step_ensemble.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.one_step_ensemble_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.one_step_ensemble_optimizer.step()
+        self.update_network(
+            self.one_step_ensemble, self.one_step_ensemble_optimizer, ensemble_loss, 3
+        )
 
         """
         Exploration Actor Loss
@@ -513,73 +428,39 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             bootstrap=exploration_value[-1],
             lambda_=self.lam,
         )
-        exploration_discount = torch.cumprod(
+        exploration_weights = torch.cumprod(
             torch.cat(
                 [torch.ones_like(exploration_discount[:1]), exploration_discount[:-2]],
                 0,
             ),
             0,
         ).detach()
-        exploration_actor_loss = -(exploration_discount * exploration_returns).mean()
+        exploration_actor_loss = -(exploration_weights * exploration_returns).mean()
 
-        zero_grad(self.exploration_actor)
-        if self.use_amp:
-            with amp.scale_loss(
-                exploration_actor_loss, self.exploration_actor_optimizer, loss_id=4
-            ) as scaled_exploration_actor_loss:
-                scaled_exploration_actor_loss.backward()
-        else:
-            exploration_actor_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.exploration_actor.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.exploration_actor_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.exploration_actor_optimizer.step()
+        self.update_network(
+            self.exploration_actor,
+            self.exploration_actor_optimizer,
+            exploration_actor_loss,
+            4,
+        )
         """
         Exploration Value Loss
         """
         with torch.no_grad():
             exploration_imag_feat_v = exploration_imag_feat.detach()
             exploration_value_target = exploration_returns.detach()
-            exploration_discount = exploration_discount.detach()
+            exploration_weights = exploration_weights.detach()
 
-        exploration_value_dist = self.world_model.get_dist(
-            self.exploration_vf(exploration_imag_feat_v)[:-1], 1
+        exploration_vf_loss, exploration_value_dist = self.value_loss(
+            exploration_imag_feat_v,
+            exploration_weights,
+            exploration_value_target,
+            vf=self.exploration_vf,
         )
-        exploration_vf_loss = -(
-            exploration_discount.squeeze(-1)
-            * exploration_value_dist.log_prob(exploration_value_target)
-        ).mean()
 
-        zero_grad(self.exploration_vf)
-        if self.use_amp:
-            with amp.scale_loss(
-                exploration_vf_loss,
-                self.exploration_vf_optimizer,
-                loss_id=5,
-            ) as scaled_exploration_vf_loss:
-                scaled_exploration_vf_loss.backward()
-        else:
-            exploration_vf_loss.backward()
-        if self.gradient_clip > 0:
-            if not self.use_amp:
-                torch.nn.utils.clip_grad_norm_(
-                    self.exploration_vf.parameters(), self.gradient_clip, norm_type=2
-                )
-            else:
-                torch.nn.utils.clip_grad_norm_(
-                    amp.master_params(self.exploration_vf_optimizer),
-                    self.gradient_clip,
-                    norm_type=2,
-                )
-        self.exploration_vf_optimizer.step()
+        self.update_network(
+            self.exploration_vf, self.exploration_vf_optimizer, exploration_vf_loss, 5
+        )
 
         """
         Save some statistics for eval
@@ -595,6 +476,11 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             if self.use_pred_discount:
                 eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
 
+            eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss.item()
+            eval_statistics["Reinforce Loss"] = reinforce_loss.item()
+            eval_statistics["Actor Entropy Loss"] = actor_entropy_loss.item()
+            eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
+
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = value_dist.mean.mean().item()
@@ -603,6 +489,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
             eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
             eval_statistics["Exploration Actor Loss"] = exploration_actor_loss.item()
+            eval_statistics[
+                "Exploration Imagined Values"
+            ] = exploration_value_dist.mean.mean().item()
 
             eval_statistics[
                 "Exploration Imagined Returns"
@@ -616,17 +505,12 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             actor_loss=actor_loss,
             world_model_loss=world_model_loss,
             vf_loss=vf_loss,
+            one_step_ensemble_loss=ensemble_loss,
+            exploration_actor_loss=exploration_actor_loss,
+            exploration_vf_loss=exploration_vf_loss,
         )
 
         return loss, eval_statistics
-
-    def get_diagnostics(self):
-        stats = super().get_diagnostics()
-        stats.update(self.eval_statistics)
-        return stats
-
-    def end_epoch(self, epoch):
-        self._need_to_update_eval_statistics = True
 
     @property
     def networks(self):
@@ -634,6 +518,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             self.actor,
             self.vf,
             self.world_model,
+            self.one_step_ensemble,
+            self.exploration_actor,
+            self.exploration_vf,
         ]
 
     @property
@@ -642,6 +529,9 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             self.actor_optimizer,
             self.vf_optimizer,
             self.world_model_optimizer,
+            self.one_step_ensemble_optimizer,
+            self.exploration_actor_optimizer,
+            self.exploration_vf_optimizer,
         ]
 
     def get_snapshot(self):
@@ -649,4 +539,7 @@ class Plan2ExploreTrainer(TorchTrainer, LossFunction):
             actor=self.actor,
             world_model=self.world_model,
             vf=self.vf,
+            one_step_ensemble=self.one_step_ensemble,
+            exploration_actor=self.exploration_actor,
+            exploration_vf=self.exploration_vf,
         )

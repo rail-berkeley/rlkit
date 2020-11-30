@@ -101,6 +101,7 @@ def experiment(variant):
 
     world_model = world_model_class(
         action_dim,
+        image_shape=eval_envs[0].image_shape,
         **variant["model_kwargs"],
     )
     actor = ActorModel(
@@ -120,6 +121,14 @@ def experiment(variant):
         + variant["model_kwargs"]["deterministic_state_size"],
         hidden_activation=torch.nn.functional.elu,
     )
+    target_vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+    variant["trainer_kwargs"]["target_vf"] = target_vf
 
     one_step_ensemble = OneStepEnsembleModel(
         action_dim=action_dim,
@@ -204,6 +213,7 @@ def experiment(variant):
         world_model=world_model,
         actor=actor,
         vf=vf,
+        image_shape=eval_envs[0].image_shape,
         one_step_ensemble=one_step_ensemble,
         exploration_actor=exploration_actor,
         exploration_vf=exploration_vf,
@@ -219,7 +229,7 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    algorithm.post_epoch_funcs.append(video_post_epoch_func)
+    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    video_post_epoch_func(algorithm, -1)
+    # video_post_epoch_func(algorithm, -1)

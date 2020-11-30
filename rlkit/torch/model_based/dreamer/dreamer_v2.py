@@ -68,6 +68,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         target_update_period=1,
         use_pred_discount=True,
         debug=False,
+        initialize_amp=True,
     ):
         super().__init__()
 
@@ -82,30 +83,30 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.target_vf = target_vf.to(ptu.device)
 
         if optimizer_class == "torch_adam":
-            optimizer_class = optim.Adam
+            self.optimizer_class = optim.Adam
         elif optimizer_class == "apex_adam" and APEX_AVAILABLE:
-            optimizer_class = apex.optimizers.FusedAdam
+            self.optimizer_class = apex.optimizers.FusedAdam
 
-        self.actor_optimizer = optimizer_class(
+        self.actor_optimizer = self.optimizer_class(
             self.actor.parameters(),
             lr=actor_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.vf_optimizer = optimizer_class(
+        self.vf_optimizer = self.optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.world_model_optimizer = optimizer_class(
+        self.world_model_optimizer = self.optimizer_class(
             self.world_model.parameters(),
             lr=world_model_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
         self.use_amp = use_amp and APEX_AVAILABLE
-        if self.use_amp:
+        if self.use_amp and initialize_amp:
             models, optimizers = amp.initialize(
                 [
                     self.world_model.img_step_layer,
@@ -179,7 +180,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
 
     def train_from_torch(self, batch):
-        gt.blank_stamp()
         self.try_update_target_networks()
         losses, stats = self.compute_loss(
             batch,
@@ -194,7 +194,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.eval_statistics = stats
             # Compute statistics using only one batch per epoch
             self._need_to_update_eval_statistics = False
-        gt.stamp("dreamer training", unique=False)
 
     def imagine_ahead(self, state):
         new_state = {}
@@ -364,12 +363,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             actor_entropy_loss_scale,
         )
 
-    def value_loss(self, imag_feat_v, weights, imag_returns):
+    def value_loss(self, imag_feat_v, weights, imag_returns, vf=None):
+        if vf is None:
+            vf = self.vf
         assert len(imag_feat_v.shape) == 3, imag_feat_v.shape
         assert len(weights.shape) == 3 and weights.shape[-1] == 1, weights.shape
         assert len(imag_returns.shape) == 3, imag_returns.shape
 
-        value_dist = self.world_model.get_dist(self.vf(imag_feat_v)[:-1], 1)
+        value_dist = self.world_model.get_dist(vf(imag_feat_v)[:-1], 1)
         log_probs = value_dist.log_prob(imag_returns)
         weights = weights.squeeze(-1)
         assert len(log_probs.shape) == 2, log_probs.shape
@@ -461,7 +462,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         pred_discount_params = list(self.world_model.pred_discount.parameters())
         with FreezeParameters(world_model_params):
             imag_feat, imag_actions = self.imagine_ahead(post)
-        with FreezeParameters(world_model_params + vf_params):
+        with FreezeParameters(world_model_params + vf_params + target_vf_params):
             imag_reward = self.world_model.reward(imag_feat)
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
