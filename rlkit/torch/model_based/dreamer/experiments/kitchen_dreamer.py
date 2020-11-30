@@ -104,6 +104,7 @@ def run_experiment(variant):
         world_model_class = WorldModel
     world_model = world_model_class(
         action_dim,
+        image_shape=eval_envs[0].image_shape,
         **variant["model_kwargs"],
     )
 
@@ -201,6 +202,7 @@ def run_experiment(variant):
         world_model=world_model,
         actor=actor,
         vf=vf,
+        image_shape=eval_envs[0].image_shape,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(

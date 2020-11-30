@@ -39,6 +39,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         vf,
         world_model,
         imagination_horizon,
+        image_shape,
         target_vf,
         discount=0.99,
         reward_scale=1.0,
@@ -165,6 +166,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
+        self.image_shape = image_shape
 
     def try_update_target_networks(self):
         if (
@@ -229,7 +231,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         image_pred_loss = (
             -1
             * image_dist.log_prob(
-                self.world_model.preprocess(obs).reshape(-1, 3, 64, 64)
+                self.world_model.preprocess(obs).reshape(-1, *self.image_shape)
             ).mean()
         )
         reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()

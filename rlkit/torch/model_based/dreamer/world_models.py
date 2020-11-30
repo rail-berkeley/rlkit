@@ -16,6 +16,7 @@ class WorldModel(PyTorchModule):
     def __init__(
         self,
         action_dim,
+        image_shape,
         stochastic_state_size=60,
         deterministic_state_size=400,
         embedding_size=1024,
@@ -32,6 +33,7 @@ class WorldModel(PyTorchModule):
         discrete_latent_size=32,
     ):
         super().__init__()
+        self.image_shape = image_shape
         self.model_act = model_act
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
@@ -76,9 +78,9 @@ class WorldModel(PyTorchModule):
                 deterministic_state_size, deterministic_state_size
             )
         self.conv_encoder = CNN(
-            input_width=64,
-            input_height=64,
-            input_channels=3,
+            input_width=self.image_shape[2],
+            input_height=self.image_shape[1],
+            input_channels=self.image_shape[0],
             kernel_sizes=[4] * 4,
             n_channels=[depth, depth * 2, depth * 4, depth * 8],
             strides=[2] * 4,
@@ -96,7 +98,7 @@ class WorldModel(PyTorchModule):
             deconv_input_channels=depth * 32,
             deconv_output_kernel_size=6,
             deconv_output_strides=2,
-            deconv_output_channels=3,
+            deconv_output_channels=self.image_shape[0],
             kernel_sizes=[5, 5, 6],
             n_channels=[depth * 4, depth * 2, depth * 1],
             strides=[2] * 3,
