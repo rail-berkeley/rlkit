@@ -20,14 +20,14 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.debug:
         algorithm_kwargs = dict(
-            num_epochs=2,
-            num_eval_steps_per_epoch=30,
+            num_epochs=5,
+            num_eval_steps_per_epoch=10,
             num_trains_per_train_loop=10,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
-            min_num_steps_before_training=100,
-            num_pretrain_steps=100,
+            num_expl_steps_per_train_loop=50,
+            min_num_steps_before_training=10,
+            num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            batch_size=50,
+            batch_size=30,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -35,11 +35,8 @@ if __name__ == "__main__":
             num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
-            num_expl_steps_per_train_loop=150,  # 200 samples since num_envs = 50 and max_path_length + 1 = 4
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
-            num_train_loops_per_epoch=5,
-            batch_size=625,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -50,7 +47,7 @@ if __name__ == "__main__":
         env_class="microwave",
         env_kwargs=dict(
             dense=False,
-            delta=0.0,
+            delta=0.3,
             image_obs=True,
             fixed_schema=True,
             multitask=False,
@@ -93,6 +90,8 @@ if __name__ == "__main__":
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
+        expl_amount=0.3,
+        path_length_specific_discount=True,
     )
 
     search_space = {
@@ -104,9 +103,8 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "expl_amount": [0.3],
         "env_kwargs.fixed_schema": [True, False],
-        "env_kwargs.use_combined_action_space": [True, False],
+        "env_kwargs.use_combined_action_space": [True],
         "actor_kwargs.discrete_continuous_dist": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

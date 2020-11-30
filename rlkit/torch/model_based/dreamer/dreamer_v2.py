@@ -474,8 +474,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
             if self.target_vf:
-                with FreezeParameters(target_vf_params):
-                    value = self.target_vf(imag_feat)
+                value = self.target_vf(imag_feat)
             else:
                 value = self.vf(imag_feat)
         imag_returns = lambda_return(

@@ -7,14 +7,9 @@ import torch
 import torch.optim as optim
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.core.loss import LossFunction, LossStatistics
+from rlkit.core.loss import LossStatistics
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
-from rlkit.torch.model_based.dreamer.utils import (
-    FreezeParameters,
-    lambda_return,
-    zero_grad,
-)
-from rlkit.torch.torch_rl_algorithm import TorchTrainer
+from rlkit.torch.model_based.dreamer.utils import FreezeParameters, lambda_return
 
 try:
     import apex
@@ -309,8 +304,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
             if self.target_vf:
-                with FreezeParameters(target_vf_params):
-                    value = self.target_vf(imag_feat)
+                value = self.target_vf(imag_feat)
             else:
                 value = self.vf(imag_feat)
         imag_returns = lambda_return(
