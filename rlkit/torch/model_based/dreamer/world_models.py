@@ -1,3 +1,4 @@
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -312,19 +313,19 @@ class WorldModel(PyTorchModule):
         return state
 
 
-class MultitaskWorldModel(WorldModel):
+class StateConcatObsWorldModel(WorldModel):
     def preprocess(self, obs):
         image_obs, one_hots = (
-            obs[:, : 64 * 64 * 3],
-            obs[:, 64 * 64 * 3 :],
+            obs[:, : np.prod(self.image_shape)],
+            obs[:, np.prod(self.image_shape) :],
         )
-        image_obs = super(MultitaskWorldModel, self).preprocess(image_obs)
+        image_obs = super(StateConcatObsWorldModel, self).preprocess(image_obs)
         return image_obs
 
     def encode(self, obs):
         image_obs, one_hots = (
-            obs[:, : 64 * 64 * 3],
-            obs[:, 64 * 64 * 3 :],
+            obs[:, : np.prod(self.image_shape)],
+            obs[:, np.prod(self.image_shape) :],
         )
         image_obs = self.preprocess(obs)
         encoded_obs = self.conv_encoder(image_obs)

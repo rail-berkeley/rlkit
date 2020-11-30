@@ -55,6 +55,7 @@ if __name__ == "__main__":
             multitask=False,
             action_scale=1.4,
             wrist_cam_concat_with_fixed_view=False,
+            proprioception=False,
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -67,6 +68,7 @@ if __name__ == "__main__":
             stochastic_state_size=60,
             deterministic_state_size=400,
             gru_layer_norm=False,
+            embedding_size=1024,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -110,8 +112,9 @@ if __name__ == "__main__":
             # 0.075,
             0.3,
         ],
-        "env_kwargs.fixed_schema": [True, False],
-        "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
+        # "env_kwargs.fixed_schema": [True, False],
+        "env_kwargs.proprioception": [True, False],
+        # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         # "env_kwargs.use_combined_action_space": [True, False],
         # "actor_kwargs.discrete_continuous_dist": [True, False],
         # "trainer_kwargs.image_loss_scale": [

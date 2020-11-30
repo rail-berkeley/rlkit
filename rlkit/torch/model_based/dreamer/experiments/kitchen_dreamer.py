@@ -48,7 +48,7 @@ def run_experiment(variant):
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
-        MultitaskWorldModel,
+        StateConcatObsWorldModel,
         WorldModel,
     )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
@@ -98,8 +98,13 @@ def run_experiment(variant):
     num_primitives = eval_envs[0].num_primitives
     max_arg_len = eval_envs[0].max_arg_len
 
-    if variant.get("world_model_class", "world_model") == "multitask":
-        world_model_class = MultitaskWorldModel
+    if (
+        variant.get("world_model_class", "world_model") == "multitask"
+        or eval_envs[0].proprioception
+    ):
+        world_model_class = StateConcatObsWorldModel
+        if eval_envs[0].proprioception:
+            variant["model_kwargs"]["embedding_size"] += 9
     else:
         world_model_class = WorldModel
     world_model = world_model_class(
