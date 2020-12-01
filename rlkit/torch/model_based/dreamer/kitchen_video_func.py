@@ -141,7 +141,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             pred_discount_dist,
             embed,
         ) = algorithm.trainer.world_model(obs.detach(), actions.detach())
-        reconstructions = image_dist.mean.detach()
+        reconstructions = image_dist.mean.detach()[:, :3, :, :]
         reconstructions = (
             reconstructions.permute(0, 2, 3, 1).reshape(
                 4, algorithm.max_path_length, 64, 64, 3
@@ -149,8 +149,11 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             + 0.5
         ) * 255.0
         reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
+
         obs = ptu.get_numpy(
-            obs.reshape(4, algorithm.max_path_length, 3, 64, 64).permute(0, 1, 3, 4, 2)
+            obs[:, :, : 64 * 64 * 3]
+            .reshape(4, algorithm.max_path_length, 3, 64, 64)
+            .permute(0, 1, 3, 4, 2)
         ).astype(np.uint8)
         file_path = osp.join(
             logger.get_snapshot_dir(), "reconstructions_epoch_{}.png".format(epoch)
