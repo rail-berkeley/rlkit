@@ -103,9 +103,11 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "env_kwargs.fixed_schema": [True, False],
-        "env_kwargs.use_combined_action_space": [True],
-        "actor_kwargs.discrete_continuous_dist": [True, False],
+        "env_kwargs.fixed_schema": [False],
+        "env_kwargs.use_combined_action_space": [False],
+        "env_kwargs.use_max_bound_action_space": [True],
+        "actor_kwargs.discrete_continuous_dist": [False],
+        "trainer_kwargs.exploration_reward_scale": [1.0, 100.0, 10000.0],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -56,6 +56,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         use_pred_discount=True,
         debug=False,
         exploration_reward_scale=10000,
+        image_goals=None,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -94,6 +95,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             target_update_period=1,
             initialize_amp=False,
         )
+        self.image_goals = None
+        # self.image_goals = np.zeros((10, *image_shape))
         self.exploration_actor = exploration_actor.to(ptu.device)
         self.exploration_vf = exploration_vf.to(ptu.device)
         self.one_step_ensemble = one_step_ensemble.to(ptu.device)
@@ -208,6 +211,26 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         feats = []
         actions = []
         states = []
+        if self.image_goals is not None:
+            image_goals = ptu.from_numpy(
+                self.image_goals[
+                    np.random.choice(
+                        range(len(self.image_goals)), size=(new_state["stoch"].shape[0])
+                    )
+                ]
+            )
+            init_state = self.world_model.initial(new_state["stoch"].shape[0])
+            feat = self.world_model.get_feat(init_state).detach()
+            action = actor(feat).sample().detach()
+            encoded_image_goals = self.world_model.encode(
+                image_goals.flatten(start_dim=1, end_dim=3)
+            )
+            post_params, _, _, _, _ = self.world_model.forward_batch(
+                encoded_image_goals, action, init_state
+            )
+            featurized_image_goals = self.world_model.get_feat(post_params).detach()
+            rewards = []
+
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state).detach()
             action = actor(feat).rsample()
@@ -215,6 +238,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             feats.append(self.world_model.get_feat(new_state).unsqueeze(0))
             actions.append(action.unsqueeze(0))
             states.append(new_state["deter"])
+            if self.image_goals is not None:
+                reward = torch.linalg.norm(
+                    featurized_image_goals - self.world_model.get_feat(new_state), dim=1
+                ).unsqueeze(0)
 
         feats = torch.cat(feats)
         actions = torch.cat(actions)

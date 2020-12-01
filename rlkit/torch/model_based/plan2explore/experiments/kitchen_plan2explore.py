@@ -33,7 +33,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
-        MultitaskWorldModel,
+        StateConcatObsWorldModel,
         WorldModel,
     )
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
@@ -78,7 +78,6 @@ def experiment(variant):
             env_kwargs=variant["env_kwargs"],
         )
     ]
-
     eval_env = DummyVecEnv(eval_envs)
     max_path_length = eval_envs[0].max_steps
 
@@ -95,7 +94,7 @@ def experiment(variant):
     else:
         continuous_action_dim = max_arg_len + num_primitives
     if variant.get("world_model_class", "world_model") == "multitask":
-        world_model_class = MultitaskWorldModel
+        world_model_class = StateConcatObsWorldModel
     else:
         world_model_class = WorldModel
 
@@ -229,7 +228,7 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    # video_post_epoch_func(algorithm, -1)
+    video_post_epoch_func(algorithm, -1)
