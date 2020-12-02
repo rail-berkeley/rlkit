@@ -79,7 +79,6 @@ def experiment(variant):
         )
     ]
     eval_env = DummyVecEnv(eval_envs)
-    max_path_length = eval_envs[0].max_steps
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
@@ -93,8 +92,13 @@ def experiment(variant):
         continuous_action_dim = max_arg_len
     else:
         continuous_action_dim = max_arg_len + num_primitives
-    if variant.get("world_model_class", "world_model") == "multitask":
+    if (
+        variant.get("world_model_class", "world_model") == "multitask"
+        or eval_envs[0].proprioception
+    ):
         world_model_class = StateConcatObsWorldModel
+        if eval_envs[0].proprioception:
+            variant["model_kwargs"]["embedding_size"] += 9
     else:
         world_model_class = WorldModel
 
