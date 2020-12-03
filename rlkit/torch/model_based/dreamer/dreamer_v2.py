@@ -69,6 +69,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         use_pred_discount=True,
         debug=False,
         initialize_amp=True,
+        use_baseline=True,
     ):
         super().__init__()
 
@@ -168,6 +169,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
         self.image_shape = image_shape
+        self.use_baseline = use_baseline
 
     def try_update_target_networks(self):
         if (
@@ -302,8 +304,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         assert len(imag_feat.shape) == 3, imag_feat.shape
         assert len(imag_actions.shape) == 3, imag_actions.shape
         assert len(weights.shape) == 3 and weights.shape[-1] == 1, weights.shape
-        assert imag_actions.max() <= 1.0 and imag_actions.min() >= -1.0
-        baseline_shifted_returns = imag_returns - value[:-1]
+        if self.actor.use_tanh_normal:
+            assert imag_actions.max() <= 1.0 and imag_actions.min() >= -1.0
+        if self.use_baseline:
+            baseline_shifted_returns = imag_returns - value[:-1]
+        else:
+            baseline_shifted_returns = imag_returns
         baseline_shifted_returns = (
             torch.cat(
                 [
@@ -361,6 +367,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             reinforce_loss.mean(),
             actor_entropy_loss.mean(),
             actor_entropy_loss_scale,
+            log_probs.mean(),
         )
 
     def value_loss(self, imag_feat_v, weights, imag_returns, vf=None):
@@ -493,6 +500,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             reinforce_loss,
             actor_entropy_loss,
             actor_entropy_loss_scale,
+            log_probs,
         ) = self.actor_loss(
             imag_returns, self.vf(imag_feat), imag_feat, imag_actions, weights
         )
@@ -530,6 +538,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Reinforce Loss"] = reinforce_loss.item()
             eval_statistics["Actor Entropy Loss"] = actor_entropy_loss.item()
             eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
+            eval_statistics["Actor Log Probs"] = log_probs.item()
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = value_dist.mean.mean().item()

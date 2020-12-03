@@ -64,15 +64,15 @@ class DreamerPolicy(Policy):
                     rand_action.int(),
                     discrete.int(),
                 )
-                continuous = torch.clamp(
-                    Normal(continuous, self.expl_amount).rsample(), -1, 1
-                )
+                continuous = Normal(continuous, self.expl_amount).rsample()
+                if self.actor.use_tanh_normal:
+                    continuous = torch.clamp(continuous, -1, 1)
                 assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
                 action = torch.cat((discrete, continuous), -1)
             else:
-                action = torch.clamp(
-                    Normal(action.float(), self.expl_amount).rsample(), -1, 1
-                )
+                action = Normal(action.float(), self.expl_amount).rsample()
+                if self.actor.use_tanh_normal:
+                    action = torch.clamp(action, -1, 1)
         else:
             action = dist.mode()
         self.state = (latent, action)

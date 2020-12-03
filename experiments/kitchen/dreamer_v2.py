@@ -99,12 +99,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
+            # "microwave",
+            # "kettle",
+            # "top_left_burner",
             "slide_cabinet",
-            "hinge_cabinet",
-            "light_switch",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
         "env_kwargs.delta": [
             # 0.025,
@@ -113,8 +113,8 @@ if __name__ == "__main__":
             0.3,
         ],
         # "env_kwargs.fixed_schema": [True, False],
-        "env_kwargs.proprioception": [True, False],
-        "env_kwargs.start_image_concat_with_image_obs": [True, False],
+        # "env_kwargs.proprioception": [True, False],
+        # "env_kwargs.start_image_concat_with_image_obs": [True, False],
         # "model_kwargs.stochastic_state_size": [60, 90, 120],
         # "model_kwargs.deterministic_state_size": [400, 600, 800],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
@@ -129,7 +129,11 @@ if __name__ == "__main__":
         # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
         # "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
         # "trainer_kwargs.forward_kl": [True, False],
-        # "trainer_kwargs.reinforce_loss_scale": [1.0, 0.5, 0.0],
+        "trainer_kwargs.reinforce_loss_scale": [1.0],
+        "trainer_kwargs.use_baseline": [True, False],
+        "actor_kwargs.use_tanh_normal": [True, False],
+        # "actor_kwargs.mean_scale": [1.0, 5.0],
+        # "actor_kwargs.init_std": [1.0, 5.0],
         # "trainer_kwargs.actor_entropy_loss_schedule": [
         # "linear(3e-3,3e-4,2.5e4)",
         # "linear(3e-3,3e-4,5e4)",
@@ -157,6 +161,12 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        # if (
+        #     not variant["actor_kwargs"]["use_tanh_normal"]
+        #     and not variant["actor_kwargs"]["mean_scale"] == 5.0
+        #     and not variant["actor_kwargs"]["init_std"] == 5.0
+        # ):
+        #     continue
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

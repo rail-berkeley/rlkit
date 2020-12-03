@@ -134,6 +134,9 @@ def run_experiment(variant):
         continuous_action_dim=continuous_action_dim,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
+        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
+        mean_scale=variant["actor_kwargs"]["mean_scale"],
+        init_std=variant["actor_kwargs"]["init_std"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]

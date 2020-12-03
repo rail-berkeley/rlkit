@@ -20,6 +20,7 @@ class ActorModel(Mlp):
         min_std=1e-4,
         init_std=5.0,
         mean_scale=5.0,
+        use_tanh_normal=True,
         **kwargs
     ):
         self.discrete_continuous_dist = discrete_continuous_dist
@@ -40,6 +41,7 @@ class ActorModel(Mlp):
         self._min_std = min_std
         self._init_std = ptu.tensor(init_std)
         self._mean_scale = mean_scale
+        self.use_tanh_normal = use_tanh_normal
 
     def forward(self, input):
         raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -60,25 +62,32 @@ class ActorModel(Mlp):
 
             dist1 = OneHotDist(logits=discrete_logits)
 
-            action_mean = self._mean_scale * torch.tanh(
-                continuous_action_mean / self._mean_scale
-            )
-            action_std = (
+            if self.use_tanh_normal:
+                # why is this done???
+                continuous_action_mean = self._mean_scale * torch.tanh(
+                    continuous_action_mean / self._mean_scale
+                )
+            continuous_action_std = (
                 F.softplus(continuous_action_std + raw_init_std) + self._min_std
             )
 
-            dist2 = Normal(action_mean, action_std)
-            dist2 = TransformedDistribution(dist2, TanhBijector())
+            dist2 = Normal(continuous_action_mean, continuous_action_std)
+            if self.use_tanh_normal:
+                dist2 = TransformedDistribution(dist2, TanhBijector())
             dist2 = Independent(dist2, 1)
             dist2 = SampleDist(dist2)
             dist = SplitDist(dist1, dist2)
         else:
-            action_mean, action_std_dev = last.split(self.continuous_action_dim, -1)
-            action_mean = self._mean_scale * torch.tanh(action_mean / self._mean_scale)
-            action_std = F.softplus(action_std_dev + raw_init_std) + self._min_std
+            action_mean, action_std = last.split(self.continuous_action_dim, -1)
+            if self.use_tanh_normal:
+                action_mean = self._mean_scale * torch.tanh(
+                    action_mean / self._mean_scale
+                )
+            action_std = F.softplus(action_std + raw_init_std) + self._min_std
 
             dist = Normal(action_mean, action_std)
-            dist = TransformedDistribution(dist, TanhBijector())
+            if self.use_tanh_normal:
+                dist = TransformedDistribution(dist, TanhBijector())
             dist = torch.distributions.Independent(dist, 1)
             dist = SampleDist(dist)
         return dist
