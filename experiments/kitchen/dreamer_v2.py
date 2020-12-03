@@ -62,6 +62,8 @@ if __name__ == "__main__":
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=False,
+            mean_scale=5.0,
+            init_std=5.0,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
