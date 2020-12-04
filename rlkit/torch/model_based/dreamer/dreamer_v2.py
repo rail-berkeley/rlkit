@@ -208,11 +208,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         next_feats = []
         actions = []
         for _ in range(self.imagination_horizon):
-            feat = self.world_model.get_feat(new_state).detach()
-            action_dist = self.actor(feat)
+            feat = self.world_model.get_feat(new_state)
+            action_dist = self.actor(feat.detach())
             action = action_dist.rsample()
             new_state = self.world_model.img_step(new_state, action)
-            next_feat = self.world_model.get_feat(new_state).detach()
+            next_feat = self.world_model.get_feat(new_state)
 
             feats.append(feat.unsqueeze(0))
             next_feats.append(next_feat.unsqueeze(0))

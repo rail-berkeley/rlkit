@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=10,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -132,8 +132,8 @@ if __name__ == "__main__":
         # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
         # "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
         # "trainer_kwargs.forward_kl": [True, False],
-        "trainer_kwargs.reinforce_loss_scale": [1.0, 0.9, 0.0],
-        "trainer_kwargs.use_baseline": [True, False],
+        "trainer_kwargs.reinforce_loss_scale": [1.0, 0.0],
+        # "trainer_kwargs.use_baseline": [True, False],
         "trainer_kwargs.use_imag_next_feat": [True, False],
         # "actor_kwargs.use_tanh_normal": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
