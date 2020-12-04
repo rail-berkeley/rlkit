@@ -64,6 +64,7 @@ if __name__ == "__main__":
             discrete_continuous_dist=False,
             mean_scale=5.0,
             init_std=5.0,
+            use_tanh_normal=True,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -105,7 +106,7 @@ if __name__ == "__main__":
             # "kettle",
             # "top_left_burner",
             "slide_cabinet",
-            "hinge_cabinet",
+            # "hinge_cabinet",
             # "light_switch",
         ],
         "env_kwargs.delta": [
@@ -131,9 +132,10 @@ if __name__ == "__main__":
         # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
         # "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
         # "trainer_kwargs.forward_kl": [True, False],
-        "trainer_kwargs.reinforce_loss_scale": [1.0],
+        "trainer_kwargs.reinforce_loss_scale": [1.0, 0.9, 0.0],
         "trainer_kwargs.use_baseline": [True, False],
-        "actor_kwargs.use_tanh_normal": [True, False],
+        "trainer_kwargs.use_imag_next_feat": [True, False],
+        # "actor_kwargs.use_tanh_normal": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
