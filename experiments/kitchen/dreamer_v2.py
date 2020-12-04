@@ -104,7 +104,7 @@ if __name__ == "__main__":
             # "microwave",
             # "kettle",
             # "top_left_burner",
-            # "slide_cabinet",
+            "slide_cabinet",
             "hinge_cabinet",
             # "light_switch",
         ],
@@ -136,12 +136,12 @@ if __name__ == "__main__":
         "actor_kwargs.use_tanh_normal": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
-        # "trainer_kwargs.actor_entropy_loss_schedule": [
-        # "linear(3e-3,3e-4,2.5e4)",
-        # "linear(3e-3,3e-4,5e4)",
-        # "1e-4",
-        # "0.0"
-        # ],
+        "trainer_kwargs.actor_entropy_loss_schedule": [
+            # "linear(3e-3,3e-4,2.5e4)",
+            # "linear(3e-3,3e-4,5e4)",
+            "1e-4",
+            # "0.0"
+        ],
         # "trainer_kwargs.actor_lr": [1e-4],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
