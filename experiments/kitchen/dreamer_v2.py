@@ -112,14 +112,14 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.3,
         ],
-        # "env_kwargs.fixed_schema": [True, False],
+        "env_kwargs.fixed_schema": [False],
         # "env_kwargs.proprioception": [True, False],
         # "env_kwargs.start_image_concat_with_image_obs": [True, False],
         # "model_kwargs.stochastic_state_size": [60, 90, 120],
         # "model_kwargs.deterministic_state_size": [400, 600, 800],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         # "env_kwargs.use_combined_action_space": [True, False],
-        # "actor_kwargs.discrete_continuous_dist": [True, False],
+        "actor_kwargs.discrete_continuous_dist": [True, False],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0,
         #     1.0 / (64 * 64 * 3), #his seems like a bad idea
@@ -130,14 +130,10 @@ if __name__ == "__main__":
         # "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
         # "trainer_kwargs.forward_kl": [True, False],
         "trainer_kwargs.reinforce_loss_scale": [1.0, 0.9, 0.0],
-        # "actor_kwargs.use_tanh_normal": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
-            "linear(3e-3,3e-4,2.5e4)",
             "linear(3e-3,3e-4,5e4)",
-            "1e-4",
-            "0.0",
         ],
         # "trainer_kwargs.actor_lr": [1e-4],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
