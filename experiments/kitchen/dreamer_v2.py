@@ -133,7 +133,8 @@ if __name__ == "__main__":
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
-            "linear(3e-3,3e-4,5e4)",
+            # "linear(3e-3,3e-4,5e4)",
+            "linear(3e-3,3e-4,2.5e4)",
         ],
         # "trainer_kwargs.actor_lr": [1e-4],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
