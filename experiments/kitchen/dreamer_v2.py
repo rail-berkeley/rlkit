@@ -112,7 +112,7 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.3,
         ],
-        "env_kwargs.expl_amount": [
+        "expl_amount": [
             0.3,
             0.6,
             0.9,
