@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -102,8 +102,8 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
+            # "microwave",
+            # "kettle",
             "top_left_burner",
             # "slide_cabinet",
             "hinge_cabinet",
@@ -112,6 +112,11 @@ if __name__ == "__main__":
         "env_kwargs.delta": [
             0.3,
         ],
+        "env_kwargs.expl_amount": [
+            0.3,
+            0.6,
+            0.9,
+        ],
         "env_kwargs.fixed_schema": [False],
         # "env_kwargs.proprioception": [True, False],
         # "env_kwargs.start_image_concat_with_image_obs": [True, False],
@@ -119,7 +124,7 @@ if __name__ == "__main__":
         # "model_kwargs.deterministic_state_size": [400, 600, 800],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         # "env_kwargs.use_combined_action_space": [True, False],
-        "actor_kwargs.discrete_continuous_dist": [True, False],
+        "actor_kwargs.discrete_continuous_dist": [True],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0,
         #     1.0 / (64 * 64 * 3), #his seems like a bad idea
@@ -129,11 +134,12 @@ if __name__ == "__main__":
         # "trainer_kwargs.kl_loss_scale": [0.0, 1.0],
         # "trainer_kwargs.free_nats": [0.0, 1.0, 3.0],
         # "trainer_kwargs.forward_kl": [True, False],
-        "trainer_kwargs.reinforce_loss_scale": [1.0, 0.9, 0.0],
+        "trainer_kwargs.reinforce_loss_scale": [1.0],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
-            # "linear(3e-3,3e-4,5e4)",
+            "linear(3e-3,3e-4,5e4)",
+            "linear(3e-3,3e-4,1e5)",
             "3e-3",
         ],
         # "trainer_kwargs.actor_lr": [1e-4],
