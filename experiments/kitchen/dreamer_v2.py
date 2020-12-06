@@ -140,7 +140,6 @@ if __name__ == "__main__":
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "linear(3e-3,3e-4,5e4)",
             "linear(3e-3,3e-4,1e5)",
-            "3e-3",
         ],
         # "trainer_kwargs.actor_lr": [1e-4],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
