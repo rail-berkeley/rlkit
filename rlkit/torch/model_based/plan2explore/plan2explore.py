@@ -513,15 +513,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_feat
                 )
 
-            if self.train_with_intrinsic_and_extrinsic_reward:
-                exploration_reward = (
-                    self.exploration_reward_scale * exploration_intrinsic_reward
-                    + exploration_extrinsic_reward
-                )
-            else:
-                exploration_reward = (
-                    self.exploration_reward_scale * exploration_intrinsic_reward
-                )
+            exploration_reward = (
+                self.exploration_reward_scale * exploration_intrinsic_reward
+            )
             exploration_reward = torch.cat(
                 [
                     exploration_reward[i : i + exploration_imag_feat.shape[1]]
@@ -533,6 +527,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 ],
                 0,
             )
+            if self.train_with_intrinsic_and_extrinsic_reward:
+                exploration_reward += exploration_extrinsic_reward
 
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
