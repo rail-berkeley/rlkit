@@ -47,8 +47,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         optimizer_class="torch_adam",
         use_amp=False,
         opt_level="O1",
-        gradient_clip=100.0,
+        world_model_gradient_clip=100.0,
         actor_gradient_clip=100.0,
+        value_gradient_clip=100.0,
         lam=0.95,
         free_nats=3.0,
         kl_loss_scale=1.0,
@@ -148,7 +149,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.opt_level = opt_level
         self.discount = discount
         self.reward_scale = reward_scale
-        self.gradient_clip = gradient_clip
         self.lam = lam
         self.imagination_horizon = imagination_horizon
         self.free_nats = free_nats
@@ -175,7 +175,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.use_ppo_loss = use_ppo_loss
         self.ppo_clip_param = ppo_clip_param
         self.num_actor_updates = num_actor_updates
+        self.world_model_gradient_clip = world_model_gradient_clip
         self.actor_gradient_clip = actor_gradient_clip
+        self.value_gradient_clip = value_gradient_clip
 
     def try_update_target_networks(self):
         if (
@@ -442,7 +444,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 scaled_loss.backward()
         else:
             loss.backward()
-        if self.gradient_clip > 0:
+        if gradient_clip > 0:
             if not self.use_amp:
                 torch.nn.utils.clip_grad_norm_(
                     network.parameters(), gradient_clip, norm_type=2
@@ -509,7 +511,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.world_model_optimizer,
             world_model_loss,
             0,
-            self.gradient_clip,
+            self.world_model_gradient_clip,
         )
 
         """
@@ -621,7 +623,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             imag_feat_v, imag_next_feat_v, weights, target
         )
 
-        self.update_network(self.vf, self.vf_optimizer, vf_loss, 2, self.gradient_clip)
+        self.update_network(
+            self.vf, self.vf_optimizer, vf_loss, 2, self.value_gradient_clip
+        )
         """
         Save some statistics for eval
         """

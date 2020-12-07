@@ -81,7 +81,6 @@ if __name__ == "__main__":
             world_model_lr=6e-4,
             use_amp=True,
             opt_level="O1",
-            gradient_clip=100.0,
             lam=0.95,
             free_nats=3.0,
             optimizer_class="apex_adam",
@@ -138,6 +137,7 @@ if __name__ == "__main__":
         ],
         "trainer_kwargs.num_actor_updates": [1, 10, 25],
         "trainer_kwargs.actor_gradient_clip": [0.5, 100.0],
+        "trainer_kwargs.value_gradient_clip": [0.5, 100.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-2",
             "linear(3e-3,3e-4,5e4)",
