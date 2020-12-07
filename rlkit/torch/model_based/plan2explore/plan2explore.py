@@ -61,6 +61,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         use_ppo_loss=False,
         ppo_clip_param=0.2,
         num_actor_updates=1,
+        train_with_intrinsic_and_extrinsic_reward=False,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -178,6 +179,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             ) = optimizers
 
         self.exploration_reward_scale = exploration_reward_scale
+        self.train_with_intrinsic_and_extrinsic_reward = (
+            train_with_intrinsic_and_extrinsic_reward
+        )
 
     def compute_exploration_reward(
         self, exploration_imag_deter_states, exploration_imag_actions
@@ -495,13 +499,29 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             world_model_params + exploration_vf_params + one_step_ensemble_params
         ):
             if self.use_imag_next_feat:
-                exploration_reward = self.compute_exploration_reward(
+                exploration_intrinsic_reward = self.compute_exploration_reward(
                     exploration_imag_next_deter_states, exploration_imag_actions
-                )  # Compute Intrinsic Reward
+                )
+                exploration_extrinsic_reward = self.world_model.reward(
+                    exploration_imag_next_feat
+                )
             else:
-                exploration_reward = self.compute_exploration_reward(
+                exploration_intrinsic_reward = self.compute_exploration_reward(
                     exploration_imag_deter_states, exploration_imag_actions
-                )  # Compute Intrinsic Reward
+                )
+                exploration_extrinsic_reward = self.world_model.reward(
+                    exploration_imag_feat
+                )
+
+            if self.train_with_intrinsic_and_extrinsic_reward:
+                exploration_reward = (
+                    self.exploration_reward_scale * exploration_intrinsic_reward
+                    + exploration_extrinsic_reward
+                )
+            else:
+                exploration_reward = (
+                    self.exploration_reward_scale * exploration_intrinsic_reward
+                )
             exploration_reward = torch.cat(
                 [
                     exploration_reward[i : i + exploration_imag_feat.shape[1]]
