@@ -116,11 +116,12 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        seed = random.randint(0, 100000)
-        variant["seed"] = seed
-        variant["exp_id"] = exp_id
+        variant = preprocess_variant(variant, args.debug)
+
         for _ in range(args.num_seeds):
-            variant = preprocess_variant(variant, args.debug)
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
