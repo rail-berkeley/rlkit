@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=10,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         # "model_kwargs.stochastic_state_size": [60, 90, 120],
         # "model_kwargs.deterministic_state_size": [400, 600, 800],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
-        "env_kwargs.use_combined_action_space": [True, False],
+        # "env_kwargs.use_combined_action_space": [True, False],
         # "trainer_kwargs.image_loss_scale": [
         #     1.0,
         #     1.0 / (64 * 64 * 3), #his seems like a bad idea
