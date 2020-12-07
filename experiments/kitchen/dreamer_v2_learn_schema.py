@@ -135,7 +135,6 @@ if __name__ == "__main__":
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.use_ppo_loss": [
             True,
-            False,
         ],
         "trainer_kwargs.num_actor_updates": [1, 10, 25],
         "trainer_kwargs.actor_gradient_clip": [0.5, 100.0],
@@ -164,11 +163,6 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if (
-            not variant["trainer_kwargs"]["use_ppo_loss"]
-            and variant["trainer_kwargs"]["num_actor_updates"] > 1
-        ):
-            continue
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
