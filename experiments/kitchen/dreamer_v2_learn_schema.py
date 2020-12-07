@@ -134,11 +134,10 @@ if __name__ == "__main__":
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.use_ppo_loss": [
             True,
-            False,
         ],
-        # "trainer_kwargs.num_actor_updates": [1, 10, 25],
-        # "trainer_kwargs.actor_gradient_clip": [0.5, 100.0],
-        # "trainer_kwargs.value_gradient_clip": [0.5, 100.0],
+        "trainer_kwargs.num_actor_updates": [1, 10, 25],
+        "trainer_kwargs.actor_gradient_clip": [0.5, 100.0],
+        "trainer_kwargs.value_gradient_clip": [0.5, 100.0],
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-2",
             "linear(3e-3,3e-4,5e4)",
