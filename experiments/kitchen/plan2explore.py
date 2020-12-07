@@ -80,7 +80,6 @@ if __name__ == "__main__":
             world_model_lr=6e-4,
             use_amp=True,
             opt_level="O1",
-            gradient_clip=100.0,
             lam=0.95,
             free_nats=3.0,
             kl_loss_scale=1.0,
