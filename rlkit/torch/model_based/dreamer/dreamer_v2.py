@@ -57,9 +57,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         transition_loss_scale=0.0,
         entropy_loss_scale=0.0,
         forward_kl=True,
-        reinforce_loss_scale=0.0,
-        dynamics_backprop_loss_scale=1.0,
-        actor_entropy_loss_schedule="0.0",
+        reinforce_loss_scale=1.0,
+        actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
         adam_eps=1e-7,
         weight_decay=0.0,
         soft_target_tau=1,
@@ -156,7 +155,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.transition_loss_scale = transition_loss_scale
         self.entropy_loss_scale = entropy_loss_scale
         self.reinforce_loss_scale = reinforce_loss_scale
-        self.dynamics_backprop_loss_scale = dynamics_backprop_loss_scale
         self.actor_entropy_loss_scale = lambda x=actor_entropy_loss_schedule: schedule(
             x, self._n_train_steps_total
         )

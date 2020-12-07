@@ -67,7 +67,6 @@ class DreamerTrainer(DreamerV2Trainer):
             entropy_loss_scale=0.0,
             forward_kl=True,
             reinforce_loss_scale=0.0,
-            dynamics_backprop_loss_scale=1.0,
             actor_entropy_loss_schedule="0.0",
             soft_target_tau=1,
             target_update_period=1,
