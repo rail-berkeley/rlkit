@@ -52,7 +52,7 @@ if __name__ == "__main__":
             fixed_schema=False,
             multitask=False,
             action_scale=1.4,
-            use_combined_action_space=True,
+            use_combined_action_space=False,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
