@@ -217,25 +217,25 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 if self.use_pred_discount:  # Last step could be terminal.
                     v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
-        if self.image_goals is not None:
-            image_goals = ptu.from_numpy(
-                self.image_goals[
-                    np.random.choice(
-                        range(len(self.image_goals)), size=(new_state["stoch"].shape[0])
-                    )
-                ]
-            )
-            init_state = self.world_model.initial(new_state["stoch"].shape[0])
-            feat = self.world_model.get_feat(init_state).detach()
-            action = actor(feat).sample().detach()
-            encoded_image_goals = self.world_model.encode(
-                image_goals.flatten(start_dim=1, end_dim=3)
-            )
-            post_params, _, _, _, _ = self.world_model.forward_batch(
-                encoded_image_goals, action, init_state
-            )
-            featurized_image_goals = self.world_model.get_feat(post_params).detach()
-            rewards = []
+        # if self.image_goals is not None:
+        #     image_goals = ptu.from_numpy(
+        #         self.image_goals[
+        #             np.random.choice(
+        #                 range(len(self.image_goals)), size=(new_state["stoch"].shape[0])
+        #             )
+        #         ]
+        #     )
+        #     init_state = self.world_model.initial(new_state["stoch"].shape[0])
+        #     feat = self.world_model.get_feat(init_state).detach()
+        #     action = actor(feat).sample().detach()
+        #     encoded_image_goals = self.world_model.encode(
+        #         image_goals.flatten(start_dim=1, end_dim=3)
+        #     )
+        #     post_params, _, _, _, _ = self.world_model.forward_batch(
+        #         encoded_image_goals, action, init_state
+        #     )
+        #     featurized_image_goals = self.world_model.get_feat(post_params).detach()
+        #     rewards = []
 
         feats = []
         next_feats = []
@@ -246,7 +246,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             states.append(new_state["deter"])
-            action_dist = self.actor(feat.detach())
+            action_dist = actor(feat.detach())
             action = action_dist.rsample()
             new_state = self.world_model.img_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
@@ -256,10 +256,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
             log_probs.append(action_dist.log_prob(action).unsqueeze(0))
-            if self.image_goals is not None:
-                reward = torch.linalg.norm(
-                    featurized_image_goals - self.world_model.get_feat(new_state), dim=1
-                ).unsqueeze(0)
+            # if self.image_goals is not None:
+            #     reward = torch.linalg.norm(
+            #         featurized_image_goals - self.world_model.get_feat(new_state), dim=1
+            #     ).unsqueeze(0)
 
         feats = torch.cat(feats)
         next_feats = torch.cat(next_feats)
@@ -411,6 +411,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 imag_actions,
                 weights,
                 imag_log_probs,
+                self.actor,
             )
             self.update_network(
                 self.actor,
@@ -594,6 +595,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 exploration_imag_actions,
                 exploration_weights,
                 exploration_imag_log_probs,
+                self.exploration_actor,
             )
             self.update_network(
                 self.exploration_actor,

@@ -323,7 +323,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         imag_actions,
         weights,
         old_imag_log_probs,
+        actor=None,
     ):
+        if actor is None:
+            actor = self.actor
         assert len(imag_returns.shape) == 3, imag_returns.shape
         assert len(value.shape) == 3, value.shape
         assert len(imag_feat.shape) == 3, imag_feat.shape
@@ -358,7 +361,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         ).detach()
         assert imag_actions.shape[0] == imag_feat_a.shape[0]
 
-        imag_actor_dist = self.actor(imag_feat_a)
+        imag_actor_dist = actor(imag_feat_a)
         imag_log_probs = imag_actor_dist.log_prob(imag_actions)
         assert old_imag_log_probs.shape == imag_log_probs.shape
         if self.use_ppo_loss:
