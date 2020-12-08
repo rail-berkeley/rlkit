@@ -221,9 +221,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         assert pred_embeddings.shape[1] == input_state.shape[0]
         assert len(pred_embeddings.shape) == 3
 
-        reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(
-            dim=1
-        ) * self.exploration_reward_scale
+        reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
         return reward
 
     def imagine_ahead(self, state, actor):
@@ -548,7 +546,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 0,
             )
             if self.train_with_intrinsic_and_extrinsic_reward:
-                exploration_reward = exploration_reward + exploration_extrinsic_reward
+                exploration_reward = (
+                    exploration_reward * self.exploration_reward_scale
+                    + exploration_extrinsic_reward
+                )
 
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):

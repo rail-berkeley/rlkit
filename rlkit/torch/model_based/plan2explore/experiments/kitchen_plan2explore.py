@@ -170,7 +170,7 @@ def experiment(variant):
 
     expl_policy = DreamerPolicy(
         world_model,
-        actor,  # TODO: revert this back to exploration_actor
+        exploration_actor,
         obs_dim,
         action_dim,
         exploration=True,
