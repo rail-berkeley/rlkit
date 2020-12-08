@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -107,9 +107,7 @@ if __name__ == "__main__":
         ],
         # "env_kwargs.use_combined_action_space": [True],
         # "env_kwargs.use_max_bound_action_space": [False],
-        "trainer_kwargs.exploration_reward_scale": [
-            0.0,
-        ],
+        "trainer_kwargs.exploration_reward_scale": [1.0, 10.0, 100.0, 1000.0, 10000.0],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
