@@ -457,7 +457,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             target = imag_returns.detach()
             weights = weights.detach()
 
-        vf_loss, value_dist = self.value_loss(
+        vf_loss, imag_value_mean = self.value_loss(
             imag_feat_v, imag_next_feat_v, weights, target
         )
 
@@ -652,7 +652,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             exploration_value_target = exploration_imag_returns.detach()
             exploration_weights = exploration_weights.detach()
 
-        exploration_vf_loss, exploration_value_dist = self.value_loss(
+        exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
             exploration_imag_feat_v,
             exploration_imag_next_feat_v,
             exploration_weights,
@@ -673,7 +673,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
-            eval_statistics["Value Loss"] = vf_loss.item()
+            eval_statistics["Value Loss"] = vf_loss
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
@@ -703,22 +703,17 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
 
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
-            eval_statistics["Imagined Values"] = value_dist.mean.mean().item()
+            eval_statistics["Imagined Values"] = imag_value_mean
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
             eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
-            eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
-            eval_statistics[
-                "Exploration Imagined Values"
-            ] = exploration_value_dist.mean.mean().item()
+            eval_statistics["Exploration Value Loss"] = exploration_vf_loss
+            eval_statistics["Exploration Imagined Values"] = exploration_imag_value_mean
 
             eval_statistics[
                 "Exploration Imagined Returns"
             ] = exploration_imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = exploration_reward.mean().item()
-            eval_statistics[
-                "Imagined Values"
-            ] = exploration_value_dist.mean.mean().item()
 
         loss = Plan2ExploreLosses(
             actor_loss=actor_loss,
