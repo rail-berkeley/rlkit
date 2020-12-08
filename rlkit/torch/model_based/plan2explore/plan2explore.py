@@ -61,7 +61,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         actor_entropy_loss_schedule="0.0",
         use_ppo_loss=False,
         ppo_clip_param=0.2,
-        num_actor_updates=1,
+        num_actor_value_updates=1,
         train_with_intrinsic_and_extrinsic_reward=False,
     ):
         super(Plan2ExploreTrainer, self).__init__(
@@ -100,7 +100,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             initialize_amp=False,
             use_ppo_loss=use_ppo_loss,
             ppo_clip_param=ppo_clip_param,
-            num_actor_updates=num_actor_updates,
+            num_actor_value_updates=num_actor_value_updates,
         )
         self.image_goals = None
         # self.image_goals = np.zeros((10, *image_shape))
@@ -411,7 +411,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actor_entropy_loss_scale,
             log_probs,
         ) = (0, 0, 0, 0, 0, 0)
-        for _ in range(self.num_actor_updates):
+        for _ in range(self.num_actor_value_updates):
             (
                 actor_loss_,
                 dynamics_backprop_loss_,
@@ -442,12 +442,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actor_entropy_loss_scale += actor_entropy_loss_scale_
             log_probs += log_probs_.item()
 
-        actor_loss /= self.num_actor_updates
-        dynamics_backprop_loss /= self.num_actor_updates
-        policy_gradient_loss /= self.num_actor_updates
-        actor_entropy_loss /= self.num_actor_updates
-        actor_entropy_loss_scale /= self.num_actor_updates
-        log_probs /= self.num_actor_updates
+        actor_loss /= self.num_actor_value_updates
+        dynamics_backprop_loss /= self.num_actor_value_updates
+        policy_gradient_loss /= self.num_actor_value_updates
+        actor_entropy_loss /= self.num_actor_value_updates
+        actor_entropy_loss_scale /= self.num_actor_value_updates
+        log_probs /= self.num_actor_value_updates
         """
         Value Loss
         """
@@ -602,7 +602,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             exploration_actor_entropy_loss_scale,
             exploration_log_probs,
         ) = (0, 0, 0, 0, 0, 0)
-        for _ in range(self.num_actor_updates):
+        for _ in range(self.num_actor_value_updates):
             (
                 exploration_actor_loss_,
                 exploration_dynamics_backprop_loss_,
@@ -637,12 +637,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             )
             exploration_log_probs += exploration_log_probs_.item()
 
-        exploration_actor_loss /= self.num_actor_updates
-        exploration_dynamics_backprop_loss /= self.num_actor_updates
-        exploration_policy_gradient_loss /= self.num_actor_updates
-        exploration_actor_entropy_loss /= self.num_actor_updates
-        exploration_actor_entropy_loss_scale /= self.num_actor_updates
-        exploration_log_probs /= self.num_actor_updates
+        exploration_actor_loss /= self.num_actor_value_updates
+        exploration_dynamics_backprop_loss /= self.num_actor_value_updates
+        exploration_policy_gradient_loss /= self.num_actor_value_updates
+        exploration_actor_entropy_loss /= self.num_actor_value_updates
+        exploration_actor_entropy_loss_scale /= self.num_actor_value_updates
+        exploration_log_probs /= self.num_actor_value_updates
         """
         Exploration Value Loss
         """

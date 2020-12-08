@@ -133,16 +133,10 @@ if __name__ == "__main__":
         # "trainer_kwargs.forward_kl": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
-        # "trainer_kwargs.use_ppo_loss": [
-        #     True,
-        # ],
-        # "trainer_kwargs.num_actor_updates": [10],
-        # "trainer_kwargs.actor_gradient_clip": [100.0],
-        # "trainer_kwargs.value_gradient_clip": [100.0],
-        # "trainer_kwargs.actor_entropy_loss_schedule": [
-        #     "linear(3e-3,3e-4,5e4)",
-        # ],
-        # "trainer_kwargs.actor_lr": [1e-4],
+        # "trainer_kwargs.use_ppo_loss": [True],
+        # "trainer_kwargs.use_advantage_normalization": [True, False],
+        # "trainer_kwargs.num_actor_value_updates": [1, 10],
+        # "trainer_kwargs.actor_lr": [8e-5, 3e-4],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
         # "trainer_kwargs.vf_lr": [1e-4],
