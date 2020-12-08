@@ -646,7 +646,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
             eval_statistics["Actor Loss"] = actor_loss
             eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss
-            eval_statistics["Reinforce Loss"] = policy_gradient_loss
+            eval_statistics["Policy Gradient Loss"] = policy_gradient_loss
             eval_statistics["Actor Entropy Loss"] = actor_entropy_loss
             eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
             eval_statistics["Actor Log Probs"] = log_probs

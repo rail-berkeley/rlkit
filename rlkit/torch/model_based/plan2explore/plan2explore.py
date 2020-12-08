@@ -38,6 +38,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         exploration_vf,
         one_step_ensemble,
         target_vf=None,
+        exploration_target_vf=None,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -105,6 +106,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         # self.image_goals = np.zeros((10, *image_shape))
         self.exploration_actor = exploration_actor.to(ptu.device)
         self.exploration_vf = exploration_vf.to(ptu.device)
+        self.exploration_target_vf = exploration_target_vf.to(ptu.device)
         self.one_step_ensemble = one_step_ensemble.to(ptu.device)
 
         self.one_step_ensemble_optimizer = self.optimizer_class(
@@ -181,6 +183,20 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         self.exploration_reward_scale = exploration_reward_scale
         self.train_with_intrinsic_and_extrinsic_reward = (
             train_with_intrinsic_and_extrinsic_reward
+        )
+
+    def try_update_target_networks(self):
+        if (
+            self.target_vf
+            and self.exploration_target_vf
+            and self._n_train_steps_total % self.target_update_period == 0
+        ):
+            self.update_target_networks()
+
+    def update_target_networks(self):
+        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
+        ptu.soft_update_from_to(
+            self.exploration_vf, self.exploration_target_vf, self.soft_target_tau
         )
 
     def compute_exploration_reward(
@@ -340,6 +356,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         target_vf_params = list(self.target_vf.parameters())
         one_step_ensemble_params = list(self.one_step_ensemble.parameters())
         exploration_vf_params = list(self.exploration_vf.parameters())
+        exploration_target_vf_params = list(self.exploration_target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
 
         with FreezeParameters(world_model_params):
@@ -497,7 +514,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 actor=self.exploration_actor,
             )
         with FreezeParameters(
-            world_model_params + exploration_vf_params + one_step_ensemble_params
+            world_model_params
+            + exploration_vf_params
+            + one_step_ensemble_params
+            + exploration_target_vf_params
         ):
             if self.use_imag_next_feat:
                 exploration_intrinsic_reward = self.compute_exploration_reward(
@@ -514,22 +534,21 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_feat
                 )
 
-            exploration_reward = (
-                self.exploration_reward_scale * exploration_intrinsic_reward
-            )
             exploration_reward = torch.cat(
                 [
-                    exploration_reward[i : i + exploration_imag_feat.shape[1]]
+                    exploration_intrinsic_reward[i : i + exploration_imag_feat.shape[1]]
                     .unsqueeze(0)
                     .unsqueeze(2)
                     for i in range(
-                        0, exploration_reward.shape[0], exploration_imag_feat.shape[1]
+                        0,
+                        exploration_intrinsic_reward.shape[0],
+                        exploration_imag_feat.shape[1],
                     )
                 ],
                 0,
             )
             if self.train_with_intrinsic_and_extrinsic_reward:
-                exploration_reward += exploration_extrinsic_reward
+                exploration_reward = exploration_reward + exploration_extrinsic_reward
 
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
@@ -550,13 +569,15 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_reward
                 )
             if self.use_imag_next_feat:
-                exploration_imag_target_value = self.target_vf(
+                exploration_imag_target_value = self.exploration_target_vf(
                     exploration_imag_next_feat
                 )
-                exploration_imag_value = self.vf(exploration_imag_next_feat)
+                exploration_imag_value = self.exploration_vf(exploration_imag_next_feat)
             else:
-                exploration_imag_target_value = self.target_vf(exploration_imag_feat)
-                exploration_imag_value = self.vf(exploration_imag_feat)
+                exploration_imag_target_value = self.exploration_target_vf(
+                    exploration_imag_feat
+                )
+                exploration_imag_value = self.exploration_vf(exploration_imag_feat)
         exploration_imag_returns = lambda_return(
             exploration_reward[:-1],
             exploration_imag_target_value[:-1],
@@ -714,10 +735,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         return [
             self.actor,
             self.vf,
+            self.target_vf,
             self.world_model,
             self.one_step_ensemble,
             self.exploration_actor,
             self.exploration_vf,
+            self.exploration_target_vf,
         ]
 
     @property
@@ -739,4 +762,5 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             one_step_ensemble=self.one_step_ensemble,
             exploration_actor=self.exploration_actor,
             exploration_vf=self.exploration_vf,
+            exploration_target_vf=self.exploration_target_vf,
         )
