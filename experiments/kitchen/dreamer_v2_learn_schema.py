@@ -135,7 +135,7 @@ if __name__ == "__main__":
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.use_ppo_loss": [True, False],
         "trainer_kwargs.use_advantage_normalization": [False],
-        "trainer_kwargs.num_actor_value_updates": [1],
+        "trainer_kwargs.num_actor_value_updates": [1, 10],
         "trainer_kwargs.actor_lr": [8e-5],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
