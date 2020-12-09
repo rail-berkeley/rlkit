@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -105,10 +105,10 @@ if __name__ == "__main__":
         "env_class": [
             "microwave",
             "kettle",
-            # "top_left_burner",
+            "top_left_burner",
             "slide_cabinet",
-            # "hinge_cabinet",
-            # "light_switch",
+            "hinge_cabinet",
+            "light_switch",
         ],
         "env_kwargs.delta": [
             0.3,
@@ -133,10 +133,10 @@ if __name__ == "__main__":
         # "trainer_kwargs.forward_kl": [True, False],
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
-        "trainer_kwargs.use_ppo_loss": [True],
-        "trainer_kwargs.use_advantage_normalization": [True, False],
-        "trainer_kwargs.num_actor_value_updates": [1, 10],
-        "trainer_kwargs.actor_lr": [8e-5, 3e-4],
+        "trainer_kwargs.use_ppo_loss": [True, False],
+        "trainer_kwargs.use_advantage_normalization": [False],
+        "trainer_kwargs.num_actor_value_updates": [1],
+        "trainer_kwargs.actor_lr": [8e-5],
         # "model_kwargs.discrete_latents": [False, True],  # todo: sweep this
         # "trainer_kwargs.target_update_period": [100],
         # "trainer_kwargs.vf_lr": [1e-4],
