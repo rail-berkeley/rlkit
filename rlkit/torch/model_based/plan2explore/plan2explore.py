@@ -231,25 +231,26 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 if self.use_pred_discount:  # Last step could be terminal.
                     v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
-        # if self.image_goals is not None:
-        #     image_goals = ptu.from_numpy(
-        #         self.image_goals[
-        #             np.random.choice(
-        #                 range(len(self.image_goals)), size=(new_state["stoch"].shape[0])
-        #             )
-        #         ]
-        #     )
-        #     init_state = self.world_model.initial(new_state["stoch"].shape[0])
-        #     feat = self.world_model.get_feat(init_state).detach()
-        #     action = actor(feat).sample().detach()
-        #     encoded_image_goals = self.world_model.encode(
-        #         image_goals.flatten(start_dim=1, end_dim=3)
-        #     )
-        #     post_params, _, _, _, _ = self.world_model.forward_batch(
-        #         encoded_image_goals, action, init_state
-        #     )
-        #     featurized_image_goals = self.world_model.get_feat(post_params).detach()
-        #     rewards = []
+        if self.image_goals is not None:
+            image_goals = ptu.from_numpy(
+                self.image_goals[
+                    np.random.choice(
+                        range(len(self.image_goals)), size=(new_state["stoch"].shape[0])
+                    )
+                ]
+            )
+            init_state = self.world_model.initial(new_state["stoch"].shape[0])
+            feat = self.world_model.get_feat(init_state).detach()
+            action = actor(feat).rsample().detach()
+            action = ptu.zeros_like(action)  # ensures it is a dummy action
+            encoded_image_goals = self.world_model.encode(
+                image_goals.flatten(start_dim=1, end_dim=3)
+            )
+            post_params, _, _, _, _ = self.world_model.forward_batch(
+                encoded_image_goals, action, init_state
+            )
+            featurized_image_goals = self.world_model.get_feat(post_params).detach()
+            rewards = []
 
         feats = []
         next_feats = []
@@ -270,10 +271,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
             log_probs.append(action_dist.log_prob(action).unsqueeze(0))
-            # if self.image_goals is not None:
-            #     reward = torch.linalg.norm(
-            #         featurized_image_goals - self.world_model.get_feat(new_state), dim=1
-            #     ).unsqueeze(0)
+            if self.image_goals is not None:
+                reward = torch.linalg.norm(
+                    featurized_image_goals - self.world_model.get_feat(new_state), dim=1
+                ).unsqueeze(0)
+                rewards.append(reward)
 
         feats = torch.cat(feats)
         next_feats = torch.cat(next_feats)
@@ -281,6 +283,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         log_probs = torch.cat(log_probs)
         states = torch.cat(states)
         next_states = torch.cat(next_states)
+        if self.image_goals is not None:
+            rewards = torch.cat(rewards).unsqueeze(-1)
+            return feats, next_feats, actions, log_probs, states, next_states, rewards
         return feats, next_feats, actions, log_probs, states, next_states
 
     def compute_loss(
@@ -358,19 +363,31 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         pred_discount_params = list(self.world_model.pred_discount.parameters())
 
         with FreezeParameters(world_model_params):
-            (
-                imag_feat,
-                imag_next_feat,
-                imag_actions,
-                imag_log_probs,
-                _,
-                _,
-            ) = self.imagine_ahead(post, actor=self.actor)
-        with FreezeParameters(world_model_params + vf_params + target_vf_params):
-            if self.use_imag_next_feat:
-                imag_reward = self.world_model.reward(imag_next_feat)
+            if self.image_goals is not None:
+                (
+                    imag_feat,
+                    imag_next_feat,
+                    imag_actions,
+                    imag_log_probs,
+                    _,
+                    _,
+                    imag_reward,
+                ) = self.imagine_ahead(post, actor=self.actor)
             else:
-                imag_reward = self.world_model.reward(imag_feat)
+                (
+                    imag_feat,
+                    imag_next_feat,
+                    imag_actions,
+                    imag_log_probs,
+                    _,
+                    _,
+                ) = self.imagine_ahead(post, actor=self.actor)
+        with FreezeParameters(world_model_params + vf_params + target_vf_params):
+            if self.image_goals is None:
+                if self.use_imag_next_feat:
+                    imag_reward = self.world_model.reward(imag_next_feat)
+                else:
+                    imag_reward = self.world_model.reward(imag_feat)
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
                     if self.use_imag_next_feat:
@@ -500,17 +517,31 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         Exploration Actor Loss
         """
         with FreezeParameters(world_model_params):
-            (
-                exploration_imag_feat,
-                exploration_imag_next_feat,
-                exploration_imag_actions,
-                exploration_imag_log_probs,
-                exploration_imag_deter_states,
-                exploration_imag_next_deter_states,
-            ) = self.imagine_ahead(
-                post,
-                actor=self.exploration_actor,
-            )
+            if self.image_goals is not None:
+                (
+                    exploration_imag_feat,
+                    exploration_imag_next_feat,
+                    exploration_imag_actions,
+                    exploration_imag_log_probs,
+                    exploration_imag_deter_states,
+                    exploration_imag_next_deter_states,
+                    exploration_extrinsic_reward,
+                ) = self.imagine_ahead(
+                    post,
+                    actor=self.exploration_actor,
+                )
+            else:
+                (
+                    exploration_imag_feat,
+                    exploration_imag_next_feat,
+                    exploration_imag_actions,
+                    exploration_imag_log_probs,
+                    exploration_imag_deter_states,
+                    exploration_imag_next_deter_states,
+                ) = self.imagine_ahead(
+                    post,
+                    actor=self.exploration_actor,
+                )
         with FreezeParameters(
             world_model_params
             + exploration_vf_params
