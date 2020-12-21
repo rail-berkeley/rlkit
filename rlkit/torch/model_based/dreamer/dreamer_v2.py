@@ -74,6 +74,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         ppo_clip_param=0.2,
         num_actor_value_updates=1,
         use_advantage_normalization=False,
+        detach_rewards=False,
     ):
         super().__init__()
 
@@ -180,6 +181,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.actor_gradient_clip = actor_gradient_clip
         self.value_gradient_clip = value_gradient_clip
         self.use_advantage_normalization = use_advantage_normalization
+        self.detach_rewards = detach_rewards
 
     def try_update_target_networks(self):
         if (
@@ -254,7 +256,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 self.world_model.preprocess(obs).reshape(-1, *self.image_shape)
             ).mean()
         )
-        reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
+        if self.detach_rewards:
+            reward_pred_loss = -1 * reward_dist.log_prob(rewards.detach()).mean()
+        else:
+            reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
         pred_discount_target = self.discount * (1 - terminals.float())
         pred_discount_loss = (
             -1 * pred_discount_dist.log_prob(pred_discount_target).mean()

@@ -140,6 +140,7 @@ def experiment(variant):
         hidden_size=variant["one_step_ensemble_kwargs"]["hidden_size"],
         num_layers=variant["one_step_ensemble_kwargs"]["num_layers"],
         num_models=variant["one_step_ensemble_kwargs"]["num_models"],
+        output_embeddings=variant["one_step_ensemble_kwargs"]["output_embeddings"],
     )
 
     exploration_actor = ActorModel(
