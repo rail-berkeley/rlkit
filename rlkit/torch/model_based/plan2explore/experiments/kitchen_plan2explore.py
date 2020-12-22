@@ -182,7 +182,8 @@ def experiment(variant):
     )
     eval_policy = DreamerPolicy(
         world_model,
-        actor,
+        # actor,
+        exploration_actor,
         obs_dim,
         action_dim,
         exploration=False,

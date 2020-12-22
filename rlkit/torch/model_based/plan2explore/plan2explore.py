@@ -482,7 +482,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             weights = weights.detach()
 
         vf_loss, imag_value_mean = self.value_loss(
-            imag_feat_v, imag_next_feat_v, weights, target
+            imag_feat_v, imag_next_feat_v, weights, target, vf=self.vf
         )
 
         self.update_network(
@@ -725,7 +725,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
-            eval_statistics["Value Loss"] = vf_loss
+            eval_statistics["Value Loss"] = vf_loss.item()
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
@@ -755,12 +755,14 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
 
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
-            eval_statistics["Imagined Values"] = imag_value_mean
+            eval_statistics["Imagined Values"] = imag_value_mean.item()
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
             eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
-            eval_statistics["Exploration Value Loss"] = exploration_vf_loss
-            eval_statistics["Exploration Imagined Values"] = exploration_imag_value_mean
+            eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
+            eval_statistics[
+                "Exploration Imagined Values"
+            ] = exploration_imag_value_mean.item()
 
             eval_statistics[
                 "Exploration Imagined Returns"
