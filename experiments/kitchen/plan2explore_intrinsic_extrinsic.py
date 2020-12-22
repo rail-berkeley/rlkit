@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -68,9 +68,10 @@ if __name__ == "__main__":
             use_depth_wise_separable_conv=False,
         ),
         one_step_ensemble_kwargs=dict(
-            hidden_size=32 * 32,
-            num_layers=2,
-            num_models=5,
+            num_models=10,
+            hidden_size=400,
+            num_layers=4,
+            output_embeddings=False,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -89,6 +90,7 @@ if __name__ == "__main__":
             train_with_intrinsic_and_extrinsic_reward=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
+            detach_rewards=False,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -98,16 +100,16 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
+            # "microwave",
+            # "kettle",
             # "top_left_burner",
-            "slide_cabinet",
+            # "slide_cabinet",
             # "hinge_cabinet",
-            # "light_switch",
+            "light_switch",
         ],
         # "env_kwargs.use_combined_action_space": [True],
         # "env_kwargs.use_max_bound_action_space": [False],
-        "trainer_kwargs.exploration_reward_scale": [1.0, 10.0, 100.0, 1000.0, 10000.0],
+        "trainer_kwargs.exploration_reward_scale": [1, 0.1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -115,11 +117,10 @@ if __name__ == "__main__":
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
-
         for _ in range(args.num_seeds):
-            seed = random.randint(0, 100000)
-            variant["seed"] = seed
-            variant["exp_id"] = exp_id
+            # seed = random.randint(0, 100000)
+            # variant["seed"] = seed
+            # variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -128,6 +129,6 @@ if __name__ == "__main__":
                 use_gpu=True,
                 snapshot_mode="last",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
-                seed=seed,
+                # seed=seed,
                 exp_id=exp_id,
             )
