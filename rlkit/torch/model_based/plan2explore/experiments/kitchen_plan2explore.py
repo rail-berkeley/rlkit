@@ -109,8 +109,7 @@ def experiment(variant):
     )
     actor = ActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
-        variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,
         continuous_action_dim=continuous_action_dim,
@@ -118,10 +117,10 @@ def experiment(variant):
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
     vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     target_vf = Mlp(
