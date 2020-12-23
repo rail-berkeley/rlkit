@@ -109,8 +109,8 @@ if __name__ == "__main__":
         ],
         # "env_kwargs.use_combined_action_space": [True],
         # "env_kwargs.use_max_bound_action_space": [False],
-        "trainer_kwargs.exploration_reward_scale": [1],
-        "trainer_kwargs.expl_amount": [0.3, 0.5],
+        "trainer_kwargs.exploration_reward_scale": [0.1, .5, 1, 10],
+        "expl_amount": [0.3, 0.5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -119,9 +119,9 @@ if __name__ == "__main__":
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
-            # seed = random.randint(0, 100000)
-            # variant["seed"] = seed
-            # variant["exp_id"] = exp_id
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -130,6 +130,6 @@ if __name__ == "__main__":
                 use_gpu=True,
                 snapshot_mode="last",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
-                # seed=seed,
+                seed=seed,
                 exp_id=exp_id,
             )
