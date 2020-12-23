@@ -62,7 +62,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         use_ppo_loss=False,
         ppo_clip_param=0.2,
         num_actor_value_updates=1,
-        train_with_intrinsic_and_extrinsic_reward=False,
+        train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
+        train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
     ):
         super(Plan2ExploreTrainer, self).__init__(
@@ -183,8 +184,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             ) = optimizers
 
         self.exploration_reward_scale = exploration_reward_scale
-        self.train_with_intrinsic_and_extrinsic_reward = (
-            train_with_intrinsic_and_extrinsic_reward
+        self.train_exploration_actor_with_intrinsic_and_extrinsic_reward = (
+            train_exploration_actor_with_intrinsic_and_extrinsic_reward
+        )
+        self.train_actor_with_intrinsic_and_extrinsic_reward = (
+            train_actor_with_intrinsic_and_extrinsic_reward
         )
 
     def try_update_target_networks(self):
@@ -376,9 +380,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_next_feat,
                     imag_actions,
                     imag_log_probs,
-                    _,
-                    _,
-                    imag_reward,
+                    imag_deter_states,
+                    imag_next_deter_states,
+                    extrinsic_reward,
                 ) = self.imagine_ahead(post, actor=self.actor)
             else:
                 (
@@ -386,15 +390,50 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_next_feat,
                     imag_actions,
                     imag_log_probs,
-                    _,
-                    _,
+                    imag_deter_states,
+                    imag_next_deter_states,
                 ) = self.imagine_ahead(post, actor=self.actor)
         with FreezeParameters(world_model_params + vf_params + target_vf_params):
             if self.image_goals is None:
                 if self.use_imag_next_feat:
-                    imag_reward = self.world_model.reward(imag_next_feat)
+                    intrinsic_reward = self.compute_exploration_reward(
+                        imag_next_deter_states, imag_actions
+                    )
+                    extrinsic_reward = self.world_model.reward(imag_next_feat)
                 else:
-                    imag_reward = self.world_model.reward(imag_feat)
+                    intrinsic_reward = self.compute_exploration_reward(
+                        imag_deter_states, imag_actions
+                    )
+                    extrinsic_reward = self.world_model.reward(imag_feat)
+            else:
+                if self.use_imag_next_feat:
+                    intrinsic_reward = self.compute_exploration_reward(
+                        imag_next_deter_states, imag_actions
+                    )
+                else:
+                    intrinsic_reward = self.compute_exploration_reward(
+                        imag_deter_states, imag_actions
+                    )
+
+            intrinsic_reward = torch.cat(
+                [
+                    intrinsic_reward[i : i + imag_feat.shape[1]]
+                    .unsqueeze(0)
+                    .unsqueeze(2)
+                    for i in range(
+                        0,
+                        intrinsic_reward.shape[0],
+                        imag_feat.shape[1],
+                    )
+                ],
+                0,
+            )
+            if self.train_actor_with_intrinsic_and_extrinsic_reward:
+                imag_reward = (
+                    intrinsic_reward * self.exploration_reward_scale + extrinsic_reward
+                )
+            else:
+                imag_reward = extrinsic_reward
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
                     if self.use_imag_next_feat:
@@ -597,7 +636,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 ],
                 0,
             )
-            if self.train_with_intrinsic_and_extrinsic_reward:
+            if self.train_exploration_actor_with_intrinsic_and_extrinsic_reward:
                 exploration_reward = (
                     exploration_reward * self.exploration_reward_scale
                     + exploration_extrinsic_reward

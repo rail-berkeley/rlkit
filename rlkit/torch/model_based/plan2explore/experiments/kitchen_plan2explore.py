@@ -180,10 +180,13 @@ def experiment(variant):
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
     )
+    if variant["eval_with_exploration_actor"]:
+        eval_actor = exploration_actor
+    else:
+        eval_actor = actor
     eval_policy = DreamerPolicy(
         world_model,
-        # actor,
-        exploration_actor,
+        eval_actor,
         obs_dim,
         action_dim,
         exploration=False,

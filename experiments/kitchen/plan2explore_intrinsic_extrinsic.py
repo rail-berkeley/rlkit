@@ -87,7 +87,7 @@ if __name__ == "__main__":
             optimizer_class="apex_adam",
             pred_discount_loss_scale=10.0,
             use_pred_discount=True,
-            train_with_intrinsic_and_extrinsic_reward=True,
+            train_exploration_actor_with_intrinsic_and_extrinsic_reward=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
             detach_rewards=False,
@@ -96,21 +96,24 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         path_length_specific_discount=True,
+        eval_with_exploration_actor=False,
     )
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
+            "microwave",
+            "kettle",
             "top_left_burner",
-            # "slide_cabinet",
+            "slide_cabinet",
             "hinge_cabinet",
             "light_switch",
         ],
         # "env_kwargs.use_combined_action_space": [True],
         # "env_kwargs.use_max_bound_action_space": [False],
-        "trainer_kwargs.exploration_reward_scale": [0.1, .5, 1, 10],
-        "expl_amount": [0.3, 0.5],
+        "train_exploration_actor_with_intrinsic_and_extrinsic_reward": [True, False],
+        "train_actor_with_intrinsic_and_extrinsic_reward": [True, False],
+        "trainer_kwargs.exploration_reward_scale": [1],
+        "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
