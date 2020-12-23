@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -134,7 +134,8 @@ if __name__ == "__main__":
         # "actor_kwargs.mean_scale": [1.0, 5.0],
         # "actor_kwargs.init_std": [1.0, 5.0],
         "trainer_kwargs.use_ppo_loss": [False],
-        "trainer_kwargs.detach_rewards": [True, False],
+        "model_kwargs.use_per_primitive_feature_extractor": [True, False],
+        # "trainer_kwargs.detach_rewards": [True, False],
         "trainer_kwargs.use_advantage_normalization": [False],
         "trainer_kwargs.num_actor_value_updates": [1],
         "trainer_kwargs.actor_lr": [8e-5],

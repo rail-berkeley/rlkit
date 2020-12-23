@@ -115,8 +115,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         if self.use_amp and initialize_amp:
             models, optimizers = amp.initialize(
                 [
-                    self.world_model.img_step_layer,
-                    self.world_model.img_step_mlp,
+                    self.world_model.action_step_feature_extractor,
+                    self.world_model.action_step_mlp,
                     self.world_model.obs_step_mlp,
                     self.world_model.conv_decoder,
                     self.world_model.conv_encoder,
@@ -131,8 +131,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 num_losses=3,
             )
             (
-                self.world_model.img_step_layer,
-                self.world_model.img_step_mlp,
+                self.world_model.action_step_feature_extractor,
+                self.world_model.action_step_mlp,
                 self.world_model.obs_step_mlp,
                 self.world_model.conv_decoder,
                 self.world_model.conv_encoder,
@@ -224,7 +224,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             feat = self.world_model.get_feat(new_state)
             action_dist = self.actor(feat.detach())
             action = action_dist.rsample()
-            new_state = self.world_model.img_step(new_state, action)
+            new_state = self.world_model.action_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
 
             feats.append(feat.unsqueeze(0))

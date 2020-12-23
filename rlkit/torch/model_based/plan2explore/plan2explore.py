@@ -134,8 +134,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         if self.use_amp:
             models, optimizers = amp.initialize(
                 [
-                    self.world_model.img_step_layer,
-                    self.world_model.img_step_mlp,
+                    self.world_model.action_step_feature_extractor,
+                    self.world_model.action_step_mlp,
                     self.world_model.obs_step_mlp,
                     self.world_model.conv_decoder,
                     self.world_model.conv_encoder,
@@ -160,8 +160,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 num_losses=6,
             )
             (
-                self.world_model.img_step_layer,
-                self.world_model.img_step_mlp,
+                self.world_model.action_step_feature_extractor,
+                self.world_model.action_step_mlp,
                 self.world_model.obs_step_mlp,
                 self.world_model.conv_decoder,
                 self.world_model.conv_encoder,
@@ -269,7 +269,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             states.append(new_state["deter"])
             action_dist = actor(feat.detach())
             action = action_dist.rsample()
-            new_state = self.world_model.img_step(new_state, action)
+            new_state = self.world_model.action_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
             next_states.append(new_state["deter"])
 

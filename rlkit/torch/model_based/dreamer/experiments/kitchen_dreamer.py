@@ -108,6 +108,7 @@ def run_experiment(variant):
         action_dim,
         image_shape=eval_envs[0].image_shape,
         **variant["model_kwargs"],
+        env=eval_envs[0],
     )
 
     if (
