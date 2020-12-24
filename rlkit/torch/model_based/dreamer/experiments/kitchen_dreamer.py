@@ -141,6 +141,8 @@ def run_experiment(variant):
         use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
         mean_scale=variant["actor_kwargs"]["mean_scale"],
         init_std=variant["actor_kwargs"]["init_std"],
+        env=eval_envs[0],
+        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]

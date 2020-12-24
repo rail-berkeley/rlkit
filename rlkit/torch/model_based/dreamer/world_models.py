@@ -74,7 +74,7 @@ class WorldModel(PyTorchModule):
                     len_v = len(v)
                 layer = torch.nn.Linear(
                     full_stochastic_state_size + len_v, deterministic_state_size
-                ).to(ptu.device)
+                )
                 torch.nn.init.xavier_uniform_(layer.weight)
                 layer.bias.data.fill_(0)
                 self.action_step_feature_extractor[k] = layer

@@ -13,6 +13,8 @@ class ActorModel(Mlp):
         self,
         hidden_sizes,
         obs_dim,
+        env,
+        use_per_primitive_actor=False,
         discrete_continuous_dist=False,
         discrete_action_dim=0,
         continuous_action_dim=0,
@@ -124,6 +126,7 @@ class ConditionalActorModel(torch.nn.Module):
         self,
         hidden_sizes,
         obs_dim,
+        env,
         discrete_continuous_dist=True,
         discrete_action_dim=0,
         continuous_action_dim=0,
@@ -132,6 +135,7 @@ class ConditionalActorModel(torch.nn.Module):
         init_std=5.0,
         mean_scale=5.0,
         use_tanh_normal=True,
+        use_per_primitive_actor=False,
         **kwargs
     ):
         super().__init__()
@@ -143,14 +147,36 @@ class ConditionalActorModel(torch.nn.Module):
             hidden_init=torch.nn.init.xavier_uniform_,
             **kwargs
         )
-        self.continuous_actor = Mlp(
-            hidden_sizes,
-            input_size=obs_dim + discrete_action_dim,
-            output_size=continuous_action_dim * 2,
-            hidden_activation=hidden_activation,
-            hidden_init=torch.nn.init.xavier_uniform_,
-            **kwargs
-        )
+        self.env = env
+        self.use_per_primitive_actor = use_per_primitive_actor
+        if self.use_per_primitive_actor:
+            self.continuous_actor = torch.nn.ModuleDict()
+            for (
+                k,
+                v,
+            ) in env.primitive_name_to_action_idx.items():
+                if type(v) == int:
+                    len_v = 1
+                else:
+                    len_v = len(v)
+                net = Mlp(
+                    hidden_sizes,
+                    input_size=obs_dim,
+                    output_size=len_v * 2,
+                    hidden_activation=hidden_activation,
+                    hidden_init=torch.nn.init.xavier_uniform_,
+                    **kwargs
+                )
+                self.continuous_actor[k] = net
+        else:
+            self.continuous_actor = Mlp(
+                hidden_sizes,
+                input_size=obs_dim + discrete_action_dim,
+                output_size=continuous_action_dim * 2,
+                hidden_activation=hidden_activation,
+                hidden_init=torch.nn.init.xavier_uniform_,
+                **kwargs
+            )
         self.discrete_action_dim = discrete_action_dim
         self.continuous_action_dim = continuous_action_dim
         self._min_std = min_std
@@ -174,6 +200,8 @@ class ConditionalActorModel(torch.nn.Module):
             self._mean_scale,
             self.raw_init_std,
             self._min_std,
+            self.use_per_primitive_actor,
+            self.env,
         )
         return dist
 
@@ -317,6 +345,8 @@ class SplitConditionalDist:
         mean_scale,
         raw_init_std,
         min_std,
+        use_per_primitive_actor,
+        env,
     ):
         self._dist1 = dist1
         self.h = h
@@ -326,11 +356,29 @@ class SplitConditionalDist:
         self._mean_scale = mean_scale
         self.raw_init_std = raw_init_std
         self._min_std = min_std
+        self.use_per_primitive_actor = use_per_primitive_actor
+        self.env = env
 
     def compute_continuous_dist(self, discrete_action):
-        h = torch.cat((self.h, discrete_action), dim=1)
-        cont_output = self.continuous_actor(h)
-        mean, std = cont_output.split(self.continuous_action_dim, -1)
+        if self.use_per_primitive_actor:
+            primitive_indices = torch.argmax(discrete_action, dim=1)
+            mean = ptu.zeros((primitive_indices.shape[0], self.continuous_action_dim))
+            std = ptu.zeros((primitive_indices.shape[0], self.continuous_action_dim))
+            for k, v in self.env.primitive_name_to_action_idx.items():
+                if type(v) is int:
+                    v = [v]
+                if len(v) < 1:
+                    continue
+                output = self.continuous_actor[k](self.h)
+                mean = mean.type(output.dtype)
+                std = std.type(output.dtype)
+                mean_, std_ = output.split(len(v), -1)
+                mean[:, v] = mean_
+                std[:, v] = std_
+        else:
+            h = torch.cat((self.h, discrete_action), dim=1)
+            cont_output = self.continuous_actor(h)
+            mean, std = cont_output.split(self.continuous_action_dim, -1)
         if self.use_tanh_normal:
             mean = self._mean_scale * torch.tanh(mean / self._mean_scale)
         std = F.softplus(std + self.raw_init_std) + self._min_std

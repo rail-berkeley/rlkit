@@ -136,6 +136,7 @@ if __name__ == "__main__":
         "trainer_kwargs.use_ppo_loss": [False],
         # "model_kwargs.use_per_primitive_feature_extractor": [True, False],
         "actor_model_class": ["conditional_actor_model", "actor_model"],
+        "actor_kwargs.use_per_primitive_actor": [True, False],
         # "trainer_kwargs.detach_rewards": [True, False],
         "trainer_kwargs.use_advantage_normalization": [False],
         "trainer_kwargs.num_actor_value_updates": [1],
