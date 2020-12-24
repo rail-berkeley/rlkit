@@ -2,7 +2,6 @@ def experiment(variant):
     import os
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
-
     import torch
     from d4rl.kitchen.kitchen_envs import (
         KitchenBottomLeftBurnerV0,
@@ -21,7 +20,10 @@ def experiment(variant):
     )
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
+    from rlkit.torch.model_based.dreamer.actor_models import (
+        ActorModel,
+        ConditionalActorModel,
+    )
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -106,8 +108,13 @@ def experiment(variant):
         action_dim,
         image_shape=eval_envs[0].image_shape,
         **variant["model_kwargs"],
+        env=eval_envs[0],
     )
-    actor = ActorModel(
+    if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
+        actor_model_class = ConditionalActorModel
+    else:
+        actor_model_class = ActorModel
+    actor = actor_model_class(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
@@ -115,6 +122,11 @@ def experiment(variant):
         continuous_action_dim=continuous_action_dim,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
+        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
+        mean_scale=variant["actor_kwargs"]["mean_scale"],
+        init_std=variant["actor_kwargs"]["init_std"],
+        env=eval_envs[0],
+        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
@@ -142,7 +154,7 @@ def experiment(variant):
         output_embeddings=variant["one_step_ensemble_kwargs"]["output_embeddings"],
     )
 
-    exploration_actor = ActorModel(
+    exploration_actor = actor_model_class(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         variant["model_kwargs"]["stochastic_state_size"]
         + variant["model_kwargs"]["deterministic_state_size"],
@@ -151,6 +163,8 @@ def experiment(variant):
         continuous_action_dim=continuous_action_dim,
         discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
         and (not variant["env_kwargs"]["fixed_schema"]),
+        env=eval_envs[0],
+        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
     )
     exploration_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,

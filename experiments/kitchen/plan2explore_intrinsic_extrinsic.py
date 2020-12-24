@@ -56,6 +56,10 @@ if __name__ == "__main__":
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
+            use_per_primitive_actor=False,
+            use_tanh_normal=True,
+            mean_scale=5.0,
+            init_std=5.0,
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -66,6 +70,7 @@ if __name__ == "__main__":
             deterministic_state_size=400,
             embedding_size=1024,
             use_depth_wise_separable_conv=False,
+            use_per_primitive_feature_extractor=False,
         ),
         one_step_ensemble_kwargs=dict(
             num_models=10,
