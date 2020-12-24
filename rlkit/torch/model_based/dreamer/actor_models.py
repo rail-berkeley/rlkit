@@ -92,6 +92,112 @@ class ActorModel(Mlp):
             dist = SampleDist(dist)
         return dist
 
+    def compute_exploration_action(self, action, expl_amount):
+        if self.discrete_continuous_dist:
+            discrete, continuous = (
+                action[:, : self.discrete_action_dim],
+                action[:, self.discrete_action_dim :],
+            )
+            indices = torch.distributions.Categorical(logits=0 * discrete).sample()
+            rand_action = F.one_hot(indices, discrete.shape[-1])
+            probs = ptu.rand(discrete.shape[:1])
+            # epsilon greedy
+            discrete = torch.where(
+                probs.reshape(-1, 1) < expl_amount,
+                rand_action.int(),
+                discrete.int(),
+            )
+            continuous = Normal(continuous, expl_amount).rsample()
+            if self.use_tanh_normal:
+                continuous = torch.clamp(continuous, -1, 1)
+            assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
+            action = torch.cat((discrete, continuous), -1)
+        else:
+            action = Normal(action.float(), expl_amount).rsample()
+            if self.use_tanh_normal:
+                action = torch.clamp(action, -1, 1)
+        return action
+
+
+class ConditionalActorModel(torch.nn.Module):
+    def __init__(
+        self,
+        hidden_sizes,
+        obs_dim,
+        discrete_continuous_dist=True,
+        discrete_action_dim=0,
+        continuous_action_dim=0,
+        hidden_activation=F.elu,
+        min_std=1e-4,
+        init_std=5.0,
+        mean_scale=5.0,
+        use_tanh_normal=True,
+        **kwargs
+    ):
+        super().__init__()
+        self.discrete_actor = Mlp(
+            hidden_sizes,
+            input_size=obs_dim,
+            output_size=discrete_action_dim,
+            hidden_activation=hidden_activation,
+            hidden_init=torch.nn.init.xavier_uniform_,
+            **kwargs
+        )
+        self.continuous_actor = Mlp(
+            hidden_sizes,
+            input_size=obs_dim + discrete_action_dim,
+            output_size=continuous_action_dim * 2,
+            hidden_activation=hidden_activation,
+            hidden_init=torch.nn.init.xavier_uniform_,
+            **kwargs
+        )
+        self.discrete_action_dim = discrete_action_dim
+        self.continuous_action_dim = continuous_action_dim
+        self._min_std = min_std
+        self._init_std = ptu.tensor(init_std)
+        self._mean_scale = mean_scale
+        self.use_tanh_normal = use_tanh_normal
+        self.raw_init_std = torch.log(torch.exp(self._init_std) - 1)
+        self.discrete_continuous_dist = discrete_continuous_dist
+
+    def forward(self, input):
+        h = input
+        discrete_logits = self.discrete_actor(h)
+        dist1 = OneHotDist(logits=discrete_logits)
+
+        dist = SplitConditionalDist(
+            dist1,
+            h,
+            self.continuous_actor,
+            self.use_tanh_normal,
+            self.continuous_action_dim,
+            self._mean_scale,
+            self.raw_init_std,
+            self._min_std,
+        )
+        return dist
+
+    def compute_exploration_action(self, action, expl_amount):
+        discrete, continuous = (
+            action[:, : self.discrete_action_dim],
+            action[:, self.discrete_action_dim :],
+        )
+        indices = torch.distributions.Categorical(logits=0 * discrete).sample()
+        rand_action = F.one_hot(indices, discrete.shape[-1])
+        probs = ptu.rand(discrete.shape[:1])
+        # epsilon greedy
+        discrete = torch.where(
+            probs.reshape(-1, 1) < expl_amount,
+            rand_action.int(),
+            discrete.int(),
+        )
+        continuous = Normal(continuous, expl_amount).rsample()
+        if self.use_tanh_normal:
+            continuous = torch.clamp(continuous, -1, 1)
+        assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
+        action = torch.cat((discrete, continuous), -1)
+        return action
+
 
 # "atanh", "TanhBijector" and "SampleDist" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
@@ -198,6 +304,72 @@ class SplitDist:
         return self._dist1.log_prob(actions[:, :13]) + self._dist2.log_prob(
             actions[:, 13:]
         )
+
+
+class SplitConditionalDist:
+    def __init__(
+        self,
+        dist1,
+        h,
+        continuous_actor,
+        use_tanh_normal,
+        continuous_action_dim,
+        mean_scale,
+        raw_init_std,
+        min_std,
+    ):
+        self._dist1 = dist1
+        self.h = h
+        self.continuous_actor = continuous_actor
+        self.use_tanh_normal = use_tanh_normal
+        self.continuous_action_dim = continuous_action_dim
+        self._mean_scale = mean_scale
+        self.raw_init_std = raw_init_std
+        self._min_std = min_std
+
+    def compute_continuous_dist(self, discrete_action):
+        h = torch.cat((self.h, discrete_action), dim=1)
+        cont_output = self.continuous_actor(h)
+        mean, std = cont_output.split(self.continuous_action_dim, -1)
+        if self.use_tanh_normal:
+            mean = self._mean_scale * torch.tanh(mean / self._mean_scale)
+        std = F.softplus(std + self.raw_init_std) + self._min_std
+
+        dist2 = Normal(mean, std)
+        if self.use_tanh_normal:
+            dist2 = TransformedDistribution(dist2, TanhBijector())
+        dist2 = Independent(dist2, 1)
+        dist2 = SampleDist(dist2)
+        return dist2
+
+    def rsample(self):
+        discrete_action = self._dist1.rsample()
+        dist2 = self.compute_continuous_dist(discrete_action)
+        return torch.cat((discrete_action, dist2.rsample()), -1)
+
+    def mode(self):
+        discrete_mode = self._dist1.mode().float()
+        dist2 = self.compute_continuous_dist(discrete_mode)
+        return torch.cat((discrete_mode, dist2.mode().float()), -1)
+
+    def entropy(self):
+        discrete_entropy = self._dist1.entropy()
+        continuous_entropy = ptu.zeros_like(discrete_entropy)
+        for i in range(13):
+            discrete_actions = F.one_hot(
+                ptu.ones_like(discrete_entropy, dtype=torch.int64) * i,
+                self._dist1._categorical._num_events,
+            )
+            dist2 = self.compute_continuous_dist(discrete_actions)
+            continuous_entropy += dist2.entropy() * self._dist1.log_prob(
+                discrete_actions
+            )
+        return discrete_entropy + continuous_entropy
+
+    def log_prob(self, actions):
+        discrete_actions = actions[:, :13]
+        dist2 = self.compute_continuous_dist(discrete_actions)
+        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, 13:])
 
 
 class SafeTruncatedNormal(TruncatedNormal):

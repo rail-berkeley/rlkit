@@ -50,29 +50,9 @@ class DreamerPolicy(Policy):
         dist = self.actor(feat)
         if self.exploration:
             action = dist.rsample()
-            if self.discrete_continuous_dist:
-                discrete, continuous = (
-                    action[:, : self.discrete_action_dim],
-                    action[:, self.discrete_action_dim :],
-                )
-                indices = torch.distributions.Categorical(logits=0 * discrete).sample()
-                rand_action = F.one_hot(indices, discrete.shape[-1])
-                probs = ptu.rand(discrete.shape[:1])
-                # epsilon greedy
-                discrete = torch.where(
-                    probs.reshape(-1, 1) < self.expl_amount,
-                    rand_action.int(),
-                    discrete.int(),
-                )
-                continuous = Normal(continuous, self.expl_amount).rsample()
-                if self.actor.use_tanh_normal:
-                    continuous = torch.clamp(continuous, -1, 1)
-                assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
-                action = torch.cat((discrete, continuous), -1)
-            else:
-                action = Normal(action.float(), self.expl_amount).rsample()
-                if self.actor.use_tanh_normal:
-                    action = torch.clamp(action, -1, 1)
+            action = self.actor.compute_exploration_action(
+                action, self.expl_amount
+            )  # todo: make sure this doesn't cause any issues
         else:
             action = dist.mode()
         self.state = (latent, action)

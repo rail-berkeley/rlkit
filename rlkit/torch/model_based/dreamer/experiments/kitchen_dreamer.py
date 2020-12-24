@@ -34,7 +34,10 @@ def run_experiment(variant):
     )
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
+    from rlkit.torch.model_based.dreamer.actor_models import (
+        ActorModel,
+        ConditionalActorModel,
+    )
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
@@ -123,8 +126,11 @@ def run_experiment(variant):
         trainer_class = DreamerV2Trainer
     else:
         trainer_class = DreamerTrainer
-
-    actor = ActorModel(
+    if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
+        actor_model_class = ConditionalActorModel
+    else:
+        actor_model_class = ActorModel
+    actor = actor_model_class(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
