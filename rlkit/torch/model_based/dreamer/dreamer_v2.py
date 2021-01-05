@@ -725,24 +725,25 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 vf_loss += vf_loss_.item()
                 imag_values_mean += imag_values_mean_.item()
 
-        actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-        dynamics_backprop_loss /= (
-            self.num_actor_value_updates * self.num_imagination_iterations
-        )
-        policy_gradient_loss /= (
-            self.num_actor_value_updates * self.num_imagination_iterations
-        )
-        actor_entropy_loss /= (
-            self.num_actor_value_updates * self.num_imagination_iterations
-        )
-        actor_entropy_loss_scale /= (
-            self.num_actor_value_updates * self.num_imagination_iterations
-        )
-        log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
-        vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-        imag_values_mean /= (
-            self.num_actor_value_updates * self.num_imagination_iterations
-        )
+        if self.num_imagination_iterations > 0:
+            actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            dynamics_backprop_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            policy_gradient_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            actor_entropy_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            actor_entropy_loss_scale /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
+            vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            imag_values_mean /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
 
         """
         Save some statistics for eval
@@ -766,8 +767,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
             eval_statistics["Actor Log Probs"] = log_probs
 
-            eval_statistics["Imagined Returns"] = imag_returns.mean().item()
-            eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
+            if self.num_imagination_iterations > 0:
+                eval_statistics["Imagined Returns"] = imag_returns.mean().item()
+                eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = imag_values_mean
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 

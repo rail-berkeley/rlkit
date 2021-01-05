@@ -48,6 +48,7 @@ def run_experiment(variant):
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+    from rlkit.torch.model_based.dreamer.mcts_policy import DiscreteMCTSPolicy
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
@@ -160,30 +161,48 @@ def run_experiment(variant):
     )
     variant["trainer_kwargs"]["target_vf"] = target_vf
 
-    expl_policy = DreamerPolicy(
-        world_model,
-        actor,
-        obs_dim,
-        action_dim,
-        exploration=True,
-        expl_amount=variant.get("expl_amount", 0.3),
-        discrete_action_dim=num_primitives,
-        continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-    )
-    eval_policy = DreamerPolicy(
-        world_model,
-        actor,
-        obs_dim,
-        action_dim,
-        exploration=False,
-        expl_amount=0.0,
-        discrete_action_dim=num_primitives,
-        continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-    )
+    if variant.get("use_mcts_policy", False):
+        expl_policy = DiscreteMCTSPolicy(
+            world_model,
+            eval_envs[0].max_steps,
+            eval_envs[0].num_primitives,
+            eval_envs[0].action_space.low.size,
+            eval_envs[0].action_space,
+            **variant["expl_policy_kwargs"],
+        )
+        eval_policy = DiscreteMCTSPolicy(
+            world_model,
+            eval_envs[0].max_steps,
+            eval_envs[0].num_primitives,
+            eval_envs[0].action_space.low.size,
+            eval_envs[0].action_space,
+            **variant["eval_policy_kwargs"],
+        )
+    else:
+        expl_policy = DreamerPolicy(
+            world_model,
+            actor,
+            obs_dim,
+            action_dim,
+            exploration=True,
+            expl_amount=variant.get("expl_amount", 0.3),
+            discrete_action_dim=num_primitives,
+            continuous_action_dim=continuous_action_dim,
+            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
+            and (not variant["env_kwargs"]["fixed_schema"]),
+        )
+        eval_policy = DreamerPolicy(
+            world_model,
+            actor,
+            obs_dim,
+            action_dim,
+            exploration=False,
+            expl_amount=0.0,
+            discrete_action_dim=num_primitives,
+            continuous_action_dim=continuous_action_dim,
+            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
+            and (not variant["env_kwargs"]["fixed_schema"]),
+        )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
 
