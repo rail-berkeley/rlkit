@@ -37,7 +37,7 @@ def UCT_search(
 ):
     root = UCTNode(wm, state, num_primitives, exploration_weight=exploration_weight)
     root.expand()
-    ctr = {1: 0, 2: 0, 3: 0}
+    # ctr = {1: 0, 2: 0, 3: 0, 4:0, 5:0, 6:0}
     for i in range(iterations):
         leaf = root.select_leaf()
         returns = random_rollout(
@@ -48,7 +48,7 @@ def UCT_search(
         else:
             leaf.is_expanded = True  # for terminal states
             leaf.is_terminal = True  # for terminal states
-        ctr[leaf.step_count] += 1
+        # ctr[leaf.step_count] += 1
         leaf.backup(returns)
         # print(i, returns)
         # print(ctr)
