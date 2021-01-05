@@ -1,4 +1,5 @@
-from d4rl.kitchen.kitchen_envs import KitchenMultitaskAllV0 
+from d4rl.kitchen.kitchen_envs import KitchenMultitaskAllV0
+
 env = KitchenMultitaskAllV0(
     dense=False,
     fixed_schema=True,
