@@ -105,8 +105,8 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
+            "microwave",
+            "kettle",
             # "top_left_burner",
             "slide_cabinet",
             # "hinge_cabinet",
