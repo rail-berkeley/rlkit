@@ -37,8 +37,8 @@ def vec_rollout(
     next_observations = []
     path_length = 0
 
-    agent.reset()
     o = env.reset()
+    agent.reset(o)
     a = np.zeros((env.n_envs, env.action_space.low.size))
     r = np.zeros(env.n_envs)
 

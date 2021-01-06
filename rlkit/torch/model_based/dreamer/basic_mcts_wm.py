@@ -34,6 +34,7 @@ def UCT_search(
     max_steps,
     num_primitives,
     exploration_weight=1.0,
+    return_open_loop_plan=False,
 ):
     root = UCTNode(wm, state, num_primitives, exploration_weight=exploration_weight)
     root.expand()
@@ -54,7 +55,23 @@ def UCT_search(
         # print(ctr)
         # print()
     # print(max([item[1].Q() for item in root.children.items()]))
-    return max(root.children.items(), key=lambda item: item[1].Q())
+    if return_open_loop_plan:
+        output_actions = []
+        cur = root
+        while cur.children != {}:
+            max_Q = 0
+            max_a = None
+            max_child = None
+            for a, child in cur.children.items():
+                if child.Q() >= max_Q:
+                    max_Q = child.Q()
+                    max_a = a
+                    max_child = child
+            output_actions.append(max_a)
+            cur = max_child
+        return output_actions
+    else:
+        return max(root.children.items(), key=lambda item: item[1].Q())
 
 
 def step_wm(wm, state, actions):
@@ -74,7 +91,6 @@ class UCTNode:
         step_count=0,
         exploration_weight=1.0,
         parent=None,
-        shifted_exploration_denominator=False,
     ):
         self.wm = wm
         self.state = state
@@ -87,21 +103,12 @@ class UCTNode:
         self.num_primitives = num_primitives
         self.step_count = step_count
         self.exploration_weight = exploration_weight
-        self.shifted_exploration_denominator = shifted_exploration_denominator
 
     def Q(self) -> float:
-        if self.shifted_exploration_denominator:
-            return self.total_value / (1 + self.number_visits)
-        if self.number_visits == 0:
-            return self.total_value
-        return self.total_value / (self.number_visits)
+        return self.total_value / (1 + self.number_visits)
 
     def U(self) -> float:
-        if self.shifted_exploration_denominator:
-            return math.sqrt(self.parent.number_visits) / (1 + self.number_visits)
-        if self.number_visits == 0:
-            return np.inf
-        return math.sqrt(self.parent.number_visits) / (self.number_visits)
+        return math.sqrt(self.parent.number_visits) / (1 + self.number_visits)
 
     def best_child(self):
         # best child that is not known to be terminal

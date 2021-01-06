@@ -94,12 +94,12 @@ if __name__ == "__main__":
         path_length_specific_discount=True,
         use_mcts_policy=True,
         expl_policy_kwargs=dict(
-            iterations=1000,
-            exploration_weight=1.0,
+            iterations=10000,
+            exploration_weight=0.1,
         ),
         eval_policy_kwargs=dict(
-            iterations=1000,
-            exploration_weight=0.0,
+            iterations=10000,
+            exploration_weight=0.1,
         ),
     )
 
@@ -112,17 +112,14 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "expl_policy_kwargs.iterations": [10000],
-        "eval_policy_kwargs.iterations": [10000],
-        "eval_policy_kwargs.exploration_weight": [0.1],
-        "expl_policy_kwargs.exploration_weight": [0.1],
-        "algorithm_kwargs.min_num_steps_before_training": [1000],
         # "env_kwargs.delta": [
         #     0.3,
         # ],
         # "expl_amount": [
         #     0.3,
         # ],
+        "expl_policy_kwargs.open_loop_plan": [True, False],
+        "eval_policy_kwargs.open_loop_plan": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

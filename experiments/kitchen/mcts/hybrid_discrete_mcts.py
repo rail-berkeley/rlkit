@@ -24,7 +24,7 @@ def random_rollout(env, state, actions):
     return returns
 
 
-def UCT_search(env, iterations, exploration_weight):
+def UCT_search(env, iterations, exploration_weight, return_open_loop_plan=False):
     root = UCTNode(
         env, env.get_env_state(), env.actions, exploration_weight=exploration_weight
     )
@@ -45,7 +45,24 @@ def UCT_search(env, iterations, exploration_weight):
         # print(ctr)
         # print()
         # in_order_traversal2(root)
-    return max(root.children.items(), key=lambda item: item[1].total_value)
+    if return_open_loop_plan:
+        output_actions = []
+        cur = root
+        while cur.children != {}:
+            max_Q = 0
+            max_a = None
+            max_child = None
+            for a, child in cur.children.items():
+                if child.Q() >= max_Q:
+                    max_Q = child.Q()
+                    max_a = a
+                    max_child = child
+            output_actions.append(max_a)
+            cur = max_child
+
+        return output_actions
+    else:
+        return max(root.children.items(), key=lambda item: item[1].Q())
 
 
 import queue
@@ -174,7 +191,7 @@ class UCTNode:
 
 
 if __name__ == "__main__":
-    env = KitchenMicrowaveV0(
+    env = KitchenSlideCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=False
     )
     cont_action = env.action_space.low[env.num_primitives :]
@@ -185,19 +202,19 @@ if __name__ == "__main__":
     env.actions = actions
     env.reset()
     state = env.get_env_state()
-    action = UCT_search(env, 2379, exploration_weight=0.1)[0]
+    action = UCT_search(env, 584, exploration_weight=0.1, return_open_loop_plan=True)
     print(action)
 
-    action = env.actions[action]
-    state = step_env(
-        env,
-        state,
-        action,
-    )
-    action = UCT_search(env, 2379, exploration_weight=0.1)[0]
-    print(action)
+    # action = env.actions[action]
+    # state = step_env(
+    #     env,
+    #     state,
+    #     action,
+    # )
+    # action = UCT_search(env, 2379, exploration_weight=0.1)[0]
+    # print(action)
 
-    action = env.actions[action]
-    state = step_env(env, state, action)
-    action = UCT_search(env, 2379, exploration_weight=0.1)[0]
-    print(action)
+    # action = env.actions[action]
+    # state = step_env(env, state, action)
+    # action = UCT_search(env, 2379, exploration_weight=0.1)[0]
+    # print(action)

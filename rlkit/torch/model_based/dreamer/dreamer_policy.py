@@ -58,7 +58,7 @@ class DreamerPolicy(Policy):
         self.state = (latent, action)
         return ptu.get_numpy(action), {}
 
-    def reset(self):
+    def reset(self, o):
         self.state = None
 
 
@@ -71,3 +71,6 @@ class ActionSpaceSamplePolicy(Policy):
             np.array([self.env.action_space.sample() for _ in range(self.env.n_envs)]),
             {},
         )
+
+    def reset(self, o):
+        return super().reset()

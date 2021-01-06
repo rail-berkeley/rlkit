@@ -20,6 +20,7 @@ class DiscreteMCTSPolicy(Policy):
         action_space,
         iterations,
         exploration_weight,
+        open_loop_plan=False,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -36,6 +37,7 @@ class DiscreteMCTSPolicy(Policy):
         self.action_dim = action_dim
         self.iterations = iterations
         self.exploration_weight = exploration_weight
+        self.open_loop_plan = open_loop_plan
 
     def get_action(self, observation):
         """
@@ -49,21 +51,42 @@ class DiscreteMCTSPolicy(Policy):
         else:
             latent = self.world_model.initial(observation.shape[0])
             action = ptu.zeros((observation.shape[0], self.action_dim))
-        embed = self.world_model.encode(observation)
-        start_state, _ = self.world_model.obs_step(latent, action, embed)
-        action = UCT_search(
-            self.world_model,
-            start_state,
-            self.iterations,
-            self.max_steps,
-            self.num_primitives,
-        )[0]
+        if self.open_loop_plan:
+            action = self.actions[self.ctr]
+            self.ctr += 1
+        else:
+            embed = self.world_model.encode(observation)
+            start_state, _ = self.world_model.obs_step(latent, action, embed)
+            action = UCT_search(
+                self.world_model,
+                start_state,
+                self.iterations,
+                self.max_steps,
+                self.num_primitives,
+            )[0]
         action = self.world_model.actions[action].reshape(1, -1)
         self.state = (latent, action)
         return ptu.get_numpy(action), {}
 
-    def reset(self):
+    def reset(self, o):
         self.state = None
+        self.ctr = 0
+        o = o[0]
+        o = o.reshape(1, -1)
+        latent = self.world_model.initial(o.shape[0])
+        action = ptu.zeros((o.shape[0], self.action_dim))
+        o = ptu.from_numpy(np.array(o))
+        embed = self.world_model.encode(o)
+        start_state, _ = self.world_model.obs_step(latent, action, embed)
+        if self.open_loop_plan:
+            self.actions = UCT_search(
+                self.world_model,
+                start_state,
+                self.iterations,
+                self.max_steps,
+                self.num_primitives,
+                return_open_loop_plan=True,
+            )
 
 
 class ActionSpaceSamplePolicy(Policy):
@@ -75,3 +98,6 @@ class ActionSpaceSamplePolicy(Policy):
             np.array([self.env.action_space.sample() for _ in range(self.env.n_envs)]),
             {},
         )
+
+    def reset(self, o):
+        return super().reset()
