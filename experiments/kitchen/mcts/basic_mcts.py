@@ -122,12 +122,12 @@ if __name__ == "__main__":
     print(time.time() - t)
     print(action)
 
-    # action = env.actions[4]
-    # state = step_env(env, state, action)
-    # action = UCT_search(env, 584)[0]
-    # print(action)
+    action = env.actions[actions]
+    state = step_env(env, state, action)
+    action = UCT_search(env, 584)[0]
+    print(action)
 
-    # action = env.actions[1]
-    # state = step_env(env, state, action)
-    # action = UCT_search(env, 584)[0]
-    # print(action)
+    action = env.actions[actions]
+    state = step_env(env, state, action)
+    action = UCT_search(env, 584)[0]
+    print(action)

@@ -74,6 +74,7 @@ class UCTNode:
         step_count=0,
         exploration_weight=1.0,
         parent=None,
+        shifted_exploration_denominator=False,
     ):
         self.wm = wm
         self.state = state
@@ -86,21 +87,25 @@ class UCTNode:
         self.num_primitives = num_primitives
         self.step_count = step_count
         self.exploration_weight = exploration_weight
+        self.shifted_exploration_denominator = shifted_exploration_denominator
 
     def Q(self) -> float:
-        # return self.total_value / (1 + self.number_visits)
+        if self.shifted_exploration_denominator:
+            return self.total_value / (1 + self.number_visits)
         if self.number_visits == 0:
             return self.total_value
         return self.total_value / (self.number_visits)
 
     def U(self) -> float:
-        # return math.sqrt(self.parent.number_visits) / (1 + self.number_visits)
+        if self.shifted_exploration_denominator:
+            return math.sqrt(self.parent.number_visits) / (1 + self.number_visits)
         if self.number_visits == 0:
             return np.inf
         return math.sqrt(self.parent.number_visits) / (self.number_visits)
 
     def best_child(self):
         # best child that is not known to be terminal
+        # todo: make it random choice between equal value children
         return max(
             self.children.values(),
             key=lambda node: node.Q() + self.exploration_weight * node.U(),
@@ -148,9 +153,6 @@ if __name__ == "__main__":
     )
     f = "data/12-24-dreamer_v2_reinforce_reproduce_2020_12_24_14_33_19_0000--s-87504/params.pkl"
     data = torch.load(f)
-    import ipdb
-
-    ipdb.set_trace()
     wm = WorldModel(
         env.action_space.low.size,
         env.image_shape,
