@@ -18,8 +18,8 @@ def random_rollout(wm, state, max_steps, num_primitives, step_count):
     for i in range(step_count, max_steps):
         idx = np.random.choice(num_primitives)
         action = wm.actions[idx : idx + 1, :]
-        new_state = wm.action_step(state, action)
-        r = wm.reward(wm.get_feat(new_state))[0]
+        state = wm.action_step(state, action)
+        r = wm.reward(wm.get_feat(state))[0]
         returns += r
     return returns.item()
 
