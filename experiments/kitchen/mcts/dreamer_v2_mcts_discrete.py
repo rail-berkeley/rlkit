@@ -94,12 +94,10 @@ if __name__ == "__main__":
         path_length_specific_discount=True,
         use_mcts_policy=True,
         expl_policy_kwargs=dict(
-            iterations=10000,
-            exploration_weight=0.1,
+            iterations=10000, exploration_weight=0.1, parallelize=False
         ),
         eval_policy_kwargs=dict(
-            iterations=10000,
-            exploration_weight=0.1,
+            iterations=10000, exploration_weight=0.1, parallelize=False
         ),
     )
 
@@ -112,12 +110,6 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        # "env_kwargs.delta": [
-        #     0.3,
-        # ],
-        # "expl_amount": [
-        #     0.3,
-        # ],
         "expl_policy_kwargs.open_loop_plan": [True, False],
         "eval_policy_kwargs.open_loop_plan": [True, False],
     }

@@ -1,11 +1,11 @@
+from multiprocessing.pool import ThreadPool as Pool
+
 import numpy as np
 import torch
-import torch.nn.functional as F
-from torch.distributions import Normal
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import Policy
-from rlkit.torch.model_based.dreamer.basic_mcts_wm import UCT_search
+from rlkit.torch.model_based.dreamer.basic_mcts_wm import UCT_search, run_parallel
 
 
 class DiscreteMCTSPolicy(Policy):
@@ -21,6 +21,7 @@ class DiscreteMCTSPolicy(Policy):
         iterations,
         exploration_weight,
         open_loop_plan=False,
+        parallelize=False,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -38,6 +39,7 @@ class DiscreteMCTSPolicy(Policy):
         self.iterations = iterations
         self.exploration_weight = exploration_weight
         self.open_loop_plan = open_loop_plan
+        self.parallelize = parallelize
 
     def get_action(self, observation):
         """
@@ -52,41 +54,110 @@ class DiscreteMCTSPolicy(Policy):
             latent = self.world_model.initial(observation.shape[0])
             action = ptu.zeros((observation.shape[0], self.action_dim))
         if self.open_loop_plan:
-            action = self.actions[self.ctr]
-            self.ctr += 1
+            actions = [self.actions[i][self.ctr] for i in range(observation.shape[0])]
+            action = [
+                self.world_model.actions[action].reshape(1, -1) for action in actions
+            ]
+            action = torch.cat(action)
         else:
             embed = self.world_model.encode(observation)
             start_state, _ = self.world_model.obs_step(latent, action, embed)
-            action = UCT_search(
-                self.world_model,
-                start_state,
-                self.iterations,
-                self.max_steps,
-                self.num_primitives,
-            )[0]
-        action = self.world_model.actions[action].reshape(1, -1)
+            if self.parallelize:
+                p = Pool(observation.shape[0])
+                results = []
+                for i in range(observation.shape[0]):
+                    st = {}
+                    for k, v in start_state.items():
+                        st[k] = v[i : i + 1].detach()
+                    results.append(
+                        p.apply_async(
+                            run_parallel,
+                            args=(
+                                [
+                                    st,
+                                    self.max_steps - self.ctr,
+                                    self.world_model,
+                                    self.num_primitives,
+                                    self.exploration_weight,
+                                    self.iterations,
+                                    False,
+                                ]
+                            ),
+                        )
+                    )
+
+                actions = [p.get()[0] for p in results]
+                actions = [
+                    self.world_model.actions[action].reshape(1, -1)
+                    for action in actions
+                ]
+                action = torch.cat(actions)
+            else:
+                actions = []
+                for i in range(observation.shape[0]):
+                    st = {}
+                    for k, v in start_state.items():
+                        st[k] = v[i : i + 1].detach()
+
+                    action = UCT_search(
+                        self.world_model,
+                        st,
+                        self.iterations,
+                        self.max_steps - self.ctr,
+                        self.num_primitives,
+                    )[0]
+                    action = self.world_model.actions[action].reshape(1, -1)
+                    actions.append(action)
+                action = torch.cat(actions)
+        self.ctr += 1
         self.state = (latent, action)
         return ptu.get_numpy(action), {}
 
     def reset(self, o):
         self.state = None
         self.ctr = 0
-        o = o[0]
-        o = o.reshape(1, -1)
+        o = np.concatenate([o_.reshape(1, -1) for o_ in o])
         latent = self.world_model.initial(o.shape[0])
         action = ptu.zeros((o.shape[0], self.action_dim))
         o = ptu.from_numpy(np.array(o))
         embed = self.world_model.encode(o)
         start_state, _ = self.world_model.obs_step(latent, action, embed)
         if self.open_loop_plan:
-            self.actions = UCT_search(
-                self.world_model,
-                start_state,
-                self.iterations,
-                self.max_steps,
-                self.num_primitives,
-                return_open_loop_plan=True,
-            )
+            if self.parallelize:
+                p = Pool(o.shape[0])
+                results = []
+                for i in range(o.shape[0]):
+                    st = {}
+                    for k, v in start_state.items():
+                        st[k] = v[i : i + 1].detach()
+                    results.append(
+                        p.apply_async(
+                            run_parallel,
+                            args=(
+                                [
+                                    st,
+                                    self.max_steps,
+                                    self.world_model,
+                                    self.num_primitives,
+                                    self.exploration_weight,
+                                    self.iterations,
+                                    True,
+                                ]
+                            ),
+                        )
+                    )
+                self.actions = [p.get() for p in results]
+            else:
+                self.actions = [
+                    UCT_search(
+                        self.world_model,
+                        start_state,
+                        self.iterations,
+                        self.max_steps,
+                        self.num_primitives,
+                        return_open_loop_plan=True,
+                    )
+                ]
 
 
 class ActionSpaceSamplePolicy(Policy):

@@ -1,6 +1,7 @@
 # https://www.moderndescartes.com/essays/deep_dive_mcts/
 
 import math
+import time
 
 import numpy as np
 import torch
@@ -16,17 +17,14 @@ def random_rollout(wm, state, max_steps, num_primitives, step_count):
     returns = 0
     for i in range(step_count, max_steps):
         idx = np.random.choice(num_primitives)
-        # if i == 1:
-        #     idx = 1
-        # elif i == 2:
-        #     idx = 1
         action = wm.actions[idx : idx + 1, :]
         new_state = wm.action_step(state, action)
-        r = wm.reward(wm.get_feat(new_state))[0].item()
+        r = wm.reward(wm.get_feat(new_state))[0]
         returns += r
-    return returns
+    return returns.item()
 
 
+@torch.no_grad()
 def UCT_search(
     wm,
     state,
@@ -38,7 +36,6 @@ def UCT_search(
 ):
     root = UCTNode(wm, state, num_primitives, exploration_weight=exploration_weight)
     root.expand()
-    # ctr = {1: 0, 2: 0, 3: 0, 4:0, 5:0, 6:0}
     for i in range(iterations):
         leaf = root.select_leaf()
         returns = random_rollout(
@@ -49,17 +46,12 @@ def UCT_search(
         else:
             leaf.is_expanded = True  # for terminal states
             leaf.is_terminal = True  # for terminal states
-        # ctr[leaf.step_count] += 1
         leaf.backup(returns)
-        # print(i, returns)
-        # print(ctr)
-        # print()
-    # print(max([item[1].Q() for item in root.children.items()]))
     if return_open_loop_plan:
         output_actions = []
         cur = root
         while cur.children != {}:
-            max_Q = 0
+            max_Q = -np.inf
             max_a = None
             max_child = None
             for a, child in cur.children.items():
@@ -154,19 +146,42 @@ class UCTNode:
             current = current.parent
 
 
+def run_parallel(
+    state=None,
+    max_steps=None,
+    wm=None,
+    num_primitives=None,
+    exploration_weight=1,
+    iterations=1000,
+    return_open_loop_plan=False,
+):
+    st = {}
+    for k, v in state.items():
+        st[k] = v.clone().detach()
+    return UCT_search(
+        wm,
+        st,
+        iterations,
+        max_steps,
+        num_primitives,
+        exploration_weight=exploration_weight,
+        return_open_loop_plan=return_open_loop_plan,
+    )
+
+
 if __name__ == "__main__":
     env = KitchenSlideCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=True
     )
     f = "data/12-24-dreamer_v2_reinforce_reproduce_2020_12_24_14_33_19_0000--s-87504/params.pkl"
     data = torch.load(f)
+    ptu.set_gpu_mode(True)
+
     wm = WorldModel(
         env.action_space.low.size,
         env.image_shape,
         env,
     ).to(ptu.device)
-
-    ptu.set_gpu_mode(True)
 
     cont_action = env.action_space.low[env.num_primitives :]
     actions = np.array(
@@ -175,33 +190,22 @@ if __name__ == "__main__":
             for i in range(env.num_primitives)
         ]
     )
-    actions = ptu.from_numpy(actions)
+    actions = ptu.from_numpy(actions).detach()
 
     wm.actions = actions
     state = wm.initial(1)
     import time
 
     t = time.time()
-    action = UCT_search(wm, state, 1000, env.max_steps, env.num_primitives)[0]
+    action = UCT_search(wm, state, 10000, env.max_steps, env.num_primitives)[0]
     print(time.time() - t)
     print(action)
-
     t = time.time()
-    action = UCT_search(wm, state, 1000, env.max_steps, env.num_primitives)[0]
-    print(time.time() - t)
+    action = wm.actions[action]
+    state = step_wm(wm, state, action)
+    action = UCT_search(wm, state, 10000, env.max_steps, env.num_primitives)[0]
     print(action)
-
-    t = time.time()
-    action = UCT_search(wm, state, 1000, env.max_steps, env.num_primitives)[0]
-    print(time.time() - t)
+    action = wm.actions[1]
+    state = step_wm(wm, state, action)
+    action = UCT_search(wm, state, 10000, env.max_steps, env.num_primitives)[0]
     print(action)
-
-    # action = wm.actions[4]
-    # state = step_wm(wm, state, action)
-    # action = UCT_search(wm, 584)[0]
-    # print(action)
-
-    # action = wm.actions[1]
-    # state = step_wm(wm, state, action)
-    # action = UCT_search(wm, 584)[0]
-    # print(action)
