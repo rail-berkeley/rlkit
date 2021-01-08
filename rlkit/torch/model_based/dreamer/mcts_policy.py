@@ -109,6 +109,7 @@ class DiscreteMCTSPolicy(Policy):
                     action = self.world_model.actions[action].reshape(1, -1)
                     actions.append(action)
                 action = torch.cat(actions)
+
         self.ctr += 1
         self.state = (latent, action)
         return ptu.get_numpy(action), {}

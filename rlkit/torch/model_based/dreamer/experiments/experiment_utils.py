@@ -21,6 +21,9 @@ def preprocess_variant(variant, debug):
 
     variant["algorithm_kwargs"]["max_path_length"] = max_path_length
     variant["trainer_kwargs"]["imagination_horizon"] = max_path_length + 1
+    # variant["trainer_kwargs"][
+    #     "imagination_horizon"
+    # ] = max_path_length  # todo: see if this works well or not
     num_steps_per_epoch = 1000
     num_expl_steps_per_train_loop = 50 * (max_path_length + 1)
     num_train_loops_per_epoch = num_steps_per_epoch // num_expl_steps_per_train_loop

@@ -19,7 +19,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         img_array1 = []
         path_length = 0
         o = env.reset()
-        policy.reset()
+        policy.reset(o)
         obs = np.zeros(
             (4, algorithm.max_path_length, env.observation_space.shape[0]),
             dtype=np.uint8,
@@ -43,7 +43,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         img_array2 = []
         path_length = 0
         o = env.reset()
-        policy.reset()
+        policy.reset(o)
         while path_length < algorithm.max_path_length:
             a, agent_info = policy.get_action(
                 o,
@@ -62,7 +62,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         img_array3 = []
         path_length = 0
         o = env.reset()
-        policy.reset()
+        policy.reset(o)
         while path_length < algorithm.max_path_length:
             a, agent_info = policy.get_action(
                 o,
@@ -81,7 +81,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         img_array4 = []
         path_length = 0
         o = env.reset()
-        policy.reset()
+        policy.reset(o)
         while path_length < algorithm.max_path_length:
             a, agent_info = policy.get_action(
                 o,

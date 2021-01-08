@@ -10,6 +10,7 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossStatistics
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
 from rlkit.torch.model_based.dreamer.utils import FreezeParameters, lambda_return
+from rlkit.torch.model_based.plan2explore.basic_mcts_wm_expl import UCT_search
 
 try:
     import apex
@@ -23,6 +24,32 @@ Plan2ExploreLosses = namedtuple(
     "Plan2ExploreLosses",
     "actor_loss vf_loss world_model_loss one_step_ensemble_loss exploration_actor_loss exploration_vf_loss",
 )
+
+
+def compute_exploration_reward(
+    one_step_ensemble, exploration_imag_deter_states, exploration_imag_actions
+):
+    pred_embeddings = []
+    input_state = exploration_imag_deter_states
+    exploration_imag_actions = torch.cat(
+        [
+            exploration_imag_actions[i, :, :]
+            for i in range(exploration_imag_actions.shape[0])
+        ]
+    )
+    for mdl in range(one_step_ensemble.num_models):
+        inputs = torch.cat((input_state, exploration_imag_actions), 1)
+        pred_embeddings.append(
+            one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
+        )
+    pred_embeddings = torch.cat(pred_embeddings)
+
+    assert pred_embeddings.shape[0] == one_step_ensemble.num_models
+    assert pred_embeddings.shape[1] == input_state.shape[0]
+    assert len(pred_embeddings.shape) == 3
+
+    reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
+    return reward
 
 
 class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
@@ -65,8 +92,9 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
+        mcts_iterations=10000,
     ):
-        super(Plan2ExploreTrainer, self).__init__(
+        super(Plan2ExploreMCTSTrainer, self).__init__(
             env,
             actor,
             vf,
@@ -190,6 +218,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         self.train_actor_with_intrinsic_and_extrinsic_reward = (
             train_actor_with_intrinsic_and_extrinsic_reward
         )
+        self.mcts_iterations = mcts_iterations
 
     def try_update_target_networks(self):
         if (
@@ -205,9 +234,111 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.exploration_vf, self.exploration_target_vf, self.soft_target_tau
         )
 
-    
+    def actor_loss(
+        self,
+        imag_returns,
+        value,
+        imag_feat,
+        imag_actions,
+        weights,
+        old_imag_log_probs,
+        actor,
+    ):
+        if actor is None:
+            actor = self.actor
+        assert len(imag_returns.shape) == 3, imag_returns.shape
+        assert len(value.shape) == 3, value.shape
+        assert len(imag_feat.shape) == 3, imag_feat.shape
+        assert len(imag_actions.shape) == 3, imag_actions.shape
+        assert len(weights.shape) == 3 and weights.shape[-1] == 1, weights.shape
+        if self.actor.use_tanh_normal:
+            assert imag_actions.max() <= 1.0 and imag_actions.min() >= -1.0
+        if self.use_baseline:
+            advantages = imag_returns - value[:-1]
+        else:
+            advantages = imag_returns
+        if self.use_advantage_normalization:
+            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
+        advantages = (
+            torch.cat([advantages[i, :, :] for i in range(advantages.shape[0])])
+            .detach()
+            .squeeze(-1)
+        )
 
-    def imagine_ahead(self, state, actor):
+        imag_feat_a = torch.cat(
+            [imag_feat[i, :, :] for i in range(imag_feat.shape[0] - 1)]
+        ).detach()
+        imag_actions = torch.cat(
+            [imag_actions[i, :, :] for i in range(imag_actions.shape[0] - 1)]
+        ).detach()
+        old_imag_log_probs = torch.cat(
+            [old_imag_log_probs[i, :] for i in range(old_imag_log_probs.shape[0] - 1)]
+        ).detach()
+        assert imag_actions.shape[0] == imag_feat_a.shape[0]
+
+        imag_discrete_actions = imag_actions[:, : self.world_model.env.num_primitives]
+        action_input = (imag_discrete_actions, imag_feat_a.detach())
+        imag_actor_dist = actor(action_input)
+        imag_continuous_actions = imag_actions[:, self.world_model.env.num_primitives :]
+        imag_log_probs = imag_actor_dist.log_prob(imag_continuous_actions)
+        assert old_imag_log_probs.shape == imag_log_probs.shape
+        if self.use_ppo_loss:
+            ratio = torch.exp(imag_log_probs - old_imag_log_probs)
+            surr1 = ratio * advantages
+            surr2 = (
+                torch.clamp(ratio, 1.0 - self.ppo_clip_param, 1.0 + self.ppo_clip_param)
+                * advantages
+            )
+            policy_gradient_loss = -torch.min(surr1, surr2)
+        else:
+            policy_gradient_loss = -1 * imag_log_probs * advantages
+        actor_entropy_loss = -1 * imag_actor_dist.entropy()
+
+        dynamics_backprop_loss = -(imag_returns)
+        dynamics_backprop_loss = torch.cat(
+            [
+                dynamics_backprop_loss[i, :, :]
+                for i in range(dynamics_backprop_loss.shape[0])
+            ]
+        ).squeeze(-1)
+        weights = torch.cat(
+            [weights[i, :, :] for i in range(weights.shape[0])]
+        ).squeeze(-1)
+        assert (
+            dynamics_backprop_loss.shape
+            == policy_gradient_loss.shape
+            == actor_entropy_loss.shape
+            == weights.shape
+        )
+        actor_entropy_loss_scale = self.actor_entropy_loss_scale()
+        dynamics_backprop_loss_scale = 1 - self.policy_gradient_loss_scale
+        if self.num_actor_value_updates > 1:
+            actor_loss = (
+                (
+                    self.policy_gradient_loss_scale * policy_gradient_loss
+                    + actor_entropy_loss_scale * actor_entropy_loss
+                )
+                * weights
+            ).mean()
+        else:
+            actor_loss = (
+                (
+                    dynamics_backprop_loss_scale * dynamics_backprop_loss
+                    + self.policy_gradient_loss_scale * policy_gradient_loss
+                    + actor_entropy_loss_scale * actor_entropy_loss
+                )
+                * weights
+            ).mean()
+        return (
+            actor_loss,
+            dynamics_backprop_loss.mean(),
+            policy_gradient_loss.mean(),
+            actor_entropy_loss.mean(),
+            actor_entropy_loss_scale,
+            imag_log_probs.mean(),
+        )
+
+    def imagine_ahead(self, state, actor, discrete_actions):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
@@ -241,11 +372,16 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         log_probs = []
         states = []
         next_states = []
-        for _ in range(self.imagination_horizon):
+        for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             states.append(new_state["deter"])
-            action_dist = actor(feat.detach())
-            action = action_dist.rsample()
+            discrete_action = discrete_actions[
+                i : i + 1, : self.world_model.env.num_primitives
+            ].repeat(feat.shape[0], 1)
+            action_input = (discrete_action, feat.detach())
+            action_dist = actor(action_input)
+            continuous_action = action_dist.rsample()
+            action = torch.cat((discrete_action, continuous_action), 1)
             new_state = self.world_model.action_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
             next_states.append(new_state["deter"])
@@ -253,7 +389,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             feats.append(feat.unsqueeze(0))
             next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
-            log_probs.append(action_dist.log_prob(action).unsqueeze(0))
+            log_probs.append(action_dist.log_prob(continuous_action).unsqueeze(0))
             if self.image_goals is not None:
                 reward = torch.linalg.norm(
                     featurized_image_goals - self.world_model.get_feat(new_state), dim=1
@@ -268,8 +404,23 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         next_states = torch.cat(next_states)
         if self.image_goals is not None:
             rewards = torch.cat(rewards).unsqueeze(-1)
-            return feats, next_feats, actions, log_probs, states, next_states, rewards
-        return feats, next_feats, actions, log_probs, states, next_states
+            return (
+                feats,
+                next_feats,
+                actions,
+                log_probs,
+                states,
+                next_states,
+                rewards,
+            )
+        return (
+            feats,
+            next_feats,
+            actions,
+            log_probs,
+            states,
+            next_states,
+        )
 
     def compute_loss(
         self,
@@ -350,6 +501,26 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         exploration_target_vf_params = list(self.exploration_target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
 
+        o = self.world_model.env.reset()
+        o = np.concatenate([o.reshape(1, -1) for i in range(1)])
+        latent = self.world_model.initial(1)
+        action = ptu.zeros((1, self.world_model.env.action_space.low.size))
+        o = ptu.from_numpy(np.array(o))
+        embed = self.world_model.encode(o)
+        start_state, _ = self.world_model.obs_step(latent, action, embed)
+        start_state = (start_state, 0)
+        discrete_actions = UCT_search(
+            self.world_model,
+            self.one_step_ensemble,
+            self.actor,
+            start_state,
+            self.mcts_iterations,
+            self.world_model.env.max_steps + 1,
+            self.world_model.env.num_primitives,
+            return_open_loop_plan=True,
+            exploration_reward=False,
+        )
+
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
                 (
@@ -360,7 +531,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     imag_deter_states,
                     imag_next_deter_states,
                     extrinsic_reward,
-                ) = self.imagine_ahead(post, actor=self.actor)
+                ) = self.imagine_ahead(post, self.actor, discrete_actions)
             else:
                 (
                     imag_feat,
@@ -369,7 +540,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     imag_log_probs,
                     imag_deter_states,
                     imag_next_deter_states,
-                ) = self.imagine_ahead(post, actor=self.actor)
+                ) = self.imagine_ahead(post, self.actor, discrete_actions)
         with FreezeParameters(world_model_params + vf_params + target_vf_params):
             if self.image_goals is None:
                 if self.use_imag_next_feat:
@@ -543,6 +714,25 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         """
         Exploration Actor Loss
         """
+        o = self.world_model.env.reset()
+        o = np.concatenate([o.reshape(1, -1) for i in range(1)])
+        latent = self.world_model.initial(1)
+        action = ptu.zeros((1, self.world_model.env.action_space.low.size))
+        o = ptu.from_numpy(np.array(o))
+        embed = self.world_model.encode(o)
+        start_state, _ = self.world_model.obs_step(latent, action, embed)
+        start_state = (start_state, 0)
+        discrete_actions = UCT_search(
+            self.world_model,
+            self.one_step_ensemble,
+            self.exploration_actor,
+            start_state,
+            self.mcts_iterations,
+            self.world_model.env.max_steps + 1,
+            self.world_model.env.num_primitives,
+            return_open_loop_plan=True,
+            exploration_reward=True,
+        )
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
                 (
@@ -555,7 +745,8 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     exploration_extrinsic_reward,
                 ) = self.imagine_ahead(
                     post,
-                    actor=self.exploration_actor,
+                    self.exploration_actor,
+                    discrete_actions,
                 )
             else:
                 (
@@ -567,7 +758,8 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     exploration_imag_next_deter_states,
                 ) = self.imagine_ahead(
                     post,
-                    actor=self.exploration_actor,
+                    self.exploration_actor,
+                    discrete_actions,
                 )
         with FreezeParameters(
             world_model_params
@@ -578,14 +770,18 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             if self.image_goals is None:
                 if self.use_imag_next_feat:
                     exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, exploration_imag_next_deter_states, exploration_imag_actions
+                        self.one_step_ensemble,
+                        exploration_imag_next_deter_states,
+                        exploration_imag_actions,
                     )
                     exploration_extrinsic_reward = self.world_model.reward(
                         exploration_imag_next_feat
                     )
                 else:
                     exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, exploration_imag_deter_states, exploration_imag_actions
+                        self.one_step_ensemble,
+                        exploration_imag_deter_states,
+                        exploration_imag_actions,
                     )
                     exploration_extrinsic_reward = self.world_model.reward(
                         exploration_imag_feat
@@ -593,11 +789,15 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             else:
                 if self.use_imag_next_feat:
                     exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, exploration_imag_next_deter_states, exploration_imag_actions
+                        self.one_step_ensemble,
+                        exploration_imag_next_deter_states,
+                        exploration_imag_actions,
                     )
                 else:
                     exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, exploration_imag_deter_states, exploration_imag_actions
+                        self.one_step_ensemble,
+                        exploration_imag_deter_states,
+                        exploration_imag_actions,
                     )
 
             exploration_reward = torch.cat(
@@ -838,28 +1038,3 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             exploration_vf=self.exploration_vf,
             exploration_target_vf=self.exploration_target_vf,
         )
-
-def compute_exploration_reward(
-        one_step_ensemble, exploration_imag_deter_states, exploration_imag_actions
-    ):
-        pred_embeddings = []
-        input_state = exploration_imag_deter_states
-        exploration_imag_actions = torch.cat(
-            [
-                exploration_imag_actions[i, :, :]
-                for i in range(exploration_imag_actions.shape[0])
-            ]
-        )
-        for mdl in range(one_step_ensemble.num_models):
-            inputs = torch.cat((input_state, exploration_imag_actions), 1)
-            pred_embeddings.append(
-                one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
-            )
-        pred_embeddings = torch.cat(pred_embeddings)
-
-        assert pred_embeddings.shape[0] == one_step_ensemble.num_models
-        assert pred_embeddings.shape[1] == input_state.shape[0]
-        assert len(pred_embeddings.shape) == 3
-
-        reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
-        return reward
