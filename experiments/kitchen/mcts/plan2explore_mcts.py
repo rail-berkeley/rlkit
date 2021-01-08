@@ -34,10 +34,10 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
-            min_num_steps_before_training=1000,
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
             batch_size=625,
             use_wandb=args.use_wandb,
@@ -120,7 +120,7 @@ if __name__ == "__main__":
         ],
         "expl_policy_kwargs.open_loop_plan": [True, False],
         "eval_policy_kwargs.open_loop_plan": [True, False],
-        "env_kwargs.delta": [0.1, 0.3, 0.5],
+        "env_kwargs.delta": [0.1, 0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
