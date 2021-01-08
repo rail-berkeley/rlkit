@@ -201,8 +201,7 @@ def experiment(variant):
     )
 
     if variant.get("use_mcts_policy", False):
-        variant["expl_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
-        variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+
         expl_policy = HybridMCTSPolicy(
             world_model,
             eval_envs[0].max_steps,

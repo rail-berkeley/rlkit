@@ -102,7 +102,7 @@ if __name__ == "__main__":
             open_loop_plan=False,
         ),
         one_step_ensemble_kwargs=dict(
-            num_models=10,
+            num_models=5,
             hidden_size=400,
             num_layers=4,
             output_embeddings=False,
@@ -120,8 +120,8 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "expl_policy_kwargs.open_loop_plan": [True],
-        "eval_policy_kwargs.open_loop_plan": [True],
-        "env_kwargs.delta": [0.1, 0.3],
+        "eval_policy_kwargs.open_loop_plan": [False],
+        "env_kwargs.delta": [0.1, 0.3, 0.5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

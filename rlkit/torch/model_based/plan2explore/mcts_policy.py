@@ -81,6 +81,7 @@ class HybridMCTSPolicy(Policy):
                 self.world_model.env.num_primitives,
                 return_open_loop_plan=False,
                 exploration_reward=self.exploration,
+                evaluation=not self.exploration,
             )
         self.ctr += 1
         self.state = (latent, action)
@@ -113,6 +114,7 @@ class HybridMCTSPolicy(Policy):
                 exploration_reward=self.exploration,
                 return_top_k_paths=True,
                 k=o.shape[0],
+                evaluation=not self.exploration,
             )
 
 

@@ -45,6 +45,7 @@ def random_rollout(
     num_primitives,
     step_count,
     exploration_reward,
+    evaluation=False,
 ):
     state, r = state
     if step_count == max_steps:
@@ -58,7 +59,12 @@ def random_rollout(
         ).reshape(1, -1)
         action_input = (discrete_action, feat)
         action_dist = actor(action_input)
-        continuous_action = action_dist.mode()
+        if evaluation:
+            continuous_action = action_dist.mode()
+        else:
+            continuous_action = actor.compute_exploration_action(
+                action_dist.sample(), 0.3
+            )
         action = torch.cat((discrete_action, continuous_action), 1)
         state = wm.action_step(state, action)
         deter_state = state["deter"]
@@ -115,6 +121,7 @@ def UCT_search(
     exploration_reward=False,
     return_top_k_paths=False,
     k=1,
+    evaluation=False,
 ):
     root = UCTNode(
         wm,
@@ -124,6 +131,7 @@ def UCT_search(
         num_primitives,
         exploration_weight=exploration_weight,
         exploration_reward=exploration_reward,
+        evaluation=evaluation,
     )
     root.expand()
     for i in range(iterations):
@@ -137,6 +145,7 @@ def UCT_search(
             num_primitives,
             leaf.step_count,
             exploration_reward,
+            evaluation=evaluation,
         )
         if leaf.step_count < max_steps:
             leaf.expand()
@@ -176,7 +185,13 @@ def UCT_search(
         return ptu.from_numpy(np.array(max_a)).reshape(1, -1)
 
 
-def generate_full_actions(wm, state, actor, num_primitives):
+def generate_full_actions(
+    wm,
+    state,
+    actor,
+    num_primitives,
+    evaluation=False,
+):
     discrete_actions = []
     for da in range(num_primitives):
         discrete_action = F.one_hot(
@@ -187,7 +202,10 @@ def generate_full_actions(wm, state, actor, num_primitives):
     feat = wm.get_feat(state)
     action_input = (discrete_actions, feat)
     action_dist = actor(action_input)
-    continuous_action = action_dist.mode()
+    if evaluation:
+        continuous_action = action_dist.mode()
+    else:
+        continuous_action = actor.compute_exploration_action(action_dist.sample(), 0.3)
     actions = torch.cat((discrete_actions, continuous_action), 1)
     return actions
 
@@ -199,12 +217,13 @@ def step_wm(
     actor,
     num_primitives,
     exploration_reward=False,
+    evaluation=False,
 ):
     state, _ = state
     state_n = {}
     for k, v in state.items():
         state_n[k] = v.repeat(num_primitives, 1)
-    actions = generate_full_actions(wm, state_n, actor, num_primitives)
+    actions = generate_full_actions(wm, state_n, actor, num_primitives, evaluation)
     new_states = wm.action_step(state_n, actions)
     deter_state = state_n["deter"]
     if exploration_reward:
@@ -226,6 +245,7 @@ class UCTNode:
         exploration_weight=1.0,
         parent=None,
         exploration_reward=False,
+        evaluation=False,
     ):
         self.wm = wm
         self.one_step_ensemble = one_step_ensemble
@@ -241,6 +261,7 @@ class UCTNode:
         self.step_count = step_count
         self.exploration_weight = exploration_weight
         self.exploration_reward = exploration_reward
+        self.evaluation = evaluation
 
     def Q(self) -> float:
         return self.total_value / (1 + self.number_visits)
@@ -268,7 +289,12 @@ class UCTNode:
     def expand(self):
         self.is_expanded = True
         child_states, r, self.actions = step_wm(
-            self.wm, self.one_step_ensemble, self.state, self.actor, self.num_primitives
+            self.wm,
+            self.one_step_ensemble,
+            self.state,
+            self.actor,
+            self.num_primitives,
+            evaluation=self.evaluation,
         )
         for i in range(self.actions.shape[0]):
             child_state = {}
@@ -288,6 +314,7 @@ class UCTNode:
             exploration_weight=self.exploration_weight,
             parent=self,
             exploration_reward=self.exploration_reward,
+            evaluation=self.evaluation,
         )
 
     def backup(self, returns):

@@ -519,6 +519,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.world_model.env.num_primitives,
             return_open_loop_plan=True,
             exploration_reward=False,
+            evaluation=True,
         )
 
         with FreezeParameters(world_model_params):
@@ -732,6 +733,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.world_model.env.num_primitives,
             return_open_loop_plan=True,
             exploration_reward=True,
+            evaluation=False,
         )
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
