@@ -26,7 +26,7 @@ if __name__ == "__main__":
             num_trains_per_train_loop=10,
             num_expl_steps_per_train_loop=50,
             min_num_steps_before_training=10,
-            num_pretrain_steps=10,
+            num_pretrain_steps=1,
             num_train_loops_per_epoch=1,
             batch_size=30,
             use_wandb=args.use_wandb,
@@ -83,6 +83,7 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
+            mcts_iterations=1000,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -118,8 +119,8 @@ if __name__ == "__main__":
             # "hinge_cabinet",
             # "light_switch",
         ],
-        "expl_policy_kwargs.open_loop_plan": [True, False],
-        "eval_policy_kwargs.open_loop_plan": [True, False],
+        "expl_policy_kwargs.open_loop_plan": [True],
+        "eval_policy_kwargs.open_loop_plan": [True],
         "env_kwargs.delta": [0.1, 0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

@@ -65,28 +65,23 @@ class HybridMCTSPolicy(Policy):
                 for i in range(observation.shape[0])
             ]
             action = torch.cat(actions)
+            assert action.shape == (observation.shape[0], self.action_dim)
         else:
             embed = self.world_model.encode(observation)
             start_state, _ = self.world_model.obs_step(latent, action, embed)
             actions = []
-            for i in range(observation.shape[0]):
-                st = {}
-                for k, v in start_state.items():
-                    st[k] = v[i : i + 1].detach()
-                start_state = (st, 0)
-                action = UCT_search(
-                    self.world_model,
-                    self.one_step_ensemble,
-                    self.actor,
-                    start_state,
-                    self.mcts_iterations,
-                    self.world_model.env.max_steps,
-                    self.world_model.env.num_primitives,
-                    return_open_loop_plan=False,
-                    exploration_reward=self.exploration,
-                )
-                actions.append(action)
-            action = torch.cat(actions)
+            start_state = (start_state, 0)
+            action = UCT_search(
+                self.world_model,
+                self.one_step_ensemble,
+                self.actor,
+                start_state,
+                self.mcts_iterations,
+                self.world_model.env.max_steps,
+                self.world_model.env.num_primitives,
+                return_open_loop_plan=False,
+                exploration_reward=self.exploration,
+            )
         self.ctr += 1
         self.state = (latent, action)
         return ptu.get_numpy(action), {}
@@ -100,21 +95,25 @@ class HybridMCTSPolicy(Policy):
         o = ptu.from_numpy(np.array(o))
         embed = self.world_model.encode(o)
         start_state, _ = self.world_model.obs_step(latent, action, embed)
-        start_state = (start_state, 0)
         if self.open_loop_plan:
-            self.actions = [
-                UCT_search(
-                    self.world_model,
-                    self.one_step_ensemble,
-                    self.actor,
-                    start_state,
-                    self.mcts_iterations,
-                    self.world_model.env.max_steps,
-                    self.world_model.env.num_primitives,
-                    return_open_loop_plan=True,
-                    exploration_reward=self.exploration,
-                )
-            ]
+            state_n = {}
+            for k, v in start_state.items():
+                state_n[k] = v[0:1]
+            state_n = (state_n, 0)
+
+            self.actions = UCT_search(
+                self.world_model,
+                self.one_step_ensemble,
+                self.actor,
+                state_n,
+                self.mcts_iterations,
+                self.world_model.env.max_steps,
+                self.world_model.env.num_primitives,
+                return_open_loop_plan=True,
+                exploration_reward=self.exploration,
+                return_top_k_paths=True,
+                k=o.shape[0],
+            )
 
 
 class ActionSpaceSamplePolicy(Policy):

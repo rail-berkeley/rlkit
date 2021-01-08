@@ -250,7 +250,6 @@ def experiment(variant):
         action_dim,
         replace=False,
     )
-    variant["trainer_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
     trainer = Plan2ExploreMCTSTrainer(
         env=eval_env,
         world_model=world_model,

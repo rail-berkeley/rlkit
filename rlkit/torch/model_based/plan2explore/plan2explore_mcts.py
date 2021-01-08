@@ -92,7 +92,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
-        mcts_iterations=10000,
+        mcts_iterations=1000,
     ):
         super(Plan2ExploreMCTSTrainer, self).__init__(
             env,
@@ -515,7 +515,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.actor,
             start_state,
             self.mcts_iterations,
-            self.world_model.env.max_steps + 1,
+            self.imagination_horizon,
             self.world_model.env.num_primitives,
             return_open_loop_plan=True,
             exploration_reward=False,
@@ -728,7 +728,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.exploration_actor,
             start_state,
             self.mcts_iterations,
-            self.world_model.env.max_steps + 1,
+            self.imagination_horizon,
             self.world_model.env.num_primitives,
             return_open_loop_plan=True,
             exploration_reward=True,

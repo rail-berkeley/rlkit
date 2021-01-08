@@ -27,12 +27,12 @@ def compute_exploration_reward(
             one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
         )
     pred_embeddings = torch.cat(pred_embeddings)
-
     assert pred_embeddings.shape[0] == one_step_ensemble.num_models
     assert pred_embeddings.shape[1] == input_state.shape[0]
     assert len(pred_embeddings.shape) == 3
 
     reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
+    assert (reward >= 0.0).all()
     return reward
 
 
@@ -58,7 +58,7 @@ def random_rollout(
         ).reshape(1, -1)
         action_input = (discrete_action, feat)
         action_dist = actor(action_input)
-        continuous_action = action_dist.rsample()
+        continuous_action = action_dist.mode()
         action = torch.cat((discrete_action, continuous_action), 1)
         state = wm.action_step(state, action)
         deter_state = state["deter"]
@@ -89,7 +89,16 @@ def compute_all_paths(cur):
 
 def compute_top_k_paths(l, k):
     l.sort(key=lambda x: x[0][1])
-    return l[-k:]
+    top_k_paths = l[-k:]
+    actions = []
+    for path in top_k_paths:
+        path_as = []
+        for val in path:
+            a, v = val
+            path_as.append(ptu.from_numpy(np.array(a).reshape(1, -1)))
+        path_as = torch.cat(path_as)
+        actions.append(path_as.unsqueeze(0))
+    return torch.cat(actions)
 
 
 @torch.no_grad()
@@ -104,6 +113,8 @@ def UCT_search(
     exploration_weight=1.0,
     return_open_loop_plan=False,
     exploration_reward=False,
+    return_top_k_paths=False,
+    k=1,
 ):
     root = UCTNode(
         wm,
@@ -135,6 +146,10 @@ def UCT_search(
         leaf.backup(returns)
 
     if return_open_loop_plan:
+        if return_top_k_paths:
+            l = compute_all_paths(root)
+            actions = compute_top_k_paths(l, k)
+            return actions
         output_actions = []
         cur = root
         while cur.children != {}:
@@ -172,7 +187,7 @@ def generate_full_actions(wm, state, actor, num_primitives):
     feat = wm.get_feat(state)
     action_input = (discrete_actions, feat)
     action_dist = actor(action_input)
-    continuous_action = action_dist.rsample()
+    continuous_action = action_dist.mode()
     actions = torch.cat((discrete_actions, continuous_action), 1)
     return actions
 
