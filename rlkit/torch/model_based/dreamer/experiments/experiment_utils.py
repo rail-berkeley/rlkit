@@ -44,5 +44,12 @@ def preprocess_variant(variant, debug):
     if variant.get("path_length_specific_discount", False):
         variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
     variant["expl_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+    variant["expl_policy_kwargs"]["randomly_sample_discrete_actions"] = variant[
+        "randomly_sample_discrete_actions"
+    ]
+    variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
+        "randomly_sample_discrete_actions"
+    ]
     variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+
     return variant

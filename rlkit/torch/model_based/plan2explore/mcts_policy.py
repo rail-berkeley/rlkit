@@ -25,6 +25,7 @@ class HybridMCTSPolicy(Policy):
         open_loop_plan=False,
         parallelize=False,
         exploration=False,
+        randomly_sample_discrete_actions=False,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -46,6 +47,7 @@ class HybridMCTSPolicy(Policy):
         self.actor = actor
         self.exploration = exploration
         self.one_step_ensemble = one_step_ensemble
+        self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
 
     def get_action(self, observation):
         """
@@ -66,6 +68,23 @@ class HybridMCTSPolicy(Policy):
             ]
             action = torch.cat(actions)
             assert action.shape == (observation.shape[0], self.action_dim)
+            if self.randomly_sample_discrete_actions:
+                discrete_action = ptu.from_numpy(
+                    np.eye(self.world_model.env.num_primitives)[
+                        np.random.choice(
+                            self.world_model.env.num_primitives,
+                            observation.shape[0],
+                        )
+                    ]
+                )
+                embed = self.world_model.encode(observation)
+                start_state, _ = self.world_model.obs_step(latent, action, embed)
+                action_input = (discrete_action, self.world_model.get_feat(start_state))
+                action_dist = self.actor(action_input)
+                continuous_action = self.actor.compute_exploration_action(
+                    action_dist.sample(), 0.3
+                )
+                action = torch.cat((discrete_action, continuous_action), 1)
         else:
             embed = self.world_model.encode(observation)
             start_state, _ = self.world_model.obs_step(latent, action, embed)
@@ -101,7 +120,6 @@ class HybridMCTSPolicy(Policy):
             for k, v in start_state.items():
                 state_n[k] = v[0:1]
             state_n = (state_n, 0)
-
             self.actions = UCT_search(
                 self.world_model,
                 self.one_step_ensemble,

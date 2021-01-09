@@ -108,6 +108,7 @@ if __name__ == "__main__":
             output_embeddings=False,
         ),
         mcts_iterations=10000,
+        randomly_sample_discrete_actions=True,
     )
 
     search_space = {
@@ -122,6 +123,7 @@ if __name__ == "__main__":
         "expl_policy_kwargs.open_loop_plan": [True],
         "eval_policy_kwargs.open_loop_plan": [False],
         "env_kwargs.delta": [0.1, 0.3, 0.5],
+        "randomly_sample_discrete_actions": [True],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

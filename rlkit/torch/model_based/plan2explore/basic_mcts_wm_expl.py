@@ -192,13 +192,8 @@ def generate_full_actions(
     num_primitives,
     evaluation=False,
 ):
-    discrete_actions = []
-    for da in range(num_primitives):
-        discrete_action = F.one_hot(
-            ptu.from_numpy(np.array([da])).long(), num_primitives
-        ).reshape(1, -1)
-        discrete_actions.append(discrete_action)
-    discrete_actions = torch.cat(discrete_actions)
+
+    discrete_actions = ptu.eye(num_primitives)
     feat = wm.get_feat(state)
     action_input = (discrete_actions, feat)
     action_dist = actor(action_input)

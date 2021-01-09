@@ -93,6 +93,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
         mcts_iterations=1000,
+        randomly_sample_discrete_actions=False,
     ):
         super(Plan2ExploreMCTSTrainer, self).__init__(
             env,
@@ -219,6 +220,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             train_actor_with_intrinsic_and_extrinsic_reward
         )
         self.mcts_iterations = mcts_iterations
+        self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
 
     def try_update_target_networks(self):
         if (
@@ -723,18 +725,27 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         embed = self.world_model.encode(o)
         start_state, _ = self.world_model.obs_step(latent, action, embed)
         start_state = (start_state, 0)
-        discrete_actions = UCT_search(
-            self.world_model,
-            self.one_step_ensemble,
-            self.exploration_actor,
-            start_state,
-            self.mcts_iterations,
-            self.imagination_horizon,
-            self.world_model.env.num_primitives,
-            return_open_loop_plan=True,
-            exploration_reward=True,
-            evaluation=False,
-        )
+        if self.randomly_sample_discrete_actions:
+            discrete_actions = ptu.from_numpy(
+                np.eye(self.world_model.env.num_primitives)[
+                    np.random.choice(
+                        self.world_model.env.num_primitives, self.imagination_horizon
+                    )
+                ]
+            )
+        else:
+            discrete_actions = UCT_search(
+                self.world_model,
+                self.one_step_ensemble,
+                self.exploration_actor,
+                start_state,
+                self.mcts_iterations,
+                self.imagination_horizon,
+                self.world_model.env.num_primitives,
+                return_open_loop_plan=True,
+                exploration_reward=True,
+                evaluation=False,
+            )
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
                 (
