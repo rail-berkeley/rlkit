@@ -48,7 +48,6 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
-        # env_class="hinge_cabinet",
         env_kwargs=dict(fixed_schema=False, delta=0.0, dense=False, image_obs=True),
         vf_kwargs=dict(
             num_layers=3,

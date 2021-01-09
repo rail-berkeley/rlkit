@@ -232,7 +232,7 @@ def experiment(variant):
     replay_buffer = EpisodeReplayBuffer(
         variant["replay_buffer_size"],
         expl_env,
-        variant["trainer_kwargs"]["imagination_horizon"],
+        variant["algorithm_kwargs"]["max_path_length"] + 1,
         obs_dim,
         action_dim,
         replace=False,

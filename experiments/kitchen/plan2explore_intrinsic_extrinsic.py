@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -73,7 +73,7 @@ if __name__ == "__main__":
             use_per_primitive_feature_extractor=False,
         ),
         one_step_ensemble_kwargs=dict(
-            num_models=10,
+            num_models=5,
             hidden_size=400,
             num_layers=4,
             output_embeddings=False,
@@ -92,32 +92,33 @@ if __name__ == "__main__":
             optimizer_class="apex_adam",
             pred_discount_loss_scale=10.0,
             use_pred_discount=True,
-            train_exploration_actor_with_intrinsic_and_extrinsic_reward=True,
+            # train_exploration_actor_with_intrinsic_and_extrinsic_reward=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            detach_rewards=False,
+            # detach_rewards=False,
+            detach_rewards=True,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
         expl_amount=0.3,
         path_length_specific_discount=True,
         eval_with_exploration_actor=False,
+        mcts_iterations=0,
+        randomly_sample_discrete_actions=False,
     )
 
     search_space = {
         "env_class": [
             "microwave",
-            "kettle",
+            # "kettle",
             "top_left_burner",
             "slide_cabinet",
-            "hinge_cabinet",
-            "light_switch",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        # "env_kwargs.use_combined_action_space": [True],
-        # "env_kwargs.use_max_bound_action_space": [False],
-        "train_exploration_actor_with_intrinsic_and_extrinsic_reward": [True, False],
-        "train_actor_with_intrinsic_and_extrinsic_reward": [True, False],
-        "trainer_kwargs.exploration_reward_scale": [1],
+        "train_exploration_actor_with_intrinsic_and_extrinsic_reward": [False],
+        "train_actor_with_intrinsic_and_extrinsic_reward": [False],
+        # "trainer_kwargs.exploration_reward_scale": [1],
         "expl_amount": [0.3],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
