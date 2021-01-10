@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -40,19 +40,19 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="Plan2ExploreInstrinsicExtrinsic",
+        algorithm="Plan2ExploreIntrinsicOnly",
+        # algorithm="Plan2ExploreIntrinsicExtrinsic",
+        # algorithm="Plan2ExploreExtrinsicOnly",
         version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
-        env_class="microwave",
         env_kwargs=dict(
             dense=False,
-            delta=0.3,
             image_obs=True,
             fixed_schema=False,
             multitask=False,
             action_scale=1.4,
-            use_combined_action_space=False,
+            use_combined_action_space=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -103,23 +103,41 @@ if __name__ == "__main__":
         expl_amount=0.3,
         path_length_specific_discount=True,
         eval_with_exploration_actor=False,
-        mcts_iterations=0,
-        randomly_sample_discrete_actions=False,
     )
 
     search_space = {
         "env_class": [
             "microwave",
-            # "kettle",
             "top_left_burner",
             "slide_cabinet",
-            # "hinge_cabinet",
-            # "light_switch",
+            "kettle",
+            "hinge_cabinet",
+            "light_switch",
         ],
-        "train_exploration_actor_with_intrinsic_and_extrinsic_reward": [False],
-        "train_actor_with_intrinsic_and_extrinsic_reward": [False],
+        # "train_exploration_actor_with_intrinsic_and_extrinsic_reward": [False],
+        # "train_actor_with_intrinsic_and_extrinsic_reward": [False],
         # "trainer_kwargs.exploration_reward_scale": [1],
         "expl_amount": [0.3],
+        # extrinsic reward_only
+        "trainer_kwargs.exploration_reward_scale": [0.0],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            True
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        # intrinsic + extrinsic reward
+        "trainer_kwargs.exploration_reward_scale": [
+            1.0,
+        ],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            True,
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        # intrinsic reward_only
+        "trainer_kwargs.exploration_reward_scale": [10000],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            False
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

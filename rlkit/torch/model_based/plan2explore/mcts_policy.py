@@ -1,3 +1,4 @@
+import time
 from multiprocessing.pool import ThreadPool as Pool
 
 import numpy as np
@@ -101,6 +102,7 @@ class HybridMCTSPolicy(Policy):
                 return_open_loop_plan=False,
                 exploration_reward=self.exploration,
                 evaluation=not self.exploration,
+                exploration_weight=self.exploration_weight,
             )
         self.ctr += 1
         self.state = (latent, action)
@@ -133,6 +135,7 @@ class HybridMCTSPolicy(Policy):
                 return_top_k_paths=True,
                 k=o.shape[0],
                 evaluation=not self.exploration,
+                exploration_weight=self.exploration_weight,
             )
 
 

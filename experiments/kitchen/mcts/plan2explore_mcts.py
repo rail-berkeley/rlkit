@@ -34,7 +34,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -44,11 +44,20 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="p2exp_mcts",
+        algorithm="Plan2ExploreMCTSIntrinsicOnly",
+        # algorithm="Plan2ExploreMCTSIntrinsicExtrinsic",
+        # algorithm="Plan2ExploreMCTSExtrinsicOnly",
         version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
-        env_kwargs=dict(fixed_schema=False, delta=0.0, dense=False, image_obs=True),
+        env_kwargs=dict(
+            dense=False,
+            image_obs=True,
+            fixed_schema=False,
+            multitask=False,
+            action_scale=1.4,
+            use_combined_action_space=True,
+        ),
         vf_kwargs=dict(
             num_layers=3,
         ),
@@ -63,7 +72,6 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
-            gru_layer_norm=False,
             embedding_size=1024,
             use_per_primitive_feature_extractor=False,
         ),
@@ -82,14 +90,15 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            mcts_iterations=1000,
+            mcts_iterations=10000,
+            pred_discount_loss_scale=10.0,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
         path_length_specific_discount=True,
         use_mcts_policy=True,
         expl_policy_kwargs=dict(
-            exploration_weight=0.1,
+            exploration_weight=0.01,
             parallelize=False,
             exploration=True,
             open_loop_plan=True,
@@ -98,7 +107,7 @@ if __name__ == "__main__":
             exploration_weight=0.1,
             parallelize=False,
             exploration=False,
-            open_loop_plan=False,
+            open_loop_plan=True,
         ),
         one_step_ensemble_kwargs=dict(
             num_models=5,
@@ -107,22 +116,38 @@ if __name__ == "__main__":
             output_embeddings=False,
         ),
         mcts_iterations=10000,
-        randomly_sample_discrete_actions=True,
+        randomly_sample_discrete_actions=False,
     )
-
     search_space = {
         "env_class": [
-            "microwave",
-            "top_left_burner",
-            "slide_cabinet",
+            # "microwave",
+            # "top_left_burner",
+            # "slide_cabinet",
             # "kettle",
-            # "hinge_cabinet",
+            "hinge_cabinet",
             # "light_switch",
         ],
-        "expl_policy_kwargs.open_loop_plan": [True],
-        "eval_policy_kwargs.open_loop_plan": [False],
-        "env_kwargs.delta": [0.1, 0.3, 0.5],
-        "randomly_sample_discrete_actions": [True],
+        # "randomly_sample_discrete_actions": [True, False],
+        # extrinsic reward_only
+        # "trainer_kwargs.exploration_reward_scale": [0.0],
+        # "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+        #     True
+        # ],
+        # "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        # # intrinsic + extrinsic reward
+        # "trainer_kwargs.exploration_reward_scale": [
+        #     1.0,
+        # ],
+        # "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+        #     True
+        # ],
+        # "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        # intrinsic reward_only
+        "trainer_kwargs.exploration_reward_scale": [10000],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            False
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

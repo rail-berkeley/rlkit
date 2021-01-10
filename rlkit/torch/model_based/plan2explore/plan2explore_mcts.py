@@ -1,3 +1,4 @@
+import time
 from collections import OrderedDict, namedtuple
 from typing import Tuple
 
@@ -519,9 +520,10 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.mcts_iterations,
             self.imagination_horizon,
             self.world_model.env.num_primitives,
+            exploration_weight=0.1,
             return_open_loop_plan=True,
             exploration_reward=False,
-            evaluation=True,
+            evaluation=False,
         )
 
         with FreezeParameters(world_model_params):
@@ -717,14 +719,6 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         """
         Exploration Actor Loss
         """
-        o = self.world_model.env.reset()
-        o = np.concatenate([o.reshape(1, -1) for i in range(1)])
-        latent = self.world_model.initial(1)
-        action = ptu.zeros((1, self.world_model.env.action_space.low.size))
-        o = ptu.from_numpy(np.array(o))
-        embed = self.world_model.encode(o)
-        start_state, _ = self.world_model.obs_step(latent, action, embed)
-        start_state = (start_state, 0)
         if self.randomly_sample_discrete_actions:
             discrete_actions = ptu.from_numpy(
                 np.eye(self.world_model.env.num_primitives)[
@@ -742,10 +736,12 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                 self.mcts_iterations,
                 self.imagination_horizon,
                 self.world_model.env.num_primitives,
+                exploration_weight=0.01,
                 return_open_loop_plan=True,
                 exploration_reward=True,
                 evaluation=False,
             )
+
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
                 (

@@ -6,7 +6,7 @@ import time
 import numpy as np
 import torch
 import torch.nn.functional as F
-from d4rl.kitchen.kitchen_envs import KitchenSlideCabinetV0
+from d4rl.kitchen.kitchen_envs import KitchenKettleV0, KitchenSlideCabinetV0
 
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
@@ -129,12 +129,15 @@ def UCT_search(
         actor,
         state,
         num_primitives,
+        max_steps,
         exploration_weight=exploration_weight,
         exploration_reward=exploration_reward,
         evaluation=evaluation,
     )
     root.expand()
-    for i in range(iterations):
+    ctr = 0
+    has_not_reached_max_depth = True
+    while ctr < iterations or has_not_reached_max_depth:
         leaf = root.select_leaf()
         returns = random_rollout(
             wm,
@@ -152,7 +155,9 @@ def UCT_search(
         else:
             leaf.is_expanded = True  # for terminal states
             leaf.is_terminal = True  # for terminal states
+            has_not_reached_max_depth = False
         leaf.backup(returns)
+        ctr += 1
 
     if return_open_loop_plan:
         if return_top_k_paths:
@@ -236,6 +241,7 @@ class UCTNode:
         actor,
         state,
         num_primitives,
+        max_steps,
         step_count=0,
         exploration_weight=1.0,
         parent=None,
@@ -257,6 +263,7 @@ class UCTNode:
         self.exploration_weight = exploration_weight
         self.exploration_reward = exploration_reward
         self.evaluation = evaluation
+        self.max_steps = max_steps
 
     def Q(self) -> float:
         return self.total_value / (1 + self.number_visits)
@@ -281,6 +288,33 @@ class UCTNode:
             current = current.best_child()
         return current
 
+    def progressively_widen(self):
+        child_states, r, self.actions = step_wm(
+            self.wm,
+            self.one_step_ensemble,
+            self.state,
+            self.actor,
+            self.num_primitives,
+            evaluation=self.evaluation,
+        )
+        for i in range(self.actions.shape[0]):
+            child_state = {}
+            for k, v in child_states.items():
+                child_state[k] = v[i : i + 1, :]
+            node = self.add_child((child_state, r[i].item()), self.actions[i, :])
+            returns = random_rollout(
+                wm,
+                one_step_ensemble,
+                actor,
+                node.state,
+                node.max_steps,
+                node.num_primitives,
+                node.step_count,
+                node.exploration_reward,
+                evaluation=node.evaluation,
+            )
+            node.backup(returns)
+
     def expand(self):
         self.is_expanded = True
         child_states, r, self.actions = step_wm(
@@ -299,18 +333,21 @@ class UCTNode:
 
     def add_child(self, state, action):
         key = tuple(ptu.get_numpy(action).tolist())
-        self.children[key] = UCTNode(
+        node = UCTNode(
             self.wm,
             self.one_step_ensemble,
             self.actor,
             state,
             self.num_primitives,
+            self.max_steps,
             self.step_count + 1,
             exploration_weight=self.exploration_weight,
             parent=self,
             exploration_reward=self.exploration_reward,
             evaluation=self.evaluation,
         )
+        self.children[key] = node
+        return node
 
     def backup(self, returns):
         current = self
@@ -324,8 +361,6 @@ if __name__ == "__main__":
     env = KitchenSlideCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=True
     )
-    f = "data/12-24-dreamer_v2_reinforce_reproduce_2020_12_24_14_33_19_0000--s-87504/params.pkl"
-    data = torch.load(f)
     ptu.set_gpu_mode(True)
 
     wm = WorldModel(
@@ -334,9 +369,13 @@ if __name__ == "__main__":
         env,
     ).to(ptu.device)
     one_step_ensemble = OneStepEnsembleModel(
-        env.action_space.low.size,
-        400,
-        1024,
+        action_dim=env.action_space.low.size,
+        deterministic_state_size=400,
+        embedding_size=1024,
+        num_models=5,
+        hidden_size=400,
+        num_layers=4,
+        output_embeddings=False,
     ).to(ptu.device)
     actor = ConditionalActorModel(
         [400] * 4,
@@ -358,12 +397,12 @@ if __name__ == "__main__":
         10000,
         env.max_steps,
         env.num_primitives,
-        return_open_loop_plan=True,
+        return_open_loop_plan=False,
+        exploration_weight=0.1,
+        evaluation=True,
+        exploration_reward=True,
     )
     print(time.time() - t)
-    import ipdb
-
-    ipdb.set_trace()
     t = time.time()
     # state, r, _ = step_wm(wm, one_step_ensemble, (state, 0), actor, env.num_primitives)
     # action = UCT_search(
