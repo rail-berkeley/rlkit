@@ -6,7 +6,11 @@ import time
 import numpy as np
 import torch
 import torch.nn.functional as F
-from d4rl.kitchen.kitchen_envs import KitchenKettleV0, KitchenSlideCabinetV0
+from d4rl.kitchen.kitchen_envs import (
+    KitchenHingeCabinetV0,
+    KitchenKettleV0,
+    KitchenSlideCabinetV0,
+)
 
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
@@ -66,12 +70,13 @@ def random_rollout(
                 action_dist.sample(), 0.3
             )
         action = torch.cat((discrete_action, continuous_action), 1)
-        state = wm.action_step(state, action)
+        new_state = wm.action_step(state, action)
         deter_state = state["deter"]
         if exploration_reward:
             r = compute_exploration_reward(one_step_ensemble, deter_state, action)[0]
         else:
-            r = wm.reward(wm.get_feat(state))[0]
+            r = wm.reward(wm.get_feat(new_state))[0]
+        state = new_state
         returns += r
     return returns.item()
 
@@ -155,7 +160,30 @@ def UCT_search(
         else:
             leaf.is_expanded = True  # for terminal states
             leaf.is_terminal = True  # for terminal states
-            has_not_reached_max_depth = False
+            if ctr >= iterations:
+                if return_top_k_paths:
+                    l = compute_all_paths(root)
+                    l.sort(key=lambda x: x[0][1])
+                    top_k_paths = l[-k:]
+                    for path in top_k_paths:
+                        has_not_reached_max_depth = has_not_reached_max_depth and not (
+                            len(path) == max_steps
+                        )
+                else:
+                    output_actions = []
+                    cur = root
+                    while cur.children != {}:
+                        max_Q = -np.inf
+                        max_a = None
+                        max_child = None
+                        for a, child in cur.children.items():
+                            if child.Q() >= max_Q:
+                                max_Q = child.Q()
+                                max_a = a
+                                max_child = child
+                        output_actions.append(np.array(max_a).reshape(1, -1))
+                        cur = max_child
+                    has_not_reached_max_depth = not (len(output_actions) == max_steps)
         leaf.backup(returns)
         ctr += 1
 
@@ -224,8 +252,8 @@ def step_wm(
     for k, v in state.items():
         state_n[k] = v.repeat(num_primitives, 1)
     actions = generate_full_actions(wm, state_n, actor, num_primitives, evaluation)
-    new_states = wm.action_step(state_n, actions)
     deter_state = state_n["deter"]
+    new_states = wm.action_step(state_n, actions)
     if exploration_reward:
         r = compute_exploration_reward(one_step_ensemble, deter_state, actions)
     else:
@@ -358,7 +386,7 @@ class UCTNode:
 
 
 if __name__ == "__main__":
-    env = KitchenSlideCabinetV0(
+    env = KitchenHingeCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=True
     )
     ptu.set_gpu_mode(True)
@@ -394,14 +422,17 @@ if __name__ == "__main__":
         one_step_ensemble,
         actor,
         (state, 0),
-        10000,
+        1000,
         env.max_steps,
         env.num_primitives,
-        return_open_loop_plan=False,
-        exploration_weight=0.1,
+        return_open_loop_plan=True,
+        exploration_weight=0.01,
         evaluation=True,
         exploration_reward=True,
+        return_top_k_paths=True,
+        k=10,
     )
+    print(action.shape)
     print(time.time() - t)
     t = time.time()
     # state, r, _ = step_wm(wm, one_step_ensemble, (state, 0), actor, env.num_primitives)
