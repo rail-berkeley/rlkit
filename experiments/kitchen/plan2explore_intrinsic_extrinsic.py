@@ -69,7 +69,6 @@ if __name__ == "__main__":
             stochastic_state_size=60,
             deterministic_state_size=400,
             embedding_size=1024,
-            use_depth_wise_separable_conv=False,
             use_per_primitive_feature_extractor=False,
         ),
         one_step_ensemble_kwargs=dict(
@@ -92,10 +91,8 @@ if __name__ == "__main__":
             optimizer_class="apex_adam",
             pred_discount_loss_scale=10.0,
             use_pred_discount=True,
-            # train_exploration_actor_with_intrinsic_and_extrinsic_reward=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            # detach_rewards=False,
             detach_rewards=True,
         ),
         num_expl_envs=args.num_expl_envs,

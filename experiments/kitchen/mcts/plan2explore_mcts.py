@@ -58,9 +58,6 @@ if __name__ == "__main__":
             action_scale=1.4,
             use_combined_action_space=True,
         ),
-        vf_kwargs=dict(
-            num_layers=3,
-        ),
         actor_kwargs=dict(
             mean_scale=5.0,
             init_std=5.0,
@@ -68,12 +65,21 @@ if __name__ == "__main__":
             use_per_primitive_actor=False,
             discrete_continuous_dist=True,
         ),
+        vf_kwargs=dict(
+            num_layers=3,
+        ),
         model_kwargs=dict(
             model_hidden_size=400,
             stochastic_state_size=60,
             deterministic_state_size=400,
             embedding_size=1024,
             use_per_primitive_feature_extractor=False,
+        ),
+        one_step_ensemble_kwargs=dict(
+            num_models=5,
+            hidden_size=400,
+            num_layers=4,
+            output_embeddings=False,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -85,13 +91,13 @@ if __name__ == "__main__":
             opt_level="O1",
             lam=0.95,
             free_nats=3.0,
-            optimizer_class="apex_adam",
             kl_loss_scale=1.0,
+            optimizer_class="apex_adam",
+            pred_discount_loss_scale=10.0,
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
             mcts_iterations=10000,
-            pred_discount_loss_scale=10.0,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -109,39 +115,33 @@ if __name__ == "__main__":
             exploration=False,
             open_loop_plan=True,
         ),
-        one_step_ensemble_kwargs=dict(
-            num_models=5,
-            hidden_size=400,
-            num_layers=4,
-            output_embeddings=False,
-        ),
         mcts_iterations=10000,
         randomly_sample_discrete_actions=False,
     )
     search_space = {
         "env_class": [
-            # "microwave",
-            # "top_left_burner",
-            # "slide_cabinet",
-            # "kettle",
+            "microwave",
+            "top_left_burner",
+            "slide_cabinet",
+            "kettle",
             "hinge_cabinet",
-            # "light_switch",
+            "light_switch",
         ],
-        # "randomly_sample_discrete_actions": [True, False],
+        "randomly_sample_discrete_actions": [True, False],
         # extrinsic reward_only
-        # "trainer_kwargs.exploration_reward_scale": [0.0],
-        # "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
-        #     True
-        # ],
-        # "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
-        # # intrinsic + extrinsic reward
-        # "trainer_kwargs.exploration_reward_scale": [
-        #     1.0,
-        # ],
-        # "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
-        #     True
-        # ],
-        # "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        "trainer_kwargs.exploration_reward_scale": [0.0],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            True
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
+        # intrinsic + extrinsic reward
+        "trainer_kwargs.exploration_reward_scale": [
+            1.0,
+        ],
+        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
+            True
+        ],
+        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
         # intrinsic reward_only
         "trainer_kwargs.exploration_reward_scale": [10000],
         "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
