@@ -48,7 +48,8 @@ def random_rollout(
     max_steps,
     num_primitives,
     step_count,
-    exploration_reward,
+    intrinsic_reward_scale=1.0,
+    extrinsic_reward_scale=0.0,
     evaluation=False,
 ):
     state, r = state
@@ -56,11 +57,10 @@ def random_rollout(
         return r
     returns = 0
     for i in range(step_count, max_steps):
-        discrete_action = np.random.choice(num_primitives)
+        idx = np.random.choice(num_primitives)
         feat = wm.get_feat(state)
-        discrete_action = F.one_hot(
-            ptu.from_numpy(np.array([discrete_action])).long(), num_primitives
-        ).reshape(1, -1)
+        discrete_action = ptu.zeros(num_primitives).reshape(1, -1)
+        discrete_action[0][idx] = 1.0
         action_input = (discrete_action, feat)
         action_dist = actor(action_input)
         if evaluation:
@@ -72,13 +72,17 @@ def random_rollout(
         action = torch.cat((discrete_action, continuous_action), 1)
         new_state = wm.action_step(state, action)
         deter_state = state["deter"]
-        if exploration_reward:
-            r = compute_exploration_reward(one_step_ensemble, deter_state, action)[0]
-        else:
-            r = wm.reward(wm.get_feat(new_state))[0]
+        r = ptu.ones(1)
+        if intrinsic_reward_scale > 0.0:
+            r += (
+                compute_exploration_reward(one_step_ensemble, deter_state, action)
+                * intrinsic_reward_scale
+            )
+        if extrinsic_reward_scale > 0.0:
+            r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
         state = new_state
         returns += r
-    return returns.item()
+    return returns[0].item()
 
 
 def compute_all_paths(cur):
@@ -123,10 +127,11 @@ def UCT_search(
     num_primitives,
     exploration_weight=1.0,
     return_open_loop_plan=False,
-    exploration_reward=False,
     return_top_k_paths=False,
     k=1,
     evaluation=False,
+    intrinsic_reward_scale=1.0,
+    extrinsic_reward_scale=0.0,
 ):
     root = UCTNode(
         wm,
@@ -135,8 +140,9 @@ def UCT_search(
         state,
         num_primitives,
         max_steps,
+        intrinsic_reward_scale=intrinsic_reward_scale,
+        extrinsic_reward_scale=extrinsic_reward_scale,
         exploration_weight=exploration_weight,
-        exploration_reward=exploration_reward,
         evaluation=evaluation,
     )
     root.expand()
@@ -152,7 +158,8 @@ def UCT_search(
             max_steps,
             num_primitives,
             leaf.step_count,
-            exploration_reward,
+            intrinsic_reward_scale=intrinsic_reward_scale,
+            extrinsic_reward_scale=extrinsic_reward_scale,
             evaluation=evaluation,
         )
         if leaf.step_count < max_steps:
@@ -244,21 +251,26 @@ def step_wm(
     state,
     actor,
     num_primitives,
-    exploration_reward=False,
     evaluation=False,
+    intrinsic_reward_scale=1.0,
+    extrinsic_reward_scale=0.0,
 ):
     state, _ = state
     state_n = {}
     for k, v in state.items():
         state_n[k] = v.repeat(num_primitives, 1)
-    actions = generate_full_actions(wm, state_n, actor, num_primitives, evaluation)
+    action = generate_full_actions(wm, state_n, actor, num_primitives, evaluation)
     deter_state = state_n["deter"]
-    new_states = wm.action_step(state_n, actions)
-    if exploration_reward:
-        r = compute_exploration_reward(one_step_ensemble, deter_state, actions)
-    else:
-        r = wm.reward(wm.get_feat(new_states))
-    return new_states, r, actions
+    new_state = wm.action_step(state_n, action)
+    r = ptu.ones(deter_state.shape[0])
+    if intrinsic_reward_scale > 0.0:
+        r += (
+            compute_exploration_reward(one_step_ensemble, deter_state, action).flatten()
+            * intrinsic_reward_scale
+        )
+    if extrinsic_reward_scale > 0.0:
+        r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
+    return new_state, r, action
 
 
 class UCTNode:
@@ -273,8 +285,9 @@ class UCTNode:
         step_count=0,
         exploration_weight=1.0,
         parent=None,
-        exploration_reward=False,
         evaluation=False,
+        intrinsic_reward_scale=1.0,
+        extrinsic_reward_scale=0.0,
     ):
         self.wm = wm
         self.one_step_ensemble = one_step_ensemble
@@ -289,7 +302,8 @@ class UCTNode:
         self.num_primitives = num_primitives
         self.step_count = step_count
         self.exploration_weight = exploration_weight
-        self.exploration_reward = exploration_reward
+        self.intrinsic_reward_scale = intrinsic_reward_scale
+        self.extrinsic_reward_scale = extrinsic_reward_scale
         self.evaluation = evaluation
         self.max_steps = max_steps
 
@@ -323,6 +337,8 @@ class UCTNode:
             self.state,
             self.actor,
             self.num_primitives,
+            intrinsic_reward_scale=self.intrinsic_reward_scale,
+            extrinsic_reward_scale=self.extrinsic_reward_scale,
             evaluation=self.evaluation,
         )
         for i in range(self.actions.shape[0]):
@@ -338,7 +354,8 @@ class UCTNode:
                 node.max_steps,
                 node.num_primitives,
                 node.step_count,
-                node.exploration_reward,
+                intrinsic_reward_scale=self.intrinsic_reward_scale,
+                extrinsic_reward_scale=self.extrinsic_reward_scale,
                 evaluation=node.evaluation,
             )
             node.backup(returns)
@@ -351,6 +368,8 @@ class UCTNode:
             self.state,
             self.actor,
             self.num_primitives,
+            intrinsic_reward_scale=self.intrinsic_reward_scale,
+            extrinsic_reward_scale=self.extrinsic_reward_scale,
             evaluation=self.evaluation,
         )
         for i in range(self.actions.shape[0]):
@@ -371,7 +390,8 @@ class UCTNode:
             self.step_count + 1,
             exploration_weight=self.exploration_weight,
             parent=self,
-            exploration_reward=self.exploration_reward,
+            intrinsic_reward_scale=self.intrinsic_reward_scale,
+            extrinsic_reward_scale=self.extrinsic_reward_scale,
             evaluation=self.evaluation,
         )
         self.children[key] = node
@@ -426,11 +446,12 @@ if __name__ == "__main__":
         env.max_steps,
         env.num_primitives,
         return_open_loop_plan=True,
-        exploration_weight=0.01,
+        exploration_weight=0.1,
         evaluation=True,
-        exploration_reward=True,
-        return_top_k_paths=True,
-        k=10,
+        intrinsic_reward_scale=0.0,
+        extrinsic_reward_scale=1.0,
+        return_top_k_paths=False,
+        k=1,
     )
     print(action.shape)
     print(time.time() - t)

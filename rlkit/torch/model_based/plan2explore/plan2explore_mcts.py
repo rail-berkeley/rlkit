@@ -95,6 +95,11 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         detach_rewards=True,
         mcts_iterations=1000,
         randomly_sample_discrete_actions=False,
+        exploration_actor_intrinsic_reward_scale=1.0,
+        exploration_actor_extrinsic_reward_scale=0.0,
+        actor_intrinsic_reward_scale=0.0,
+        actor_mcts_exploration_weight=0.1,
+        exploration_actor_mcts_exploration_weight=0.01,
     ):
         super(Plan2ExploreMCTSTrainer, self).__init__(
             env,
@@ -222,6 +227,17 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         )
         self.mcts_iterations = mcts_iterations
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
+        self.exploration_actor_intrinsic_reward_scale = (
+            exploration_actor_intrinsic_reward_scale
+        )
+        self.exploration_actor_extrinsic_reward_scale = (
+            exploration_actor_extrinsic_reward_scale
+        )
+        self.actor_intrinsic_reward_scale = actor_intrinsic_reward_scale
+        self.actor_mcts_exploration_weight = actor_mcts_exploration_weight
+        self.exploration_actor_mcts_exploration_weight = (
+            exploration_actor_mcts_exploration_weight
+        )
 
     def try_update_target_networks(self):
         if (
@@ -520,10 +536,11 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             self.mcts_iterations,
             self.imagination_horizon,
             self.world_model.env.num_primitives,
-            exploration_weight=0.1,
+            exploration_weight=self.actor_mcts_exploration_weight,
             return_open_loop_plan=True,
-            exploration_reward=False,
             evaluation=False,
+            intrinsic_reward_scale=self.actor_intrinsic_reward_scale,
+            extrinsic_reward_scale=1.0,
         )
 
         with FreezeParameters(world_model_params):
@@ -534,7 +551,7 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
-                    imag_next_deter_states,
+                    _,
                     extrinsic_reward,
                 ) = self.imagine_ahead(post, self.actor, discrete_actions)
             else:
@@ -544,29 +561,14 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
-                    imag_next_deter_states,
+                    _,
                 ) = self.imagine_ahead(post, self.actor, discrete_actions)
         with FreezeParameters(world_model_params + vf_params + target_vf_params):
+            intrinsic_reward = compute_exploration_reward(
+                self.one_step_ensemble, imag_deter_states, imag_actions
+            )
             if self.image_goals is None:
-                if self.use_imag_next_feat:
-                    intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, imag_next_deter_states, imag_actions
-                    )
-                    extrinsic_reward = self.world_model.reward(imag_next_feat)
-                else:
-                    intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, imag_deter_states, imag_actions
-                    )
-                    extrinsic_reward = self.world_model.reward(imag_feat)
-            else:
-                if self.use_imag_next_feat:
-                    intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, imag_next_deter_states, imag_actions
-                    )
-                else:
-                    intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble, imag_deter_states, imag_actions
-                    )
+                extrinsic_reward = self.world_model.reward(imag_feat)
 
             intrinsic_reward = torch.cat(
                 [
@@ -589,26 +591,15 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                 imag_reward = extrinsic_reward
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
-                    if self.use_imag_next_feat:
-                        discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(imag_next_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
-                    else:
-                        discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(imag_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
             else:
                 discount = self.discount * torch.ones_like(imag_reward)
-            if self.use_imag_next_feat:
-                imag_target_value = self.target_vf(imag_next_feat)
-                imag_value = self.vf(imag_next_feat)
-            else:
-                imag_target_value = self.target_vf(imag_feat)
-                imag_value = self.vf(imag_feat)
+            imag_target_value = self.target_vf(imag_feat)
+            imag_value = self.vf(imag_feat)
         imag_returns = lambda_return(
             imag_reward[:-1],
             imag_target_value[:-1],
@@ -736,10 +727,11 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
                 self.mcts_iterations,
                 self.imagination_horizon,
                 self.world_model.env.num_primitives,
-                exploration_weight=0.01,
+                exploration_weight=self.exploration_actor_mcts_exploration_weight,
                 return_open_loop_plan=True,
-                exploration_reward=True,
                 evaluation=False,
+                intrinsic_reward_scale=self.exploration_actor_intrinsic_reward_scale,
+                extrinsic_reward_scale=self.exploration_actor_extrinsic_reward_scale,
             )
 
         with FreezeParameters(world_model_params):
@@ -776,38 +768,15 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             + one_step_ensemble_params
             + exploration_target_vf_params
         ):
+            exploration_intrinsic_reward = compute_exploration_reward(
+                self.one_step_ensemble,
+                exploration_imag_deter_states,
+                exploration_imag_actions,
+            )
             if self.image_goals is None:
-                if self.use_imag_next_feat:
-                    exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble,
-                        exploration_imag_next_deter_states,
-                        exploration_imag_actions,
-                    )
-                    exploration_extrinsic_reward = self.world_model.reward(
-                        exploration_imag_next_feat
-                    )
-                else:
-                    exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble,
-                        exploration_imag_deter_states,
-                        exploration_imag_actions,
-                    )
-                    exploration_extrinsic_reward = self.world_model.reward(
-                        exploration_imag_feat
-                    )
-            else:
-                if self.use_imag_next_feat:
-                    exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble,
-                        exploration_imag_next_deter_states,
-                        exploration_imag_actions,
-                    )
-                else:
-                    exploration_intrinsic_reward = compute_exploration_reward(
-                        self.one_step_ensemble,
-                        exploration_imag_deter_states,
-                        exploration_imag_actions,
-                    )
+                exploration_extrinsic_reward = self.world_model.reward(
+                    exploration_imag_feat
+                )
 
             exploration_reward = torch.cat(
                 [
@@ -830,32 +799,19 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
 
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
-                    if self.use_imag_next_feat:
-                        exploration_discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(exploration_imag_next_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
-                    else:
-                        exploration_discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(exploration_imag_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
+                    exploration_discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(exploration_imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
             else:
                 exploration_discount = self.discount * torch.ones_like(
                     exploration_reward
                 )
-            if self.use_imag_next_feat:
-                exploration_imag_target_value = self.exploration_target_vf(
-                    exploration_imag_next_feat
-                )
-                exploration_imag_value = self.exploration_vf(exploration_imag_next_feat)
-            else:
-                exploration_imag_target_value = self.exploration_target_vf(
-                    exploration_imag_feat
-                )
-                exploration_imag_value = self.exploration_vf(exploration_imag_feat)
+            exploration_imag_target_value = self.exploration_target_vf(
+                exploration_imag_feat
+            )
+            exploration_imag_value = self.exploration_vf(exploration_imag_feat)
         exploration_imag_returns = lambda_return(
             exploration_reward[:-1],
             exploration_imag_target_value[:-1],

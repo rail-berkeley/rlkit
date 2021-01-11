@@ -24,9 +24,10 @@ class HybridMCTSPolicy(Policy):
         mcts_iterations,
         exploration_weight,
         open_loop_plan=False,
-        parallelize=False,
-        exploration=False,
+        evaluation=True,
         randomly_sample_discrete_actions=False,
+        intrinsic_reward_scale=1.0,
+        extrinsic_reward_scale=0.0,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -44,11 +45,12 @@ class HybridMCTSPolicy(Policy):
         self.mcts_iterations = mcts_iterations
         self.exploration_weight = exploration_weight
         self.open_loop_plan = open_loop_plan
-        self.parallelize = parallelize
         self.actor = actor
-        self.exploration = exploration
         self.one_step_ensemble = one_step_ensemble
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
+        self.evaluation = evaluation
+        self.intrinsic_reward_scale = intrinsic_reward_scale
+        self.extrinsic_reward_scale = extrinsic_reward_scale
 
     def get_action(self, observation):
         """
@@ -100,8 +102,9 @@ class HybridMCTSPolicy(Policy):
                 self.world_model.env.max_steps,
                 self.world_model.env.num_primitives,
                 return_open_loop_plan=False,
-                exploration_reward=self.exploration,
-                evaluation=not self.exploration,
+                evaluation=self.evaluation,
+                intrinsic_reward_scale=self.intrinsic_reward_scale,
+                extrinsic_reward_scale=self.extrinsic_reward_scale,
                 exploration_weight=self.exploration_weight,
             )
         self.ctr += 1
@@ -131,11 +134,11 @@ class HybridMCTSPolicy(Policy):
                 self.world_model.env.max_steps,
                 self.world_model.env.num_primitives,
                 return_open_loop_plan=True,
-                exploration_reward=self.exploration,
                 return_top_k_paths=True,
                 k=o.shape[0],
-                evaluation=not self.exploration,
-                exploration_weight=self.exploration_weight,
+                evaluation=self.evaluation,
+                intrinsic_reward_scale=self.intrinsic_reward_scale,
+                extrinsic_reward_scale=self.extrinsic_reward_scale,
             )
 
 

@@ -97,57 +97,36 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            mcts_iterations=10000,
+            mcts_iterations=5000,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
         path_length_specific_discount=True,
         use_mcts_policy=True,
         expl_policy_kwargs=dict(
-            exploration_weight=0.01,
-            parallelize=False,
-            exploration=True,
+            exploration_weight=1.0,
+            evaluation=False,
             open_loop_plan=True,
         ),
         eval_policy_kwargs=dict(
-            exploration_weight=0.1,
-            parallelize=False,
-            exploration=False,
+            exploration_weight=1.0,
+            evaluation=True,
             open_loop_plan=True,
         ),
-        mcts_iterations=10000,
+        mcts_iterations=5000,
         randomly_sample_discrete_actions=False,
+        reward_type="intrinsic",
     )
     search_space = {
         "env_class": [
             "microwave",
             "top_left_burner",
             "slide_cabinet",
-            "kettle",
-            "hinge_cabinet",
-            "light_switch",
+            # "kettle",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        "randomly_sample_discrete_actions": [True, False],
-        # extrinsic reward_only
-        "trainer_kwargs.exploration_reward_scale": [0.0],
-        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
-            True
-        ],
-        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
-        # intrinsic + extrinsic reward
-        "trainer_kwargs.exploration_reward_scale": [
-            1.0,
-        ],
-        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
-            True
-        ],
-        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [True],
-        # intrinsic reward_only
-        "trainer_kwargs.exploration_reward_scale": [10000],
-        "trainer_kwargs.train_exploration_actor_with_intrinsic_and_extrinsic_reward": [
-            False
-        ],
-        "trainer_kwargs.train_actor_with_intrinsic_and_extrinsic_reward": [False],
+        "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
