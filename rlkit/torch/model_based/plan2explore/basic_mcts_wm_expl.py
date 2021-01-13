@@ -72,7 +72,7 @@ def random_rollout(
         action = torch.cat((discrete_action, continuous_action), 1)
         new_state = wm.action_step(state, action)
         deter_state = state["deter"]
-        r = ptu.ones(1)
+        r = ptu.zeros(1)
         if intrinsic_reward_scale > 0.0:
             r += (
                 compute_exploration_reward(one_step_ensemble, deter_state, action)
@@ -262,7 +262,7 @@ def step_wm(
     action = generate_full_actions(wm, state_n, actor, num_primitives, evaluation)
     deter_state = state_n["deter"]
     new_state = wm.action_step(state_n, action)
-    r = ptu.ones(deter_state.shape[0])
+    r = ptu.zeros(deter_state.shape[0])
     if intrinsic_reward_scale > 0.0:
         r += (
             compute_exploration_reward(one_step_ensemble, deter_state, action).flatten()
@@ -410,7 +410,7 @@ if __name__ == "__main__":
         fixed_schema=False, delta=0.0, dense=False, image_obs=True
     )
     ptu.set_gpu_mode(True)
-
+    torch.backends.cudnn.benchmark = True
     wm = WorldModel(
         env.action_space.low.size,
         env.image_shape,
@@ -442,7 +442,7 @@ if __name__ == "__main__":
         one_step_ensemble,
         actor,
         (state, 0),
-        1000,
+        10000,
         env.max_steps,
         env.num_primitives,
         return_open_loop_plan=True,
