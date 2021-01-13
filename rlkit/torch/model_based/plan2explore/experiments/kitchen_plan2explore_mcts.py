@@ -39,7 +39,9 @@ def experiment(variant):
         StateConcatObsWorldModel,
         WorldModel,
     )
-    from rlkit.torch.model_based.plan2explore.actor_models import ConditionalActorModel
+    from rlkit.torch.model_based.plan2explore.actor_models import (
+        ConditionalContinuousActorModel,
+    )
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
         OneStepEnsembleModel,
     )
@@ -120,7 +122,7 @@ def experiment(variant):
         **variant["model_kwargs"],
         env=eval_envs[0],
     )
-    actor = ConditionalActorModel(
+    actor = ConditionalContinuousActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
@@ -148,7 +150,7 @@ def experiment(variant):
     )
     variant["trainer_kwargs"]["target_vf"] = target_vf
 
-    exploration_actor = ConditionalActorModel(
+    exploration_actor = ConditionalContinuousActorModel(
         [variant["model_kwargs"]["model_hidden_size"]] * 4,
         variant["model_kwargs"]["stochastic_state_size"]
         + variant["model_kwargs"]["deterministic_state_size"],

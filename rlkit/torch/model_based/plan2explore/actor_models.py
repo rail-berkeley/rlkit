@@ -7,7 +7,7 @@ from rlkit.torch.model_based.dreamer.actor_models import SampleDist, TanhBijecto
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
-class ConditionalActorModel(torch.nn.Module):
+class ConditionalContinuousActorModel(torch.nn.Module):
     def __init__(
         self,
         hidden_sizes,

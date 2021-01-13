@@ -14,7 +14,9 @@ from d4rl.kitchen.kitchen_envs import (
 
 from rlkit.torch import pytorch_util as ptu
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
-from rlkit.torch.model_based.plan2explore.actor_models import ConditionalActorModel
+from rlkit.torch.model_based.plan2explore.actor_models import (
+    ConditionalContinuousActorModel,
+)
 from rlkit.torch.model_based.plan2explore.latent_space_models import (
     OneStepEnsembleModel,
 )
@@ -425,7 +427,7 @@ if __name__ == "__main__":
         num_layers=4,
         output_embeddings=False,
     ).to(ptu.device)
-    actor = ConditionalActorModel(
+    actor = ConditionalContinuousActorModel(
         [400] * 4,
         wm.feature_size,
         env,
