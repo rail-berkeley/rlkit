@@ -4,9 +4,10 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from torch.distributions import kl_divergence as kld
-from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
+
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
+from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 from rlkit.torch.model_based.dreamer.utils import (
     FreezeParameters,
     lambda_return,

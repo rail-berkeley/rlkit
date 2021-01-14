@@ -116,7 +116,9 @@ def experiment(variant):
     )
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
-        num_hidden_layers = 2 #since the architecture is doubled (discrete and continuous)
+        num_hidden_layers = (
+            2  # since the architecture is doubled (discrete and continuous)
+        )
     else:
         actor_model_class = ActorModel
         num_hidden_layers = 4

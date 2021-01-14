@@ -32,9 +32,8 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
-            num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
         )
@@ -96,14 +95,10 @@ if __name__ == "__main__":
         ),
         expl_policy_kwargs=dict(
             evaluation=False,
-            batch_size=64,
-            start_spot=int(1.5 * 64),
-            randomly_sample_discrete_actions=False,
         ),
         eval_policy_kwargs=dict(
             evaluation=True,
-            batch_size=64,
-            start_spot=int(1.5 * 64),
+            randomly_sample_discrete_actions=False,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -114,7 +109,7 @@ if __name__ == "__main__":
         randomly_sample_discrete_actions=False,
         mcts_algorithm=False,
         actor_model_class="conditional_actor_model",
-        trainer_class="plan2explore_advanced_mcts",
+        batch_size=64,
     )
 
     search_space = {
@@ -127,11 +122,12 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "path_length_specific_discount": [True, False],
-        "mcts_iterations": [1000, 10000],
+        "mcts_iterations": [1000],
         "dirichlet_alpha": [
-            0.03,
+            0.25,  # from atari
             0.15,
             0.3,
+            0.03,
         ],
         "progressive_widening_constant": [0.1, 1],
         "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],

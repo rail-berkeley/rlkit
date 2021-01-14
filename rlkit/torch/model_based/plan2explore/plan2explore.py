@@ -5,9 +5,10 @@ import gtimer as gt
 import numpy as np
 import torch
 import torch.optim as optim
-from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
+
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossStatistics
+from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
 from rlkit.torch.model_based.dreamer.utils import FreezeParameters, lambda_return
 

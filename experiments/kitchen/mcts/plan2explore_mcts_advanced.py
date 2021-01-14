@@ -94,7 +94,6 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            mcts_iterations=5000,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,

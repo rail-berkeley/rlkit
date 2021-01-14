@@ -118,7 +118,7 @@ def Advanced_UCT_search(
     return_top_k_paths=True,
     K=1,
 ):
-    start_spot = int(1.5*batch_size)
+    start_spot = int(1.5 * batch_size)
     root = UCTNode(
         wm,
         one_step_ensemble,
