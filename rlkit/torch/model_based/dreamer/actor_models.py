@@ -226,6 +226,12 @@ class ConditionalActorModel(torch.nn.Module):
         action = torch.cat((discrete, continuous), -1)
         return action
 
+    def compute_continuous_exploration_action(self, continuous, expl_amount):
+        continuous = Normal(continuous, expl_amount).rsample()
+        if self.use_tanh_normal:
+            continuous = torch.clamp(continuous, -1, 1)
+        return continuous
+
 
 # "atanh", "TanhBijector" and "SampleDist" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
@@ -417,6 +423,10 @@ class SplitConditionalDist:
     def log_prob(self, actions):
         discrete_actions = actions[:, :13]
         dist2 = self.compute_continuous_dist(discrete_actions)
+        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, 13:])
+
+    def log_prob_given_continuous_dist(self, actions, dist2):
+        discrete_actions = actions[:, :13]
         return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, 13:])
 
 

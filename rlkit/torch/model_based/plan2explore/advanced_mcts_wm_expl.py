@@ -13,6 +13,7 @@ from d4rl.kitchen.kitchen_envs import (
 )
 
 from rlkit.torch import pytorch_util as ptu
+from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
 from rlkit.torch.model_based.plan2explore.actor_models import (
@@ -112,6 +113,7 @@ def UCT_search(
     batch_size=4,
     discount=1.0,
     start_spot=100,
+    dirichlet_alpha=0.03,  # todo: sweep .03, .15, .3 and other numbers
 ):
     root = UCTNode(
         wm,
@@ -128,11 +130,17 @@ def UCT_search(
         extrinsic_reward_scale=extrinsic_reward_scale,
         evaluation=evaluation,
     )
-    root.add_exploration_noise(dirichlet_alpha=0.03, exploration_fraction=0.25)
+    root.add_exploration_noise(
+        dirichlet_alpha=dirichlet_alpha, exploration_fraction=0.25
+    )
     ctr = 0
     eval_list = []
     min_max_stats = MinMaxStats()
     while ctr < iterations:
+        if ctr > start_spot:
+            import ipdb
+
+            ipdb.set_trace()
         leaf = root.select_leaf(
             min_max_stats,
             discount,
@@ -252,16 +260,34 @@ def generate_full_actions(
     discrete_actions,
     evaluation=False,
 ):
-    # todo: take log prob of full action not just cont. actio
     feat = wm.get_feat(state)
-    action_input = (discrete_actions, feat)
-    action_dist = actor(action_input)
-    if evaluation:
-        continuous_action = action_dist.mode()
-    else:
-        continuous_action = actor.compute_exploration_action(action_dist.sample(), 0.3)
-    actions = torch.cat((discrete_actions, continuous_action), 1)
-    return actions, action_dist.log_prob(continuous_action).flatten()
+    if type(actor) == ConditionalContinuousActorModel:
+        action_input = (discrete_actions, feat)
+        action_dist = actor(action_input)
+        if evaluation:
+            continuous_action = action_dist.mode()
+        else:
+            continuous_action = actor.compute_continuous_exploration_action(
+                action_dist.sample(), 0.3
+            )
+        actions = torch.cat((discrete_actions, continuous_action), 1)
+        priors = action_dist.log_prob(continuous_action)
+    elif type(actor) == ConditionalActorModel:
+        action_input = feat
+        action_dist = actor(action_input)
+        cont_dist = action_dist.compute_continuous_dist(discrete_actions)
+        if evaluation:
+            continuous_action = cont_dist.mode()
+        else:
+            continuous_action = actor.compute_continuous_exploration_action(
+                cont_dist.sample(), 0.3
+            )
+        actions = torch.cat((discrete_actions, continuous_action), 1)
+        priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
+    return (
+        actions,
+        priors / priors.sum(),
+    )  # todo: check if it is fine to normalize this?
 
 
 def step_wm(
@@ -326,7 +352,10 @@ class UCTNode:
         self.prior = prior
 
     def average_value(self):
-        value = self.total_value / (1 + self.number_visits)
+        if self.number_visits > 0:
+            value = self.total_value / (self.number_visits)
+        else:
+            value = 0
         return value
 
     def Q(self, min_max_stats, discount):
@@ -341,31 +370,36 @@ class UCTNode:
         return prior_score
 
     def score(self, node, min_max_stats, discount, c1, c2):
-        return node.Q(min_max_stats, discount) + node.U(c1, c2)
+        q = node.Q(min_max_stats, discount)
+        u = node.U(c1, c2)
+        return q + u
 
     def best_child(self, min_max_stats, discount, c1, c2):
-        max_score = max(
+        child_scores = [
             self.score(node, min_max_stats, discount, c1, c2)
             for node in self.children.values()
-        )
+        ]
+        max_score = max(child_scores)
         nodes_with_top_score = [
             node
             for node in self.children.values()
             if self.score(node, min_max_stats, discount, c1, c2) == max_score
         ]
         idx = np.random.randint(len(nodes_with_top_score))
-        return nodes_with_top_score[idx]
+        best_node = nodes_with_top_score[idx]
+        return best_node
 
     def select_leaf(self, min_max_stats, discount, c1, c2, virtual_loss=False):
         current = self
         while current.is_expanded and not current.is_terminal:
             if virtual_loss:
                 current.number_visits += 1
-                current.total_value -= 100
+                current.total_value -= 10000
+                min_max_stats.update(self.reward + discount * self.average_value())
             current = current.best_child(min_max_stats, discount, c1, c2)
         if virtual_loss:
             current.number_visits += 1
-            current.total_value -= 100
+            current.total_value -= 10000
         return current
 
     # def progressively_widen(self):
@@ -443,7 +477,7 @@ class UCTNode:
         current = self
         while current is not None:
             if virtual_loss:
-                current.total_value += 100 + value
+                current.total_value += 10000 + value
             else:
                 current.number_visits += 1
                 current.total_value += value
@@ -485,10 +519,18 @@ if __name__ == "__main__":
         num_layers=4,
         output_embeddings=False,
     ).to(ptu.device)
-    actor = ConditionalContinuousActorModel(
+    # actor = ConditionalContinuousActorModel(
+    #     [400] * 4,
+    #     wm.feature_size,
+    #     env,
+    #     discrete_action_dim=env.num_primitives,
+    #     continuous_action_dim=env.max_arg_len,
+    # ).to(ptu.device)
+    actor = ConditionalActorModel(
         [400] * 4,
         wm.feature_size,
         env,
+        discrete_continuous_dist=True,
         discrete_action_dim=env.num_primitives,
         continuous_action_dim=env.max_arg_len,
     ).to(ptu.device)
@@ -510,7 +552,7 @@ if __name__ == "__main__":
     import time
 
     num_tries = 100
-    for batch_size in [1, 2, 4, 8, 16, 32, 64, 128, 256]:
+    for batch_size in [1, 2, 4, 8, 16, 32, 64]:
         total_time = 0
         for i in range(num_tries):
             t = time.time()
