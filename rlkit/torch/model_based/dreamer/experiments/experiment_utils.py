@@ -52,6 +52,10 @@ def preprocess_variant(variant, debug):
         ]
         variant["expl_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
         variant["eval_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
+
+        variant["expl_policy_kwargs"]["batch_size"] = variant["batch_size"]
+        variant["expl_policy_kwargs"]["batch_size"] = variant["batch_size"]
+
         variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
             "progressive_widening_constant"
         ]

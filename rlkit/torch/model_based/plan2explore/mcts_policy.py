@@ -163,7 +163,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         extrinsic_reward_scale=0.0,
         batch_size=4,
         discount=1.0,
-        start_spot=100,
         dirichlet_alpha=0.03,
         progressive_widening_constant=0.1,
         open_loop_plan=True,
@@ -190,7 +189,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         self.extrinsic_reward_scale = extrinsic_reward_scale
         self.batch_size = batch_size
         self.discount = discount
-        self.start_spot = start_spot
         self.dirichlet_alpha = dirichlet_alpha
         self.progressive_widening_constant = progressive_widening_constant
         self.vf = vf
@@ -258,7 +256,6 @@ class HybridAdvancedMCTSPolicy(Policy):
                     extrinsic_reward_scale=self.extrinsic_reward_scale,
                     batch_size=self.batch_size,
                     discount=self.discount,
-                    start_spot=self.start_spot,
                     dirichlet_alpha=self.dirichlet_alpha,
                     progressive_widening_constant=self.progressive_widening_constant,
                 )
@@ -296,7 +293,6 @@ class HybridAdvancedMCTSPolicy(Policy):
                 extrinsic_reward_scale=self.extrinsic_reward_scale,
                 batch_size=self.batch_size,
                 discount=self.discount,
-                start_spot=self.start_spot,
                 dirichlet_alpha=self.dirichlet_alpha,
                 progressive_widening_constant=self.progressive_widening_constant,
                 return_open_loop_plan=True,

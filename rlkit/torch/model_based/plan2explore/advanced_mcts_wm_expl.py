@@ -112,13 +112,13 @@ def Advanced_UCT_search(
     extrinsic_reward_scale=0.0,
     batch_size=4,
     discount=1.0,
-    start_spot=100,
     dirichlet_alpha=0.03,  # todo: sweep .03, .15, .3 and other numbers
     progressive_widening_constant=0.1,
     return_open_loop_plan=True,
     return_top_k_paths=True,
     K=1,
 ):
+    start_spot = int(1.5*batch_size)
     root = UCTNode(
         wm,
         one_step_ensemble,
@@ -398,18 +398,25 @@ class UCTNode:
         return q + u
 
     def best_child(self, min_max_stats, discount, c1, c2):
-        child_scores = [
-            self.score(node, min_max_stats, discount, c1, c2)
-            for node in self.children.values()
-        ]
-        max_score = max(child_scores)
-        nodes_with_top_score = [
-            node
-            for node in self.children.values()
-            if self.score(node, min_max_stats, discount, c1, c2) == max_score
-        ]
-        idx = np.random.randint(len(nodes_with_top_score))
-        best_node = nodes_with_top_score[idx]
+        # child_scores = [
+        #     self.score(node, min_max_stats, discount, c1, c2)
+        #     for node in self.children.values()
+        # ]
+        # max_score = max(child_scores)
+        # nodes_with_top_score = [
+        #     node
+        #     for node in self.children.values()
+        #     if self.score(node, min_max_stats, discount, c1, c2) == max_score
+        # ]
+        max_score = -np.inf
+        best_node = None
+        for node in self.children.values():
+            score = self.score(node, min_max_stats, discount, c1, c2)
+            if score > max_score:
+                max_score = score
+                best_node = node
+        # idx = np.random.randint(len(nodes_with_top_score))
+        # best_node = nodes_with_top_score[idx]
         return best_node
 
     def select_leaf(
