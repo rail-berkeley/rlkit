@@ -123,7 +123,9 @@ def UCT_search(
         num_primitives,
         max_steps,
         reward=0,
-        prior=None,
+        prior=0,
+        step_count=0,
+        parent=None,
     )
     root.expand(
         intrinsic_reward_scale=intrinsic_reward_scale,
@@ -137,39 +139,32 @@ def UCT_search(
     eval_list = []
     min_max_stats = MinMaxStats()
     while ctr < iterations:
-        if ctr > start_spot:
-            import ipdb
-
-            ipdb.set_trace()
         leaf = root.select_leaf(
             min_max_stats,
             discount,
+            eval_list=eval_list,
             virtual_loss=ctr > start_spot,
             c1=1.25,
             c2=19652,
         )
         if ctr > start_spot:
-            if leaf.value:
-                leaf.is_expanded = True  # for terminal states
-                leaf.is_terminal = True  # for terminal states
-                leaf.backup(leaf.value, discount, min_max_stats, True)
+            if leaf.is_terminal:
+                leaf.backup(leaf.value, discount, min_max_stats, virtual_loss=True)
             else:
-                # Todo: check if leaf is on queue before adding
-                if leaf in eval_list:
-                    import ipdb
-
-                    ipdb.set_trace()
                 eval_list.append(leaf)
-
-                if len(eval_list) == batch_size:
+                if len(eval_list) >= batch_size:
                     states = torch.cat(
                         [wm.get_feat(leaf.state) for leaf in eval_list], 0
                     )
                     values = ptu.zeros(states.shape[0])
                     if intrinsic_reward_scale > 0.0:
-                        values += intrinsic_vf(states).flatten()
+                        values += (
+                            intrinsic_vf(states).flatten() * intrinsic_reward_scale
+                        )
                     if extrinsic_reward_scale > 0.0:
-                        values += extrinsic_vf(states).flatten()
+                        values += (
+                            extrinsic_vf(states).flatten() * extrinsic_reward_scale
+                        )
                     full_state = {}
                     for leaf in eval_list:
                         for k, v in leaf.state.items():
@@ -180,7 +175,7 @@ def UCT_search(
                     full_state = {
                         k: torch.cat(full_state[k]) for k in full_state.keys()
                     }
-                    discrete_actions = ptu.eye(num_primitives).repeat(batch_size, 1)
+                    discrete_actions = ptu.eye(num_primitives).repeat(len(eval_list), 1)
                     full_actions, priors = generate_full_actions(
                         wm, full_state, actor, discrete_actions, evaluation
                     )
@@ -200,6 +195,7 @@ def UCT_search(
                             * extrinsic_reward_scale
                         )
                     for i, leaf in enumerate(eval_list):
+                        assert not leaf.is_terminal
                         st = {}
                         for k, v in new_state.items():
                             st[k] = v[i * num_primitives : (i + 1) * num_primitives]
@@ -208,25 +204,28 @@ def UCT_search(
                         ]
                         reward = r[i * num_primitives : (i + 1) * num_primitives]
                         prior = priors[i * num_primitives : (i + 1) * num_primitives]
+                        if not leaf.is_expanded:
+                            # only leaves that are not from progressive widening
+                            value = values[i].item()
+                            leaf.value = value
+                            leaf.backup(
+                                leaf.value, discount, min_max_stats, virtual_loss=True
+                            )
                         if leaf.step_count < max_steps:
                             leaf.expand_given_states_actions(st, action, prior, reward)
                         else:
                             leaf.is_expanded = True  # for terminal states
                             leaf.is_terminal = True  # for terminal states
-                        value = values[i].item()
-                        leaf.value = value
-                        leaf.backup(
-                            leaf.value, discount, min_max_stats, virtual_loss=True
-                        )
+
                     eval_list = []
         else:
             if not leaf.value:
                 states = wm.get_feat(leaf.state)
                 value = ptu.zeros(states.shape[0])
                 if intrinsic_reward_scale > 0.0:
-                    value += intrinsic_vf(states)[0]
+                    value += intrinsic_vf(states)[0] * intrinsic_reward_scale
                 if extrinsic_reward_scale > 0.0:
-                    value += extrinsic_vf(states)[0]
+                    value += extrinsic_vf(states)[0] * extrinsic_reward_scale
                 leaf.value = value.item()
             if leaf.step_count < max_steps:
                 leaf.expand(
@@ -238,7 +237,6 @@ def UCT_search(
                 leaf.is_expanded = True  # for terminal states
                 leaf.is_terminal = True  # for terminal states
             leaf.backup(leaf.value, discount, min_max_stats, False)
-
         ctr += 1
     return compute_root_action(root)
 
@@ -284,10 +282,7 @@ def generate_full_actions(
             )
         actions = torch.cat((discrete_actions, continuous_action), 1)
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
-    return (
-        actions,
-        priors / priors.sum(),
-    )  # todo: check if it is fine to normalize this?
+    return actions, priors
 
 
 def step_wm(
@@ -350,6 +345,7 @@ class UCTNode:
         self.is_terminal = False
         self.value = None
         self.prior = prior
+        self.child_priors_sum = 0
 
     def average_value(self):
         if self.number_visits > 0:
@@ -359,14 +355,13 @@ class UCTNode:
         return value
 
     def Q(self, min_max_stats, discount):
-        # return min_max_stats.normalize(self.reward + discount * self.average_value())
         return self.reward + discount * self.average_value()
 
     def U(self, c1, c2):
         prior_score = math.log((self.parent.number_visits + c2 + 1) / c2) + c1
         prior_score *= math.sqrt(self.parent.number_visits) / (self.number_visits + 1)
-
-        prior_score *= self.prior
+        prior = self.prior / self.parent.child_priors_sum
+        prior_score *= prior
         return prior_score
 
     def score(self, node, min_max_stats, discount, c1, c2):
@@ -389,48 +384,32 @@ class UCTNode:
         best_node = nodes_with_top_score[idx]
         return best_node
 
-    def select_leaf(self, min_max_stats, discount, c1, c2, virtual_loss=False):
+    def select_leaf(
+        self, min_max_stats, discount, c1, c2, eval_list, virtual_loss=False
+    ):
         current = self
         while current.is_expanded and not current.is_terminal:
             if virtual_loss:
                 current.number_visits += 1
                 current.total_value -= 10000
-                min_max_stats.update(self.reward + discount * self.average_value())
+                min_max_stats.update(
+                    current.reward + discount * current.average_value()
+                )
+                current.progressively_widen(eval_list)
+
             current = current.best_child(min_max_stats, discount, c1, c2)
         if virtual_loss:
             current.number_visits += 1
             current.total_value -= 10000
         return current
 
-    # def progressively_widen(self):
-    #     child_states, r, self.actions = step_wm(
-    #         self.wm,
-    #         self.one_step_ensemble,
-    #         self.state,
-    #         self.actor,
-    #         self.num_primitives,
-    #         intrinsic_reward_scale=self.intrinsic_reward_scale,
-    #         extrinsic_reward_scale=self.extrinsic_reward_scale,
-    #         evaluation=self.evaluation,
-    #     )
-    #     for i in range(self.actions.shape[0]):
-    #         child_state = {}
-    #         for k, v in child_states.items():
-    #             child_state[k] = v[i : i + 1, :]
-    #         node = self.add_child((child_state, r[i].item()), self.actions[i, :])
-    #         returns = random_rollout(
-    #             wm,
-    #             one_step_ensemble,
-    #             actor,
-    #             node.state,
-    #             node.max_steps,
-    #             node.num_primitives,
-    #             node.step_count,
-    #             intrinsic_reward_scale=self.intrinsic_reward_scale,
-    #             extrinsic_reward_scale=self.extrinsic_reward_scale,
-    #             evaluation=node.evaluation,
-    #         )
-    #         node.backup(returns)
+    def progressively_widen(self, eval_list):
+        # progressive widening
+        C = 0.1
+        alpha = 0.5
+        thresh = math.ceil(C * self.number_visits ** alpha)
+        if len(self.children) < thresh:
+            eval_list.append(self)
 
     def expand(self, intrinsic_reward_scale, extrinsic_reward_scale, evaluation):
         child_states, actions, priors, rewards = step_wm(
@@ -447,13 +426,16 @@ class UCTNode:
 
     def expand_given_states_actions(self, child_states, actions, priors, rewards):
         self.is_expanded = True
-        self.actions = actions
-        for i in range(self.actions.shape[0]):
+        self.child_priors_sum = self.child_priors_sum + priors.sum().item()
+        for i in range(self.num_primitives):
             child_state = {}
             for k, v in child_states.items():
                 child_state[k] = v[i : i + 1, :]
             self.add_child(
-                child_state, self.actions[i, :], rewards[i].item(), priors[i].item()
+                child_state,
+                actions[i, :],
+                priors[i].item(),
+                rewards[i].item(),
             )
 
     def add_child(self, state, action, prior, reward):
@@ -467,7 +449,7 @@ class UCTNode:
             self.max_steps,
             reward,
             prior,
-            self.step_count + 1,
+            step_count=self.step_count + 1,
             parent=self,
         )
         self.children[key] = node
@@ -481,8 +463,8 @@ class UCTNode:
             else:
                 current.number_visits += 1
                 current.total_value += value
-            min_max_stats.update(self.reward + discount * self.average_value())
-            value = self.reward + discount * value
+            min_max_stats.update(current.reward + discount * current.average_value())
+            value = current.reward + discount * value
             current = current.parent
 
     def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
@@ -519,22 +501,21 @@ if __name__ == "__main__":
         num_layers=4,
         output_embeddings=False,
     ).to(ptu.device)
-    # actor = ConditionalContinuousActorModel(
-    #     [400] * 4,
-    #     wm.feature_size,
-    #     env,
-    #     discrete_action_dim=env.num_primitives,
-    #     continuous_action_dim=env.max_arg_len,
-    # ).to(ptu.device)
-    actor = ConditionalActorModel(
+    actor = ConditionalContinuousActorModel(
         [400] * 4,
         wm.feature_size,
         env,
-        discrete_continuous_dist=True,
         discrete_action_dim=env.num_primitives,
         continuous_action_dim=env.max_arg_len,
     ).to(ptu.device)
-    cont_action = env.action_space.low[env.num_primitives :]
+    # actor = ConditionalActorModel(
+    #     [400] * 4,
+    #     wm.feature_size,
+    #     env,
+    #     discrete_continuous_dist=True,
+    #     discrete_action_dim=env.num_primitives,
+    #     continuous_action_dim=env.max_arg_len,
+    # ).to(ptu.device)
     state = wm.initial(1)
 
     intrinsic_vf = Mlp(
@@ -562,13 +543,13 @@ if __name__ == "__main__":
                 one_step_ensemble,
                 actor,
                 state,
-                10000,
+                1000,
                 env.max_steps,
                 env.num_primitives,
                 intrinsic_vf=intrinsic_vf,
                 extrinsic_vf=extrinsic_vf,
                 evaluation=True,
-                intrinsic_reward_scale=1.0,
+                intrinsic_reward_scale=0.0,
                 extrinsic_reward_scale=1.0,
                 batch_size=batch_size,
                 start_spot=int(1.5 * batch_size),

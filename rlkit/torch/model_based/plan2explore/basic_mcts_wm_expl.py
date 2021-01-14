@@ -408,7 +408,7 @@ class UCTNode:
 
 
 if __name__ == "__main__":
-    env = KitchenHingeCabinetV0(
+    env = KitchenSlideCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=True
     )
     ptu.set_gpu_mode(True)
@@ -448,7 +448,7 @@ if __name__ == "__main__":
         env.max_steps,
         env.num_primitives,
         return_open_loop_plan=True,
-        exploration_weight=0.1,
+        exploration_weight=1.0,
         evaluation=True,
         intrinsic_reward_scale=0.0,
         extrinsic_reward_scale=1.0,
