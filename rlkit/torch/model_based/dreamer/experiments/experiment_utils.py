@@ -44,16 +44,33 @@ def preprocess_variant(variant, debug):
     if variant.get("path_length_specific_discount", False):
         variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
     if variant.get("use_mcts_policy", False):
+        variant["expl_policy_kwargs"]["discount"] = variant["trainer_kwargs"][
+            "discount"
+        ]
+        variant["eval_policy_kwargs"]["discount"] = variant["trainer_kwargs"][
+            "discount"
+        ]
+        variant["expl_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
+        variant["eval_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
+        variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
+            "progressive_widening_constant"
+        ]
+        variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
+            "progressive_widening_constant"
+        ]
+
         variant["expl_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+        variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
         variant["expl_policy_kwargs"]["randomly_sample_discrete_actions"] = variant[
             "randomly_sample_discrete_actions"
         ]
-        variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
-            "randomly_sample_discrete_actions"
-        ]
+        if variant["mcts_algorithm"]:
+            variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
+                "randomly_sample_discrete_actions"
+            ]
         variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
         if variant["reward_type"] == "intrinsic":
-            variant["algorithm"] = "Plan2ExploreMCTSIntrinsic"
+            variant["algorithm"] = variant["algorithm"] + "Intrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 10000
 
             variant["trainer_kwargs"][
@@ -68,13 +85,16 @@ def preprocess_variant(variant, debug):
             variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 0.0
             variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
 
-            variant["trainer_kwargs"]["exploration_actor_intrinsic_reward_scale"] = 1.0
-            variant["trainer_kwargs"]["exploration_actor_extrinsic_reward_scale"] = 0.0
-            variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
-            variant["trainer_kwargs"]["actor_mcts_exploration_weight"] = 1.0
-            variant["trainer_kwargs"]["exploration_actor_mcts_exploration_weight"] = 1.0
+            if variant["mcts_algorithm"]:
+                variant["trainer_kwargs"][
+                    "exploration_actor_intrinsic_reward_scale"
+                ] = 1.0
+                variant["trainer_kwargs"][
+                    "exploration_actor_extrinsic_reward_scale"
+                ] = 0.0
+                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
         elif variant["reward_type"] == "intrinsic+extrinsic":
-            variant["algorithm"] = "Plan2ExploreMCTSIntrinsicExtrinsic"
+            variant["algorithm"] = variant["algorithm"] + "IntrinsicExtrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 1.0
 
             variant["trainer_kwargs"][
@@ -88,14 +108,16 @@ def preprocess_variant(variant, debug):
             variant["expl_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
             variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 1.0
             variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
-
-            variant["trainer_kwargs"]["exploration_actor_intrinsic_reward_scale"] = 1.0
-            variant["trainer_kwargs"]["exploration_actor_extrinsic_reward_scale"] = 1.0
-            variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 1.0
-            variant["trainer_kwargs"]["actor_mcts_exploration_weight"] = 1.0
-            variant["trainer_kwargs"]["exploration_actor_mcts_exploration_weight"] = 1.0
+            if variant["mcts_algorithm"]:
+                variant["trainer_kwargs"][
+                    "exploration_actor_intrinsic_reward_scale"
+                ] = 1.0
+                variant["trainer_kwargs"][
+                    "exploration_actor_extrinsic_reward_scale"
+                ] = 1.0
+                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 1.0
         else:
-            variant["algorithm"] = "Plan2ExploreMCTSExtrinsic"
+            variant["algorithm"] = variant["algorithm"] + "Extrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 0.0
 
             variant["trainer_kwargs"][
@@ -109,11 +131,13 @@ def preprocess_variant(variant, debug):
             variant["expl_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
             variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 0.0
             variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
-
-            variant["trainer_kwargs"]["exploration_actor_intrinsic_reward_scale"] = 0.0
-            variant["trainer_kwargs"]["exploration_actor_extrinsic_reward_scale"] = 1.0
-            variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
-            variant["trainer_kwargs"]["actor_mcts_exploration_weight"] = 1.0
-            variant["trainer_kwargs"]["exploration_actor_mcts_exploration_weight"] = 1.0
+            if variant["mcts_algorithm"]:
+                variant["trainer_kwargs"][
+                    "exploration_actor_intrinsic_reward_scale"
+                ] = 0.0
+                variant["trainer_kwargs"][
+                    "exploration_actor_extrinsic_reward_scale"
+                ] = 1.0
+                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
 
     return variant

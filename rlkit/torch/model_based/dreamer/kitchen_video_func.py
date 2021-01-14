@@ -9,7 +9,7 @@ from rlkit.core import logger
 
 def video_post_epoch_func(algorithm, epoch, img_size=256):
     print(epoch)
-    if epoch == -1 or epoch % 100 == 0:
+    if epoch == -1 or epoch % 25 == 0:
         print("Generating Eval Video: ")
         env = algorithm.eval_env
         policy = algorithm.eval_data_collector._policy

@@ -73,11 +73,11 @@ def compute_all_paths(cur):
         for a, child in cur.children.items():
             l = compute_all_paths(child)
             if len(l) == 0:
-                new_l.append([[a, child.Q()]])
+                new_l.append([[a, child.number_visits]])
             else:
                 for path in l:
-                    total_value = path[0][1] + child.Q()
-                    p = [(a, total_value)] + path
+                    total_visits = path[0][1] + child.number_visits
+                    p = [(a, total_visits)] + path
                     new_l.append(p)
         return new_l
 
@@ -97,7 +97,7 @@ def compute_top_k_paths(l, k):
 
 
 @torch.no_grad()
-def UCT_search(
+def Advanced_UCT_search(
     wm,
     one_step_ensemble,
     actor,
@@ -114,6 +114,10 @@ def UCT_search(
     discount=1.0,
     start_spot=100,
     dirichlet_alpha=0.03,  # todo: sweep .03, .15, .3 and other numbers
+    progressive_widening_constant=0.1,
+    return_open_loop_plan=True,
+    return_top_k_paths=True,
+    K=1,
 ):
     root = UCTNode(
         wm,
@@ -146,6 +150,7 @@ def UCT_search(
             virtual_loss=ctr > start_spot,
             c1=1.25,
             c2=19652,
+            progressive_widening_constant=progressive_widening_constant,
         )
         if ctr > start_spot:
             if leaf.is_terminal:
@@ -238,7 +243,30 @@ def UCT_search(
                 leaf.is_terminal = True  # for terminal states
             leaf.backup(leaf.value, discount, min_max_stats, False)
         ctr += 1
-    return compute_root_action(root)
+
+    if return_open_loop_plan:
+        if return_top_k_paths:
+            l = compute_all_paths(root)
+            actions = compute_top_k_paths(l, K)
+            return actions
+        output_actions = []
+        cur = root
+        while cur.children != {}:
+            max_visits = -np.inf
+            max_a = None
+            max_child = None
+            for a, child in cur.children.items():
+                if child.number_visits >= max_visits:
+                    max_visits = child.number_visits
+                    max_a = a
+                    max_child = child
+            output_actions.append(np.array(max_a).reshape(1, -1))
+            cur = max_child
+        actions = np.concatenate(output_actions, 0)
+        actions = ptu.from_numpy(actions)
+        return actions
+    else:
+        return compute_root_action(root)
 
 
 def compute_root_action(root):
@@ -265,7 +293,7 @@ def generate_full_actions(
         if evaluation:
             continuous_action = action_dist.mode()
         else:
-            continuous_action = actor.compute_continuous_exploration_action(
+            continuous_action = actor.compute_exploration_action(
                 action_dist.sample(), 0.3
             )
         actions = torch.cat((discrete_actions, continuous_action), 1)
@@ -385,7 +413,14 @@ class UCTNode:
         return best_node
 
     def select_leaf(
-        self, min_max_stats, discount, c1, c2, eval_list, virtual_loss=False
+        self,
+        min_max_stats,
+        discount,
+        c1,
+        c2,
+        eval_list,
+        progressive_widening_constant,
+        virtual_loss=False,
     ):
         current = self
         while current.is_expanded and not current.is_terminal:
@@ -395,7 +430,7 @@ class UCTNode:
                 min_max_stats.update(
                     current.reward + discount * current.average_value()
                 )
-                current.progressively_widen(eval_list)
+                current.progressively_widen(eval_list, progressive_widening_constant)
 
             current = current.best_child(min_max_stats, discount, c1, c2)
         if virtual_loss:
@@ -403,11 +438,10 @@ class UCTNode:
             current.total_value -= 10000
         return current
 
-    def progressively_widen(self, eval_list):
+    def progressively_widen(self, eval_list, progressive_widening_constant):
         # progressive widening
-        C = 0.1
         alpha = 0.5
-        thresh = math.ceil(C * self.number_visits ** alpha)
+        thresh = math.ceil(progressive_widening_constant * self.number_visits ** alpha)
         if len(self.children) < thresh:
             eval_list.append(self)
 
@@ -533,17 +567,17 @@ if __name__ == "__main__":
     import time
 
     num_tries = 100
-    for batch_size in [1, 2, 4, 8, 16, 32, 64]:
+    for batch_size in [64, 128]:
         total_time = 0
         for i in range(num_tries):
             t = time.time()
 
-            action = UCT_search(
+            action = Advanced_UCT_search(
                 wm,
                 one_step_ensemble,
                 actor,
                 state,
-                1000,
+                10000,
                 env.max_steps,
                 env.num_primitives,
                 intrinsic_vf=intrinsic_vf,
@@ -553,6 +587,7 @@ if __name__ == "__main__":
                 extrinsic_reward_scale=1.0,
                 batch_size=batch_size,
                 start_spot=int(1.5 * batch_size),
+                progressive_widening_constant=0.1,
             )
             total_time += time.time() - t
         print(batch_size, total_time / num_tries)

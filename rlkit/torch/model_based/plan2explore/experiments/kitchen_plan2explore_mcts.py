@@ -1,3 +1,8 @@
+from rlkit.torch.model_based.plan2explore.plan2explore_advanced_mcts import (
+    Plan2ExploreAdvancedMCTSTrainer,
+)
+
+
 def experiment(variant):
     import os
 
@@ -44,6 +49,9 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
         OneStepEnsembleModel,
+    )
+    from rlkit.torch.model_based.plan2explore.mcts_policy import (
+        HybridAdvancedMCTSPolicy,
     )
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
@@ -204,7 +212,27 @@ def experiment(variant):
 
     if variant.get("use_mcts_policy", False):
 
-        expl_policy = HybridMCTSPolicy(
+        # expl_policy = HybridMCTSPolicy(
+        #     world_model,
+        #     eval_envs[0].max_steps,
+        #     eval_envs[0].num_primitives,
+        #     eval_envs[0].action_space.low.size,
+        #     eval_envs[0].action_space,
+        #     exploration_actor,
+        #     one_step_ensemble,
+        #     **variant["expl_policy_kwargs"],
+        # )
+        # eval_policy = HybridMCTSPolicy(
+        #     world_model,
+        #     eval_envs[0].max_steps,
+        #     eval_envs[0].num_primitives,
+        #     eval_envs[0].action_space.low.size,
+        #     eval_envs[0].action_space,
+        #     eval_actor,
+        #     one_step_ensemble,
+        #     **variant["eval_policy_kwargs"],
+        # )
+        expl_policy = HybridAdvancedMCTSPolicy(
             world_model,
             eval_envs[0].max_steps,
             eval_envs[0].num_primitives,
@@ -212,16 +240,20 @@ def experiment(variant):
             eval_envs[0].action_space,
             exploration_actor,
             one_step_ensemble,
+            vf,
+            exploration_vf,
             **variant["expl_policy_kwargs"],
         )
-        eval_policy = HybridMCTSPolicy(
+        eval_policy = HybridAdvancedMCTSPolicy(
             world_model,
             eval_envs[0].max_steps,
             eval_envs[0].num_primitives,
             eval_envs[0].action_space.low.size,
             eval_envs[0].action_space,
-            eval_actor,
+            actor,
             one_step_ensemble,
+            vf,
+            exploration_vf,
             **variant["eval_policy_kwargs"],
         )
 
@@ -251,7 +283,11 @@ def experiment(variant):
         action_dim,
         replace=False,
     )
-    trainer = Plan2ExploreMCTSTrainer(
+    if variant.get("trainer_class") == "plan2explore_advanced_mcts":
+        trainer_class = Plan2ExploreAdvancedMCTSTrainer
+    else:
+        trainer_class = Plan2ExploreMCTSTrainer
+    trainer = trainer_class(
         env=eval_env,
         world_model=world_model,
         actor=actor,
