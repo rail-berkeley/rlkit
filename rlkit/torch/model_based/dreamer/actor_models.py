@@ -400,7 +400,15 @@ class SplitConditionalDist:
         discrete_action = self._dist1.rsample()
         dist2 = self.compute_continuous_dist(discrete_action)
         return torch.cat((discrete_action, dist2.rsample()), -1)
-
+    
+    def rsample_and_log_prob(self):
+        discrete_action = self._dist1.rsample()
+        dist2 = self.compute_continuous_dist(discrete_action)
+        continuous_action = dist2.rsample()
+        action = torch.cat((discrete_action, continuous_action), -1)
+        log_prob = self._dist1.log_prob(discrete_action) + dist2.log_prob(continuous_action)
+        return action, log_prob
+    
     def mode(self):
         discrete_mode = self._dist1.mode().float()
         dist2 = self.compute_continuous_dist(discrete_mode)
@@ -409,25 +417,28 @@ class SplitConditionalDist:
     def entropy(self):
         discrete_entropy = self._dist1.entropy()
         continuous_entropy = ptu.zeros_like(discrete_entropy)
-        for i in range(13):
+        for i in range(self.env.num_primitives):
             discrete_actions = F.one_hot(
                 ptu.ones_like(discrete_entropy, dtype=torch.int64) * i,
                 self._dist1._categorical._num_events,
             )
             dist2 = self.compute_continuous_dist(discrete_actions)
+            # continuous_entropy += dist2.entropy() * self._dist1.log_prob(
+            #     discrete_actions
+            # )
             continuous_entropy += dist2.entropy() * self._dist1.log_prob(
                 discrete_actions
-            )
+            ).detach() # todo: not sure if it is okay to detach this (i think it should be fine)
         return discrete_entropy + continuous_entropy
 
     def log_prob(self, actions):
-        discrete_actions = actions[:, :13]
+        discrete_actions = actions[:, :self.env.num_primitives]
         dist2 = self.compute_continuous_dist(discrete_actions)
-        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, 13:])
+        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, self.env.num_primitives:])
 
     def log_prob_given_continuous_dist(self, actions, dist2):
-        discrete_actions = actions[:, :13]
-        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, 13:])
+        discrete_actions = actions[:, :self.env.num_primitives]
+        return self._dist1.log_prob(discrete_actions) + dist2.log_prob(actions[:, self.env.num_primitives:])
 
 
 class SafeTruncatedNormal(TruncatedNormal):

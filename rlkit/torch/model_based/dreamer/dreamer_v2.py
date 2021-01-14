@@ -4,7 +4,7 @@ from typing import Tuple
 import torch
 import torch.optim as optim
 from torch.distributions import kl_divergence as kld
-
+from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
 from rlkit.torch.model_based.dreamer.utils import (
@@ -276,14 +276,18 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             action_dist = self.actor(feat.detach())
-            action = action_dist.rsample()
+            if type(actor) == ConditionalActorModel:
+                action, log_prob = action_dist.rsample_and_log_prob()
+            else:
+                action = action_dist.rsample()
+                log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
 
             feats.append(feat.unsqueeze(0))
             next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
-            log_probs.append(action_dist.log_prob(action).unsqueeze(0))
+            log_probs.append(log_prob.unsqueeze(0))
         feats = torch.cat(feats)
         next_feats = torch.cat(next_feats)
         actions = torch.cat(actions)

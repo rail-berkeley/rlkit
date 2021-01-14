@@ -116,10 +116,12 @@ def experiment(variant):
     )
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
+        num_hidden_layers = 2 #since the architecture is doubled (discrete and continuous)
     else:
         actor_model_class = ActorModel
+        num_hidden_layers = 4
     actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * 4,
+        [variant["model_kwargs"]["model_hidden_size"]] * num_hidden_layers,
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,

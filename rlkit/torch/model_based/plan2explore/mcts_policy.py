@@ -239,27 +239,27 @@ class HybridAdvancedMCTSPolicy(Policy):
             for i in range(observation.shape[0]):
                 st = {}
                 for k, v in start_state.items():
-                    st[k] = v[i : i + 1]
-
-                action = Advanced_UCT_search(
-                    self.world_model,
-                    self.one_step_ensemble,
-                    self.actor,
-                    st,
-                    self.mcts_iterations,
-                    self.world_model.env.max_steps,
-                    self.world_model.env.num_primitives,
-                    self.exploration_vf,
-                    self.vf,
-                    evaluation=self.evaluation,
-                    intrinsic_reward_scale=self.intrinsic_reward_scale,
-                    extrinsic_reward_scale=self.extrinsic_reward_scale,
-                    batch_size=self.batch_size,
-                    discount=self.discount,
-                    dirichlet_alpha=self.dirichlet_alpha,
-                    progressive_widening_constant=self.progressive_widening_constant,
-                )
-                actions.append(action)
+                    st[k] = v[i : i + 1].detach()
+                with torch.set_grad_enabled(False):
+                    action = Advanced_UCT_search(
+                        self.world_model,
+                        self.one_step_ensemble,
+                        self.actor,
+                        st,
+                        self.mcts_iterations,
+                        self.world_model.env.max_steps,
+                        self.world_model.env.num_primitives,
+                        self.exploration_vf,
+                        self.vf,
+                        evaluation=self.evaluation,
+                        intrinsic_reward_scale=self.intrinsic_reward_scale,
+                        extrinsic_reward_scale=self.extrinsic_reward_scale,
+                        batch_size=self.batch_size,
+                        discount=self.discount,
+                        dirichlet_alpha=self.dirichlet_alpha,
+                        progressive_widening_constant=self.progressive_widening_constant,
+                    )
+                    actions.append(action)
             actions = torch.cat(actions)
         self.ctr += 1
         self.state = (latent, action)
@@ -277,29 +277,30 @@ class HybridAdvancedMCTSPolicy(Policy):
         if self.open_loop_plan:
             state_n = {}
             for k, v in start_state.items():
-                state_n[k] = v[0:1]
-            actions = Advanced_UCT_search(
-                self.world_model,
-                self.one_step_ensemble,
-                self.actor,
-                state_n,
-                self.mcts_iterations,
-                self.world_model.env.max_steps,
-                self.world_model.env.num_primitives,
-                self.exploration_vf,
-                self.vf,
-                evaluation=self.evaluation,
-                intrinsic_reward_scale=self.intrinsic_reward_scale,
-                extrinsic_reward_scale=self.extrinsic_reward_scale,
-                batch_size=self.batch_size,
-                discount=self.discount,
-                dirichlet_alpha=self.dirichlet_alpha,
-                progressive_widening_constant=self.progressive_widening_constant,
-                return_open_loop_plan=True,
-                return_top_k_paths=True,
-                K=embed.shape[0],
-            )
-            self.actions = actions
+                state_n[k] = v[0:1].detach()
+            with torch.set_grad_enabled(False):
+                actions = Advanced_UCT_search(
+                    self.world_model,
+                    self.one_step_ensemble,
+                    self.actor,
+                    state_n,
+                    self.mcts_iterations,
+                    self.world_model.env.max_steps,
+                    self.world_model.env.num_primitives,
+                    self.exploration_vf,
+                    self.vf,
+                    evaluation=self.evaluation,
+                    intrinsic_reward_scale=self.intrinsic_reward_scale,
+                    extrinsic_reward_scale=self.extrinsic_reward_scale,
+                    batch_size=self.batch_size,
+                    discount=self.discount,
+                    dirichlet_alpha=self.dirichlet_alpha,
+                    progressive_widening_constant=self.progressive_widening_constant,
+                    return_open_loop_plan=True,
+                    return_top_k_paths=True,
+                    K=embed.shape[0],
+                )
+                self.actions = actions
 
 
 class ActionSpaceSamplePolicy(Policy):

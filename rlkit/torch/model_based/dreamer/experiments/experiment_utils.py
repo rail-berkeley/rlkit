@@ -25,8 +25,9 @@ def preprocess_variant(variant, debug):
         "imagination_horizon"
     ] = max_path_length  # todo: see if this works well or not
     num_steps_per_epoch = 1000
-    num_expl_steps_per_train_loop = 50 * (max_path_length + 1)
+    num_expl_steps_per_train_loop = variant['num_expl_envs'] * (max_path_length + 1)
     num_train_loops_per_epoch = num_steps_per_epoch // num_expl_steps_per_train_loop
+    num_trains_per_train_loop = num_expl_steps_per_train_loop
     if num_steps_per_epoch % num_expl_steps_per_train_loop != 0:
         num_train_loops_per_epoch += 1
 
@@ -41,6 +42,7 @@ def preprocess_variant(variant, debug):
         variant["algorithm_kwargs"][
             "num_train_loops_per_epoch"
         ] = num_train_loops_per_epoch
+        variant['algorithm_kwargs']['num_trains_per_train_loop'] = num_trains_per_train_loop
     if variant.get("path_length_specific_discount", False):
         variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
     if variant.get("use_mcts_policy", False):
@@ -54,9 +56,9 @@ def preprocess_variant(variant, debug):
         variant["eval_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
 
         variant["expl_policy_kwargs"]["batch_size"] = variant["batch_size"]
-        variant["expl_policy_kwargs"]["batch_size"] = variant["batch_size"]
+        variant["eval_policy_kwargs"]["batch_size"] = variant["batch_size"]
 
-        variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
+        variant["expl_policy_kwargs"]["progressive_widening_constant"] = variant[
             "progressive_widening_constant"
         ]
         variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
@@ -65,6 +67,7 @@ def preprocess_variant(variant, debug):
 
         variant["expl_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
         variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+        
         variant["expl_policy_kwargs"]["randomly_sample_discrete_actions"] = variant[
             "randomly_sample_discrete_actions"
         ]
@@ -72,7 +75,7 @@ def preprocess_variant(variant, debug):
             variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
                 "randomly_sample_discrete_actions"
             ]
-        variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+            variant['trainer_kwargs']['mcts_iterations'] = variant['mcts_iterations']
         if variant["reward_type"] == "intrinsic":
             variant["algorithm"] = variant["algorithm"] + "Intrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 10000

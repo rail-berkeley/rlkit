@@ -5,7 +5,7 @@ import gtimer as gt
 import numpy as np
 import torch
 import torch.optim as optim
-
+from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossStatistics
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
@@ -268,7 +268,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             feat = self.world_model.get_feat(new_state)
             states.append(new_state["deter"])
             action_dist = actor(feat.detach())
-            action = action_dist.rsample()
+            if type(actor) == ConditionalActorModel:
+                action, log_prob = action_dist.rsample_and_log_prob()
+            else:
+                action = action_dist.rsample()
+                log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
             next_feat = self.world_model.get_feat(new_state)
             next_states.append(new_state["deter"])
@@ -276,7 +280,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             feats.append(feat.unsqueeze(0))
             next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
-            log_probs.append(action_dist.log_prob(action).unsqueeze(0))
+            log_probs.append(log_prob.unsqueeze(0))
             if self.image_goals is not None:
                 reward = torch.linalg.norm(
                     featurized_image_goals - self.world_model.get_feat(new_state), dim=1
