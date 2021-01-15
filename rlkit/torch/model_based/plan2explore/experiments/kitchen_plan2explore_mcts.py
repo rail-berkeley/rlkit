@@ -1,11 +1,8 @@
-from rlkit.torch.model_based.plan2explore.plan2explore_advanced_mcts import (
-    Plan2ExploreAdvancedMCTSTrainer,
-)
-
-
 def experiment(variant):
     import os
-
+    from rlkit.torch.model_based.plan2explore.plan2explore_advanced_mcts import (
+    Plan2ExploreAdvancedMCTSTrainer,
+    )
     from rlkit.torch.model_based.plan2explore.mcts_policy import HybridMCTSPolicy
     from rlkit.torch.model_based.plan2explore.plan2explore_mcts import (
         Plan2ExploreMCTSTrainer,

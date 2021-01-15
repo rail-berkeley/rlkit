@@ -110,6 +110,8 @@ if __name__ == "__main__":
         mcts_algorithm=False,
         actor_model_class="conditional_actor_model",
         batch_size=64,
+        dirichlet_alpha=0.25,
+        progressive_widening_constant=0.1,
     )
 
     search_space = {
