@@ -291,11 +291,12 @@ def generate_full_actions(
         action_input = (discrete_actions, feat)
         action_dist = actor(action_input)
         if evaluation:
-            continuous_action = action_dist.mode()
+            continuous_action = action_dist.mode().float()
         else:
             continuous_action = actor.compute_exploration_action(
-                action_dist.sample(), 0.3
-            )
+                action_dist.sample(),
+                0.3,  # computing log prob of noisy action can lead to nans
+            ).float()
         actions = torch.cat((discrete_actions, continuous_action), 1)
         priors = action_dist.log_prob(continuous_action)
     elif type(actor) == ConditionalActorModel:
@@ -303,13 +304,17 @@ def generate_full_actions(
         action_dist = actor(action_input)
         cont_dist = action_dist.compute_continuous_dist(discrete_actions)
         if evaluation:
-            continuous_action = cont_dist.mode()
+            continuous_action = cont_dist.mode().float()
         else:
             continuous_action = actor.compute_continuous_exploration_action(
                 cont_dist.sample(), 0.3
-            )
+            ).float()
         actions = torch.cat((discrete_actions, continuous_action), 1)
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
+    if torch.isnan(priors).any():
+        import ipdb
+
+        ipdb.set_trace()
     return actions, priors
 
 
@@ -402,7 +407,7 @@ class UCTNode:
         best_node = None
         for node in self.children.values():
             score = self.score(node, min_max_stats, discount, c1, c2)
-            if score > max_score:
+            if score >= max_score:
                 max_score = score
                 best_node = node
         return best_node

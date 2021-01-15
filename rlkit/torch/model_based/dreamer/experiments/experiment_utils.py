@@ -78,6 +78,11 @@ def preprocess_variant(variant, debug):
                 "randomly_sample_discrete_actions"
             ]
             variant["trainer_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+            variant["trainer_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
+            variant["trainer_kwargs"]["batch_size"] = variant["batch_size"]
+            variant["trainer_kwargs"]["progressive_widening_constant"] = variant[
+                "progressive_widening_constant"
+            ]
         if variant["reward_type"] == "intrinsic":
             variant["algorithm"] = variant["algorithm"] + "Intrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 10000

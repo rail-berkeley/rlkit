@@ -102,11 +102,10 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         exploration_actor_extrinsic_reward_scale=0.0,
         actor_intrinsic_reward_scale=0.0,
         batch_size=64,
-        start_spot=int(1.5 * 64),
-        dirichlet_alpha=0.03,
+        dirichlet_alpha=0.25,
         progressive_widening_constant=0.1,
     ):
-        super(Plan2ExploreMCTSTrainer, self).__init__(
+        super(Plan2ExploreAdvancedMCTSTrainer, self).__init__(
             env,
             actor,
             vf,
@@ -241,7 +240,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         self.actor_intrinsic_reward_scale = actor_intrinsic_reward_scale
         self.batch_size = batch_size
         self.discount = discount
-        self.start_spot = start_spot
         self.dirichlet_alpha = dirichlet_alpha
         self.progressive_widening_constant = progressive_widening_constant
 
@@ -548,7 +546,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             extrinsic_reward_scale=1.0,
             batch_size=self.batch_size,
             discount=self.discount,
-            start_spot=self.start_spot,
             dirichlet_alpha=self.dirichlet_alpha,
             progressive_widening_constant=self.progressive_widening_constant,
             return_open_loop_plan=True,
@@ -746,7 +743,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 extrinsic_reward_scale=self.exploration_actor_extrinsic_reward_scale,
                 batch_size=self.batch_size,
                 discount=self.discount,
-                start_spot=self.start_spot,
                 dirichlet_alpha=self.dirichlet_alpha,
                 progressive_widening_constant=self.progressive_widening_constant,
                 return_open_loop_plan=True,

@@ -100,6 +100,9 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
         actor_intrinsic_reward_scale=0.0,
         actor_mcts_exploration_weight=0.1,
         exploration_actor_mcts_exploration_weight=0.01,
+        batch_size=4,
+        dirichlet_alpha=0.03,
+        progressive_widening_constant=0.1,
     ):
         super(Plan2ExploreMCTSTrainer, self).__init__(
             env,

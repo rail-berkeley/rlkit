@@ -101,25 +101,20 @@ if __name__ == "__main__":
         use_mcts_policy=True,
         expl_policy_kwargs=dict(
             evaluation=False,
-            batch_size=64,
-            discount=1.0,
-            start_spot=int(1.5 * 64),
-            dirichlet_alpha=0.03,
-            progressive_widening_constant=0.1,
         ),
         eval_policy_kwargs=dict(
             evaluation=True,
-            batch_size=64,
-            discount=1.0,
-            start_spot=int(1.5 * 64),
-            dirichlet_alpha=0.03,
-            progressive_widening_constant=0.1,
+            randomly_sample_discrete_actions=False,
         ),
         reward_type="intrinsic",
         mcts_iterations=1000,
         randomly_sample_discrete_actions=False,
         mcts_algorithm=True,
         actor_model_class="conditional_actor_model",
+        batch_size=64,
+        dirichlet_alpha=0.25,
+        progressive_widening_constant=0.1,
+        trainer_class="plan2explore_advanced_mcts",
     )
     search_space = {
         "env_class": [
@@ -131,6 +126,15 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
+        # "path_length_specific_discount": [True, False],
+        # "mcts_iterations": [1000],
+        # "dirichlet_alpha": [
+        #     0.25,  # from atari
+        #     0.15,
+        #     0.3,
+        #     0.03,
+        # ],
+        # "progressive_widening_constant": [0.1, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
