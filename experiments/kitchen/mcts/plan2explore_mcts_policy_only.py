@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
@@ -121,15 +121,14 @@ if __name__ == "__main__":
             # "hinge_cabinet",
             # "light_switch",
         ],
-        "path_length_specific_discount": [True, False],
-        "mcts_iterations": [1000],
-        "dirichlet_alpha": [
-            0.25,  # from atari
-            0.15,
-            0.3,
-            0.03,
-        ],
-        "progressive_widening_constant": [0.1, 1],
+        # "path_length_specific_discount": [True, False],
+        # "mcts_iterations": [1000],
+        # "dirichlet_alpha": [
+        #     0.25,  # from atari
+        #     0.15,
+        #     0.03,
+        # ],
+        # "progressive_widening_constant": [0.1, 1],
         "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

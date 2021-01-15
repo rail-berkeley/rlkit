@@ -510,10 +510,12 @@ class UCTNode:
         actions = list(self.children.keys())
         noise = np.random.dirichlet([dirichlet_alpha] * len(actions))
         frac = exploration_fraction
+        prior_sum = 0
         for a, n in zip(actions, noise):
             self.children[a].prior = self.children[a].prior * (1 - frac) + n * frac
-
-
+            prior_sum += self.children[a].prior
+        self.child_priors_sum = prior_sum
+        
 if __name__ == "__main__":
     env = KitchenHingeCabinetV0(
         fixed_schema=False, delta=0.0, dense=False, image_obs=True

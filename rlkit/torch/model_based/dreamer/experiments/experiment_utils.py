@@ -77,7 +77,7 @@ def preprocess_variant(variant, debug):
             variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
                 "randomly_sample_discrete_actions"
             ]
-            variant["trainer_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
+            # variant["trainer_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
             variant["trainer_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
             variant["trainer_kwargs"]["batch_size"] = variant["batch_size"]
             variant["trainer_kwargs"]["progressive_widening_constant"] = variant[

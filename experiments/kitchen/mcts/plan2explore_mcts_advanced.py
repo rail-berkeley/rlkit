@@ -36,11 +36,8 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=100,
             num_eval_steps_per_epoch=30,
-            num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
-            batch_size=625,
-            use_wandb=args.use_wandb,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -94,6 +91,7 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
+            mcts_iterations=100,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
