@@ -96,14 +96,11 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
-        mcts_iterations=1000,
         randomly_sample_discrete_actions=False,
         exploration_actor_intrinsic_reward_scale=1.0,
         exploration_actor_extrinsic_reward_scale=0.0,
         actor_intrinsic_reward_scale=0.0,
-        batch_size=64,
-        dirichlet_alpha=0.25,
-        progressive_widening_constant=0.1,
+        mcts_kwargs=None,
     ):
         super(Plan2ExploreAdvancedMCTSTrainer, self).__init__(
             env,
@@ -229,7 +226,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         self.train_actor_with_intrinsic_and_extrinsic_reward = (
             train_actor_with_intrinsic_and_extrinsic_reward
         )
-        self.mcts_iterations = mcts_iterations
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
         self.exploration_actor_intrinsic_reward_scale = (
             exploration_actor_intrinsic_reward_scale
@@ -238,10 +234,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             exploration_actor_extrinsic_reward_scale
         )
         self.actor_intrinsic_reward_scale = actor_intrinsic_reward_scale
-        self.batch_size = batch_size
-        self.discount = discount
-        self.dirichlet_alpha = dirichlet_alpha
-        self.progressive_widening_constant = progressive_widening_constant
+        self.mcts_kwargs = mcts_kwargs
 
     def try_update_target_networks(self):
         if (
@@ -536,20 +529,14 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             self.one_step_ensemble,
             self.actor,
             start_state,
-            self.mcts_iterations,
             self.world_model.env.max_steps,
             self.world_model.env.num_primitives,
             self.exploration_vf,
             self.vf,
-            evaluation=False,
             intrinsic_reward_scale=self.actor_intrinsic_reward_scale,
             extrinsic_reward_scale=1.0,
-            batch_size=self.batch_size,
-            discount=self.discount,
-            dirichlet_alpha=self.dirichlet_alpha,
-            progressive_widening_constant=self.progressive_widening_constant,
             return_open_loop_plan=True,
-            return_top_k_paths=False,
+            **self.mcts_kwargs,
         )
 
         with FreezeParameters(world_model_params):
@@ -733,20 +720,14 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 self.one_step_ensemble,
                 self.exploration_actor,
                 start_state,
-                self.mcts_iterations,
                 self.world_model.env.max_steps,
                 self.world_model.env.num_primitives,
                 self.exploration_vf,
                 self.vf,
-                evaluation=False,
                 intrinsic_reward_scale=self.exploration_actor_intrinsic_reward_scale,
                 extrinsic_reward_scale=self.exploration_actor_extrinsic_reward_scale,
-                batch_size=self.batch_size,
-                discount=self.discount,
-                dirichlet_alpha=self.dirichlet_alpha,
-                progressive_widening_constant=self.progressive_widening_constant,
                 return_open_loop_plan=True,
-                return_top_k_paths=False,
+                **self.mcts_kwargs,
             )
 
         with FreezeParameters(world_model_params):

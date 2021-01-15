@@ -156,16 +156,8 @@ class HybridAdvancedMCTSPolicy(Policy):
         one_step_ensemble,
         vf,
         exploration_vf,
-        mcts_iterations,
-        evaluation=True,
+        mcts_kwargs,
         randomly_sample_discrete_actions=False,
-        intrinsic_reward_scale=1.0,
-        extrinsic_reward_scale=0.0,
-        batch_size=4,
-        discount=1.0,
-        dirichlet_alpha=0.03,
-        progressive_widening_constant=0.1,
-        open_loop_plan=True,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -180,20 +172,12 @@ class HybridAdvancedMCTSPolicy(Policy):
         self.max_steps = max_steps
         self.num_primitives = num_primitives
         self.action_dim = action_dim
-        self.mcts_iterations = mcts_iterations
         self.actor = actor
         self.one_step_ensemble = one_step_ensemble
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
-        self.evaluation = evaluation
-        self.intrinsic_reward_scale = intrinsic_reward_scale
-        self.extrinsic_reward_scale = extrinsic_reward_scale
-        self.batch_size = batch_size
-        self.discount = discount
-        self.dirichlet_alpha = dirichlet_alpha
-        self.progressive_widening_constant = progressive_widening_constant
         self.vf = vf
         self.exploration_vf = exploration_vf
-        self.open_loop_plan = open_loop_plan
+        self.mcts_kwargs = mcts_kwargs
 
     def get_action(self, observation):
         """
@@ -208,99 +192,34 @@ class HybridAdvancedMCTSPolicy(Policy):
             latent = self.world_model.initial(observation.shape[0])
             action = ptu.zeros((observation.shape[0], self.action_dim))
 
-        if self.open_loop_plan:
-            actions = [
-                self.actions[i][self.ctr].reshape(1, -1)
-                for i in range(observation.shape[0])
-            ]
-            action = torch.cat(actions)
-            assert action.shape == (observation.shape[0], self.action_dim)
-            if self.randomly_sample_discrete_actions:
-                discrete_action = ptu.from_numpy(
-                    np.eye(self.world_model.env.num_primitives)[
-                        np.random.choice(
-                            self.world_model.env.num_primitives,
-                            observation.shape[0],
-                        )
-                    ]
+        embed = self.world_model.encode(observation)
+        start_state, _ = self.world_model.obs_step(latent, action, embed)
+        actions = []
+        for i in range(observation.shape[0]):
+            st = {}
+            for k, v in start_state.items():
+                st[k] = v[i : i + 1].detach()
+            with torch.set_grad_enabled(False):
+                action = Advanced_UCT_search(
+                    self.world_model,
+                    self.one_step_ensemble,
+                    self.actor,
+                    st,
+                    self.world_model.env.max_steps - self.ctr,
+                    self.world_model.env.num_primitives,
+                    self.exploration_vf,
+                    self.vf,
+                    **self.mcts_kwargs,
                 )
-                embed = self.world_model.encode(observation)
-                start_state, _ = self.world_model.obs_step(latent, action, embed)
-                action_input = (discrete_action, self.world_model.get_feat(start_state))
-                action_dist = self.actor(action_input)
-                continuous_action = self.actor.compute_exploration_action(
-                    action_dist.sample(), 0.3
-                )
-                action = torch.cat((discrete_action, continuous_action), 1)
-        else:
-            embed = self.world_model.encode(observation)
-            start_state, _ = self.world_model.obs_step(latent, action, embed)
-            actions = []
-            for i in range(observation.shape[0]):
-                st = {}
-                for k, v in start_state.items():
-                    st[k] = v[i : i + 1].detach()
-                with torch.set_grad_enabled(False):
-                    action = Advanced_UCT_search(
-                        self.world_model,
-                        self.one_step_ensemble,
-                        self.actor,
-                        st,
-                        self.mcts_iterations,
-                        self.world_model.env.max_steps,
-                        self.world_model.env.num_primitives,
-                        self.exploration_vf,
-                        self.vf,
-                        evaluation=self.evaluation,
-                        intrinsic_reward_scale=self.intrinsic_reward_scale,
-                        extrinsic_reward_scale=self.extrinsic_reward_scale,
-                        batch_size=self.batch_size,
-                        discount=self.discount,
-                        dirichlet_alpha=self.dirichlet_alpha,
-                        progressive_widening_constant=self.progressive_widening_constant,
-                    )
-                    actions.append(action)
-            actions = torch.cat(actions)
+                actions.append(action)
         self.ctr += 1
+        actions = torch.cat(actions)
         self.state = (latent, action)
         return ptu.get_numpy(action), {}
 
     def reset(self, o):
         self.state = None
         self.ctr = 0
-        o = np.concatenate([o_.reshape(1, -1) for o_ in o])
-        latent = self.world_model.initial(o.shape[0])
-        action = ptu.zeros((o.shape[0], self.action_dim))
-        o = ptu.from_numpy(np.array(o))
-        embed = self.world_model.encode(o)
-        start_state, _ = self.world_model.obs_step(latent, action, embed)
-        if self.open_loop_plan:
-            state_n = {}
-            for k, v in start_state.items():
-                state_n[k] = v[0:1].detach()
-            with torch.set_grad_enabled(False):
-                actions = Advanced_UCT_search(
-                    self.world_model,
-                    self.one_step_ensemble,
-                    self.actor,
-                    state_n,
-                    self.mcts_iterations,
-                    self.world_model.env.max_steps,
-                    self.world_model.env.num_primitives,
-                    self.exploration_vf,
-                    self.vf,
-                    evaluation=self.evaluation,
-                    intrinsic_reward_scale=self.intrinsic_reward_scale,
-                    extrinsic_reward_scale=self.extrinsic_reward_scale,
-                    batch_size=self.batch_size,
-                    discount=self.discount,
-                    dirichlet_alpha=self.dirichlet_alpha,
-                    progressive_widening_constant=self.progressive_widening_constant,
-                    return_open_loop_plan=True,
-                    return_top_k_paths=True,
-                    K=embed.shape[0],
-                )
-                self.actions = actions
 
 
 class ActionSpaceSamplePolicy(Policy):

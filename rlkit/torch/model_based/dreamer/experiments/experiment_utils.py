@@ -48,41 +48,26 @@ def preprocess_variant(variant, debug):
     if variant.get("path_length_specific_discount", False):
         variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
     if variant.get("use_mcts_policy", False):
-        variant["expl_policy_kwargs"]["discount"] = variant["trainer_kwargs"][
-            "discount"
-        ]
-        variant["eval_policy_kwargs"]["discount"] = variant["trainer_kwargs"][
-            "discount"
-        ]
-        variant["expl_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
-        variant["eval_policy_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
+        discount = variant["trainer_kwargs"]["discount"]
+        randomly_sample_discrete_actions = variant["randomly_sample_discrete_actions"]
+        variant["mcts_kwargs"]["discount"] = discount
 
-        variant["expl_policy_kwargs"]["batch_size"] = variant["batch_size"]
-        variant["eval_policy_kwargs"]["batch_size"] = variant["batch_size"]
-
-        variant["expl_policy_kwargs"]["progressive_widening_constant"] = variant[
-            "progressive_widening_constant"
-        ]
-        variant["eval_policy_kwargs"]["progressive_widening_constant"] = variant[
-            "progressive_widening_constant"
-        ]
-
-        variant["expl_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
-        variant["eval_policy_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
-
-        variant["expl_policy_kwargs"]["randomly_sample_discrete_actions"] = variant[
+        variant["expl_policy_kwargs"][
             "randomly_sample_discrete_actions"
-        ]
+        ] = randomly_sample_discrete_actions
+
+        variant["expl_policy_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"].copy()
+        variant["eval_policy_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"].copy()
+
+        variant["expl_policy_kwargs"]["mcts_kwargs"]["evaluation"] = False
+        variant["eval_policy_kwargs"]["mcts_kwargs"]["evaluation"] = True
         if variant["mcts_algorithm"]:
             variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
                 "randomly_sample_discrete_actions"
             ]
-            # variant["trainer_kwargs"]["mcts_iterations"] = variant["mcts_iterations"]
-            variant["trainer_kwargs"]["dirichlet_alpha"] = variant["dirichlet_alpha"]
-            variant["trainer_kwargs"]["batch_size"] = variant["batch_size"]
-            variant["trainer_kwargs"]["progressive_widening_constant"] = variant[
-                "progressive_widening_constant"
-            ]
+            variant["trainer_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"]
+            variant["trainer_kwargs"]["mcts_kwargs"]["evaluation"] = False
+
         if variant["reward_type"] == "intrinsic":
             variant["algorithm"] = variant["algorithm"] + "Intrinsic"
             variant["trainer_kwargs"]["exploration_reward_scale"] = 10000
@@ -94,10 +79,11 @@ def preprocess_variant(variant, debug):
                 "train_actor_with_intrinsic_and_extrinsic_reward"
             ] = False
 
-            variant["expl_policy_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["expl_policy_kwargs"]["extrinsic_reward_scale"] = 0.0
-            variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 0.0
+
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
 
             if variant["mcts_algorithm"]:
                 variant["trainer_kwargs"][
@@ -118,10 +104,10 @@ def preprocess_variant(variant, debug):
                 "train_actor_with_intrinsic_and_extrinsic_reward"
             ] = True
 
-            variant["expl_policy_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["expl_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
             if variant["mcts_algorithm"]:
                 variant["trainer_kwargs"][
                     "exploration_actor_intrinsic_reward_scale"
@@ -141,10 +127,10 @@ def preprocess_variant(variant, debug):
                 "train_actor_with_intrinsic_and_extrinsic_reward"
             ] = True
 
-            variant["expl_policy_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["expl_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["eval_policy_kwargs"]["extrinsic_reward_scale"] = 1.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
+            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
+            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
             if variant["mcts_algorithm"]:
                 variant["trainer_kwargs"][
                     "exploration_actor_intrinsic_reward_scale"

@@ -42,7 +42,6 @@ if __name__ == "__main__":
         algorithm="Plan2ExploreMCTSPolicy",
         version="normal",
         replay_buffer_size=int(1e6),
-        use_mcts_policy=True,
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
             dense=False,
@@ -93,11 +92,8 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
             detach_rewards=True,
         ),
-        expl_policy_kwargs=dict(
-            evaluation=False,
-        ),
+        expl_policy_kwargs=dict(),
         eval_policy_kwargs=dict(
-            evaluation=True,
             randomly_sample_discrete_actions=False,
         ),
         num_expl_envs=args.num_expl_envs,
@@ -105,33 +101,42 @@ if __name__ == "__main__":
         expl_amount=0.3,
         path_length_specific_discount=True,
         eval_with_exploration_actor=False,
-        mcts_iterations=1000,
         randomly_sample_discrete_actions=False,
-        mcts_algorithm=False,
         actor_model_class="conditional_actor_model",
-        batch_size=64,
-        dirichlet_alpha=0.25,
-        progressive_widening_constant=0.1,
+        reward_type="intrinsic",
+        use_mcts_policy=True,
+        mcts_algorithm=False,
+        mcts_kwargs=dict(
+            mcts_iterations=50,
+            dirichlet_alpha=0.03,
+            progressive_widening_constant=0.0,
+            use_dirichlet_exploration_noise=False,
+            use_puct=False,
+            normalize_q=False,
+            use_reward_discount_value=False,
+            use_muzero_uct=False,
+            use_max_visit_count=False,
+        ),
     )
 
     search_space = {
         "env_class": [
             "microwave",
-            "top_left_burner",
-            "slide_cabinet",
+            # "top_left_burner",
+            # "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
         # "path_length_specific_discount": [True, False],
-        # "mcts_iterations": [1000],
-        # "dirichlet_alpha": [
+        # "mcts_kwargs.mcts_iterations": [1000],
+        # "mcts_kwargs.dirichlet_alpha": [
         #     0.25,  # from atari
         #     0.15,
         #     0.03,
         # ],
-        # "progressive_widening_constant": [0.1, 1],
-        "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
+        # "mcts_kwargs.progressive_widening_constant": [0.1, 1],
+        # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
