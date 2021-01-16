@@ -524,7 +524,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         o = ptu.from_numpy(np.array(o))
         embed = self.world_model.encode(o)
         start_state, _ = self.world_model.obs_step(latent, action, embed)
-        discrete_actions = Advanced_UCT_search(
+        discrete_actions = ptu.from_numpy(Advanced_UCT_search(
             self.world_model,
             self.one_step_ensemble,
             self.actor,
@@ -537,7 +537,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             extrinsic_reward_scale=1.0,
             return_open_loop_plan=True,
             **self.mcts_kwargs,
-        )
+        ))
 
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:
@@ -715,7 +715,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 ]
             )
         else:
-            discrete_actions = Advanced_UCT_search(
+            discrete_actions = ptu.from_numpy(Advanced_UCT_search(
                 self.world_model,
                 self.one_step_ensemble,
                 self.exploration_actor,
@@ -728,7 +728,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 extrinsic_reward_scale=self.exploration_actor_extrinsic_reward_scale,
                 return_open_loop_plan=True,
                 **self.mcts_kwargs,
-            )
+            ))
 
         with FreezeParameters(world_model_params):
             if self.image_goals is not None:

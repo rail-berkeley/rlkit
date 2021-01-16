@@ -148,7 +148,7 @@ def Advanced_UCT_search(
         else:
             leaf.is_expanded = True  # for terminal states
             leaf.is_terminal = True  # for terminal states
-        leaf.backup(leaf.value, discount, min_max_stats)
+        leaf.backup(leaf.value, discount, min_max_stats, use_reward_discount_value)
         ctr += 1
         if return_open_loop_plan and ctr > mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
@@ -165,7 +165,7 @@ def compute_best_path(root, use_max_visit_count):
     while cur.children != {}:
         action, cur = compute_best_action(cur, use_max_visit_count)
         output_actions.append(action)
-    actions = torch.cat(output_actions, 0)
+    actions = np.concatenate(output_actions, 0)
     return actions
 
 
@@ -182,7 +182,7 @@ def compute_best_action(root, use_max_visit_count):
             max_val = val
             max_a = a
             max_child = child
-    return ptu.from_numpy(np.array(max_a)).reshape(1, -1), max_child
+    return np.array(max_a).reshape(1, -1), max_child
 
 
 def generate_full_actions(
@@ -217,7 +217,7 @@ def generate_full_actions(
             ).float()
         actions = torch.cat((discrete_actions, continuous_action), 1)
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
-    return actions, priors.exp()
+    return actions, (priors-100).exp() #shift by a constant value to keep from exploding
 
 
 def step_wm(
@@ -336,6 +336,10 @@ class UCTNode:
         max_score = -np.inf
         best_node = None
         for node in self.children.values():
+            if use_reward_discount_value:
+                min_max_stats.update(node.reward + discount * node.average_value())
+            else:
+                min_max_stats.update(node.average_value())
             score = node.score(
                 min_max_stats,
                 discount,
@@ -374,6 +378,7 @@ class UCTNode:
                 extrinsic_reward_scale,
                 evaluation,
             )
+            
             current = current.best_child(
                 min_max_stats,
                 discount,
@@ -453,14 +458,17 @@ class UCTNode:
         self.children[key] = node
         return node
 
-    def backup(self, value, discount, min_max_stats):
+    def backup(self, value, discount, min_max_stats, use_reward_discount_value):
         current = self
         while current is not None:
             current.number_visits += 1
             current.total_value += value
-            min_max_stats.update(current.reward + discount * current.average_value())
-            value = current.reward + discount * value
             current = current.parent
+            if use_reward_discount_value:
+                min_max_stats.update(current.reward + discount * current.average_value())
+                value = current.reward + discount * value
+            else:
+                min_max_stats.update(current.average_value())
 
     def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
         """

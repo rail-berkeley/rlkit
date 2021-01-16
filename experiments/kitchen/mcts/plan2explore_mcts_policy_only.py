@@ -103,11 +103,11 @@ if __name__ == "__main__":
         eval_with_exploration_actor=False,
         randomly_sample_discrete_actions=False,
         actor_model_class="conditional_actor_model",
-        reward_type="intrinsic",
+        reward_type="intrinsic+extrinsic",
         use_mcts_policy=True,
         mcts_algorithm=False,
         mcts_kwargs=dict(
-            mcts_iterations=50,
+            mcts_iterations=100,
             dirichlet_alpha=0.03,
             progressive_widening_constant=0.0,
             use_dirichlet_exploration_noise=False,
@@ -136,6 +136,11 @@ if __name__ == "__main__":
         #     0.03,
         # ],
         # "mcts_kwargs.progressive_widening_constant": [0.1, 1],
+        "mcts_kwargs.normalize_q":[True, False],
+        "mcts_kwargs.use_reward_discount_value":[True, False],
+        "mcts_kwargs.use_muzero_uct":[True, False],
+        "mcts_kwargs.use_puct":[True, False],
+        "mcts_kwargs.use_max_visit_count":[True, False],
         # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

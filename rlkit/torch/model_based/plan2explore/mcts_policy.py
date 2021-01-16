@@ -213,9 +213,9 @@ class HybridAdvancedMCTSPolicy(Policy):
                 )
                 actions.append(action)
         self.ctr += 1
-        actions = torch.cat(actions)
-        self.state = (latent, action)
-        return ptu.get_numpy(action), {}
+        actions = np.concatenate(actions)
+        self.state = (latent, ptu.from_numpy(actions))
+        return actions, {}
 
     def reset(self, o):
         self.state = None

@@ -106,7 +106,7 @@ if __name__ == "__main__":
         actor_model_class="conditional_actor_model",
         trainer_class="plan2explore_advanced_mcts",
         mcts_kwargs=dict(
-            mcts_iterations=50,
+            mcts_iterations=100,
             dirichlet_alpha=0.03,
             progressive_widening_constant=0.0,
             use_dirichlet_exploration_noise=False,
