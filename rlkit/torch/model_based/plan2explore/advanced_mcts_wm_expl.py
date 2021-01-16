@@ -463,12 +463,12 @@ class UCTNode:
         while current is not None:
             current.number_visits += 1
             current.total_value += value
-            current = current.parent
             if use_reward_discount_value:
                 min_max_stats.update(current.reward + discount * current.average_value())
                 value = current.reward + discount * value
             else:
                 min_max_stats.update(current.average_value())
+            current = current.parent
 
     def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
         """

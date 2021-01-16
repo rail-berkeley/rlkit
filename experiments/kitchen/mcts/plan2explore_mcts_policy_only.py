@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
@@ -122,14 +122,14 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            # "top_left_burner",
-            # "slide_cabinet",
+            "top_left_burner",
+            "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
         # "path_length_specific_discount": [True, False],
-        # "mcts_kwargs.mcts_iterations": [1000],
+        # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
         # "mcts_kwargs.dirichlet_alpha": [
         #     0.25,  # from atari
         #     0.15,
@@ -140,8 +140,7 @@ if __name__ == "__main__":
         "mcts_kwargs.use_reward_discount_value":[True, False],
         "mcts_kwargs.use_muzero_uct":[True, False],
         "mcts_kwargs.use_puct":[True, False],
-        "mcts_kwargs.use_max_visit_count":[True, False],
-        # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
+        # "mcts_kwargs.use_max_visit_count":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
