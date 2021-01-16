@@ -115,8 +115,8 @@ def Advanced_UCT_search(
     min_max_stats = MinMaxStats()
     c1 = 1.25
     c2 = 19625
-    keep_searching = True
-    while ctr < mcts_iterations and keep_searching:
+    keep_searching = return_open_loop_plan
+    while ctr < mcts_iterations or keep_searching:
         leaf = root.select_leaf(
             progressive_widening_constant,
             intrinsic_reward_scale,
@@ -150,7 +150,7 @@ def Advanced_UCT_search(
             leaf.is_terminal = True  # for terminal states
         leaf.backup(leaf.value, discount, min_max_stats, use_reward_discount_value)
         ctr += 1
-        if return_open_loop_plan and ctr > mcts_iterations:
+        if return_open_loop_plan and ctr >= mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
             keep_searching = path.shape[0] < max_steps
     if return_open_loop_plan:
