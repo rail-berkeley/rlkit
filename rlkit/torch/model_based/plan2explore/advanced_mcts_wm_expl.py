@@ -197,7 +197,8 @@ def generate_full_actions(
         action_input = (discrete_actions, feat)
         action_dist = actor(action_input)
         if evaluation:
-            continuous_action = action_dist.mode().float()
+            # continuous_action = action_dist.mode().float()
+            continuous_action = action_dist.sample().float()
         else:
             continuous_action = actor.compute_exploration_action(
                 action_dist.sample(),
@@ -210,7 +211,8 @@ def generate_full_actions(
         action_dist = actor(action_input)
         cont_dist = action_dist.compute_continuous_dist(discrete_actions)
         if evaluation:
-            continuous_action = cont_dist.mode().float()
+            # continuous_action = cont_dist.mode().float()
+            continuous_action = cont_dist.sample().float()
         else:
             continuous_action = actor.compute_continuous_exploration_action(
                 cont_dist.sample(), 0.3

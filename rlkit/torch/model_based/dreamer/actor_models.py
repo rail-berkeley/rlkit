@@ -425,12 +425,9 @@ class SplitConditionalDist:
                 self._dist1._categorical._num_events,
             )
             dist2 = self.compute_continuous_dist(discrete_actions)
-            # continuous_entropy += dist2.entropy() * self._dist1.log_prob(
-            #     discrete_actions
-            # )
             continuous_entropy += (
-                dist2.entropy() * self._dist1.log_prob(discrete_actions).detach()
-            )  # todo: not sure if it is okay to detach this (i think it should be fine)
+                dist2.entropy() * self._dist1.log_prob(discrete_actions).exp()
+            )
         return discrete_entropy + continuous_entropy
 
     def log_prob(self, actions):

@@ -70,13 +70,13 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             gt.stamp("evaluation sampling")
 
-            for _ in range(self.num_train_loops_per_epoch):
-                if epoch == 0 and _ == 0:  # absolute first iteration
-                    train_steps = self.num_pretrain_steps
+            for train_loop in range(self.num_train_loops_per_epoch):
+                if epoch == 0 and train_loop == 0:  # absolute first iteration
+                    num_train_steps = self.num_pretrain_steps
                 else:
-                    train_steps = self.num_trains_per_train_loop
+                    num_train_steps = self.num_trains_per_train_loop
                 self.training_mode(True)
-                for _ in range(train_steps):
+                for train_step in range(num_train_steps):
                     train_data = self.replay_buffer.random_batch(self.batch_size)
                     self.trainer.train(train_data)
                 gt.stamp("training", unique=False)

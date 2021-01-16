@@ -941,6 +941,12 @@ class Plan2ExploreMCTSTrainer(DreamerV2Trainer):
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
             eval_statistics["Imagined Values"] = imag_value_mean.item()
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
+            eval_statistics[
+                "Imagined Intrinsic Rewards"
+            ] = intrinsic_reward.mean().item()
+            eval_statistics[
+                "Imagined Extrinsic Rewards"
+            ] = extrinsic_reward.mean().item()
 
             eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
             eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
