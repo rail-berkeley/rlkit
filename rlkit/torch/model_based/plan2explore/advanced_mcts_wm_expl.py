@@ -217,7 +217,7 @@ def generate_full_actions(
             ).float()
         actions = torch.cat((discrete_actions, continuous_action), 1)
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
-    return actions, (priors-100).exp() #shift by a constant value to keep from exploding
+    return actions, priors
 
 
 def step_wm(
@@ -280,7 +280,6 @@ class UCTNode:
         self.is_terminal = False
         self.value = None
         self.prior = prior
-        self.child_priors_sum = 0
 
     def average_value(self):
         if self.number_visits > 0:
@@ -298,11 +297,10 @@ class UCTNode:
         else:
             return q
 
-    def U(self, c1, c2, use_puct, use_muzero_uct):
+    def U(self, c1, c2, use_puct, use_muzero_uct, prior):
         prior_score = math.sqrt(self.parent.number_visits) / (self.number_visits + 1)
         if use_muzero_uct:
             prior_score *= math.log((self.parent.number_visits + c2 + 1) / c2) + c1
-        prior = self.prior / self.parent.child_priors_sum
         if use_puct:
             prior_score *= prior
         return prior_score
@@ -317,9 +315,10 @@ class UCTNode:
         c2,
         use_puct,
         use_muzero_uct,
+        prior,
     ):
         q = self.Q(min_max_stats, discount, normalize_q, use_reward_discount_value)
-        u = self.U(c1, c2, use_puct, use_muzero_uct)
+        u = self.U(c1, c2, use_puct, use_muzero_uct, prior)
         return q + u
 
     def best_child(
@@ -335,6 +334,12 @@ class UCTNode:
     ):
         max_score = -np.inf
         best_node = None
+        priors = np.array([node.prior for node in self.children.values()])
+        max_prior = priors.max()
+        priors = priors - max_prior
+        normalization = np.exp(priors).sum()
+        priors = np.exp(priors)/np.exp(priors).sum()
+        assert np.allclose(priors.sum(), 1)
         for node in self.children.values():
             if use_reward_discount_value:
                 min_max_stats.update(node.reward + discount * node.average_value())
@@ -349,6 +354,7 @@ class UCTNode:
                 c2,
                 use_puct,
                 use_muzero_uct,
+                np.exp(node.prior-max_prior)/normalization,
             )
             if score >= max_score:
                 max_score = score
@@ -428,7 +434,6 @@ class UCTNode:
         self.expand_given_states_actions(child_states, actions, priors, rewards)
 
     def expand_given_states_actions(self, child_states, actions, priors, rewards):
-        self.child_priors_sum = self.child_priors_sum + priors.sum().item()
         for i in range(self.num_primitives):
             child_state = {}
             for k, v in child_states.items():
@@ -483,7 +488,6 @@ class UCTNode:
         for a, n in zip(actions, noise):
             self.children[a].prior = self.children[a].prior * (1 - frac) + n * frac
             prior_sum += self.children[a].prior
-        self.child_priors_sum = prior_sum
 
 
 if __name__ == "__main__":

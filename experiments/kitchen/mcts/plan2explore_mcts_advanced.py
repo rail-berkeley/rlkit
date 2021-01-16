@@ -100,7 +100,7 @@ if __name__ == "__main__":
         eval_policy_kwargs=dict(
             randomly_sample_discrete_actions=False,
         ),
-        reward_type="intrinsic",
+        reward_type="intrinsic+extrinsic",
         randomly_sample_discrete_actions=False,
         mcts_algorithm=True,
         actor_model_class="conditional_actor_model",
