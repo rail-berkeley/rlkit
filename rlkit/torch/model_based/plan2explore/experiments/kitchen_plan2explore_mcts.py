@@ -1,7 +1,7 @@
 def experiment(variant):
     import os
     from rlkit.torch.model_based.plan2explore.plan2explore_advanced_mcts import (
-    Plan2ExploreAdvancedMCTSTrainer,
+        Plan2ExploreAdvancedMCTSTrainer,
     )
     from rlkit.torch.model_based.plan2explore.mcts_policy import HybridMCTSPolicy
     from rlkit.torch.model_based.plan2explore.plan2explore_mcts import (
@@ -180,32 +180,6 @@ def experiment(variant):
         hidden_activation=torch.nn.functional.elu,
     )
     variant["trainer_kwargs"]["exploration_target_vf"] = exploration_target_vf
-
-    expl_policy = DreamerPolicy(
-        world_model,
-        exploration_actor,
-        obs_dim,
-        action_dim,
-        exploration=True,
-        expl_amount=variant.get("expl_amount", 0.3),
-        discrete_action_dim=num_primitives,
-        continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-    )
-    eval_actor = actor
-    eval_policy = DreamerPolicy(
-        world_model,
-        eval_actor,
-        obs_dim,
-        action_dim,
-        exploration=False,
-        expl_amount=0.0,
-        discrete_action_dim=num_primitives,
-        continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-    )
 
     if variant.get("use_mcts_policy", False):
 

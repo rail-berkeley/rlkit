@@ -102,15 +102,15 @@ def Advanced_UCT_search(
         step_count=0,
         parent=None,
     )
+    exploration_fraction=0.25
     root.expand(
         intrinsic_reward_scale=intrinsic_reward_scale,
         extrinsic_reward_scale=extrinsic_reward_scale,
         evaluation=evaluation,
+        use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
+        dirichlet_alpha=dirichlet_alpha,
+        exploration_fraction=exploration_fraction,
     )
-    if use_dirichlet_exploration_noise:
-        root.add_exploration_noise(
-            dirichlet_alpha=dirichlet_alpha, exploration_fraction=0.25
-        )
     ctr = 0
     min_max_stats = MinMaxStats()
     c1 = 1.25
@@ -130,6 +130,9 @@ def Advanced_UCT_search(
             c2,
             use_puct,
             use_muzero_uct,
+            use_dirichlet_exploration_noise,
+            dirichlet_alpha,
+            exploration_fraction,
         )
         if not leaf.value:
             states = wm.get_feat(leaf.state)
@@ -144,6 +147,9 @@ def Advanced_UCT_search(
                 intrinsic_reward_scale=intrinsic_reward_scale,
                 extrinsic_reward_scale=extrinsic_reward_scale,
                 evaluation=evaluation,
+                use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
+                dirichlet_alpha=dirichlet_alpha,
+                exploration_fraction=exploration_fraction,
             )
         else:
             leaf.is_expanded = True  # for terminal states
@@ -152,11 +158,9 @@ def Advanced_UCT_search(
         ctr += 1
         if return_open_loop_plan and ctr >= mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
-            keep_searching = path.shape[0] < max_steps
-    if return_open_loop_plan:
-        return compute_best_path(root, use_max_visit_count)
-    else:
-        return compute_best_action(root, use_max_visit_count=use_max_visit_count)[0]
+            if path.shape[0] == max_steps:
+                return path
+    return compute_best_action(root, use_max_visit_count)[0]
 
 
 def compute_best_path(root, use_max_visit_count):
@@ -169,11 +173,11 @@ def compute_best_path(root, use_max_visit_count):
     return actions
 
 
-def compute_best_action(root, use_max_visit_count):
+def compute_best_action(node, use_max_visit_count):
     max_val = -np.inf
     max_a = None
     max_child = None
-    for a, child in root.children.items():
+    for a, child in node.children.items():
         if use_max_visit_count:
             val = child.number_visits
         else:
@@ -299,12 +303,11 @@ class UCTNode:
         else:
             return q
 
-    def U(self, c1, c2, use_puct, use_muzero_uct, prior):
+    def U(self, c1, c2, use_muzero_uct, prior):
         prior_score = math.sqrt(self.parent.number_visits) / (self.number_visits + 1)
         if use_muzero_uct:
             prior_score *= math.log((self.parent.number_visits + c2 + 1) / c2) + c1
-        if use_puct:
-            prior_score *= prior
+        prior_score *= prior
         return prior_score
 
     def score(
@@ -315,12 +318,11 @@ class UCTNode:
         use_reward_discount_value,
         c1,
         c2,
-        use_puct,
         use_muzero_uct,
         prior,
     ):
         q = self.Q(min_max_stats, discount, normalize_q, use_reward_discount_value)
-        u = self.U(c1, c2, use_puct, use_muzero_uct, prior)
+        u = self.U(c1, c2, use_muzero_uct, prior)
         return q + u
 
     def best_child(
@@ -333,6 +335,7 @@ class UCTNode:
         c2,
         use_puct,
         use_muzero_uct,
+        use_dirichlet_exploration_noise,
     ):
         max_score = -np.inf
         best_node = None
@@ -340,13 +343,25 @@ class UCTNode:
         max_prior = priors.max()
         priors = priors - max_prior
         normalization = np.exp(priors).sum()
-        priors = np.exp(priors)/np.exp(priors).sum()
+        priors = np.exp(priors) / np.exp(priors).sum()
         assert np.allclose(priors.sum(), 1)
         for node in self.children.values():
             if use_reward_discount_value:
                 min_max_stats.update(node.reward + discount * node.average_value())
             else:
                 min_max_stats.update(node.average_value())
+            if use_puct:
+                prior = np.exp(node.prior - max_prior) / normalization
+            else:
+                prior = 1.0
+            if self.parent is None and use_dirichlet_exploration_noise:  # must be root
+                if not use_puct:
+                    prior = prior / len(self.children)
+                prior = (
+                    prior * (1 - node.exploration_fraction)
+                    + node.dirichlet_noise * node.exploration_fraction
+                )
+            
             score = node.score(
                 min_max_stats,
                 discount,
@@ -354,9 +369,8 @@ class UCTNode:
                 use_reward_discount_value,
                 c1,
                 c2,
-                use_puct,
                 use_muzero_uct,
-                np.exp(node.prior-max_prior)/normalization,
+                prior,
             )
             if score >= max_score:
                 max_score = score
@@ -377,6 +391,9 @@ class UCTNode:
         c2,
         use_puct,
         use_muzero_uct,
+        use_dirichlet_exploration_noise,
+        dirichlet_alpha,
+        exploration_fraction,
     ):
         current = self
         while current.is_expanded and not current.is_terminal:
@@ -385,8 +402,11 @@ class UCTNode:
                 intrinsic_reward_scale,
                 extrinsic_reward_scale,
                 evaluation,
+                use_dirichlet_exploration_noise,
+                dirichlet_alpha,
+                exploration_fraction,
             )
-            
+
             current = current.best_child(
                 min_max_stats,
                 discount,
@@ -396,6 +416,7 @@ class UCTNode:
                 c2,
                 use_puct,
                 use_muzero_uct,
+                use_dirichlet_exploration_noise,
             )
         return current
 
@@ -405,6 +426,9 @@ class UCTNode:
         intrinsic_reward_scale,
         extrinsic_reward_scale,
         evaluation,
+        use_dirichlet_exploration_noise,
+        dirichlet_alpha,
+        exploration_fraction,
     ):
         # progressive widening
         alpha = 0.5
@@ -420,9 +444,25 @@ class UCTNode:
                 extrinsic_reward_scale=extrinsic_reward_scale,
                 evaluation=evaluation,
             )
-            self.expand_given_states_actions(child_states, actions, priors, rewards)
+            self.expand_given_states_actions(
+                child_states,
+                actions,
+                priors,
+                rewards,
+                use_dirichlet_exploration_noise,
+                dirichlet_alpha,
+                exploration_fraction,
+            )
 
-    def expand(self, intrinsic_reward_scale, extrinsic_reward_scale, evaluation):
+    def expand(
+        self,
+        intrinsic_reward_scale,
+        extrinsic_reward_scale,
+        evaluation,
+        use_dirichlet_exploration_noise,
+        dirichlet_alpha,
+        exploration_fraction,
+    ):
         child_states, actions, priors, rewards = step_wm(
             self.wm,
             self.state,
@@ -433,19 +473,43 @@ class UCTNode:
             extrinsic_reward_scale=extrinsic_reward_scale,
             evaluation=evaluation,
         )
-        self.expand_given_states_actions(child_states, actions, priors, rewards)
+        self.expand_given_states_actions(
+            child_states,
+            actions,
+            priors,
+            rewards,
+            use_dirichlet_exploration_noise,
+            dirichlet_alpha,
+            exploration_fraction,
+        )
 
-    def expand_given_states_actions(self, child_states, actions, priors, rewards):
+    def expand_given_states_actions(
+        self,
+        child_states,
+        actions,
+        priors,
+        rewards,
+        use_dirichlet_exploration_noise,
+        dirichlet_alpha,
+        exploration_fraction,
+    ):
+        if self.parent is None and use_dirichlet_exploration_noise:
+            # therefore self must be the root
+            noise = np.random.dirichlet([dirichlet_alpha] * self.num_primitives)
+            frac = exploration_fraction
         for i in range(self.num_primitives):
             child_state = {}
             for k, v in child_states.items():
                 child_state[k] = v[i : i + 1, :]
-            self.add_child(
+            node = self.add_child(
                 child_state,
                 actions[i, :],
                 priors[i].item(),
                 rewards[i].item(),
             )
+            if self.parent is None and use_dirichlet_exploration_noise:
+                node.exploration_fraction = exploration_fraction
+                node.dirichlet_noise = noise[i]
         self.is_expanded = True
 
     def add_child(self, state, action, prior, reward):
@@ -471,25 +535,13 @@ class UCTNode:
             current.number_visits += 1
             current.total_value += value
             if use_reward_discount_value:
-                min_max_stats.update(current.reward + discount * current.average_value())
+                min_max_stats.update(
+                    current.reward + discount * current.average_value()
+                )
                 value = current.reward + discount * value
             else:
                 min_max_stats.update(current.average_value())
             current = current.parent
-
-    def add_exploration_noise(self, dirichlet_alpha, exploration_fraction):
-        """
-        At the start of each search, we add dirichlet noise to the prior of the root to
-        encourage the search to explore new actions.
-        From: https://github.com/werner-duvaud/muzero-general/blob/master/self_play.py
-        """
-        actions = list(self.children.keys())
-        noise = np.random.dirichlet([dirichlet_alpha] * len(actions))
-        frac = exploration_fraction
-        prior_sum = 0
-        for a, n in zip(actions, noise):
-            self.children[a].prior = self.children[a].prior * (1 - frac) + n * frac
-            prior_sum += self.children[a].prior
 
 
 if __name__ == "__main__":
@@ -564,11 +616,13 @@ if __name__ == "__main__":
             extrinsic_reward_scale=1.0,
             progressive_widening_constant=0,
             use_dirichlet_exploration_noise=False,
-            use_puct=False,
+            use_puct=True,
             normalize_q=False,
             use_reward_discount_value=False,
             use_muzero_uct=False,
-            use_max_visit_count=False,
+            use_max_visit_count=True,
+            return_open_loop_plan=True,
+            dirichlet_alpha=.25,
         )
         total_time += time.time() - t
     print(total_time / num_tries)
