@@ -199,7 +199,6 @@ def experiment(variant):
             eval_envs[0].action_space,
             exploration_actor,
             one_step_ensemble,
-            vf,
             exploration_vf,
             **variant["expl_policy_kwargs"],
         )
@@ -212,7 +211,6 @@ def experiment(variant):
             actor,
             one_step_ensemble,
             vf,
-            exploration_vf,
             **variant["eval_policy_kwargs"],
         )
     else:

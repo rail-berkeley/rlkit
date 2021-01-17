@@ -73,8 +73,7 @@ def Advanced_UCT_search(
     state,
     max_steps,
     num_primitives,
-    intrinsic_vf,
-    extrinsic_vf,
+    vf,
     mcts_iterations=50,
     evaluation=False,
     intrinsic_reward_scale=1.0,
@@ -136,12 +135,8 @@ def Advanced_UCT_search(
         )
         if not leaf.value:
             states = wm.get_feat(leaf.state)
-            value = ptu.zeros(states.shape[0])
-            if intrinsic_reward_scale > 0.0:
-                value += intrinsic_vf(states)[0] * intrinsic_reward_scale
-            if extrinsic_reward_scale > 0.0:
-                value += extrinsic_vf(states)[0] * extrinsic_reward_scale
-            leaf.value = value.item()
+            value = vf(states)[0].item()
+            leaf.value = value
         if leaf.step_count < max_steps:
             leaf.expand(
                 intrinsic_reward_scale=intrinsic_reward_scale,
@@ -582,13 +577,7 @@ if __name__ == "__main__":
     ).to(ptu.device)
     state = wm.initial(1)
 
-    intrinsic_vf = Mlp(
-        hidden_sizes=[400] * 3,
-        output_size=1,
-        input_size=wm.feature_size,
-        hidden_activation=torch.nn.functional.elu,
-    ).to(ptu.device)
-    extrinsic_vf = Mlp(
+    vf = Mlp(
         hidden_sizes=[400] * 3,
         output_size=1,
         input_size=wm.feature_size,
@@ -609,8 +598,7 @@ if __name__ == "__main__":
             mcts_iterations=100,
             max_steps=env.max_steps,
             num_primitives=env.num_primitives,
-            intrinsic_vf=intrinsic_vf,
-            extrinsic_vf=extrinsic_vf,
+            vf=vf,
             evaluation=True,
             intrinsic_reward_scale=0.0,
             extrinsic_reward_scale=1.0,

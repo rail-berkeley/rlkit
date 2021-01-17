@@ -155,7 +155,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         actor,
         one_step_ensemble,
         vf,
-        exploration_vf,
         mcts_kwargs,
         randomly_sample_discrete_actions=False,
     ):
@@ -176,7 +175,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         self.one_step_ensemble = one_step_ensemble
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
         self.vf = vf
-        self.exploration_vf = exploration_vf
         self.mcts_kwargs = mcts_kwargs
 
     def get_action(self, observation):
@@ -207,7 +205,6 @@ class HybridAdvancedMCTSPolicy(Policy):
                     st,
                     self.world_model.env.max_steps - self.ctr,
                     self.world_model.env.num_primitives,
-                    self.exploration_vf,
                     self.vf,
                     **self.mcts_kwargs,
                 )
