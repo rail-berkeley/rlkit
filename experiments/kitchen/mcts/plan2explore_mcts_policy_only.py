@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
@@ -112,7 +112,7 @@ if __name__ == "__main__":
             mcts_iterations=100,
             dirichlet_alpha=0.03,
             progressive_widening_constant=0.0,
-            use_dirichlet_exploration_noise=False,
+            use_dirichlet_exploration_noise=True,
             use_puct=False,
             normalize_q=False,
             use_reward_discount_value=False,
@@ -123,36 +123,32 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "top_left_burner",
             "slide_cabinet",
+            "microwave",
+            "top_left_burner",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
         # "path_length_specific_discount": [True, False],
         # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
-        # "mcts_kwargs.dirichlet_alpha": [
-        #     0.25,  # from atari
-        #     0.03,
-        #     1,
-        #     10,
-        # ],
-        # "mcts_kwargs.progressive_widening_constant": [1, 5, 10],
+        "mcts_kwargs.dirichlet_alpha": [
+            0.1 ,1, 10,
+        ],
+        "mcts_kwargs.progressive_widening_constant": [1, 2.5, 5, 7.5, 10],
+        "mcts_kwargs.progressive_widening_type": ['all', 'max_prior', 'max_value'],
         # "mcts_kwargs.normalize_q":[True, False],
-        "mcts_kwargs.use_reward_discount_value": [True, False],
-        "mcts_kwargs.use_muzero_uct": [True, False],
-        "mcts_kwargs.use_puct": [True, False],
+        "mcts_kwargs.use_reward_discount_value": [True],
+        "mcts_kwargs.use_muzero_uct": [False],
+        "mcts_kwargs.use_puct": [True],
+        "mcts_kwargs.mcts_iterations":[50],
         # "mcts_kwargs.use_max_visit_count":[True, False],
-        # "mcts_kwargs.use_dirichlet_exploration_noise":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        # if not variant['mcts_kwargs']['use_dirichlet_exploration_noise'] and variant['mcts_kwargs']['dirichlet_alpha'] != 0.25:
-        #     continue
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
@@ -164,7 +160,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",
+                snapshot_mode="last",  # saving doesn't seem to work with wandb atm
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
