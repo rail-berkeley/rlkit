@@ -16,7 +16,6 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
-    parser.add_argument("--use_wandb", action="store_true", default=False)
     parser.add_argument("--num_expl_envs", type=int, default=1)
     args = parser.parse_args()
     if args.debug:
@@ -29,12 +28,11 @@ if __name__ == "__main__":
             num_pretrain_steps=1,
             num_train_loops_per_epoch=1,
             batch_size=30,
-            use_wandb=args.use_wandb,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
@@ -42,6 +40,7 @@ if __name__ == "__main__":
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="Plan2ExploreMCTS",
+        version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
@@ -103,7 +102,6 @@ if __name__ == "__main__":
         reward_type="intrinsic+extrinsic",
         randomly_sample_discrete_actions=False,
         mcts_algorithm=True,
-        actor_model_class="conditional_actor_model",
         trainer_class="plan2explore_advanced_mcts",
         mcts_kwargs=dict(
             mcts_iterations=100,
@@ -119,8 +117,8 @@ if __name__ == "__main__":
     )
     search_space = {
         "env_class": [
-            "microwave",
-            "top_left_burner",
+            # "microwave",
+            # "top_left_burner",
             "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
@@ -135,12 +133,12 @@ if __name__ == "__main__":
         #     0.03,
         # ],
         # "mcts_kwargs.progressive_widening_constant": [0.1, 1],
-        # "progressive_widening_constant": [0.1, 1],
-        "mcts_kwargs.normalize_q":[True, False],
-        "mcts_kwargs.use_reward_discount_value":[True, False],
-        "mcts_kwargs.use_muzero_uct":[True, False],
-        "mcts_kwargs.use_puct":[True, False],
-        # "mcts_kwargs.use_max_visit_count":[True, False],
+        # "mcts_kwargs.progressive_widening_constant": [0.1, 1],
+        # "mcts_kwargs.normalize_q":[True, False],
+        "mcts_kwargs.use_reward_discount_value": [True, False],
+        "mcts_kwargs.use_muzero_uct": [True, False],
+        "mcts_kwargs.use_puct": [True, False],
+        # "mcts_kwargs.use_max_visit_count": [True,False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

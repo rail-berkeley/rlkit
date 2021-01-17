@@ -32,9 +32,9 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
-            min_num_steps_before_training=50,
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
         )
         exp_prefix = args.exp_prefix
@@ -90,7 +90,9 @@ if __name__ == "__main__":
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            detach_rewards=True,
+            use_ppo_loss=False,
+            ppo_clip_param=0.2,
+            num_actor_value_updates=1,
         ),
         expl_policy_kwargs=dict(),
         eval_policy_kwargs=dict(
@@ -121,8 +123,8 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "top_left_burner",
+            # "microwave",
+            # "top_left_burner",
             "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
@@ -132,21 +134,25 @@ if __name__ == "__main__":
         # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
         # "mcts_kwargs.dirichlet_alpha": [
         #     0.25,  # from atari
-        #     0.15,
         #     0.03,
+        #     1,
+        #     10,
         # ],
-        # "mcts_kwargs.progressive_widening_constant": [0.1, 1],
-        "mcts_kwargs.normalize_q":[True, False],
-        "mcts_kwargs.use_reward_discount_value":[True, False],
-        "mcts_kwargs.use_muzero_uct":[True, False],
-        "mcts_kwargs.use_puct":[True, False],
+        # "mcts_kwargs.progressive_widening_constant": [1, 5, 10],
+        # "mcts_kwargs.normalize_q":[True, False],
+        "mcts_kwargs.use_reward_discount_value": [True, False],
+        "mcts_kwargs.use_muzero_uct": [True, False],
+        "mcts_kwargs.use_puct": [True, False],
         # "mcts_kwargs.use_max_visit_count":[True, False],
+        # "mcts_kwargs.use_dirichlet_exploration_noise":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        # if not variant['mcts_kwargs']['use_dirichlet_exploration_noise'] and variant['mcts_kwargs']['dirichlet_alpha'] != 0.25:
+        #     continue
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
