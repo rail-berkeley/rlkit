@@ -88,7 +88,7 @@ def Advanced_UCT_search(
     use_muzero_uct=False,
     use_max_visit_count=False,
     return_open_loop_plan=False,
-    progressive_widening_type='all',
+    progressive_widening_type="all",
 ):
     root = UCTNode(
         wm,
@@ -102,7 +102,7 @@ def Advanced_UCT_search(
         step_count=0,
         parent=None,
     )
-    exploration_fraction=0.25
+    exploration_fraction = 0.25
     root.expand(
         intrinsic_reward_scale=intrinsic_reward_scale,
         extrinsic_reward_scale=extrinsic_reward_scale,
@@ -222,7 +222,24 @@ def generate_full_actions(
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
     return actions, priors
 
+
+def step_wm_action(node, use_max_prior=True):
+    max_val = -np.inf
+    max_action = None
+    for a, node in node.children.items():
+        if use_max_prior:
+            val = node.prior
+        else:
+            val = node.average_value()
+        if val > max_val:
+            max_action = a
+            max_val = val
+    discrete_action = np.array(max_action)[: node.num_primitives]
+    return ptu.from_numpy(discrete_action).reshape(1, -1).repeat(node.num_primitives, 1)
+
+
 def step_wm(
+    node,
     wm,
     state,
     actor,
@@ -231,15 +248,16 @@ def step_wm(
     evaluation=False,
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
-    actions_type='all' #max_prior, max_value
+    actions_type="all",  # max_prior, max_value
 ):
-    
-    if actions_type=='all':
+
+    if actions_type == "all":
         discrete_actions = ptu.eye(num_primitives)
-    elif actions_type=='max_prior':
-        discrete_actions = step_wm_action(use_max_prior=True)
-    elif actions_type == 'max_value':
-        discrete_actions = step_wm_action(use_max_prior=False)
+    elif actions_type == "max_prior":
+        discrete_actions = step_wm_action(node, use_max_prior=True)
+    elif actions_type == "max_value":
+        discrete_actions = step_wm_action(node, use_max_prior=False)
+
     state_n = {}
     for k, v in state.items():
         state_n[k] = v.repeat(discrete_actions.shape[0], 1)
@@ -258,19 +276,6 @@ def step_wm(
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
     return new_state, action, priors, r
 
-def step_wm_action(node, use_max_prior=True):
-    max_val = -np.inf
-    max_action = None
-    for a, node in node.children.items():
-        if use_max_prior:
-            val = node.prior
-        else:
-            val = node.average_value()
-        if max_val > val:
-            max_action = a
-            max_val = val
-    discrete_action = max_action[:node.num_primitives]
-    return ptu.from_numpy(discrete_action).reshape(1, -1).repeat(node.num_primitives, 1)
 
 class UCTNode:
     def __init__(
@@ -377,7 +382,7 @@ class UCTNode:
                     prior * (1 - node.exploration_fraction)
                     + node.dirichlet_noise * node.exploration_fraction
                 )
-            
+
             score = node.score(
                 min_max_stats,
                 discount,
@@ -422,7 +427,7 @@ class UCTNode:
                 use_dirichlet_exploration_noise,
                 dirichlet_alpha,
                 exploration_fraction,
-                progressive_widening_type
+                progressive_widening_type,
             )
 
             current = current.best_child(
@@ -447,7 +452,7 @@ class UCTNode:
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
-        progressive_widening_type, #all, max_prior, max_value
+        progressive_widening_type,  # all, max_prior, max_value
     ):
         # progressive widening
         alpha = 0.5
@@ -462,6 +467,7 @@ class UCTNode:
             sample new actions from continuous policy or from action space bounds and scale to -1,1
             """
             child_states, actions, priors, rewards = step_wm(
+                self,
                 self.wm,
                 self.state,
                 self.actor,
@@ -492,6 +498,7 @@ class UCTNode:
         exploration_fraction,
     ):
         child_states, actions, priors, rewards = step_wm(
+            self,
             self.wm,
             self.state,
             self.actor,
@@ -643,7 +650,7 @@ if __name__ == "__main__":
             use_muzero_uct=False,
             use_max_visit_count=True,
             return_open_loop_plan=True,
-            dirichlet_alpha=.25,
+            dirichlet_alpha=0.25,
         )
         total_time += time.time() - t
     print(total_time / num_tries)
