@@ -88,6 +88,7 @@ def Advanced_UCT_search(
     use_muzero_uct=False,
     use_max_visit_count=False,
     return_open_loop_plan=False,
+    progressive_widening_type='all',
 ):
     root = UCTNode(
         wm,
@@ -132,6 +133,7 @@ def Advanced_UCT_search(
             use_dirichlet_exploration_noise,
             dirichlet_alpha,
             exploration_fraction,
+            progressive_widening_type,
         )
         if not leaf.value:
             states = wm.get_feat(leaf.state)
@@ -220,7 +222,6 @@ def generate_full_actions(
         priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
     return actions, priors
 
-
 def step_wm(
     wm,
     state,
@@ -230,11 +231,18 @@ def step_wm(
     evaluation=False,
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
+    actions_type='all' #max_prior, max_value
 ):
+    
+    if actions_type=='all':
+        discrete_actions = ptu.eye(num_primitives)
+    elif actions_type=='max_prior':
+        discrete_actions = step_wm_action(use_max_prior=True)
+    elif actions_type == 'max_value':
+        discrete_actions = step_wm_action(use_max_prior=False)
     state_n = {}
     for k, v in state.items():
-        state_n[k] = v.repeat(num_primitives, 1)
-    discrete_actions = ptu.eye(num_primitives)
+        state_n[k] = v.repeat(discrete_actions.shape[0], 1)
     action, priors = generate_full_actions(
         wm, state_n, actor, discrete_actions, evaluation
     )
@@ -250,6 +258,19 @@ def step_wm(
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
     return new_state, action, priors, r
 
+def step_wm_action(node, use_max_prior=True):
+    max_val = -np.inf
+    max_action = None
+    for a, node in node.children.items():
+        if use_max_prior:
+            val = node.prior
+        else:
+            val = node.average_value()
+        if max_val > val:
+            max_action = a
+            max_val = val
+    discrete_action = max_action[:node.num_primitives]
+    return ptu.from_numpy(discrete_action).reshape(1, -1).repeat(node.num_primitives, 1)
 
 class UCTNode:
     def __init__(
@@ -389,6 +410,7 @@ class UCTNode:
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
+        progressive_widening_type,
     ):
         current = self
         while current.is_expanded and not current.is_terminal:
@@ -400,6 +422,7 @@ class UCTNode:
                 use_dirichlet_exploration_noise,
                 dirichlet_alpha,
                 exploration_fraction,
+                progressive_widening_type
             )
 
             current = current.best_child(
@@ -424,11 +447,20 @@ class UCTNode:
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
+        progressive_widening_type, #all, max_prior, max_value
     ):
         # progressive widening
         alpha = 0.5
         thresh = math.ceil(progressive_widening_constant * self.number_visits ** alpha)
         if len(self.children) < thresh:
+            """
+            progressive widening ideas:
+            1) widen all discrete actions by 1
+            2) widen discrete action with highest prior probability by 1
+            3) widen discrete action with highest average value by 1
+
+            sample new actions from continuous policy or from action space bounds and scale to -1,1
+            """
             child_states, actions, priors, rewards = step_wm(
                 self.wm,
                 self.state,
@@ -438,6 +470,7 @@ class UCTNode:
                 intrinsic_reward_scale=intrinsic_reward_scale,
                 extrinsic_reward_scale=extrinsic_reward_scale,
                 evaluation=evaluation,
+                actions_type=progressive_widening_type,
             )
             self.expand_given_states_actions(
                 child_states,
