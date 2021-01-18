@@ -122,7 +122,7 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "slide_cabinet",
+            # "slide_cabinet",
             "microwave",
             "top_left_burner",
             # "kettle",
@@ -136,13 +136,13 @@ if __name__ == "__main__":
             # 1,
             10,
         ],
-        "mcts_kwargs.progressive_widening_constant": [5, 7.5, 10],
-        "mcts_kwargs.progressive_widening_type": ["max_prior", "max_value"],
+        "mcts_kwargs.progressive_widening_constant": [1,5,10],
+        "mcts_kwargs.progressive_widening_type": ["all", "max_prior", "max_value"],
         # "mcts_kwargs.normalize_q":[True, False],
         "mcts_kwargs.use_reward_discount_value": [True],
         "mcts_kwargs.use_muzero_uct": [False],
         "mcts_kwargs.use_puct": [True],
-        "mcts_kwargs.mcts_iterations": [200, 500],
+        "mcts_kwargs.mcts_iterations": [500, 1000],
         # "mcts_kwargs.use_max_visit_count":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
