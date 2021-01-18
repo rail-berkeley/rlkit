@@ -87,7 +87,6 @@ if __name__ == "__main__":
             kl_loss_scale=1.0,
             optimizer_class="apex_adam",
             pred_discount_loss_scale=10.0,
-            use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
             use_ppo_loss=False,

@@ -15,6 +15,7 @@ from rlkit.torch.model_based.plan2explore.advanced_mcts_wm_expl import (
     Advanced_UCT_search,
 )
 from rlkit.torch.model_based.plan2explore.basic_mcts_wm_expl import UCT_search
+from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
 
 try:
     import apex
@@ -56,7 +57,7 @@ def compute_exploration_reward(
     return reward
 
 
-class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
+class Plan2ExploreAdvancedMCTSTrainer(Plan2ExploreTrainer):
     def __init__(
         self,
         env,
@@ -84,7 +85,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         pred_discount_loss_scale=10.0,
         adam_eps=1e-7,
         weight_decay=0.0,
-        use_pred_discount=True,
         debug=False,
         exploration_reward_scale=10000,
         image_goals=None,
@@ -109,7 +109,11 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             world_model,
             imagination_horizon,
             image_shape,
-            target_vf=target_vf,
+            exploration_actor,
+            exploration_vf,
+            one_step_ensemble,
+            target_vf,
+            exploration_target_vf,
             discount=discount,
             reward_scale=reward_scale,
             actor_lr=actor_lr,
@@ -124,107 +128,17 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             pred_discount_loss_scale=pred_discount_loss_scale,
             adam_eps=adam_eps,
             weight_decay=weight_decay,
-            use_pred_discount=use_pred_discount,
             debug=debug,
-            image_loss_scale=1.0,
-            reward_loss_scale=1.0,
-            transition_loss_scale=0.0,
-            entropy_loss_scale=0.0,
-            forward_kl=True,
             policy_gradient_loss_scale=policy_gradient_loss_scale,
             actor_entropy_loss_schedule=actor_entropy_loss_schedule,
-            soft_target_tau=1,
-            target_update_period=1,
-            initialize_amp=False,
             use_ppo_loss=use_ppo_loss,
             ppo_clip_param=ppo_clip_param,
             num_actor_value_updates=num_actor_value_updates,
             detach_rewards=detach_rewards,
-        )
-        self.image_goals = None
-        # self.image_goals = np.zeros((10, *image_shape))
-        self.exploration_actor = exploration_actor.to(ptu.device)
-        self.exploration_vf = exploration_vf.to(ptu.device)
-        self.exploration_target_vf = exploration_target_vf.to(ptu.device)
-        self.one_step_ensemble = one_step_ensemble.to(ptu.device)
-
-        self.one_step_ensemble_optimizer = self.optimizer_class(
-            self.one_step_ensemble.parameters(),
-            lr=world_model_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-
-        self.exploration_actor_optimizer = self.optimizer_class(
-            self.exploration_actor.parameters(),
-            lr=actor_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-        self.exploration_vf_optimizer = self.optimizer_class(
-            self.exploration_vf.parameters(),
-            lr=vf_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
-        )
-        if self.use_amp:
-            models, optimizers = amp.initialize(
-                [
-                    self.world_model.action_step_feature_extractor,
-                    self.world_model.action_step_mlp,
-                    self.world_model.obs_step_mlp,
-                    self.world_model.conv_decoder,
-                    self.world_model.conv_encoder,
-                    self.world_model.pred_discount,
-                    self.world_model.reward,
-                    self.world_model.rnn,
-                    self.actor,
-                    self.vf,
-                    self.one_step_ensemble,
-                    self.exploration_actor,
-                    self.exploration_vf,
-                ],
-                [
-                    self.world_model_optimizer,
-                    self.actor_optimizer,
-                    self.vf_optimizer,
-                    self.one_step_ensemble_optimizer,
-                    self.exploration_actor_optimizer,
-                    self.exploration_vf_optimizer,
-                ],
-                opt_level=opt_level,
-                num_losses=6,
-            )
-            (
-                self.world_model.action_step_feature_extractor,
-                self.world_model.action_step_mlp,
-                self.world_model.obs_step_mlp,
-                self.world_model.conv_decoder,
-                self.world_model.conv_encoder,
-                self.world_model.pred_discount,
-                self.world_model.reward,
-                self.world_model.rnn,
-                self.actor,
-                self.vf,
-                self.one_step_ensemble,
-                self.exploration_actor,
-                self.exploration_vf,
-            ) = models
-            (
-                self.world_model_optimizer,
-                self.actor_optimizer,
-                self.vf_optimizer,
-                self.one_step_ensemble_optimizer,
-                self.exploration_actor_optimizer,
-                self.exploration_vf_optimizer,
-            ) = optimizers
-
-        self.exploration_reward_scale = exploration_reward_scale
-        self.train_exploration_actor_with_intrinsic_and_extrinsic_reward = (
-            train_exploration_actor_with_intrinsic_and_extrinsic_reward
-        )
-        self.train_actor_with_intrinsic_and_extrinsic_reward = (
-            train_actor_with_intrinsic_and_extrinsic_reward
+            train_exploration_actor_with_intrinsic_and_extrinsic_reward=train_exploration_actor_with_intrinsic_and_extrinsic_reward,
+            train_actor_with_intrinsic_and_extrinsic_reward=train_actor_with_intrinsic_and_extrinsic_reward,
+            image_goals=image_goals,
+            exploration_reward_scale=exploration_reward_scale,
         )
         self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
         self.exploration_actor_intrinsic_reward_scale = (
@@ -236,20 +150,6 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         self.actor_intrinsic_reward_scale = actor_intrinsic_reward_scale
         self.mcts_kwargs = mcts_kwargs
 
-    def try_update_target_networks(self):
-        if (
-            self.target_vf
-            and self.exploration_target_vf
-            and self._n_train_steps_total % self.target_update_period == 0
-        ):
-            self.update_target_networks()
-
-    def update_target_networks(self):
-        ptu.soft_update_from_to(self.vf, self.target_vf, self.soft_target_tau)
-        ptu.soft_update_from_to(
-            self.exploration_vf, self.exploration_target_vf, self.soft_target_tau
-        )
-
     def actor_loss(
         self,
         imag_returns,
@@ -258,7 +158,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         imag_actions,
         weights,
         old_imag_log_probs,
-        actor,
+        actor=None,
     ):
         if actor is None:
             actor = self.actor
@@ -358,8 +258,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
-                if self.use_pred_discount:  # Last step could be terminal.
-                    v = v[:, :-1]
+                v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         if self.image_goals is not None:
             image_goals = ptu.from_numpy(
@@ -383,11 +282,9 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             rewards = []
 
         feats = []
-        next_feats = []
         actions = []
         log_probs = []
         states = []
-        next_states = []
         for i in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             states.append(new_state["deter"])
@@ -399,11 +296,8 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             continuous_action = action_dist.rsample()
             action = torch.cat((discrete_action, continuous_action), 1)
             new_state = self.world_model.action_step(new_state, action)
-            next_feat = self.world_model.get_feat(new_state)
-            next_states.append(new_state["deter"])
 
             feats.append(feat.unsqueeze(0))
-            next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
             log_probs.append(action_dist.log_prob(continuous_action).unsqueeze(0))
             if self.image_goals is not None:
@@ -413,29 +307,23 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 rewards.append(reward)
 
         feats = torch.cat(feats)
-        next_feats = torch.cat(next_feats)
         actions = torch.cat(actions)
         log_probs = torch.cat(log_probs)
         states = torch.cat(states)
-        next_states = torch.cat(next_states)
         if self.image_goals is not None:
             rewards = torch.cat(rewards).unsqueeze(-1)
             return (
                 feats,
-                next_feats,
                 actions,
                 log_probs,
                 states,
-                next_states,
                 rewards,
             )
         return (
             feats,
-            next_feats,
             actions,
             log_probs,
             states,
-            next_states,
         )
 
     def compute_loss(
@@ -544,21 +432,17 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             if self.image_goals is not None:
                 (
                     imag_feat,
-                    imag_next_feat,
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
-                    _,
                     extrinsic_reward,
                 ) = self.imagine_ahead(post, self.actor, discrete_actions)
             else:
                 (
                     imag_feat,
-                    imag_next_feat,
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
-                    _,
                 ) = self.imagine_ahead(post, self.actor, discrete_actions)
         with FreezeParameters(world_model_params + vf_params + target_vf_params):
             intrinsic_reward = compute_exploration_reward(
@@ -586,15 +470,12 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                 )
             else:
                 imag_reward = extrinsic_reward
-            if self.use_pred_discount:
-                with FreezeParameters(pred_discount_params):
-                    discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(imag_feat),
-                        std=None,
-                        normal=False,
-                    ).mean
-            else:
-                discount = self.discount * torch.ones_like(imag_reward)
+            with FreezeParameters(pred_discount_params):
+                discount = self.world_model.get_dist(
+                    self.world_model.pred_discount(imag_feat),
+                    std=None,
+                    normal=False,
+                ).mean
             imag_target_value = self.target_vf(imag_feat)
             imag_value = self.vf(imag_feat)
         imag_returns = lambda_return(
@@ -657,12 +538,11 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         """
         with torch.no_grad():
             imag_feat_v = imag_feat.detach()
-            imag_next_feat_v = imag_next_feat.detach()
             target = imag_returns.detach()
             weights = weights.detach()
 
         vf_loss, imag_value_mean = self.value_loss(
-            imag_feat_v, imag_next_feat_v, weights, target, vf=self.vf
+            imag_feat_v, weights, target, vf=self.vf
         )
 
         self.update_network(
@@ -736,11 +616,9 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             if self.image_goals is not None:
                 (
                     exploration_imag_feat,
-                    exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
                     exploration_imag_deter_states,
-                    exploration_imag_next_deter_states,
                     exploration_extrinsic_reward,
                 ) = self.imagine_ahead(
                     post,
@@ -750,11 +628,9 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             else:
                 (
                     exploration_imag_feat,
-                    exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
                     exploration_imag_deter_states,
-                    exploration_imag_next_deter_states,
                 ) = self.imagine_ahead(
                     post,
                     self.exploration_actor,
@@ -795,17 +671,12 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
                     + exploration_extrinsic_reward
                 )
 
-            if self.use_pred_discount:
-                with FreezeParameters(pred_discount_params):
-                    exploration_discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(exploration_imag_feat),
-                        std=None,
-                        normal=False,
-                    ).mean
-            else:
-                exploration_discount = self.discount * torch.ones_like(
-                    exploration_reward
-                )
+            with FreezeParameters(pred_discount_params):
+                exploration_discount = self.world_model.get_dist(
+                    self.world_model.pred_discount(exploration_imag_feat),
+                    std=None,
+                    normal=False,
+                ).mean
             exploration_imag_target_value = self.exploration_target_vf(
                 exploration_imag_feat
             )
@@ -879,13 +750,11 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
         """
         with torch.no_grad():
             exploration_imag_feat_v = exploration_imag_feat.detach()
-            exploration_imag_next_feat_v = exploration_imag_next_feat.detach()
             exploration_value_target = exploration_imag_returns.detach()
             exploration_weights = exploration_weights.detach()
 
         exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
             exploration_imag_feat_v,
-            exploration_imag_next_feat_v,
             exploration_weights,
             exploration_value_target,
             vf=self.exploration_vf,
@@ -909,8 +778,7 @@ class Plan2ExploreAdvancedMCTSTrainer(DreamerV2Trainer):
             eval_statistics["Image Loss"] = image_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
-            if self.use_pred_discount:
-                eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
+            eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
 
             eval_statistics["Actor Loss"] = actor_loss
             eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss
