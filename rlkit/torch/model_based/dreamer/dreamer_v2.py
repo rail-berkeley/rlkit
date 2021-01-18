@@ -69,7 +69,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         debug=False,
         initialize_amp=True,
         use_baseline=True,
-        use_imag_next_feat=False,
         use_ppo_loss=False,
         ppo_clip_param=0.2,
         num_actor_value_updates=1,
@@ -223,7 +222,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.eval_statistics = OrderedDict()
         self.image_shape = image_shape
         self.use_baseline = use_baseline
-        self.use_imag_next_feat = use_imag_next_feat
         self.use_ppo_loss = use_ppo_loss
         self.ppo_clip_param = ppo_clip_param
         self.num_actor_value_updates = num_actor_value_updates
@@ -268,29 +266,25 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         feats = []
-        next_feats = []
         actions = []
         log_probs = []
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             action_dist = self.actor(feat.detach())
-            if type(actor) == ConditionalActorModel:
+            if type(self.actor) == ConditionalActorModel:
                 action, log_prob = action_dist.rsample_and_log_prob()
             else:
                 action = action_dist.rsample()
                 log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
-            next_feat = self.world_model.get_feat(new_state)
 
             feats.append(feat.unsqueeze(0))
-            next_feats.append(next_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
             log_probs.append(log_prob.unsqueeze(0))
         feats = torch.cat(feats)
-        next_feats = torch.cat(next_feats)
         actions = torch.cat(actions)
         log_probs = torch.cat(log_probs)
-        return feats, next_feats, actions, log_probs
+        return feats, actions, log_probs
 
     def world_model_loss(
         self,
@@ -480,7 +474,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
     def value_loss(
         self,
         imag_feat_v,
-        imag_next_feat_v,
         weights,
         imag_returns,
         old_imag_value=None,
@@ -492,12 +485,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         assert len(weights.shape) == 3 and weights.shape[-1] == 1, weights.shape
         assert len(imag_returns.shape) == 3, imag_returns.shape
 
-        if self.use_imag_next_feat:
-            values = vf(imag_next_feat_v)[:-1]
-            value_dist = self.world_model.get_dist(values, 1)
-        else:
-            values = vf(imag_feat_v)[:-1]
-            value_dist = self.world_model.get_dist(values, 1)
+        values = vf(imag_feat_v)[:-1]
+        value_dist = self.world_model.get_dist(values, 1)
         if self.use_clipped_value_loss:
             value_pred_clipped = old_imag_value[:-1] + (
                 values - old_imag_value[:-1]
@@ -618,41 +607,23 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             with FreezeParameters(world_model_params):
                 (
                     imag_feat,
-                    imag_next_feat,
                     imag_actions,
                     imag_log_probs,
                 ) = self.imagine_ahead(post)
             with FreezeParameters(world_model_params):
-                if self.use_imag_next_feat:
-                    imag_reward = self.world_model.reward(imag_next_feat)
-                else:
-                    imag_reward = self.world_model.reward(imag_feat)
+                imag_reward = self.world_model.reward(imag_feat)
                 with FreezeParameters(pred_discount_params):
-                    if self.use_imag_next_feat:
-                        discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(imag_next_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
-                    else:
-                        discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(imag_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
             with FreezeParameters(vf_params + target_vf_params):
-                if self.use_imag_next_feat:
-                    old_imag_value = self.vf(imag_next_feat).detach()
-                else:
-                    old_imag_value = self.vf(imag_feat).detach()
+                old_imag_value = self.vf(imag_feat).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(vf_params + target_vf_params):
-                    if self.use_imag_next_feat:
-                        imag_target_value = self.target_vf(imag_next_feat)
-                        imag_value = self.vf(imag_next_feat)
-                    else:
-                        imag_target_value = self.target_vf(imag_feat)
-                        imag_value = self.vf(imag_feat)
+                    imag_target_value = self.target_vf(imag_feat)
+                    imag_value = self.vf(imag_feat)
                 imag_returns = lambda_return(
                     imag_reward[:-1],
                     imag_target_value[:-1],
@@ -682,12 +653,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
                 with torch.no_grad():
                     imag_feat_v = imag_feat.detach()
-                    imag_next_feat_v = imag_next_feat.detach()
                     target = imag_returns.detach()
                     weights = weights.detach()
 
                 vf_loss_, imag_values_mean_ = self.value_loss(
-                    imag_feat_v, imag_next_feat_v, weights, target, old_imag_value
+                    imag_feat_v, weights, target, old_imag_value
                 )
 
                 if self.use_actor_value_optimizer:
