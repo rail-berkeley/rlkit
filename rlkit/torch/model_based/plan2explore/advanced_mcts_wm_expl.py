@@ -89,7 +89,10 @@ def Advanced_UCT_search(
     use_max_visit_count=False,
     return_open_loop_plan=False,
     progressive_widening_type="all",
+    num_actions_per_primitive=100,
 ):
+    global value_fn
+    value_fn = vf
     root = UCTNode(
         wm,
         one_step_ensemble,
@@ -110,6 +113,7 @@ def Advanced_UCT_search(
         use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
         dirichlet_alpha=dirichlet_alpha,
         exploration_fraction=exploration_fraction,
+        num_actions_per_primitive=num_actions_per_primitive,
     )
     ctr = 0
     min_max_stats = MinMaxStats()
@@ -147,6 +151,7 @@ def Advanced_UCT_search(
                 use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
                 dirichlet_alpha=dirichlet_alpha,
                 exploration_fraction=exploration_fraction,
+                num_actions_per_primitive=num_actions_per_primitive,
             )
         else:
             leaf.is_expanded = True  # for terminal states
@@ -187,11 +192,7 @@ def compute_best_action(node, use_max_visit_count):
 
 
 def generate_full_actions(
-    wm,
-    state,
-    actor,
-    discrete_actions,
-    evaluation=False,
+    wm, state, actor, discrete_actions, evaluation=False, num_actions_per_primitive=100
 ):
     feat = wm.get_feat(state)
     if type(actor) == ConditionalContinuousActorModel:
@@ -199,27 +200,52 @@ def generate_full_actions(
         action_dist = actor(action_input)
         if evaluation:
             # continuous_action = action_dist.mode().float()
-            continuous_action = action_dist.sample().float()
+            continuous_action = action_dist.sample(
+                sample_shape=(num_actions_per_primitive,)
+            ).float()
         else:
             continuous_action = actor.compute_exploration_action(
-                action_dist.sample(),
+                action_dist.sample(sample_shape=(num_actions_per_primitive,)),
                 0.3,  # computing log prob of noisy action can lead to nans
             ).float()
-        actions = torch.cat((discrete_actions, continuous_action), 1)
-        priors = action_dist.log_prob(continuous_action)
+        actions = torch.cat(
+            (
+                discrete_actions.unsqueeze(0).repeat((num_actions_per_primitive, 1, 1)),
+                continuous_action,
+            ),
+            -1,
+        ).reshape(-1, discrete_actions.shape[-1] + continuous_action.shape[-1])
+        priors = action_dist.log_prob(continuous_action).reshape(-1)
+        # priors = action_dist.log_prob(continuous_action)
     elif type(actor) == ConditionalActorModel:
         action_input = feat
         action_dist = actor(action_input)
         cont_dist = action_dist.compute_continuous_dist(discrete_actions)
         if evaluation:
             # continuous_action = cont_dist.mode().float()
-            continuous_action = cont_dist.sample().float()
+            continuous_action = cont_dist.sample(
+                sample_shape=(num_actions_per_primitive,)
+            ).float()
         else:
             continuous_action = actor.compute_continuous_exploration_action(
-                cont_dist.sample(), 0.3
+                cont_dist.sample(sample_shape=(num_actions_per_primitive,)), 0.3
             ).float()
-        actions = torch.cat((discrete_actions, continuous_action), 1)
-        priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
+        cont_log_probs = cont_dist.log_prob(continuous_action).reshape(-1)
+        discrete_log_probs = (
+            action_dist._dist1.log_prob(discrete_actions)
+            .unsqueeze(0)
+            .repeat((num_actions_per_primitive, 1, 1))
+        ).reshape(-1)
+        priors = cont_log_probs + discrete_log_probs
+        actions = torch.cat(
+            (
+                discrete_actions.unsqueeze(0).repeat((num_actions_per_primitive, 1, 1)),
+                continuous_action,
+            ),
+            -1,
+        ).reshape(-1, discrete_actions.shape[-1] + continuous_action.shape[-1])
+
+        # priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
     return actions, priors
 
 
@@ -249,6 +275,7 @@ def step_wm(
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
     actions_type="all",  # max_prior, max_value
+    num_actions_per_primitive=100,
 ):
 
     if actions_type == "all":
@@ -262,8 +289,16 @@ def step_wm(
     for k, v in state.items():
         state_n[k] = v.repeat(discrete_actions.shape[0], 1)
     action, priors = generate_full_actions(
-        wm, state_n, actor, discrete_actions, evaluation
+        wm,
+        state_n,
+        actor,
+        discrete_actions,
+        evaluation,
+        num_actions_per_primitive,
     )
+    state_n = {}
+    for k, v in state.items():
+        state_n[k] = v.repeat(action.shape[0], 1)
     new_state = wm.action_step(state_n, action)
     deter_state = state_n["deter"]
     r = ptu.zeros(deter_state.shape[0])
@@ -274,6 +309,17 @@ def step_wm(
         )
     if extrinsic_reward_scale > 0.0:
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
+    if num_actions_per_primitive != -1:
+        values = value_fn(wm.get_feat(new_state)).flatten()
+        values, indices = torch.sort(values, descending=True)
+        new_state_sorted = {}
+        num_actions_to_output = max(int(0.1 * action.shape[0]), num_primitives)
+        for k, v in new_state.items():
+            new_state_sorted[k] = v[indices][:num_actions_to_output]
+        action = action[indices][:num_actions_to_output]
+        priors = priors[indices][:num_actions_to_output]
+        r = r[indices][:num_actions_to_output]
+        new_state = new_state_sorted
     return new_state, action, priors, r
 
 
@@ -477,6 +523,7 @@ class UCTNode:
                 extrinsic_reward_scale=extrinsic_reward_scale,
                 evaluation=evaluation,
                 actions_type=progressive_widening_type,
+                num_actions_per_primitive=1,
             )
             self.expand_given_states_actions(
                 child_states,
@@ -496,6 +543,7 @@ class UCTNode:
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
+        num_actions_per_primitive=100,
     ):
         child_states, actions, priors, rewards = step_wm(
             self,
@@ -507,6 +555,7 @@ class UCTNode:
             intrinsic_reward_scale=intrinsic_reward_scale,
             extrinsic_reward_scale=extrinsic_reward_scale,
             evaluation=evaluation,
+            num_actions_per_primitive=num_actions_per_primitive,
         )
         self.expand_given_states_actions(
             child_states,
@@ -530,9 +579,9 @@ class UCTNode:
     ):
         if self.parent is None and use_dirichlet_exploration_noise:
             # therefore self must be the root
-            noise = np.random.dirichlet([dirichlet_alpha] * self.num_primitives)
+            noise = np.random.dirichlet([dirichlet_alpha] * actions.shape[0])
             frac = exploration_fraction
-        for i in range(self.num_primitives):
+        for i in range(actions.shape[0]):
             child_state = {}
             for k, v in child_states.items():
                 child_state[k] = v[i : i + 1, :]
@@ -643,14 +692,15 @@ if __name__ == "__main__":
             intrinsic_reward_scale=0.0,
             extrinsic_reward_scale=1.0,
             progressive_widening_constant=0,
-            use_dirichlet_exploration_noise=False,
+            use_dirichlet_exploration_noise=True,
             use_puct=True,
             normalize_q=False,
-            use_reward_discount_value=False,
+            use_reward_discount_value=True,
             use_muzero_uct=False,
             use_max_visit_count=True,
             return_open_loop_plan=True,
-            dirichlet_alpha=0.25,
+            dirichlet_alpha=10,
+            num_actions_per_primitive=100,
         )
         total_time += time.time() - t
     print(total_time / num_tries)
