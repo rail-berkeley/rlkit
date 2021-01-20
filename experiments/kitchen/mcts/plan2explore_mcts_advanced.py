@@ -120,7 +120,7 @@ if __name__ == "__main__":
         "env_class": [
             # "slide_cabinet",
             "microwave",
-            # "top_left_burner",
+            "top_left_burner",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
