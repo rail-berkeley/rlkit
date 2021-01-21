@@ -65,6 +65,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
+        image_goals_path=None,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -104,8 +105,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             num_actor_value_updates=num_actor_value_updates,
             detach_rewards=detach_rewards,
         )
-        self.image_goals = None
-        # self.image_goals = np.zeros((10, *image_shape))
+        if image_goals_path:
+            self.image_goals = np.load(image_goals_path)
+        else:
+            self.image_goals = None
         self.exploration_actor = exploration_actor.to(ptu.device)
         self.exploration_vf = exploration_vf.to(ptu.device)
         self.exploration_target_vf = exploration_target_vf.to(ptu.device)
@@ -277,7 +280,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actions.append(action.unsqueeze(0))
             log_probs.append(log_prob.unsqueeze(0))
             if self.image_goals is not None:
-                reward = torch.linalg.norm(
+                reward = -1 * torch.linalg.norm(
                     featurized_image_goals - self.world_model.get_feat(new_state), dim=1
                 ).unsqueeze(0)
                 rewards.append(reward)

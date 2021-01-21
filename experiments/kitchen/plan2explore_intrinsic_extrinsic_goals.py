@@ -25,21 +25,22 @@ if __name__ == "__main__":
             num_trains_per_train_loop=10,
             num_expl_steps_per_train_loop=50,
             min_num_steps_before_training=10,
-            num_pretrain_steps=1,
+            num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             batch_size=30,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
+            num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="Plan2ExploreMCTSPolicy",
+        algorithm="Plan2ExploreGoalBased",
         version="normal",
         replay_buffer_size=int(1e6),
         algorithm_kwargs=algorithm_kwargs,
@@ -89,61 +90,27 @@ if __name__ == "__main__":
             pred_discount_loss_scale=10.0,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
-            use_ppo_loss=False,
-            ppo_clip_param=0.2,
-            num_actor_value_updates=1,
-        ),
-        expl_policy_kwargs=dict(),
-        eval_policy_kwargs=dict(
-            randomly_sample_discrete_actions=False,
+            detach_rewards=True,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
         expl_amount=0.3,
         path_length_specific_discount=True,
         eval_with_exploration_actor=False,
-        randomly_sample_discrete_actions=False,
-        actor_model_class="conditional_actor_model",
-        reward_type="intrinsic+extrinsic",
-        use_mcts_policy=True,
-        mcts_algorithm=False,
-        mcts_kwargs=dict(
-            mcts_iterations=100,
-            dirichlet_alpha=0.03,
-            progressive_widening_constant=0.0,
-            use_dirichlet_exploration_noise=True,
-            use_puct=False,
-            normalize_q=False,
-            use_reward_discount_value=False,
-            use_muzero_uct=False,
-            use_max_visit_count=False,
-        ),
+        use_image_goals=True,
     )
 
     search_space = {
         "env_class": [
-            # "slide_cabinet",
             "microwave",
             "top_left_burner",
-            # "kettle",
-            # "hinge_cabinet",
-            # "light_switch",
+            "slide_cabinet",
+            "kettle",
+            "hinge_cabinet",
+            "light_switch",
         ],
-        # "path_length_specific_discount": [True, False],
-        # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
-        "mcts_kwargs.dirichlet_alpha": [
-            # 0.1,
-            # 1,
-            10,
-        ],
-        "mcts_kwargs.progressive_widening_constant": [1, 5, 10],
-        "mcts_kwargs.progressive_widening_type": ["all", "max_prior", "max_value"],
-        # "mcts_kwargs.normalize_q":[True, False],
-        "mcts_kwargs.use_reward_discount_value": [True],
-        "mcts_kwargs.use_muzero_uct": [False],
-        "mcts_kwargs.use_puct": [True],
-        "mcts_kwargs.mcts_iterations": [500, 1000],
-        # "mcts_kwargs.use_max_visit_count":[True, False],
+        "expl_amount": [0.3, 0.5,],
+        "reward_type":['intrinsic', 'extrinsic', 'intrinsic+extrinsic']
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -161,7 +128,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",  # saving doesn't seem to work with wandb atm
+                snapshot_mode="last",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
