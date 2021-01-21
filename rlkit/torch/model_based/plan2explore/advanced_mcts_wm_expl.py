@@ -284,12 +284,7 @@ def step_wm(
     )
     state_n = {}
     for k, v in state.items():
-        state_n[k] = (
-            v.repeat(discrete_actions.shape[1], 1)
-            .unsqueeze(0)
-            .repeat((num_actions_per_primitive, 1, 1))
-            .reshape(-1, v.shape[-1])
-        )
+        state_n[k] = v.repeat(discrete_actions.shape[1] * num_actions_per_primitive, 1)
     action, priors = generate_full_actions(
         wm,
         state_n,
@@ -311,12 +306,13 @@ def step_wm(
     values = value_fn(wm.get_feat(new_state)).flatten()
     values, indices = torch.sort(values, descending=True)
     new_state_sorted = {}
-    num_actions_to_output = max(int(0.1 * action.shape[0]), num_primitives)
+    num_actions_to_output = min(max(int(0.1 * action.shape[0]), num_primitives), 1000)
+    indices = indices[:num_actions_to_output]
     for k, v in new_state.items():
-        new_state_sorted[k] = v[indices][:num_actions_to_output]
-    action = action[indices][:num_actions_to_output]
-    priors = priors[indices][:num_actions_to_output]
-    r = r[indices][:num_actions_to_output]
+        new_state_sorted[k] = v[indices]
+    action = action[indices]
+    priors = priors[indices]
+    r = r[indices]
     new_state = new_state_sorted
     return new_state, action, priors, r
 

@@ -34,7 +34,7 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=50,
             num_eval_steps_per_epoch=30,
-            min_num_steps_before_training=10,
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
         )
         exp_prefix = args.exp_prefix
@@ -119,8 +119,8 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "slide_cabinet",
-            # "microwave",
-            # "top_left_burner",
+            "microwave",
+            "top_left_burner",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         # # "mcts_kwargs.use_max_visit_count":[True, False],
         # reproduce results for microwave:
         # "reward_type": ["intrinsic", "intrinsic+extrinsic"],
-        "mcts_kwargs.num_actions_per_primitive": [1, 100],
+        "mcts_kwargs.num_actions_per_primitive": [100, 250, 500, 1000, 5000, 10000],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
