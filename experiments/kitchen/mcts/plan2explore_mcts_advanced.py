@@ -34,7 +34,7 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=50,
             num_eval_steps_per_epoch=30,
-            min_num_steps_before_training=50,
+            min_num_steps_before_training=10,
             num_pretrain_steps=100,
         )
         exp_prefix = args.exp_prefix

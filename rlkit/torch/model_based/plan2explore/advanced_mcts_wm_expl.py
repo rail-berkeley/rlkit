@@ -192,60 +192,53 @@ def compute_best_action(node, use_max_visit_count):
 
 
 def generate_full_actions(
-    wm, state, actor, discrete_actions, evaluation=False, num_actions_per_primitive=100
+    wm,
+    state,
+    actor,
+    discrete_actions,
+    evaluation=False,
 ):
     feat = wm.get_feat(state)
     if type(actor) == ConditionalContinuousActorModel:
-        action_input = (discrete_actions, feat)
+        action_input = (
+            discrete_actions,
+            feat,
+        )
         action_dist = actor(action_input)
         if evaluation:
-            # continuous_action = action_dist.mode().float()
-            continuous_action = action_dist.sample(
-                sample_shape=(num_actions_per_primitive,)
-            ).float()
+            continuous_action = action_dist.sample().float()
         else:
             continuous_action = actor.compute_exploration_action(
-                action_dist.sample(sample_shape=(num_actions_per_primitive,)),
-                0.3,  # computing log prob of noisy action can lead to nans
+                action_dist.sample(),
+                0.3,
             ).float()
         actions = torch.cat(
             (
-                discrete_actions.unsqueeze(0).repeat((num_actions_per_primitive, 1, 1)),
+                discrete_actions,
                 continuous_action,
             ),
             -1,
-        ).reshape(-1, discrete_actions.shape[-1] + continuous_action.shape[-1])
-        priors = action_dist.log_prob(continuous_action).reshape(-1)
-        # priors = action_dist.log_prob(continuous_action)
+        )
+        priors = action_dist.log_prob(continuous_action)
     elif type(actor) == ConditionalActorModel:
         action_input = feat
         action_dist = actor(action_input)
         cont_dist = action_dist.compute_continuous_dist(discrete_actions)
         if evaluation:
-            # continuous_action = cont_dist.mode().float()
-            continuous_action = cont_dist.sample(
-                sample_shape=(num_actions_per_primitive,)
-            ).float()
+            continuous_action = cont_dist.sample().float()
         else:
             continuous_action = actor.compute_continuous_exploration_action(
-                cont_dist.sample(sample_shape=(num_actions_per_primitive,)), 0.3
+                cont_dist.sample(), 0.3
             ).float()
-        cont_log_probs = cont_dist.log_prob(continuous_action).reshape(-1)
-        discrete_log_probs = (
-            action_dist._dist1.log_prob(discrete_actions)
-            .unsqueeze(0)
-            .repeat((num_actions_per_primitive, 1, 1))
-        ).reshape(-1)
-        priors = cont_log_probs + discrete_log_probs
         actions = torch.cat(
             (
-                discrete_actions.unsqueeze(0).repeat((num_actions_per_primitive, 1, 1)),
+                discrete_actions,
                 continuous_action,
             ),
             -1,
-        ).reshape(-1, discrete_actions.shape[-1] + continuous_action.shape[-1])
+        )
 
-        # priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
+        priors = action_dist.log_prob_given_continuous_dist(actions, cont_dist)
     return actions, priors
 
 
@@ -284,21 +277,26 @@ def step_wm(
         discrete_actions = step_wm_action(node, use_max_prior=True)
     elif actions_type == "max_value":
         discrete_actions = step_wm_action(node, use_max_prior=False)
-
+    discrete_actions = (
+        discrete_actions.unsqueeze(0)
+        .repeat((num_actions_per_primitive, 1, 1))
+        .reshape(-1, discrete_actions.shape[-1])
+    )
     state_n = {}
     for k, v in state.items():
-        state_n[k] = v.repeat(discrete_actions.shape[0], 1)
+        state_n[k] = (
+            v.repeat(discrete_actions.shape[1], 1)
+            .unsqueeze(0)
+            .repeat((num_actions_per_primitive, 1, 1))
+            .reshape(-1, v.shape[-1])
+        )
     action, priors = generate_full_actions(
         wm,
         state_n,
         actor,
         discrete_actions,
         evaluation,
-        num_actions_per_primitive,
     )
-    state_n = {}
-    for k, v in state.items():
-        state_n[k] = v.repeat(action.shape[0], 1)
     new_state = wm.action_step(state_n, action)
     deter_state = state_n["deter"]
     r = ptu.zeros(deter_state.shape[0])
@@ -309,17 +307,17 @@ def step_wm(
         )
     if extrinsic_reward_scale > 0.0:
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
-    if num_actions_per_primitive != -1:
-        values = value_fn(wm.get_feat(new_state)).flatten()
-        values, indices = torch.sort(values, descending=True)
-        new_state_sorted = {}
-        num_actions_to_output = max(int(0.1 * action.shape[0]), num_primitives)
-        for k, v in new_state.items():
-            new_state_sorted[k] = v[indices][:num_actions_to_output]
-        action = action[indices][:num_actions_to_output]
-        priors = priors[indices][:num_actions_to_output]
-        r = r[indices][:num_actions_to_output]
-        new_state = new_state_sorted
+
+    values = value_fn(wm.get_feat(new_state)).flatten()
+    values, indices = torch.sort(values, descending=True)
+    new_state_sorted = {}
+    num_actions_to_output = max(int(0.1 * action.shape[0]), num_primitives)
+    for k, v in new_state.items():
+        new_state_sorted[k] = v[indices][:num_actions_to_output]
+    action = action[indices][:num_actions_to_output]
+    priors = priors[indices][:num_actions_to_output]
+    r = r[indices][:num_actions_to_output]
+    new_state = new_state_sorted
     return new_state, action, priors, r
 
 
@@ -649,21 +647,21 @@ if __name__ == "__main__":
         num_layers=4,
         output_embeddings=False,
     ).to(ptu.device)
-    # actor = ConditionalContinuousActorModel(
-    #     [400] * 4,
-    #     wm.feature_size,
-    #     env,
-    #     discrete_action_dim=env.num_primitives,
-    #     continuous_action_dim=env.max_arg_len,
-    # ).to(ptu.device)
-    actor = ConditionalActorModel(
+    actor = ConditionalContinuousActorModel(
         [400] * 4,
         wm.feature_size,
         env,
-        discrete_continuous_dist=True,
         discrete_action_dim=env.num_primitives,
         continuous_action_dim=env.max_arg_len,
     ).to(ptu.device)
+    # actor = ConditionalActorModel(
+    #     [400] * 4,
+    #     wm.feature_size,
+    #     env,
+    #     discrete_continuous_dist=True,
+    #     discrete_action_dim=env.num_primitives,
+    #     continuous_action_dim=env.max_arg_len,
+    # ).to(ptu.device)
     state = wm.initial(1)
 
     vf = Mlp(

@@ -80,7 +80,7 @@ class ConditionalContinuousActorModel(torch.nn.Module):
                 mean[:, v] = mean_
                 std[:, v] = std_
         else:
-            h = torch.cat((observation, discrete_action), dim=1)
+            h = torch.cat((observation, discrete_action), dim=-1)
             cont_output = self.continuous_actor(h)
             mean, std = cont_output.split(self.continuous_action_dim, -1)
         if self.use_tanh_normal:
