@@ -118,9 +118,9 @@ if __name__ == "__main__":
     )
     search_space = {
         "env_class": [
-            # "slide_cabinet",
-            "microwave",
-            "top_left_burner",
+            "slide_cabinet",
+            # "microwave",
+            # "top_left_burner",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
@@ -142,7 +142,7 @@ if __name__ == "__main__":
         # # "mcts_kwargs.use_max_visit_count":[True, False],
         # reproduce results for microwave:
         # "reward_type": ["intrinsic", "intrinsic+extrinsic"],
-        "mcts_kwargs.num_actions_per_primitive": [1, 10, 100],
+        "mcts_kwargs.num_actions_per_primitive": [1, 100],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
