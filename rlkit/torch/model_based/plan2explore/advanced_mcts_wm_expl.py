@@ -89,7 +89,7 @@ def Advanced_UCT_search(
     use_max_visit_count=False,
     return_open_loop_plan=False,
     progressive_widening_type="all",
-    num_actions_per_primitive=100,
+    num_actions_per_primitive=-1,
 ):
     global value_fn
     value_fn = vf
@@ -268,7 +268,7 @@ def step_wm(
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
     actions_type="all",  # max_prior, max_value
-    num_actions_per_primitive=100,
+    num_actions_per_primitive=-1,
 ):
 
     if actions_type == "all":
@@ -277,14 +277,22 @@ def step_wm(
         discrete_actions = step_wm_action(node, use_max_prior=True)
     elif actions_type == "max_value":
         discrete_actions = step_wm_action(node, use_max_prior=False)
-    discrete_actions = (
-        discrete_actions.unsqueeze(0)
-        .repeat((num_actions_per_primitive, 1, 1))
-        .reshape(-1, discrete_actions.shape[-1])
-    )
-    state_n = {}
-    for k, v in state.items():
-        state_n[k] = v.repeat(discrete_actions.shape[1] * num_actions_per_primitive, 1)
+
+    if num_actions_per_primitive > 0:
+        discrete_actions = (
+            discrete_actions.unsqueeze(0)
+            .repeat((num_actions_per_primitive, 1, 1))
+            .reshape(-1, discrete_actions.shape[-1])
+        )
+        state_n = {}
+        for k, v in state.items():
+            state_n[k] = v.repeat(
+                discrete_actions.shape[1] * num_actions_per_primitive, 1
+            )
+    else:
+        state_n = {}
+        for k, v in state.items():
+            state_n[k] = v.repeat(discrete_actions.shape[1], 1)
     action, priors = generate_full_actions(
         wm,
         state_n,
@@ -303,17 +311,20 @@ def step_wm(
     if extrinsic_reward_scale > 0.0:
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
 
-    values = value_fn(wm.get_feat(new_state)).flatten()
-    values, indices = torch.sort(values, descending=True)
-    new_state_sorted = {}
-    num_actions_to_output = min(max(int(0.1 * action.shape[0]), num_primitives), 1000)
-    indices = indices[:num_actions_to_output]
-    for k, v in new_state.items():
-        new_state_sorted[k] = v[indices]
-    action = action[indices]
-    priors = priors[indices]
-    r = r[indices]
-    new_state = new_state_sorted
+    if num_actions_per_primitive > 0:
+        values = value_fn(wm.get_feat(new_state)).flatten()
+        values, indices = torch.sort(values, descending=True)
+        new_state_sorted = {}
+        num_actions_to_output = min(
+            max(int(0.1 * action.shape[0]), num_primitives), 1000
+        )
+        indices = indices[:num_actions_to_output]
+        for k, v in new_state.items():
+            new_state_sorted[k] = v[indices]
+        action = action[indices]
+        priors = priors[indices]
+        r = r[indices]
+        new_state = new_state_sorted
     return new_state, action, priors, r
 
 
@@ -517,7 +528,7 @@ class UCTNode:
                 extrinsic_reward_scale=extrinsic_reward_scale,
                 evaluation=evaluation,
                 actions_type=progressive_widening_type,
-                num_actions_per_primitive=1,
+                num_actions_per_primitive=-1,  # uses default generation process
             )
             self.expand_given_states_actions(
                 child_states,
@@ -537,7 +548,7 @@ class UCTNode:
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
-        num_actions_per_primitive=100,
+        num_actions_per_primitive=-1,
     ):
         child_states, actions, priors, rewards = step_wm(
             self,
