@@ -112,30 +112,46 @@ if __name__ == "__main__":
             use_muzero_uct=False,
             use_max_visit_count=False,
             normalize_q=False,
+<<<<<<< HEAD
+=======
+            progressive_widening_type="all",
+            num_actions_per_primitive=100,
+>>>>>>> 79f52901cf71f329933d177f03a4ec5ab11cb180
         ),
     )
     search_space = {
         "env_class": [
-            # "slide_cabinet",
+            "slide_cabinet",
             "microwave",
             "top_left_burner",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
+<<<<<<< HEAD
         # "path_length_specific_discount": [True, False],
         # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
+=======
+        # # "path_length_specific_discount": [True, False],
+        # # "reward_type": ["intrinsic", "intrinsic+extrinsic", "extrinsic"],
+>>>>>>> 79f52901cf71f329933d177f03a4ec5ab11cb180
         # "mcts_kwargs.dirichlet_alpha": [
         #     # 0.1,
         #     # 1,
         #     10,
         # ],
+<<<<<<< HEAD
         "mcts_kwargs.progressive_widening_constant": [2.5, 5, 7.5],
         "mcts_kwargs.progressive_widening_type": ["max_prior", "max_value"],
+=======
+        # "mcts_kwargs.progressive_widening_constant": [1, 5, 10],
+        # "mcts_kwargs.progressive_widening_type": ["all", "max_prior", "max_value"],
+>>>>>>> 79f52901cf71f329933d177f03a4ec5ab11cb180
         # # "mcts_kwargs.normalize_q":[True, False],
         # "mcts_kwargs.use_reward_discount_value": [True],
         # "mcts_kwargs.use_muzero_uct": [False],
         # "mcts_kwargs.use_puct": [True],
+<<<<<<< HEAD
         # "mcts_kwargs.mcts_iterations": [500, 1000],
         # # "mcts_kwargs.use_max_visit_count":[True, False],
         # reproduce microwave results:
@@ -150,6 +166,13 @@ if __name__ == "__main__":
         # "mcts_kwargs.use_puct": [True],
         # "mcts_kwargs.mcts_iterations": [100],
         # "mcts_kwargs.use_dirichlet_exploration_noise": [True],
+=======
+        # "mcts_kwargs.mcts_iterations": [100, 500, 1000],
+        # # "mcts_kwargs.use_max_visit_count":[True, False],
+        # reproduce results for microwave:
+        # "reward_type": ["intrinsic", "intrinsic+extrinsic"],
+        "mcts_kwargs.num_actions_per_primitive": [100, 250, 500, 1000, 5000, 10000],
+>>>>>>> 79f52901cf71f329933d177f03a4ec5ab11cb180
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
