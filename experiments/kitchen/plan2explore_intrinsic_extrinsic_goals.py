@@ -109,8 +109,11 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "expl_amount": [0.3, 0.5,],
-        "reward_type":['intrinsic', 'extrinsic', 'intrinsic+extrinsic']
+        "expl_amount": [
+            0.3,
+            0.5,
+        ],
+        "reward_type": ["intrinsic", "extrinsic", "intrinsic+extrinsic"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

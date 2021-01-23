@@ -25,7 +25,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
-            (max_replay_buffer_size, max_path_length, observation_dim), dtype=np.uint8
+            (max_replay_buffer_size, max_path_length, observation_dim),
+            dtype=np.float32,  # todo: figure out what to do in the case of proprioceptive obs
         )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
         # Make everything a 2D np array to make it easier for other code to

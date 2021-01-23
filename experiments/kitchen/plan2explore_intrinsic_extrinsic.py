@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=10,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -42,7 +42,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="Plan2Explore",
         version="normal",
-        replay_buffer_size=int(1e6),
+        replay_buffer_size=int(1e5),
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
             dense=False,
@@ -108,8 +108,8 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "expl_amount": [0.3],
-        "reward_type": ["intrinsic", "extrinsic", "intrinsic+extrinsic"],
-        # "env_kwargs.proprioception": [True, False],
+        "reward_type": ["intrinsic+extrinsic"],
+        "env_kwargs.proprioception": [True, False],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         # "env_kwargs.use_wrist_cam": [True, False],
     }
