@@ -43,6 +43,9 @@ class WorldModel(PyTorchModule):
         self.discrete_latents = discrete_latents
         self.discrete_latent_size = discrete_latent_size
         self.env = env
+        self.depth = depth
+        self.use_depth_wise_separable_conv = use_depth_wise_separable_conv
+        self.conv_act = conv_act
         if discrete_latents:
             img_and_obs_step_mlp_output_size = (
                 stochastic_state_size * discrete_latent_size
@@ -356,8 +359,30 @@ class WorldModel(PyTorchModule):
 
 
 class StateConcatObsWorldModel(WorldModel):
+    def __init__(self, *args, state_output_size=1, **kwargs):
+        super(StateConcatObsWorldModel, self).__init__(*args, **kwargs)
+        self.conv_decoder = DCNN(
+            fc_input_size=self.feature_size,
+            hidden_sizes=[],
+            deconv_input_width=1,
+            deconv_input_height=1,
+            deconv_input_channels=self.depth * 32,
+            deconv_output_kernel_size=6,
+            deconv_output_strides=2,
+            deconv_output_channels=self.image_shape[0],
+            kernel_sizes=[5, 5, 6],
+            n_channels=[self.depth * 4, self.depth * 2, self.depth * 1],
+            strides=[2] * 3,
+            paddings=[0] * 3,
+            hidden_activation=self.conv_act,
+            hidden_init=torch.nn.init.xavier_uniform_,
+            use_depth_wise_separable_conv=self.use_depth_wise_separable_conv,
+            include_vector_output=True,
+            vector_output_size=state_output_size,
+        )
+
     def preprocess(self, obs):
-        image_obs, one_hots = (
+        image_obs, _ = (
             obs[:, : np.prod(self.image_shape)],
             obs[:, np.prod(self.image_shape) :],
         )
@@ -365,14 +390,91 @@ class StateConcatObsWorldModel(WorldModel):
         return image_obs
 
     def encode(self, obs):
-        image_obs, one_hots = (
+        image_obs, state = (
             obs[:, : np.prod(self.image_shape)],
             obs[:, np.prod(self.image_shape) :],
         )
         image_obs = self.preprocess(obs)
         encoded_obs = self.conv_encoder(image_obs)
-        latent = torch.cat((encoded_obs, one_hots), dim=1)
+        latent = torch.cat((encoded_obs, state), dim=1)
         return latent
+
+    def forward(self, obs, action):
+        original_batch_size = obs.shape[0]
+        state = self.initial(original_batch_size)
+        path_length = obs.shape[1]
+        if self.discrete_latents:
+            post, prior = (
+                dict(logits=[], stoch=[], deter=[]),
+                dict(logits=[], stoch=[], deter=[]),
+            )
+        else:
+            post, prior = (
+                dict(mean=[], std=[], stoch=[], deter=[]),
+                dict(mean=[], std=[], stoch=[], deter=[]),
+            )
+        images, rewards, pred_discounts, states = [], [], [], []
+        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
+        embed = self.encode(obs)
+        embedding_size = embed.shape[1]
+        embed = torch.cat(
+            [
+                embed[
+                    i * original_batch_size : (i + 1) * original_batch_size, :
+                ].reshape(original_batch_size, 1, embedding_size)
+                for i in range(path_length)
+            ],
+            dim=1,
+        )
+        for i in range(path_length):
+            (
+                post_params,
+                prior_params,
+                image_params,
+                reward_params,
+                pred_discount_params,
+            ) = self.forward_batch(embed[:, i], action[:, i], state)
+            images.append(image_params[0])
+            states.append(image_params[1])
+            rewards.append(reward_params)
+            pred_discounts.append(pred_discount_params)
+            for k in post.keys():
+                post[k].append(post_params[k].unsqueeze(1))
+
+            for k in prior.keys():
+                prior[k].append(prior_params[k].unsqueeze(1))
+            state = post_params
+
+        images = torch.cat(images)
+        rewards = torch.cat(rewards)
+        states = torch.cat(states)
+        pred_discounts = torch.cat(pred_discounts)
+        for k in post.keys():
+            post[k] = torch.cat(post[k], dim=1)
+
+        for k in prior.keys():
+            prior[k] = torch.cat(prior[k], dim=1)
+
+        if self.discrete_latents:
+            post_dist = self.get_dist(post["logits"], None, latent=True)
+            prior_dist = self.get_dist(prior["logits"], None, latent=True)
+        else:
+            post_dist = self.get_dist(post["mean"], post["std"], latent=True)
+            prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
+        image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
+        reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
+        pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
+        state_dist = self.get_dist(states, ptu.ones_like(states))
+        return (
+            post,
+            prior,
+            post_dist,
+            prior_dist,
+            (image_dist, state_dist),
+            reward_dist,
+            pred_discount_dist,
+            embed,
+        )
 
 
 class GRUCell(nn.GRUCell):

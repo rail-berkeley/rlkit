@@ -104,7 +104,9 @@ def experiment(variant):
     ):
         world_model_class = StateConcatObsWorldModel
         if eval_envs[0].proprioception:
-            variant["model_kwargs"]["embedding_size"] += 9
+            variant["model_kwargs"]["embedding_size"] += variant["model_kwargs"][
+                "state_output_size"
+            ]
     else:
         world_model_class = WorldModel
 

@@ -141,6 +141,8 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             pred_discount_dist,
             embed,
         ) = algorithm.trainer.world_model(obs.detach(), actions.detach())
+        if type(image_dist) == tuple:
+            image_dist, _ = image_dist
         reconstructions = image_dist.mean.detach()[:, :3, :, :]
         reconstructions = (
             reconstructions.permute(0, 2, 3, 1).reshape(

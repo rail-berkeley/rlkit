@@ -48,6 +48,12 @@ def preprocess_variant(variant, debug):
     if variant.get("path_length_specific_discount", False):
         variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
 
+    if (
+        "proprioception" in variant["env_kwargs"]
+        and variant["env_kwargs"]["proprioception"]
+    ):
+        variant["model_kwargs"]["state_output_size"] = 16
+
     if variant.get("use_image_goals", False):
         d = dict(
             slide_cabinet="/home/mdalal/research/hrl-exp/goals/slide_cabinet_goals.npy",
@@ -57,7 +63,7 @@ def preprocess_variant(variant, debug):
             kettle="/home/mdalal/research/hrl-exp/goals/kettle_goals.npy",
             light_switch="/home/mdalal/research/hrl-exp/goals/light_switch_goals.npy",
         )
-        variant['trainer_kwargs']['image_goals_path'] = d[variant['env_class']]
+        variant["trainer_kwargs"]["image_goals_path"] = d[variant["env_class"]]
     if variant.get("use_mcts_policy", False):
         discount = variant["trainer_kwargs"]["discount"]
         randomly_sample_discrete_actions = variant["randomly_sample_discrete_actions"]
@@ -90,7 +96,7 @@ def preprocess_variant(variant, debug):
         variant["trainer_kwargs"][
             "train_actor_with_intrinsic_and_extrinsic_reward"
         ] = False
-        if variant.get('use_mcts_policy', False):
+        if variant.get("use_mcts_policy", False):
             variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
             variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 0.0
 
@@ -117,7 +123,7 @@ def preprocess_variant(variant, debug):
             "train_actor_with_intrinsic_and_extrinsic_reward"
         ] = True
 
-        if variant.get('use_mcts_policy', False):
+        if variant.get("use_mcts_policy", False):
             variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
             variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
             variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
@@ -142,7 +148,7 @@ def preprocess_variant(variant, debug):
             "train_actor_with_intrinsic_and_extrinsic_reward"
         ] = True
 
-        if variant.get('use_mcts_policy', False):
+        if variant.get("use_mcts_policy", False):
             variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
             variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
             variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0

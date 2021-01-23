@@ -689,7 +689,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             5,
             self.value_gradient_clip,
         )
-
         """
         Save some statistics for eval
         """

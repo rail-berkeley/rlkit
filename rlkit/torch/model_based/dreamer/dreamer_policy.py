@@ -40,22 +40,20 @@ class DreamerPolicy(Policy):
         """
         observation = ptu.from_numpy(np.array(observation))
         if self.state:
-            latent, action = self.state
+            prev_state, action = self.state
         else:
-            latent = self.world_model.initial(observation.shape[0])
+            prev_state = self.world_model.initial(observation.shape[0])
             action = ptu.zeros((observation.shape[0], self.action_dim))
         embed = self.world_model.encode(observation)
-        latent, _ = self.world_model.obs_step(latent, action, embed)
-        feat = self.world_model.get_feat(latent)
+        new_state, _ = self.world_model.obs_step(prev_state, action, embed)
+        feat = self.world_model.get_feat(new_state)
         dist = self.actor(feat)
         if self.exploration:
             action = dist.rsample()
-            action = self.actor.compute_exploration_action(
-                action, self.expl_amount
-            )  # todo: make sure this doesn't cause any issues
+            action = self.actor.compute_exploration_action(action, self.expl_amount)
         else:
             action = dist.mode()
-        self.state = (latent, action)
+        self.state = (new_state, action)
         return ptu.get_numpy(action), {}
 
     def reset(self, o):

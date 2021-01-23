@@ -3,6 +3,7 @@ import torch
 from torch import nn as nn
 
 from rlkit.pythonplusplus import identity
+from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
 class DepthWiseSeparableConv2D(nn.Module):
@@ -175,6 +176,8 @@ class DCNN(nn.Module):
         hidden_activation=nn.ReLU(),
         output_activation=identity,
         use_depth_wise_separable_conv=False,
+        include_vector_output=False,
+        vector_output_size=0,
     ):
         assert len(kernel_sizes) == len(n_channels) == len(strides) == len(paddings)
         super().__init__()
@@ -252,9 +255,17 @@ class DCNN(nn.Module):
             )
             hidden_init(self.deconv_output.weight)
             self.deconv_output.bias.data.fill_(0)
+        self.include_vector_output = include_vector_output
+        if self.include_vector_output:
+            self.vector_output = Mlp(
+                input_size=deconv_input_size,
+                output_size=vector_output_size,
+                hidden_sizes=[400] * 3,
+            )
 
     def forward(self, input):
         h = self.hidden_activation(self.last_fc(input))
+        fc_input = h
         h = h.view(
             -1,
             self.deconv_input_channels,
@@ -263,6 +274,8 @@ class DCNN(nn.Module):
         )
         h = self.apply_forward(h, self.deconv_layers)
         output = self.deconv_output(h)
+        if self.include_vector_output:
+            return output, self.vector_output(fc_input)
         return output
 
     def apply_forward(self, input, hidden_layers):

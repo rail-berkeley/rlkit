@@ -1,6 +1,7 @@
 from collections import OrderedDict, namedtuple
 from typing import Tuple
 
+import numpy as np
 import torch
 import torch.optim as optim
 from torch.distributions import kl_divergence as kld
@@ -299,6 +300,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         rewards,
         terminals,
     ):
+        if type(image_dist) == tuple:
+            image_dist, state_dist = image_dist
+            train_state_dist = True
+        else:
+            train_state_dist = False
+
         image_pred_loss = (
             -1
             * image_dist.log_prob(
@@ -360,6 +367,13 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         )
 
         world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
+        if train_state_dist:
+            _, state = (
+                obs[:, : np.prod(self.image_shape)],
+                obs[:, np.prod(self.image_shape) :],
+            )
+            state_dist_loss = -1 * state_dist.log_prob(state).mean()
+            world_model_loss += state_dist_loss
         return (
             world_model_loss,
             div,
