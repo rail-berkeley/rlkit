@@ -2,6 +2,7 @@ import os.path as osp
 
 import cv2
 import numpy as np
+import torch
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
@@ -146,11 +147,16 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         image_dist_mean = image_dist.mean.detach()
         reconstructions = image_dist_mean[:, :3, :, :]
         reconstructions = (
-            reconstructions.permute(0, 2, 3, 1).reshape(
-                4, algorithm.max_path_length, 64, 64, 3
+            torch.clamp(
+                reconstructions.permute(0, 2, 3, 1).reshape(
+                    4, algorithm.max_path_length, 64, 64, 3
+                )
+                + 0.5,
+                0,
+                1,
             )
-            + 0.5
-        ) * 255.0
+            * 255.0
+        )
         reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
 
         obs_np = ptu.get_numpy(
@@ -172,10 +178,14 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         if image_dist_mean.shape[1] == 6:
             reconstructions = image_dist_mean[:, 3:6, :, :]
             reconstructions = (
-                reconstructions.permute(0, 2, 3, 1).reshape(
-                    4, algorithm.max_path_length, 64, 64, 3
+                torch.clamp(
+                    reconstructions.permute(0, 2, 3, 1).reshape(
+                        4, algorithm.max_path_length, 64, 64, 3
+                    )
+                    + 0.5,
+                    0,
+                    1,
                 )
-                + 0.5
             ) * 255.0
             reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
 

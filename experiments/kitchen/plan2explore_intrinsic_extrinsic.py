@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -53,6 +53,7 @@ if __name__ == "__main__":
             use_combined_action_space=True,
             wrist_cam_concat_with_fixed_view=False,
             use_wrist_cam=False,
+            normalize_proprioception_obs=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -103,23 +104,19 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            #     "microwave",
-            #     "top_left_burner",
+            "microwave",
+            "top_left_burner",
             "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
         "expl_amount": [0.3],
-        "reward_type": [
-            "extrinsic",
-        ],
+        "reward_type": ["intrinsic", "intrinsic+extrinsic"],
         "env_kwargs.proprioception": [True, False],
-        "env_kwargs.normalize_proprioception_obs": [True],
-        "trainer_kwargs.state_loss_scale": [1, 1 / 16],
         "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         "env_kwargs.use_wrist_cam": [True, False],
-        # "trainer_kwargs.train_decoder_on_second_output_only": [True],
+        "trainer_kwargs.train_decoder_on_second_output_only": [True, False],
         # "env_kwargs.wrist_cam_concat_with_fixed_view": [True],
         "model_kwargs.embedding_size": [
             1024,
@@ -129,7 +126,17 @@ if __name__ == "__main__":
         search_space,
         default_parameters=variant,
     )
+    num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        if (not variant["env_kwargs"]["wrist_cam_concat_with_fixed_view"]) and variant[
+            "trainer_kwargs"
+        ]["train_decoder_on_second_output_only"]:
+            continue
+        if (
+            variant["env_kwargs"]["use_wrist_cam"]
+            and variant["env_kwargs"]["wrist_cam_concat_with_fixed_view"]
+        ):
+            continue
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
@@ -146,3 +153,5 @@ if __name__ == "__main__":
                 seed=seed,
                 exp_id=exp_id,
             )
+            num_exps_launched += 1
+    print("Num exps launched: ", num_exps_launched)
