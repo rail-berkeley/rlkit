@@ -396,6 +396,28 @@ class StateConcatObsWorldModel(WorldModel):
         )
         image_obs = self.preprocess(obs)
         encoded_obs = self.conv_encoder(image_obs)
+        # print(
+        #     "Mean Encoded {}, Mean state {}".format(
+        #         encoded_obs.mean().item(), state.mean().item()
+        #     )
+        # )
+        # print(
+        #     "Std Encoded {}, Std state {}".format(
+        #         encoded_obs.std().item(), state.std().item()
+        #     )
+        # )
+        # print(
+        #     "Max Encoded {}, Max state {}".format(
+        #         encoded_obs.max().item(), state.max().item()
+        #     )
+        # )
+        # print(
+        #     "Min Encoded {}, Min state {}".format(
+        #         encoded_obs.min().item(), state.min().item()
+        #     )
+        # )
+        # print()
+
         latent = torch.cat((encoded_obs, state), dim=1)
         return latent
 

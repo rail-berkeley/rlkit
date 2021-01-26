@@ -260,7 +260,7 @@ class DCNN(nn.Module):
             self.vector_output = Mlp(
                 input_size=deconv_input_size,
                 output_size=vector_output_size,
-                hidden_sizes=[400] * 3,
+                hidden_sizes=[400] * 1,
             )
 
     def forward(self, input):

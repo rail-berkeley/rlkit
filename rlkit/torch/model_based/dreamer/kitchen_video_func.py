@@ -143,7 +143,8 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         ) = algorithm.trainer.world_model(obs.detach(), actions.detach())
         if type(image_dist) == tuple:
             image_dist, _ = image_dist
-        reconstructions = image_dist.mean.detach()[:, :3, :, :]
+        image_dist_mean = image_dist.mean.detach()
+        reconstructions = image_dist_mean[:, :3, :, :]
         reconstructions = (
             reconstructions.permute(0, 2, 3, 1).reshape(
                 4, algorithm.max_path_length, 64, 64, 3
@@ -152,7 +153,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         ) * 255.0
         reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
 
-        obs = ptu.get_numpy(
+        obs_np = ptu.get_numpy(
             obs[:, :, : 64 * 64 * 3]
             .reshape(4, algorithm.max_path_length, 3, 64, 64)
             .permute(0, 1, 3, 4, 2)
@@ -163,8 +164,35 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
         im = np.zeros((128 * 4, algorithm.max_path_length * 64, 3), dtype=np.uint8)
         for i in range(4):
             for j in range(algorithm.max_path_length):
-                im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs[i, j]
+                im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
                 im[
                     128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
                 ] = reconstructions[i, j]
         cv2.imwrite(file_path, im)
+        if image_dist_mean.shape[1] == 6:
+            reconstructions = image_dist_mean[:, 3:6, :, :]
+            reconstructions = (
+                reconstructions.permute(0, 2, 3, 1).reshape(
+                    4, algorithm.max_path_length, 64, 64, 3
+                )
+                + 0.5
+            ) * 255.0
+            reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
+
+            file_path = osp.join(
+                logger.get_snapshot_dir(),
+                "reconstructions_wrist_cam_epoch_{}.png".format(epoch),
+            )
+            obs_np = ptu.get_numpy(
+                obs[:, :, 64 * 64 * 3 : 64 * 64 * 6]
+                .reshape(4, algorithm.max_path_length, 3, 64, 64)
+                .permute(0, 1, 3, 4, 2)
+            ).astype(np.uint8)
+            im = np.zeros((128 * 4, algorithm.max_path_length * 64, 3), dtype=np.uint8)
+            for i in range(4):
+                for j in range(algorithm.max_path_length):
+                    im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+                    im[
+                        128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
+                    ] = reconstructions[i, j]
+            cv2.imwrite(file_path, im)

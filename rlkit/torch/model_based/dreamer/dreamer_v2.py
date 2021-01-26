@@ -79,6 +79,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         use_clipped_value_loss=False,
         actor_value_lr=8e-5,
         use_actor_value_optimizer=False,
+        state_loss_scale=0,
     ):
         super().__init__()
 
@@ -233,6 +234,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.detach_rewards = detach_rewards
         self.num_imagination_iterations = num_imagination_iterations
         self.use_clipped_value_loss = use_clipped_value_loss
+        self.state_loss_scale = state_loss_scale
 
     def try_update_target_networks(self):
         if (
@@ -369,7 +371,16 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         if train_state_dist:
             state = obs[:, np.prod(self.image_shape) :]
             state_dist_loss = -1 * state_dist.log_prob(state).mean()
-            world_model_loss += state_dist_loss
+            world_model_loss += self.state_loss_scale * state_dist_loss
+            return (
+                world_model_loss,
+                div,
+                (image_pred_loss, state_dist_loss),
+                reward_pred_loss,
+                transition_loss,
+                entropy_loss,
+                pred_discount_loss,
+            )
         return (
             world_model_loss,
             div,
@@ -723,6 +734,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 self.num_actor_value_updates * self.num_imagination_iterations
             )
 
+        if type(image_pred_loss) == tuple:
+            image_pred_loss, state_pred_loss = image_pred_loss
+            log_state_pred_loss = True
+        else:
+            log_state_pred_loss = False
+
         """
         Save some statistics for eval
         """
@@ -730,6 +747,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         if not skip_statistics:
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
+            if log_state_pred_loss:
+                eval_statistics["State Prediction Loss"] = state_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Transition Loss"] = transition_loss.item()

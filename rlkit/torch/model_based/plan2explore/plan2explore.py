@@ -66,6 +66,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         detach_rewards=True,
         image_goals_path=None,
+        state_loss_scale=0,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -104,6 +105,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             ppo_clip_param=ppo_clip_param,
             num_actor_value_updates=num_actor_value_updates,
             detach_rewards=detach_rewards,
+            state_loss_scale=state_loss_scale,
         )
         if image_goals_path:
             self.image_goals = np.load(image_goals_path)
@@ -689,6 +691,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             5,
             self.value_gradient_clip,
         )
+        if type(image_pred_loss) == tuple:
+            image_pred_loss, state_pred_loss = image_pred_loss
+            log_state_pred_loss = True
+        else:
+            log_state_pred_loss = False
+
         """
         Save some statistics for eval
         """
@@ -697,6 +705,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             eval_statistics["Value Loss"] = vf_loss.item()
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
+            if log_state_pred_loss:
+                eval_statistics["State Prediction Loss"] = state_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()

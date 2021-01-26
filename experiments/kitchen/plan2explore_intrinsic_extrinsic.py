@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             num_trains_per_train_loop=200,
             min_num_steps_before_training=5000,
@@ -51,6 +51,8 @@ if __name__ == "__main__":
             multitask=False,
             action_scale=1.4,
             use_combined_action_space=True,
+            wrist_cam_concat_with_fixed_view=False,
+            use_wrist_cam=False,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -70,7 +72,7 @@ if __name__ == "__main__":
             use_per_primitive_feature_extractor=False,
         ),
         one_step_ensemble_kwargs=dict(
-            num_models=5,
+            num_models=10,
             hidden_size=400,
             num_layers=4,
             output_embeddings=False,
@@ -90,6 +92,7 @@ if __name__ == "__main__":
             pred_discount_loss_scale=10.0,
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
+            state_loss_scale=1.0,
         ),
         num_expl_envs=args.num_expl_envs,
         num_eval_envs=1,
@@ -100,18 +103,25 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "top_left_burner",
+            #     "microwave",
+            #     "top_left_burner",
             "slide_cabinet",
             # "kettle",
             # "hinge_cabinet",
             # "light_switch",
         ],
         "expl_amount": [0.3],
-        "reward_type": ["intrinsic+extrinsic"],
+        "reward_type": [
+            "extrinsic",
+        ],
         "env_kwargs.proprioception": [True, False],
-        # "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
-        # "env_kwargs.use_wrist_cam": [True, False],
+        "env_kwargs.normalize_proprioception_obs": [True],
+        "trainer_kwargs.state_loss_scale": [1, 1 / 16],
+        "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
+        "env_kwargs.use_wrist_cam": [True, False],
+        "model_kwargs.embedding_size": [
+            1024,
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
