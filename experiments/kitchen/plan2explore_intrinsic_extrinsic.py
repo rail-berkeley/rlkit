@@ -119,6 +119,8 @@ if __name__ == "__main__":
         "trainer_kwargs.state_loss_scale": [1, 1 / 16],
         "env_kwargs.wrist_cam_concat_with_fixed_view": [True, False],
         "env_kwargs.use_wrist_cam": [True, False],
+        # "trainer_kwargs.train_decoder_on_second_output_only": [True],
+        # "env_kwargs.wrist_cam_concat_with_fixed_view": [True],
         "model_kwargs.embedding_size": [
             1024,
         ],

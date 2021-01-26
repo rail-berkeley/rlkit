@@ -357,7 +357,6 @@ class WorldModel(PyTorchModule):
             )
         return state
 
-
 class StateConcatObsWorldModel(WorldModel):
     def __init__(self, *args, state_output_size=1, **kwargs):
         super(StateConcatObsWorldModel, self).__init__(*args, **kwargs)

@@ -67,6 +67,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         detach_rewards=True,
         image_goals_path=None,
         state_loss_scale=0,
+        train_decoder_on_second_output_only=False,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -106,6 +107,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             num_actor_value_updates=num_actor_value_updates,
             detach_rewards=detach_rewards,
             state_loss_scale=state_loss_scale,
+            train_decoder_on_second_output_only=train_decoder_on_second_output_only,
         )
         if image_goals_path:
             self.image_goals = np.load(image_goals_path)

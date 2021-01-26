@@ -80,6 +80,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         actor_value_lr=8e-5,
         use_actor_value_optimizer=False,
         state_loss_scale=0,
+        train_decoder_on_second_output_only=False,
     ):
         super().__init__()
 
@@ -235,6 +236,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.num_imagination_iterations = num_imagination_iterations
         self.use_clipped_value_loss = use_clipped_value_loss
         self.state_loss_scale = state_loss_scale
+        self.train_decoder_on_second_output_only = train_decoder_on_second_output_only
 
     def try_update_target_networks(self):
         if (
@@ -307,12 +309,28 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             train_state_dist = True
         else:
             train_state_dist = False
-        image_pred_loss = (
-            -1
-            * image_dist.log_prob(
-                self.world_model.preprocess(obs).reshape(-1, *self.image_shape)
-            ).mean()
-        )
+
+        if self.train_decoder_on_second_output_only:
+            image_dist = self.world_model.get_dist(
+                mean=image_dist.base_dist.mean[:, 3:6, :, :],
+                std=image_dist.base_dist.scale[:, 3:6, :, :],
+                dims=3,
+            )
+            image_pred_loss = (
+                -1
+                * image_dist.log_prob(
+                    self.world_model.preprocess(obs).reshape(-1, *self.image_shape)[
+                        :, 3:6, :, :
+                    ]
+                ).mean()  # todo: need to actually choose the params of the image dist to be [3:6]
+            )
+        else:
+            image_pred_loss = (
+                -1
+                * image_dist.log_prob(
+                    self.world_model.preprocess(obs).reshape(-1, *self.image_shape)
+                ).mean()
+            )
         if self.detach_rewards:
             reward_pred_loss = -1 * reward_dist.log_prob(rewards.detach()).mean()
         else:
