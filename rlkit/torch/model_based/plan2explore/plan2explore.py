@@ -68,6 +68,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         image_goals_path=None,
         state_loss_scale=0,
         train_decoder_on_second_output_only=False,
+        use_next_feat_for_computing_reward=False,
+        one_step_ensemble_pred_prior_from_prior=True,
     ):
         super(Plan2ExploreTrainer, self).__init__(
             env,
@@ -196,6 +198,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         self.train_actor_with_intrinsic_and_extrinsic_reward = (
             train_actor_with_intrinsic_and_extrinsic_reward
         )
+        self.use_next_feat_for_computing_reward = use_next_feat_for_computing_reward
+        self.one_step_ensemble_pred_prior_from_prior = (
+            one_step_ensemble_pred_prior_from_prior
+        )
 
     def try_update_target_networks(self):
         if (
@@ -232,7 +238,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         assert pred_embeddings.shape[0] == self.one_step_ensemble.num_models
         assert pred_embeddings.shape[1] == input_state.shape[0]
         assert len(pred_embeddings.shape) == 3
-
+        # computes std across ensembles, squares it to compute variance and then computes the mean across the vector dim
         reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
         return reward
 
@@ -240,7 +246,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
-                v = v[:, :-1]
+                v = v[:, :-1]  # avoid imagining forward from terminal states
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         if self.image_goals is not None:
             image_goals = ptu.from_numpy(
@@ -268,6 +274,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         log_probs = []
         states = []
         next_states = []
+        next_feats = []
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             states.append(new_state["deter"])
@@ -278,9 +285,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 action = action_dist.rsample()
                 log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
+            new_feat = self.world_model.get_feat(new_state)
             next_states.append(new_state["deter"])
 
             feats.append(feat.unsqueeze(0))
+            next_feats.append(new_feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
             log_probs.append(log_prob.unsqueeze(0))
             if self.image_goals is not None:
@@ -290,14 +299,15 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 rewards.append(reward)
 
         feats = torch.cat(feats)
+        next_feats = torch.cat(next_feats)
         actions = torch.cat(actions)
         log_probs = torch.cat(log_probs)
         states = torch.cat(states)
         next_states = torch.cat(next_states)
         if self.image_goals is not None:
             rewards = torch.cat(rewards).unsqueeze(-1)
-            return feats, actions, log_probs, states, next_states, rewards
-        return feats, actions, log_probs, states, next_states
+            return feats, next_feats, actions, log_probs, states, next_states, rewards
+        return feats, next_feats, actions, log_probs, states, next_states
 
     def compute_loss(
         self,
@@ -328,16 +338,25 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
         actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
         embed = torch.cat([embed[:, i, :] for i in range(embed.shape[1])])
-        deter = torch.cat(
-            [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
-        )
-        prev_deter = torch.cat(
-            (ptu.zeros_like(prior["deter"][:, 0:1, :]), prior["deter"][:, :-1, :]),
-            dim=1,
-        )
-        prev_deter = torch.cat(
-            [prev_deter[:, i, :] for i in range(prev_deter.shape[1])]
-        )
+        if self.one_step_ensemble_pred_prior_from_prior:
+            deter = torch.cat(
+                [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
+            )
+            prev_deter = torch.cat(
+                (ptu.zeros_like(prior["deter"][:, 0:1, :]), prior["deter"][:, :-1, :]),
+                dim=1,
+            )
+            prev_deter = torch.cat(
+                [prev_deter[:, i, :] for i in range(prev_deter.shape[1])]
+            )
+        else:
+            prev_deter = post["deter"][:, :-1, :]
+            prev_deter = torch.cat(
+                [prev_deter[:, i, :] for i in range(prev_deter.shape[1])]
+            )
+            deter = prior["deter"][:, 1:, :]
+            deter = torch.cat([deter[:, i, :] for i in range(deter.shape[1])])
+
         (
             world_model_loss,
             div,
@@ -382,6 +401,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             if self.image_goals is not None:
                 (
                     imag_feat,
+                    imag_next_feat,
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
@@ -391,6 +411,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             else:
                 (
                     imag_feat,
+                    imag_next_feat,
                     imag_actions,
                     imag_log_probs,
                     imag_deter_states,
@@ -401,7 +422,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 imag_deter_states, imag_actions
             )
             if self.image_goals is None:
-                extrinsic_reward = self.world_model.reward(imag_feat)
+                if self.use_next_feat_for_computing_reward:
+                    extrinsic_reward = self.world_model.reward(imag_next_feat)
+                else:
+                    extrinsic_reward = self.world_model.reward(imag_feat)
 
             intrinsic_reward = torch.cat(
                 [
@@ -423,13 +447,24 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             else:
                 imag_reward = extrinsic_reward
             with FreezeParameters(pred_discount_params):
-                discount = self.world_model.get_dist(
-                    self.world_model.pred_discount(imag_feat),
-                    std=None,
-                    normal=False,
-                ).mean
-            imag_target_value = self.target_vf(imag_feat)
-            imag_value = self.vf(imag_feat)
+                if self.use_next_feat_for_computing_reward:
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_next_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+                else:
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+            if self.use_next_feat_for_computing_reward:
+                imag_target_value = self.target_vf(imag_next_feat)
+                imag_value = self.vf(imag_next_feat)
+            else:
+                imag_target_value = self.target_vf(imag_feat)
+                imag_value = self.vf(imag_feat)
         imag_returns = lambda_return(
             imag_reward[:-1],
             imag_target_value[:-1],
@@ -490,12 +525,18 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         with torch.no_grad():
             imag_feat_v = imag_feat.detach()
+            imag_next_feat_v = imag_next_feat.detach()
             target = imag_returns.detach()
             weights = weights.detach()
 
-        vf_loss, imag_value_mean = self.value_loss(
-            imag_feat_v, weights, target, vf=self.vf
-        )
+        if self.use_next_feat_for_computing_reward:
+            vf_loss, imag_value_mean = self.value_loss(
+                imag_next_feat_v, weights, target, vf=self.vf
+            )
+        else:
+            vf_loss, imag_value_mean = self.value_loss(
+                imag_feat_v, weights, target, vf=self.vf
+            )
 
         self.update_network(
             self.vf, self.vf_optimizer, vf_loss, 2, self.value_gradient_clip
@@ -512,7 +553,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             size=[self.one_step_ensemble.num_models, bagging_size],
         )
         ensemble_loss = 0
-
         for mdl in range(self.one_step_ensemble.num_models):
             mdl_actions = actions[indices[mdl, :]].detach()
             if self.one_step_ensemble.output_embeddings:
@@ -543,6 +583,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             if self.image_goals is not None:
                 (
                     exploration_imag_feat,
+                    exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
                     exploration_imag_deter_states,
@@ -555,6 +596,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             else:
                 (
                     exploration_imag_feat,
+                    exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
                     exploration_imag_deter_states,
@@ -573,10 +615,14 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 exploration_imag_deter_states, exploration_imag_actions
             )
             if self.image_goals is None:
-
-                exploration_extrinsic_reward = self.world_model.reward(
-                    exploration_imag_feat
-                )
+                if self.use_next_feat_for_computing_reward:
+                    exploration_extrinsic_reward = self.world_model.reward(
+                        exploration_imag_next_feat
+                    )
+                else:
+                    exploration_extrinsic_reward = self.world_model.reward(
+                        exploration_imag_feat
+                    )
 
             exploration_reward = torch.cat(
                 [
@@ -598,15 +644,28 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 )
 
             with FreezeParameters(pred_discount_params):
-                exploration_discount = self.world_model.get_dist(
-                    self.world_model.pred_discount(exploration_imag_feat),
-                    std=None,
-                    normal=False,
-                ).mean
-            exploration_imag_target_value = self.exploration_target_vf(
-                exploration_imag_feat
-            )
-            exploration_imag_value = self.exploration_vf(exploration_imag_feat)
+                if self.use_next_feat_for_computing_reward:
+                    exploration_discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(exploration_imag_next_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+                else:
+                    exploration_discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(exploration_imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+            if self.use_next_feat_for_computing_reward:
+                exploration_imag_target_value = self.exploration_target_vf(
+                    exploration_imag_next_feat
+                )
+                exploration_imag_value = self.exploration_vf(exploration_imag_next_feat)
+            else:
+                exploration_imag_target_value = self.exploration_target_vf(
+                    exploration_imag_feat
+                )
+                exploration_imag_value = self.exploration_vf(exploration_imag_feat)
         exploration_imag_returns = lambda_return(
             exploration_reward[:-1],
             exploration_imag_target_value[:-1],
@@ -676,15 +735,24 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         with torch.no_grad():
             exploration_imag_feat_v = exploration_imag_feat.detach()
+            exploration_imag_next_feat_v = exploration_imag_next_feat.detach()
             exploration_value_target = exploration_imag_returns.detach()
             exploration_weights = exploration_weights.detach()
 
-        exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
-            exploration_imag_feat_v,
-            exploration_weights,
-            exploration_value_target,
-            vf=self.exploration_vf,
-        )
+        if self.use_next_feat_for_computing_reward:
+            exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
+                exploration_imag_next_feat_v,
+                exploration_weights,
+                exploration_value_target,
+                vf=self.exploration_vf,
+            )
+        else:
+            exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
+                exploration_imag_feat_v,
+                exploration_weights,
+                exploration_value_target,
+                vf=self.exploration_vf,
+            )
 
         self.update_network(
             self.exploration_vf,
