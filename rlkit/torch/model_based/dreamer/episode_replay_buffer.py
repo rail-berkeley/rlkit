@@ -26,7 +26,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
             (max_replay_buffer_size, max_path_length, observation_dim),
-            dtype=np.float32,  # todo: figure out what to do in the case of proprioceptive obs
+            dtype=np.uint8,  # todo: figure out what to do in the case of proprioceptive obs
         )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
         # Make everything a 2D np array to make it easier for other code to
@@ -72,10 +72,11 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             warnings.warn(
                 "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
             )
+        batch_start = np.random.randint(0, self.max_path_length - 50)
         batch = dict(
-            observations=self._observations[indices],
-            actions=self._actions[indices],
-            rewards=self._rewards[indices],
-            terminals=self._terminals[indices],
+            observations=self._observations[indices][:, batch_start : batch_start + 50],
+            actions=self._actions[indices][:, batch_start : batch_start + 50],
+            rewards=self._rewards[indices][:, batch_start : batch_start + 50],
+            terminals=self._terminals[indices][:, batch_start : batch_start + 50],
         )
         return batch

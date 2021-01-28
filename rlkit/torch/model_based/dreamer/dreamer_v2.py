@@ -81,6 +81,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         use_actor_value_optimizer=False,
         state_loss_scale=0,
         train_decoder_on_second_output_only=False,
+        use_pred_discount=True,
     ):
         super().__init__()
 
@@ -89,6 +90,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         torch.backends.cudnn.benchmark = True
 
         self.env = env
+        self.use_pred_discount = use_pred_discount
         self.actor = actor.to(ptu.device)
         self.world_model = world_model.to(ptu.device)
         self.vf = vf.to(ptu.device)
@@ -268,7 +270,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
-                v = v[:, :-1]
+                if self.use_pred_discount:  # Last step could be terminal.
+                    v = v[:, :-1]
                 new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
         feats = []
         actions = []
@@ -385,7 +388,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             + entropy_loss_scale * entropy_loss
         )
 
-        world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
+        if self.use_pred_discount:
+            world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
         if train_state_dist:
             state = obs[:, np.prod(self.image_shape) :]
             state_dist_loss = -1 * state_dist.log_prob(state).mean()
@@ -651,12 +655,15 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 ) = self.imagine_ahead(post)
             with FreezeParameters(world_model_params):
                 imag_reward = self.world_model.reward(imag_feat)
-                with FreezeParameters(pred_discount_params):
-                    discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(imag_feat),
-                        std=None,
-                        normal=False,
-                    ).mean
+                if self.use_pred_discount:
+                    with FreezeParameters(pred_discount_params):
+                        discount = self.world_model.get_dist(
+                            self.world_model.pred_discount(imag_feat),
+                            std=None,
+                            normal=False,
+                        ).mean
+                else:
+                    discount = self.discount * torch.ones_like(imag_reward)
             with FreezeParameters(vf_params + target_vf_params):
                 old_imag_value = self.vf(imag_feat).detach()
             for _ in range(self.num_actor_value_updates):
@@ -771,6 +778,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Transition Loss"] = transition_loss.item()
             eval_statistics["Entropy Loss"] = entropy_loss.item()
+            if self.use_pred_discount:
+                eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Value Loss"] = vf_loss
 
