@@ -11,9 +11,10 @@ from rlkit.torch.model_based.dreamer.truncated_normal import TruncatedNormal
 class ActorModel(Mlp):
     def __init__(
         self,
-        hidden_sizes,
+        hidden_size,
         obs_dim,
         env,
+        num_layers=4,
         use_per_primitive_actor=False,
         discrete_continuous_dist=False,
         discrete_action_dim=0,
@@ -33,7 +34,7 @@ class ActorModel(Mlp):
         else:
             self.output_size = self.continuous_action_dim * 2
         super().__init__(
-            hidden_sizes,
+            [hidden_size] * num_layers,
             input_size=obs_dim,
             output_size=self.output_size,
             hidden_activation=hidden_activation,

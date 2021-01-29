@@ -1,8 +1,6 @@
 import gym
 import numpy as np
 
-from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
-
 
 class DeepMindControl:
     def __init__(self, name, size=(64, 64), camera=None):
@@ -146,10 +144,12 @@ def experiment(variant):
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.actor_models import ActorModel
+    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
     )
+    from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
@@ -184,15 +184,13 @@ def experiment(variant):
     actor_model_class = ActorModel
     num_hidden_layers = 4
     actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * num_hidden_layers,
+        variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=0,
         continuous_action_dim=eval_env.action_space.low.size,
-        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
-        mean_scale=variant["actor_kwargs"]["mean_scale"],
-        init_std=variant["actor_kwargs"]["init_std"],
         env=eval_env,
+        **variant["actor_kwargs"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
@@ -257,7 +255,11 @@ def experiment(variant):
         action_dim,
         replace=False,
     )
-    trainer = DreamerTrainer(
+    if variant.get("dreamer_class", "dreamerv1") == "dreamerv2":
+        dreamer_class = DreamerV2Trainer
+    else:
+        dreamer_class = DreamerTrainer
+    trainer = dreamer_class(
         env=eval_env,
         world_model=world_model,
         actor=actor,

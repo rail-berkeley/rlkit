@@ -34,6 +34,7 @@ class WorldModel(PyTorchModule):
         discrete_latents=False,
         discrete_latent_size=32,
         use_per_primitive_feature_extractor=False,
+        std_act="softplus",
     ):
         super().__init__()
         self.image_shape = image_shape
@@ -147,6 +148,14 @@ class WorldModel(PyTorchModule):
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
+        self.std_act = std_act
+
+    def compute_std(self, std):
+        if self.std_act == "softplus":
+            std = F.softplus(std)
+        elif self.std_act == "sigmoid2":
+            std = 2 * torch.sigmoid(std / 2)
+        return std + 0.1
 
     def obs_step(self, prev_state, prev_action, embed):
         prior = self.action_step(prev_state, prev_action)
@@ -161,7 +170,7 @@ class WorldModel(PyTorchModule):
             post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
         else:
             mean, std = x.split(self.stochastic_state_size, -1)
-            std = F.softplus(std) + 0.1
+            std = self.compute_std(std)
             stoch = self.get_dist(mean, std, latent=True).rsample()
             post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
@@ -357,6 +366,7 @@ class WorldModel(PyTorchModule):
             )
         return state
 
+
 class StateConcatObsWorldModel(WorldModel):
     def __init__(self, *args, state_output_size=1, **kwargs):
         super(StateConcatObsWorldModel, self).__init__(*args, **kwargs)
@@ -507,10 +517,7 @@ class GRUCell(nn.GRUCell):
         self._act = act
         self._norm = norm
         self._update_bias = update_bias
-        self._layer = nn.Linear(
-            input_size * 2,
-            3 * output_size,
-        )
+        self._layer = nn.Linear(input_size * 2, 3 * output_size, bias=norm is not None)
         if norm:
             self._norm = nn.LayerNorm((output_size * 3))
 
