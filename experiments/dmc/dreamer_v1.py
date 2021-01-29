@@ -3,7 +3,7 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.plan2explore.experiments.dmc_plan2explore import experiment
+from rlkit.torch.model_based.dreamer.experiments.dmc_dreamer import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -18,7 +18,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=1000,
             min_num_steps_before_training=1000,
             num_pretrain_steps=1,
-            max_path_length=1000 // 2,
+            max_path_length=500,
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
@@ -27,14 +27,14 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=100,
             num_eval_steps_per_epoch=2500,
-            min_num_steps_before_training=5000,
+            min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=500,
-            num_expl_steps_per_train_loop=1000,
-            num_trains_per_train_loop=1000,
-            num_train_loops_per_epoch=1,
+            num_expl_steps_per_train_loop=500,
+            num_trains_per_train_loop=100,
+            num_train_loops_per_epoch=20,
             batch_size=50,
         )
         exp_prefix = args.exp_prefix
@@ -44,8 +44,6 @@ if __name__ == "__main__":
         replay_buffer_size=int(1e3),
         algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
-            discrete_continuous_dist=True,
-            use_per_primitive_actor=False,
             use_tanh_normal=True,
             mean_scale=5.0,
             init_std=5.0,
@@ -59,12 +57,7 @@ if __name__ == "__main__":
             deterministic_state_size=200,
             embedding_size=1024,
             use_per_primitive_feature_extractor=False,
-        ),
-        one_step_ensemble_kwargs=dict(
-            num_models=10,
-            hidden_size=400,
-            num_layers=4,
-            output_embeddings=False,
+            rssm_hidden_size=200,
         ),
         trainer_kwargs=dict(
             discount=0.99,
@@ -78,33 +71,23 @@ if __name__ == "__main__":
             free_nats=3.0,
             kl_loss_scale=1.0,
             optimizer_class="apex_adam",
-            policy_gradient_loss_scale=0.0,
-            actor_entropy_loss_schedule="0.0",
-            train_decoder_on_second_output_only=False,
-            use_next_feat_for_computing_reward=False,
-            one_step_ensemble_pred_prior_from_prior=True,
             imagination_horizon=15,
-            train_exploration_actor_with_intrinsic_and_extrinsic_reward=True,
-            train_actor_with_intrinsic_and_extrinsic_reward=True,
-            exploration_reward_scale=0.0,
-            detach_rewards=False,
             use_pred_discount=False,
         ),
         num_eval_envs=1,
         expl_amount=0.3,
-        reward_type="extrinsic",
     )
 
     search_space = {
         "env_id": [
-            # "acrobot_swingup",
+            # "walker_walk",
             # "pendulum_swingup",
-            # "quadruped_walk",
-            # "walker_run",
-            "walker_walk",
-            # "hopper_hop",
-            # "hopper_stand",
             # "cartpole_swingup",
+            # "hopper_stand",
+            # "walker_run",
+            # "quadruped_walk",
+            "acrobot_swingup",
+            "hopper_hop",
         ],
         "expl_amount": [0.3],
         "model_kwargs.embedding_size": [

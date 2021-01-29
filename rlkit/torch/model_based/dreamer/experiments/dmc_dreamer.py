@@ -1,6 +1,8 @@
 import gym
 import numpy as np
 
+from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
+
 
 class DeepMindControl:
     def __init__(self, name, size=(64, 64), camera=None):
@@ -140,17 +142,10 @@ def experiment(variant):
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
-    from hrl_exp.envs.mujoco_vec_wrappers import (
-        DummyVecEnv,
-        StableBaselinesVecEnv,
-        make_env,
-    )
+    from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.torch.model_based.dreamer.actor_models import (
-        ActorModel,
-        ConditionalActorModel,
-    )
+    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -158,17 +153,9 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-    from rlkit.torch.model_based.dreamer.world_models import (
-        StateConcatObsWorldModel,
-        WorldModel,
-    )
-    from rlkit.torch.model_based.plan2explore.latent_space_models import (
-        OneStepEnsembleModel,
-    )
-    from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
+    from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     expl_env = DeepMindControl(variant["env_id"])
@@ -196,7 +183,7 @@ def experiment(variant):
     )
     actor_model_class = ActorModel
     num_hidden_layers = 4
-    eval_actor = actor_model_class(
+    actor = actor_model_class(
         [variant["model_kwargs"]["model_hidden_size"]] * num_hidden_layers,
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
@@ -223,47 +210,9 @@ def experiment(variant):
     )
     variant["trainer_kwargs"]["target_vf"] = target_vf
 
-    one_step_ensemble = OneStepEnsembleModel(
-        action_dim=action_dim,
-        embedding_size=variant["model_kwargs"]["embedding_size"],
-        deterministic_state_size=variant["model_kwargs"]["deterministic_state_size"],
-        hidden_size=variant["one_step_ensemble_kwargs"]["hidden_size"],
-        num_layers=variant["one_step_ensemble_kwargs"]["num_layers"],
-        num_models=variant["one_step_ensemble_kwargs"]["num_models"],
-        output_embeddings=variant["one_step_ensemble_kwargs"]["output_embeddings"],
-    )
-
-    exploration_actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * 4,
-        variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
-        hidden_activation=torch.nn.functional.elu,
-        discrete_action_dim=0,
-        continuous_action_dim=eval_env.action_space.low.size,
-        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
-        mean_scale=variant["actor_kwargs"]["mean_scale"],
-        init_std=variant["actor_kwargs"]["init_std"],
-        env=eval_env,
-    )
-    exploration_vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
-        output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
-        hidden_activation=torch.nn.functional.elu,
-    )
-    exploration_target_vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
-        output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
-        hidden_activation=torch.nn.functional.elu,
-    )
-    variant["trainer_kwargs"]["exploration_target_vf"] = exploration_target_vf
-
     expl_policy = DreamerPolicy(
         world_model,
-        exploration_actor,
+        actor,
         obs_dim,
         action_dim,
         exploration=True,
@@ -273,7 +222,7 @@ def experiment(variant):
     )
     eval_policy = DreamerPolicy(
         world_model,
-        eval_actor,
+        actor,
         obs_dim,
         action_dim,
         exploration=False,
@@ -308,15 +257,12 @@ def experiment(variant):
         action_dim,
         replace=False,
     )
-    trainer = Plan2ExploreTrainer(
+    trainer = DreamerTrainer(
         env=eval_env,
         world_model=world_model,
-        actor=eval_actor,
+        actor=actor,
         vf=vf,
         image_shape=(3, 64, 64),
-        one_step_ensemble=one_step_ensemble,
-        exploration_actor=exploration_actor,
-        exploration_vf=exploration_vf,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(

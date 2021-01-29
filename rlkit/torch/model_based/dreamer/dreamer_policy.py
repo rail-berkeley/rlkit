@@ -48,11 +48,9 @@ class DreamerPolicy(Policy):
         new_state, _ = self.world_model.obs_step(prev_state, action, embed)
         feat = self.world_model.get_feat(new_state)
         dist = self.actor(feat)
+        action = dist.mode()
         if self.exploration:
-            action = dist.rsample()
             action = self.actor.compute_exploration_action(action, self.expl_amount)
-        else:
-            action = dist.mode()
         self.state = (new_state, action)
         return ptu.get_numpy(action), {}
 

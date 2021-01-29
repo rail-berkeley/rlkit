@@ -66,12 +66,12 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         indices = np.random.choice(
             self._size,
             size=batch_size,
-            replace=self._replace or self._size < batch_size,
+            replace=True,
         )
-        if not self._replace and self._size < batch_size:
-            warnings.warn(
-                "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
-            )
+        # if not self._replace and self._size < batch_size:
+        #     warnings.warn(
+        #         "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+        #     )
         batch_start = np.random.randint(0, self.max_path_length - 50)
         batch = dict(
             observations=self._observations[indices][:, batch_start : batch_start + 50],
