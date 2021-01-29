@@ -24,7 +24,8 @@ class ActorModel(Mlp):
         init_std=5.0,
         mean_scale=5.0,
         use_tanh_normal=True,
-        **kwargs
+        dist="tanh_normal_dreamer_v1",
+        **kwargs,
     ):
         self.discrete_continuous_dist = discrete_continuous_dist
         self.discrete_action_dim = discrete_action_dim
@@ -39,12 +40,13 @@ class ActorModel(Mlp):
             output_size=self.output_size,
             hidden_activation=hidden_activation,
             hidden_init=torch.nn.init.xavier_uniform_,
-            **kwargs
+            **kwargs,
         )
         self._min_std = min_std
         self._init_std = ptu.tensor(init_std)
         self._mean_scale = mean_scale
         self.use_tanh_normal = use_tanh_normal
+        self._dist = dist
 
     def forward(self, input):
         raw_init_std = torch.log(torch.exp(self._init_std) - 1)
@@ -82,15 +84,30 @@ class ActorModel(Mlp):
             dist = SplitDist(dist1, dist2)
         else:
             action_mean, action_std = last.split(self.continuous_action_dim, -1)
-            if self.use_tanh_normal:
+            if self._dist == "tanh_normal_dreamer_v1":
                 action_mean = self._mean_scale * torch.tanh(
                     action_mean / self._mean_scale
                 )
-            action_std = F.softplus(action_std + raw_init_std) + self._min_std
+                action_std = F.softplus(action_std + raw_init_std) + self._min_std
 
-            dist = Normal(action_mean, action_std)
-            if self.use_tanh_normal:
+                dist = Normal(action_mean, action_std)
                 dist = TransformedDistribution(dist, TanhBijector())
+            elif self._dist == "tanh_normal":
+                action_mean = torch.tanh(action_mean)
+                action_std = F.softplus(action_std + self._init_std) + self._min_std
+                dist = Normal(action_mean, action_std)
+                dist = TransformedDistribution(dist, TanhBijector())
+            elif self._dist == "tanh_normal_5":
+                action_mean = 5 * torch.tanh(action_mean / 5)
+                action_std = F.softplus(action_std + 5) + 5
+
+                dist = Normal(action_mean, action_std)
+                dist = TransformedDistribution(dist, TanhBijector())
+            elif self._dist == "trunc_normal":
+                action_mean = torch.tanh(action_mean)
+                action_std = 2 * torch.sigmoid(action_std / 2) + self._min_std
+                dist = SafeTruncatedNormal(action_mean, action_std, -1, 1)
+
             dist = torch.distributions.Independent(dist, 1)
             dist = SampleDist(dist)
         return dist
@@ -137,7 +154,7 @@ class ConditionalActorModel(torch.nn.Module):
         mean_scale=5.0,
         use_tanh_normal=True,
         use_per_primitive_actor=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__()
         self.discrete_actor = Mlp(
@@ -146,7 +163,7 @@ class ConditionalActorModel(torch.nn.Module):
             output_size=discrete_action_dim,
             hidden_activation=hidden_activation,
             hidden_init=torch.nn.init.xavier_uniform_,
-            **kwargs
+            **kwargs,
         )
         self.env = env
         self.use_per_primitive_actor = use_per_primitive_actor
@@ -166,7 +183,7 @@ class ConditionalActorModel(torch.nn.Module):
                     output_size=len_v * 2,
                     hidden_activation=hidden_activation,
                     hidden_init=torch.nn.init.xavier_uniform_,
-                    **kwargs
+                    **kwargs,
                 )
                 self.continuous_actor[k] = net
         else:
@@ -176,7 +193,7 @@ class ConditionalActorModel(torch.nn.Module):
                 output_size=continuous_action_dim * 2,
                 hidden_activation=hidden_activation,
                 hidden_init=torch.nn.init.xavier_uniform_,
-                **kwargs
+                **kwargs,
             )
         self.discrete_action_dim = discrete_action_dim
         self.continuous_action_dim = continuous_action_dim
@@ -459,3 +476,18 @@ class SafeTruncatedNormal(TruncatedNormal):
         if self._mult:
             event *= self._mult
         return event
+
+    def expand(self, batch_shape, _instance=None):
+        new = self._get_checked_instance(SafeTruncatedNormal, _instance)
+        batch_shape = torch.Size(batch_shape)
+        new.loc = self.loc.expand(batch_shape)
+        new.scale = self.scale.expand(batch_shape)
+        new.a = self.a.expand(batch_shape)
+        new.b = self.b.expand(batch_shape)
+        new._clip = self._clip
+        new._mult = self._mult
+        super(SafeTruncatedNormal, new).__init__(
+            new.loc, new.scale, new.a, new.b, validate_args=False
+        )
+        new._validate_args = self._validate_args
+        return new

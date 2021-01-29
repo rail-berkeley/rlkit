@@ -59,7 +59,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         image_loss_scale=1.0,
         reward_loss_scale=1.0,
         transition_loss_scale=0.0,
-        entropy_loss_scale=0.0,
         forward_kl=True,
         policy_gradient_loss_scale=1.0,
         actor_entropy_loss_schedule="linear(3e-3,3e-4,5e4)",
@@ -214,7 +213,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.image_loss_scale = image_loss_scale
         self.reward_loss_scale = reward_loss_scale
         self.transition_loss_scale = transition_loss_scale
-        self.entropy_loss_scale = entropy_loss_scale
         self.policy_gradient_loss_scale = policy_gradient_loss_scale
         self.actor_entropy_loss_scale = lambda x=actor_entropy_loss_schedule: schedule(
             x, self._n_train_steps_total
@@ -377,7 +375,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             post_kld = kld(prior_detached_dist, post_dist).mean()
         transition_loss = torch.max(prior_kld, ptu.tensor(self.free_nats))
         entropy_loss = torch.max(post_kld, ptu.tensor(self.free_nats))
-        entropy_loss_scale = 0.1 - self.transition_loss_scale
+        entropy_loss_scale = 1 - self.transition_loss_scale
         entropy_loss_scale = (1 - self.kl_loss_scale) * entropy_loss_scale
         transition_loss_scale = (1 - self.kl_loss_scale) * self.transition_loss_scale
         world_model_loss = (

@@ -115,12 +115,21 @@ class TruncatedStandardNormal(Distribution):
 
     def rsample(self, sample_shape=torch.Size()):
         shape = self._extended_shape(sample_shape)
-        p = torch.empty(shape).uniform_(self._dtype_min_gt_0, self._dtype_max_lt_1)
+        p = (
+            torch.empty(shape)
+            .uniform_(self._dtype_min_gt_0, self._dtype_max_lt_1)
+            .to(ptu.device)
+        )
         return self.icdf(p)
 
     def expand(self, batch_shape, _instance=None):
-        # TODO: it is likely that keeping temporary variables in private attributes violates the logic of this method
-        raise NotImplementedError
+        new = self._get_checked_instance(TruncatedStandardNormal, _instance)
+        batch_shape = torch.Size(batch_shape)
+        new.a = self.a.expand(batch_shape)
+        new.b = self.b.expand(batch_shape)
+        super(TruncatedStandardNormal, new).__init__(new.a, new.b, validate_args=False)
+        new._validate_args = self._validate_args
+        return new
 
 
 class TruncatedNormal(TruncatedStandardNormal):
@@ -175,3 +184,14 @@ class TruncatedNormal(TruncatedStandardNormal):
             super(TruncatedNormal, self).log_prob(self._to_std_rv(value))
             - self._log_scale
         )
+
+    def expand(self, batch_shape, _instance=None):
+        new = self._get_checked_instance(TruncatedNormal, _instance)
+        batch_shape = torch.Size(batch_shape)
+        new.loc = self.loc.expand(batch_shape)
+        new.scale = self.scale.expand(batch_shape)
+        new.a = self.a.expand(batch_shape)
+        new.b = self.b.expand(batch_shape)
+        super(TruncatedNormal, new).__init__(new.a, new.b, validate_args=False)
+        new._validate_args = self._validate_args
+        return new
