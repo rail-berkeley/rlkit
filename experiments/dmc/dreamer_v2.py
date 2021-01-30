@@ -41,15 +41,13 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(1e3),
+        replay_buffer_size=int(1e4),
         algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
-            use_tanh_normal=True,
             init_std=0.0,
             num_layers=4,
             min_std=0.1,
-            # dist="tanh_normal_5",
-            dist="trunc_normal",
+            dist="tanh_normal_5",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -94,13 +92,13 @@ if __name__ == "__main__":
 
     search_space = {
         "env_id": [
-            "walker_walk",
+            # "walker_walk",
             # "pendulum_swingup",
             # "cartpole_swingup",
             # "hopper_stand",
             # "walker_run",
             # "quadruped_walk",
-            # "acrobot_swingup",
+            "acrobot_swingup",
             # "hopper_hop",
         ],
         "expl_amount": [0.0],

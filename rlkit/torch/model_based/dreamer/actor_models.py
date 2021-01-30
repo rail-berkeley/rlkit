@@ -470,11 +470,16 @@ class SafeTruncatedNormal(TruncatedNormal):
 
     def sample(self, *args, **kwargs):
         event = super().sample(*args, **kwargs)
-        if self._clip:
-            clipped = torch.clamp(event, self.a + self._clip, self.b - self._clip)
-            event = event - event.detach() + clipped.detach()
-        if self._mult:
-            event *= self._mult
+        clipped = torch.max(torch.min(event, self.b - self._clip), self.a + self._clip)
+        event = event - event.detach() + clipped.detach()
+        event *= self._mult
+        return event
+
+    def rsample(self, *args, **kwargs):
+        event = super().rsample(*args, **kwargs)
+        clipped = torch.max(torch.min(event, self.b - self._clip), self.a + self._clip)
+        event = event - event.detach() + clipped.detach()
+        event *= self._mult
         return event
 
     def expand(self, batch_shape, _instance=None):
