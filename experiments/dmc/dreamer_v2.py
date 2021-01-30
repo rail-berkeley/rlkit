@@ -27,7 +27,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=200,
+            num_epochs=500,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -94,12 +94,16 @@ if __name__ == "__main__":
         "env_id": [
             "walker_walk",
             "pendulum_swingup",
+            "cartpole_swingup_sparse",
             "cartpole_swingup",
+            "cartpole_balance",
+            "cartpole_balance_sparse",
             "hopper_stand",
             "walker_run",
             "quadruped_walk",
             "acrobot_swingup",
             "hopper_hop",
+            "cheetah_run",
         ],
         "expl_amount": [0.0],
         "model_kwargs.embedding_size": [
