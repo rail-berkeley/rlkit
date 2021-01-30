@@ -92,14 +92,14 @@ if __name__ == "__main__":
 
     search_space = {
         "env_id": [
-            # "walker_walk",
-            # "pendulum_swingup",
-            # "cartpole_swingup",
-            # "hopper_stand",
-            # "walker_run",
-            # "quadruped_walk",
+            "walker_walk",
+            "pendulum_swingup",
+            "cartpole_swingup",
+            "hopper_stand",
+            "walker_run",
+            "quadruped_walk",
             "acrobot_swingup",
-            # "hopper_hop",
+            "hopper_hop",
         ],
         "expl_amount": [0.0],
         "model_kwargs.embedding_size": [
