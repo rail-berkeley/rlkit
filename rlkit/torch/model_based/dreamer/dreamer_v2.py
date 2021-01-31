@@ -100,6 +100,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         elif optimizer_class == "apex_adam" and APEX_AVAILABLE:
             self.optimizer_class = apex.optimizers.FusedAdam
 
+        self.actor_lr = actor_lr
+        self.adam_eps = adam_eps
+        self.weight_decay = weight_decay
+        self.vf_lr = vf_lr
+        self.world_model_lr = world_model_lr
+
         self.actor_optimizer = self.optimizer_class(
             self.actor.parameters(),
             lr=actor_lr,

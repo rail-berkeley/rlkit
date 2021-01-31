@@ -182,7 +182,6 @@ def experiment(variant):
         env=eval_env,
     )
     actor_model_class = ActorModel
-    num_hidden_layers = 4
     actor = actor_model_class(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,

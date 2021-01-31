@@ -29,89 +29,25 @@ Plan2ExploreLosses = namedtuple(
 class Plan2ExploreTrainer(DreamerV2Trainer):
     def __init__(
         self,
-        env,
-        actor,
-        vf,
-        world_model,
-        imagination_horizon,
-        image_shape,
+        *args,
         exploration_actor,
         exploration_vf,
         one_step_ensemble,
-        target_vf,
         exploration_target_vf,
-        discount=0.99,
-        reward_scale=1.0,
-        actor_lr=8e-5,
-        vf_lr=8e-5,
-        world_model_lr=6e-4,
-        optimizer_class="torch_adam",
-        use_amp=False,
-        opt_level="O1",
-        lam=0.95,
-        free_nats=3.0,
-        kl_loss_scale=1.0,
-        pred_discount_loss_scale=10.0,
-        adam_eps=1e-7,
-        weight_decay=0.0,
-        debug=False,
         exploration_reward_scale=10000,
-        image_goals=None,
-        policy_gradient_loss_scale=0.0,
-        actor_entropy_loss_schedule="0.0",
-        use_ppo_loss=False,
-        ppo_clip_param=0.2,
-        num_actor_value_updates=1,
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
-        detach_rewards=True,
         image_goals_path=None,
-        state_loss_scale=0,
-        train_decoder_on_second_output_only=False,
         use_next_feat_for_computing_reward=False,
         one_step_ensemble_pred_prior_from_prior=True,
-        use_pred_discount=True,
+        log_disagreement=True,
+        ensemble_training_states="post_to_next_post",
+        **kwargs,
     ):
         super(Plan2ExploreTrainer, self).__init__(
-            env,
-            actor,
-            vf,
-            world_model,
-            imagination_horizon,
-            image_shape,
-            target_vf=target_vf,
-            discount=discount,
-            reward_scale=reward_scale,
-            actor_lr=actor_lr,
-            vf_lr=vf_lr,
-            world_model_lr=world_model_lr,
-            optimizer_class=optimizer_class,
-            use_amp=use_amp,
-            opt_level=opt_level,
-            lam=lam,
-            free_nats=free_nats,
-            kl_loss_scale=kl_loss_scale,
-            pred_discount_loss_scale=pred_discount_loss_scale,
-            adam_eps=adam_eps,
-            weight_decay=weight_decay,
-            debug=debug,
-            image_loss_scale=1.0,
-            reward_loss_scale=1.0,
-            transition_loss_scale=0.0,
-            entropy_loss_scale=0.0,
-            forward_kl=True,
-            policy_gradient_loss_scale=policy_gradient_loss_scale,
-            actor_entropy_loss_schedule=actor_entropy_loss_schedule,
-            soft_target_tau=1,
-            target_update_period=1,
+            *args,
             initialize_amp=False,
-            use_ppo_loss=use_ppo_loss,
-            ppo_clip_param=ppo_clip_param,
-            num_actor_value_updates=num_actor_value_updates,
-            detach_rewards=detach_rewards,
-            state_loss_scale=state_loss_scale,
-            train_decoder_on_second_output_only=train_decoder_on_second_output_only,
-            use_pred_discount=use_pred_discount,
+            **kwargs,
         )
         if image_goals_path:
             self.image_goals = np.load(image_goals_path)
@@ -124,22 +60,22 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
 
         self.one_step_ensemble_optimizer = self.optimizer_class(
             self.one_step_ensemble.parameters(),
-            lr=world_model_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
+            lr=self.world_model_lr,
+            eps=self.adam_eps,
+            weight_decay=self.weight_decay,
         )
 
         self.exploration_actor_optimizer = self.optimizer_class(
             self.exploration_actor.parameters(),
-            lr=actor_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
+            lr=self.actor_lr,
+            eps=self.adam_eps,
+            weight_decay=self.weight_decay,
         )
         self.exploration_vf_optimizer = self.optimizer_class(
             self.exploration_vf.parameters(),
-            lr=vf_lr,
-            eps=adam_eps,
-            weight_decay=weight_decay,
+            lr=self.vf_lr,
+            eps=self.adam_eps,
+            weight_decay=self.weight_decay,
         )
         if self.use_amp:
             models, optimizers = amp.initialize(
@@ -166,7 +102,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     self.exploration_actor_optimizer,
                     self.exploration_vf_optimizer,
                 ],
-                opt_level=opt_level,
+                opt_level=self.opt_level,
                 num_losses=6,
             )
             (
@@ -204,13 +140,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         self.one_step_ensemble_pred_prior_from_prior = (
             one_step_ensemble_pred_prior_from_prior
         )
+        self.log_disagreement = log_disagreement
+        self.ensemble_training_states = ensemble_training_states
 
     def try_update_target_networks(self):
-        if (
-            self.target_vf
-            and self.exploration_target_vf
-            and self._n_train_steps_total % self.target_update_period == 0
-        ):
+        if self._n_train_steps_total % self.target_update_period == 0:
             self.update_target_networks()
 
     def update_target_networks(self):
@@ -220,16 +154,25 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         )
 
     def compute_exploration_reward(
-        self, exploration_imag_deter_states, exploration_imag_actions
+        self, exploration_imag_states, exploration_imag_actions
     ):
         pred_embeddings = []
-        input_state = exploration_imag_deter_states
+        d = {
+            "deter": exploration_imag_states["deter"],
+            "stoch": exploration_imag_states["stoch"],
+            "feat": self.world_model.get_feat(exploration_imag_states),
+        }
+        input_state = d[self.one_step_ensemble.inputs]
+        input_state = torch.cat(
+            [input_state[i, :, :] for i in range(input_state.shape[0])]
+        )
         exploration_imag_actions = torch.cat(
             [
                 exploration_imag_actions[i, :, :]
                 for i in range(exploration_imag_actions.shape[0])
             ]
         )
+
         for mdl in range(self.one_step_ensemble.num_models):
             inputs = torch.cat((input_state, exploration_imag_actions), 1)
             pred_embeddings.append(
@@ -241,7 +184,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         assert pred_embeddings.shape[1] == input_state.shape[0]
         assert len(pred_embeddings.shape) == 3
         # computes std across ensembles, squares it to compute variance and then computes the mean across the vector dim
-        reward = (pred_embeddings.std(dim=0) * pred_embeddings.std(dim=0)).mean(dim=1)
+        reward = (pred_embeddings.std(dim=0)).mean(dim=-1)
+        if self.log_disagreement:
+            reward = torch.log(reward)
         return reward
 
     def imagine_ahead(self, state, actor):
@@ -275,12 +220,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         feats = []
         actions = []
         log_probs = []
-        states = []
-        next_states = []
         next_feats = []
+        states = dict(mean=[], std=[], stoch=[], deter=[])
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
-            states.append(new_state["deter"])
+            for k in states.keys():
+                states[k].append(new_state[k].unsqueeze(0))
             action_dist = actor(feat.detach())
             if type(actor) == ConditionalActorModel:
                 action, log_prob = action_dist.rsample_and_log_prob()
@@ -289,7 +234,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
             new_feat = self.world_model.get_feat(new_state)
-            next_states.append(new_state["deter"])
 
             feats.append(feat.unsqueeze(0))
             next_feats.append(new_feat.unsqueeze(0))
@@ -305,12 +249,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         next_feats = torch.cat(next_feats)
         actions = torch.cat(actions)
         log_probs = torch.cat(log_probs)
-        states = torch.cat(states)
-        next_states = torch.cat(next_states)
+        for k in states.keys():
+            states[k] = torch.cat(states[k])
         if self.image_goals is not None:
             rewards = torch.cat(rewards).unsqueeze(-1)
-            return feats, next_feats, actions, log_probs, states, next_states, rewards
-        return feats, next_feats, actions, log_probs, states, next_states
+            return feats, next_feats, actions, log_probs, states, rewards
+        return feats, next_feats, actions, log_probs, states
 
     def compute_loss(
         self,
@@ -335,30 +279,52 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             pred_discount_dist,
             embed,
         ) = self.world_model(obs, actions)
+
         # stack obs, rewards and terminals along path dimension
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
         terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
-        actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1])])
-        embed = torch.cat([embed[:, i, :] for i in range(embed.shape[1])])
-        if self.one_step_ensemble_pred_prior_from_prior:
-            deter = torch.cat(
-                [prior["deter"][:, i, :] for i in range(prior["deter"].shape[1])]
-            )
-            prev_deter = torch.cat(
-                (ptu.zeros_like(prior["deter"][:, 0:1, :]), prior["deter"][:, :-1, :]),
-                dim=1,
-            )
-            prev_deter = torch.cat(
-                [prev_deter[:, i, :] for i in range(prev_deter.shape[1])]
-            )
-        else:
-            prev_deter = post["deter"][:, :-1, :]
-            prev_deter = torch.cat(
-                [prev_deter[:, i, :] for i in range(prev_deter.shape[1])]
-            )
-            deter = prior["deter"][:, 1:, :]
-            deter = torch.cat([deter[:, i, :] for i in range(deter.shape[1])])
+        actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1] - 1)])
+        post_vals = {
+            "embed": embed,
+            "stoch": post["stoch"],
+            "deter": post["deter"],
+            "feat": self.world_model.get_feat(post),
+        }
+        prior_vals = {
+            "embed": embed,
+            "stoch": prior["stoch"],
+            "deter": prior["deter"],
+            "feat": self.world_model.get_feat(prior),
+        }
+        ensemble_training_input_target_state = {
+            "post_to_next_post": [post_vals, post_vals],
+            "prior_to_next_prior": [prior_vals, prior_vals],
+            "post_to_next_prior": [post_vals, prior_vals],
+            "prior_to_next_post": [prior_vals, post_vals],
+        }
+        input_vals, target_vals = ensemble_training_input_target_state[
+            self.ensemble_training_states
+        ]
+        one_step_ensemble_inputs = input_vals[self.one_step_ensemble.inputs]
+        one_step_ensemble_targets = target_vals[self.one_step_ensemble.targets]
+
+        one_step_ensemble_inputs = torch.cat(
+            [
+                one_step_ensemble_inputs[:, i, :]
+                for i in range(0, one_step_ensemble_inputs.shape[1] - 1)
+            ]
+        )
+        one_step_ensemble_inputs = torch.cat(
+            (one_step_ensemble_inputs, actions), -1
+        ).detach()
+
+        one_step_ensemble_targets = torch.cat(
+            [
+                one_step_ensemble_targets[:, i, :]
+                for i in range(1, one_step_ensemble_targets.shape[1])
+            ]
+        ).detach()
 
         (
             world_model_loss,
@@ -407,8 +373,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_next_feat,
                     imag_actions,
                     imag_log_probs,
-                    imag_deter_states,
-                    imag_next_deter_states,
+                    imag_states,
                     extrinsic_reward,
                 ) = self.imagine_ahead(post, actor=self.actor)
             else:
@@ -417,12 +382,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_next_feat,
                     imag_actions,
                     imag_log_probs,
-                    imag_deter_states,
-                    imag_next_deter_states,
+                    imag_states,
                 ) = self.imagine_ahead(post, actor=self.actor)
         with FreezeParameters(world_model_params + vf_params + target_vf_params):
             intrinsic_reward = self.compute_exploration_reward(
-                imag_deter_states, imag_actions
+                imag_states, imag_actions
             )
             if self.image_goals is None:
                 if self.use_next_feat_for_computing_reward:
@@ -551,27 +515,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         One Step Ensemble Loss
         """
-        batch_size = rewards.shape[0]
-        bagging_size = int(1 * batch_size)
-        indices = np.random.randint(
-            low=0,
-            high=batch_size,
-            size=[self.one_step_ensemble.num_models, bagging_size],
-        )
         ensemble_loss = 0
         for mdl in range(self.one_step_ensemble.num_models):
-            mdl_actions = actions[indices[mdl, :]].detach()
-            if self.one_step_ensemble.output_embeddings:
-                input_state = deter[indices[mdl, :]].detach()
-                target_prediction = embed[indices[mdl, :]].detach()
-            else:
-                input_state = prev_deter[indices[mdl, :]].detach()
-                target_prediction = deter[indices[mdl, :]].detach()
-            inputs = torch.cat((input_state, mdl_actions), 1)
             member_pred = self.one_step_ensemble.forward_ith_model(
-                inputs, mdl
+                one_step_ensemble_inputs, mdl
             )  # predict embedding of next state
-            member_loss = -1 * member_pred.log_prob(target_prediction).mean()
+            member_loss = -1 * member_pred.log_prob(one_step_ensemble_targets).mean()
             ensemble_loss += member_loss
 
         self.update_network(
@@ -592,8 +541,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
-                    exploration_imag_deter_states,
-                    exploration_imag_next_deter_states,
+                    exploration_imag_states,
                     exploration_extrinsic_reward,
                 ) = self.imagine_ahead(
                     post,
@@ -605,8 +553,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_next_feat,
                     exploration_imag_actions,
                     exploration_imag_log_probs,
-                    exploration_imag_deter_states,
-                    exploration_imag_next_deter_states,
+                    exploration_imag_states,
                 ) = self.imagine_ahead(
                     post,
                     actor=self.exploration_actor,
@@ -618,7 +565,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             + exploration_target_vf_params
         ):
             exploration_intrinsic_reward = self.compute_exploration_reward(
-                exploration_imag_deter_states, exploration_imag_actions
+                exploration_imag_states, exploration_imag_actions
             )
             if self.image_goals is None:
                 if self.use_next_feat_for_computing_reward:

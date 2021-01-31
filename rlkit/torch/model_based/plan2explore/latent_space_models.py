@@ -11,26 +11,33 @@ class OneStepEnsembleModel(PyTorchModule):
         self,
         action_dim,
         deterministic_state_size,
+        stochastic_state_size,
         embedding_size,
         model_act=F.elu,
-        num_models=5,
-        hidden_size=32 * 32,
-        num_layers=2,
-        output_embeddings=True,
+        num_models=10,
+        hidden_size=400,
+        num_layers=4,
+        inputs="feat",
+        targets="stoch",
     ):
         super().__init__()
         self.ensemble = torch.nn.ModuleList()
-        self.output_embeddings = output_embeddings
-        if self.output_embeddings:
-            output_size = embedding_size
-        else:
-            output_size = deterministic_state_size
+        self.size = {
+            "embed": embedding_size,
+            "stoch": stochastic_state_size,
+            "deter": deterministic_state_size,
+            "feat": stochastic_state_size + deterministic_state_size,
+        }
+        self.inputs = inputs
+        self.targets = targets
+        self.input_size = self.size[inputs]
+        self.output_size = self.size[targets]
         for i in range(num_models):
             self.ensemble.append(
                 Mlp(
                     hidden_sizes=[hidden_size] * num_layers,
-                    input_size=deterministic_state_size + action_dim,
-                    output_size=output_size,
+                    input_size=self.input_size + action_dim,
+                    output_size=self.output_size,
                     hidden_activation=model_act,
                     hidden_init=torch.nn.init.xavier_uniform_,
                 )
