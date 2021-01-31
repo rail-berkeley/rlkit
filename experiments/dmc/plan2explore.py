@@ -105,14 +105,14 @@ if __name__ == "__main__":
 
     search_space = {
         "env_id": [
-            # "acrobot_swingup",
-            # "pendulum_swingup",
-            # "quadruped_walk",
-            # "walker_run",
+            "acrobot_swingup",
+            "pendulum_swingup",
+            "quadruped_walk",
+            "walker_run",
             "walker_walk",
-            # "hopper_hop",
-            # "hopper_stand",
-            # "cartpole_swingup",
+            "hopper_hop",
+            "hopper_stand",
+            "cartpole_swingup",
         ],
         # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
         # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
