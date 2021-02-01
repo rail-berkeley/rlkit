@@ -22,7 +22,7 @@ if __name__ == "__main__":
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
-            batch_size=50,
+            batch_size=1,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="Plan2Explore",
         version="normal",
-        replay_buffer_size=int(1e4),
+        replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
             init_std=0.0,
