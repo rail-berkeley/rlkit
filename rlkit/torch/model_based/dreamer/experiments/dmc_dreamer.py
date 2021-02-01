@@ -162,13 +162,13 @@ def experiment(variant):
     expl_env.reset()
     expl_env = ActionRepeat(expl_env, 2)
     expl_env = NormalizeActions(expl_env)
-    expl_env = DummyVecEnv([TimeLimit(expl_env, 500)])
+    expl_env = DummyVecEnv([TimeLimit(expl_env, 500)], pass_render_kwargs=False)
 
     eval_env = DeepMindControl(variant["env_id"])
     eval_env.reset()
     eval_env = ActionRepeat(eval_env, 2)
     eval_env = NormalizeActions(eval_env)
-    eval_env = DummyVecEnv([TimeLimit(eval_env, 500)])
+    eval_env = DummyVecEnv([TimeLimit(eval_env, 500)], pass_render_kwargs=False)
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
