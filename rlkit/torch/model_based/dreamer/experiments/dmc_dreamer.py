@@ -253,6 +253,8 @@ def experiment(variant):
         obs_dim,
         action_dim,
         replace=False,
+        use_batch_length=True,
+        batch_length=50,
     )
     if variant.get("dreamer_class", "dreamerv1") == "dreamerv2":
         dreamer_class = DreamerV2Trainer

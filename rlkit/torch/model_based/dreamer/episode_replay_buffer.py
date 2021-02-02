@@ -15,6 +15,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         observation_dim,
         action_dim,
         replace=True,
+        batch_length=50,
+        use_batch_length=False,
     ):
         self.env = env
         self._ob_space = env.observation_space
@@ -24,10 +26,16 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._action_dim = get_dim(self._action_space)
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
-        self._observations = np.zeros(
-            (max_replay_buffer_size, max_path_length, observation_dim),
-            dtype=np.uint8,  # todo: figure out what to do in the case of proprioceptive obs
-        )
+        if hasattr(self.env, "proprioception") and self.env.proprioception:
+            self._observations = np.zeros(
+                (max_replay_buffer_size, max_path_length, observation_dim),
+                dtype=np.float32,
+            )
+        else:
+            self._observations = np.zeros(
+                (max_replay_buffer_size, max_path_length, observation_dim),
+                dtype=np.uint8,
+            )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
         # Make everything a 2D np array to make it easier for other code to
         # reason about the shape of the data
@@ -37,7 +45,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             (max_replay_buffer_size, max_path_length, 1), dtype="uint8"
         )
         self._replace = replace
-
+        self.batch_length = batch_length
+        self.use_batch_length = use_batch_length
         self._top = 0
         self._size = 0
 
@@ -63,20 +72,69 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             self._size += self.env.n_envs
 
     def random_batch(self, batch_size):
-        indices = np.random.choice(
-            self._size,
-            size=batch_size,
-            replace=True,
-        )
-        # if not self._replace and self._size < batch_size:
-        #     warnings.warn(
-        #         "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
-        #     )
-        batch_start = np.random.randint(0, self.max_path_length - 50)
+        if self.use_batch_length:
+            indices = np.random.choice(
+                self._size,
+                size=batch_size,
+                replace=True,
+            )
+            if not self._replace and self._size < batch_size:
+                warnings.warn(
+                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                )
+            batch_start = np.random.randint(
+                0, self.max_path_length - self.batch_length, size=(batch_size)
+            )
+            batch_indices = np.linspace(
+                batch_start,
+                batch_start + self.batch_length,
+                self.batch_length,
+                endpoint=False,
+            ).astype(int)
+            observations = np.concatenate(
+                [
+                    np.expand_dims(
+                        self._observations[indices][i, batch_indices[:, i]], 0
+                    )
+                    for i in range(batch_size)
+                ]
+            )
+            actions = np.concatenate(
+                [
+                    np.expand_dims(self._actions[indices][i, batch_indices[:, i]], 0)
+                    for i in range(batch_size)
+                ]
+            )
+            rewards = np.concatenate(
+                [
+                    np.expand_dims(self._rewards[indices][i, batch_indices[:, i]], 0)
+                    for i in range(batch_size)
+                ]
+            )
+            terminals = np.concatenate(
+                [
+                    np.expand_dims(self._terminals[indices][i, batch_indices[:, i]], 0)
+                    for i in range(batch_size)
+                ]
+            )
+        else:
+            indices = np.random.choice(
+                self._size,
+                size=batch_size,
+                replace=self._replace or self._size < batch_size,
+            )
+            if not self._replace and self._size < batch_size:
+                warnings.warn(
+                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                )
+            observations = self._observations[indices]
+            actions = self._actions[indices]
+            rewards = self._rewards[indices]
+            terminals = self._terminals[indices]
         batch = dict(
-            observations=self._observations[indices][:, batch_start : batch_start + 50],
-            actions=self._actions[indices][:, batch_start : batch_start + 50],
-            rewards=self._rewards[indices][:, batch_start : batch_start + 50],
-            terminals=self._terminals[indices][:, batch_start : batch_start + 50],
+            observations=observations,
+            actions=actions,
+            rewards=rewards,
+            terminals=terminals,
         )
         return batch

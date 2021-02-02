@@ -22,7 +22,7 @@ if __name__ == "__main__":
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
-            batch_size=1,
+            batch_size=2,
         )
         exp_prefix = "test" + args.exp_prefix
     else:

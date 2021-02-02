@@ -299,6 +299,8 @@ def experiment(variant):
         obs_dim,
         action_dim,
         replace=False,
+        use_batch_length=True,
+        batch_length=50,
     )
     trainer = Plan2ExploreTrainer(
         env=eval_env,
