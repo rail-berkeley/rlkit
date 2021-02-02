@@ -91,32 +91,19 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
                 self.batch_length,
                 endpoint=False,
             ).astype(int)
-            observations = np.concatenate(
-                [
-                    np.expand_dims(
-                        self._observations[indices][i, batch_indices[:, i]], 0
-                    )
-                    for i in range(batch_size)
-                ]
-            )
-            actions = np.concatenate(
-                [
-                    np.expand_dims(self._actions[indices][i, batch_indices[:, i]], 0)
-                    for i in range(batch_size)
-                ]
-            )
-            rewards = np.concatenate(
-                [
-                    np.expand_dims(self._rewards[indices][i, batch_indices[:, i]], 0)
-                    for i in range(batch_size)
-                ]
-            )
-            terminals = np.concatenate(
-                [
-                    np.expand_dims(self._terminals[indices][i, batch_indices[:, i]], 0)
-                    for i in range(batch_size)
-                ]
-            )
+
+            observations = self._observations[indices][
+                np.arange(batch_size), batch_indices
+            ].transpose(1, 0, 2)
+            actions = self._actions[indices][
+                np.arange(batch_size), batch_indices
+            ].transpose(1, 0, 2)
+            rewards = self._rewards[indices][
+                np.arange(batch_size), batch_indices
+            ].transpose(1, 0, 2)
+            terminals = self._terminals[indices][
+                np.arange(batch_size), batch_indices
+            ].transpose(1, 0, 2)
         else:
             indices = np.random.choice(
                 self._size,
