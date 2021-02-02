@@ -240,15 +240,13 @@ def experiment(variant):
     exploration_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     exploration_target_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     variant["trainer_kwargs"]["exploration_target_vf"] = exploration_target_vf

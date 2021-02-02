@@ -118,25 +118,16 @@ def experiment(variant):
     )
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
-        num_hidden_layers = (
-            4  # since the architecture is doubled (discrete and continuous)
-        )
     else:
         actor_model_class = ActorModel
-        num_hidden_layers = 4
     actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * num_hidden_layers,
+        variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,
         continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
-        mean_scale=variant["actor_kwargs"]["mean_scale"],
-        init_std=variant["actor_kwargs"]["init_std"],
         env=eval_envs[0],
-        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
+        **variant["actor_kwargs"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
@@ -158,36 +149,29 @@ def experiment(variant):
         action_dim=action_dim,
         embedding_size=variant["model_kwargs"]["embedding_size"],
         deterministic_state_size=variant["model_kwargs"]["deterministic_state_size"],
-        hidden_size=variant["one_step_ensemble_kwargs"]["hidden_size"],
-        num_layers=variant["one_step_ensemble_kwargs"]["num_layers"],
-        num_models=variant["one_step_ensemble_kwargs"]["num_models"],
-        output_embeddings=variant["one_step_ensemble_kwargs"]["output_embeddings"],
+        stochastic_state_size=variant["model_kwargs"]["stochastic_state_size"],
+        **variant["one_step_ensemble_kwargs"],
     )
 
     exploration_actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * 4,
-        variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        variant["model_kwargs"]["model_hidden_size"],
+        world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,
         continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
         env=eval_envs[0],
-        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
+        **variant["actor_kwargs"],
     )
     exploration_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     exploration_target_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
         output_size=1,
-        input_size=variant["model_kwargs"]["stochastic_state_size"]
-        + variant["model_kwargs"]["deterministic_state_size"],
+        input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     variant["trainer_kwargs"]["exploration_target_vf"] = exploration_target_vf

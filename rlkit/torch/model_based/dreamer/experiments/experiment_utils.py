@@ -24,12 +24,22 @@ def preprocess_variant(variant, debug):
     variant["trainer_kwargs"][
         "imagination_horizon"
     ] = max_path_length  # todo: see if this works well or not
-    num_steps_per_epoch = 1000
+
+    num_train_steps_per_epoch = 200
+    num_expl_steps_per_epoch = 1000
     num_expl_steps_per_train_loop = variant["num_expl_envs"] * (max_path_length + 1)
-    num_train_loops_per_epoch = num_steps_per_epoch // num_expl_steps_per_train_loop
-    num_trains_per_train_loop = num_expl_steps_per_train_loop
-    if num_steps_per_epoch % num_expl_steps_per_train_loop != 0:
+    num_train_loops_per_epoch = num_expl_steps_per_epoch // (
+        variant["num_expl_envs"] * (max_path_length)
+    )
+    if num_expl_steps_per_epoch % num_expl_steps_per_train_loop != 0:
         num_train_loops_per_epoch += 1
+    num_trains_per_train_loop = num_train_steps_per_epoch // num_train_loops_per_epoch
+    # num_steps_per_epoch = 1000
+    # num_expl_steps_per_train_loop = variant["num_expl_envs"] * (max_path_length + 1)
+    # num_train_loops_per_epoch = num_steps_per_epoch // num_expl_steps_per_train_loop
+    # num_trains_per_train_loop = num_expl_steps_per_train_loop
+    # if num_steps_per_epoch % num_expl_steps_per_train_loop != 0:
+    #     num_train_loops_per_epoch += 1
 
     total_batch_size = 2500
     effective_batch_size = total_batch_size // (max_path_length + 1)
