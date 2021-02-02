@@ -41,7 +41,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(1e4),
+        replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
             init_std=0.0,

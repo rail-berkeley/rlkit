@@ -276,7 +276,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             with torch.no_grad():
                 if self.use_pred_discount:  # Last step could be terminal.
                     v = v[:, :-1]
-                new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
+                new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
         feats = []
         actions = []
         log_probs = []
@@ -442,21 +442,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             advantages = imag_returns
         if self.use_advantage_normalization:
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
-        advantages = (
-            torch.cat([advantages[i, :, :] for i in range(advantages.shape[0])])
-            .detach()
-            .squeeze(-1)
-        )
+        advantages = advantages.reshape(-1).detach()
 
-        imag_feat_a = torch.cat(
-            [imag_feat[i, :, :] for i in range(imag_feat.shape[0] - 1)]
-        ).detach()
-        imag_actions = torch.cat(
-            [imag_actions[i, :, :] for i in range(imag_actions.shape[0] - 1)]
-        ).detach()
-        old_imag_log_probs = torch.cat(
-            [old_imag_log_probs[i, :] for i in range(old_imag_log_probs.shape[0] - 1)]
-        ).detach()
+        imag_feat_a = imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
+        imag_actions = imag_actions[:-1].reshape(-1, imag_actions.shape[-1]).detach()
+        old_imag_log_probs = old_imag_log_probs[:-1].reshape(-1).detach()
         assert imag_actions.shape[0] == imag_feat_a.shape[0]
 
         imag_actor_dist = actor(imag_feat_a)
@@ -475,15 +465,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         actor_entropy_loss = -1 * imag_actor_dist.entropy()
 
         dynamics_backprop_loss = -(imag_returns)
-        dynamics_backprop_loss = torch.cat(
-            [
-                dynamics_backprop_loss[i, :, :]
-                for i in range(dynamics_backprop_loss.shape[0])
-            ]
-        ).squeeze(-1)
-        weights = torch.cat(
-            [weights[i, :, :] for i in range(weights.shape[0])]
-        ).squeeze(-1)
+        dynamics_backprop_loss = dynamics_backprop_loss.reshape(-1)
+        weights = weights.reshape(-1)
         assert (
             dynamics_backprop_loss.shape
             == policy_gradient_loss.shape
@@ -600,9 +583,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             _,
         ) = self.world_model(obs, actions)
         # stack obs, rewards and terminals along path dimension
-        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
-        rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
-        terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
+        obs = obs.transpose(1, 0).view(-1, np.prod(self.image_shape))
+        rewards = rewards.transpose(1, 0).view(-1, rewards.shape[-1])
+        terminals = terminals.transpose(1, 0).view(-1, terminals.shape[-1])
 
         (
             world_model_loss,
