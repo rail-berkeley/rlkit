@@ -34,9 +34,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         exploration_vf,
         one_step_ensemble,
         exploration_target_vf,
-        exploration_reward_scale=1.0,
-        train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
-        train_actor_with_intrinsic_and_extrinsic_reward=False,
+        exploration_intrinsic_reward_scale=1.0,
+        exploration_extrinsic_reward_scale=0.0,
+        evaluation_intrinsic_reward_scale=0.0,
+        evaluation_extrinsic_reward_scale=1.0,
         image_goals_path=None,
         one_step_ensemble_pred_prior_from_prior=True,
         log_disagreement=True,
@@ -128,13 +129,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 self.exploration_vf_optimizer,
             ) = optimizers
 
-        self.exploration_reward_scale = exploration_reward_scale
-        self.train_exploration_actor_with_intrinsic_and_extrinsic_reward = (
-            train_exploration_actor_with_intrinsic_and_extrinsic_reward
-        )
-        self.train_actor_with_intrinsic_and_extrinsic_reward = (
-            train_actor_with_intrinsic_and_extrinsic_reward
-        )
+        self.exploration_intrinsic_reward_scale = exploration_intrinsic_reward_scale
+        self.exploration_extrinsic_reward_scale = exploration_extrinsic_reward_scale
+        self.evaluation_intrinsic_reward_scale = evaluation_intrinsic_reward_scale
+        self.evaluation_extrinsic_reward_scale = evaluation_extrinsic_reward_scale
         self.one_step_ensemble_pred_prior_from_prior = (
             one_step_ensemble_pred_prior_from_prior
         )
@@ -161,26 +159,17 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             "feat": self.world_model.get_feat(exploration_imag_states),
         }
         input_state = d[self.one_step_ensemble.inputs]
-        input_state = torch.cat(
-            [input_state[i, :, :] for i in range(input_state.shape[0])]
+        input_state = input_state.reshape(-1, input_state.shape[-1])
+        exploration_imag_actions = exploration_imag_actions.reshape(
+            -1, exploration_imag_actions.shape[-1]
         )
-        exploration_imag_actions = torch.cat(
-            [
-                exploration_imag_actions[i, :, :]
-                for i in range(exploration_imag_actions.shape[0])
-            ]
-        )
-
+        inputs = torch.cat((input_state, exploration_imag_actions), 1)
         for mdl in range(self.one_step_ensemble.num_models):
-            inputs = torch.cat((input_state, exploration_imag_actions), 1)
             pred_embeddings.append(
                 self.one_step_ensemble.forward_ith_model(inputs, mdl).mean.unsqueeze(0)
             )
         pred_embeddings = torch.cat(pred_embeddings)
 
-        assert pred_embeddings.shape[0] == self.one_step_ensemble.num_models
-        assert pred_embeddings.shape[1] == input_state.shape[0]
-        assert len(pred_embeddings.shape) == 3
         # computes std across ensembles, squares it to compute variance and then computes the mean across the vector dim
         reward = (pred_embeddings.std(dim=0)).mean(dim=-1)
         if self.log_disagreement:
@@ -193,7 +182,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             with torch.no_grad():
                 if self.use_pred_discount:
                     v = v[:, :-1]  # avoid imagining forward from terminal states
-                new_state[k] = torch.cat([v[:, i, :] for i in range(v.shape[1])])
+                new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
         if self.image_goals is not None:
             image_goals = ptu.from_numpy(
                 self.image_goals[
@@ -276,10 +265,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         ) = self.world_model(obs, actions)
 
         # stack obs, rewards and terminals along path dimension
-        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
-        rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
-        terminals = torch.cat([terminals[:, i, :] for i in range(terminals.shape[1])])
-        actions = torch.cat([actions[:, i, :] for i in range(actions.shape[1] - 1)])
+        obs = obs.transpose(1, 0).reshape(-1, np.prod(self.image_shape))
+        rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+        terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
+        actions = actions[:, :-1, :].transpose(1, 0).reshape(-1, actions.shape[-1])
         post_vals = {
             "embed": embed,
             "stoch": post["stoch"],
@@ -304,21 +293,18 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         one_step_ensemble_inputs = input_vals[self.one_step_ensemble.inputs]
         one_step_ensemble_targets = target_vals[self.one_step_ensemble.targets]
 
-        one_step_ensemble_inputs = torch.cat(
-            [
-                one_step_ensemble_inputs[:, i, :]
-                for i in range(0, one_step_ensemble_inputs.shape[1] - 1)
-            ]
+        one_step_ensemble_inputs = (
+            one_step_ensemble_inputs[:, :-1, :]
+            .transpose(1, 0)
+            .reshape(-1, one_step_ensemble_inputs.shape[-1])
         )
         one_step_ensemble_inputs = torch.cat(
             (one_step_ensemble_inputs, actions), -1
         ).detach()
-
-        one_step_ensemble_targets = torch.cat(
-            [
-                one_step_ensemble_targets[:, i, :]
-                for i in range(1, one_step_ensemble_targets.shape[1])
-            ]
+        one_step_ensemble_targets = (
+            one_step_ensemble_targets[:, 1:, :]
+            .transpose(1, 0)
+            .reshape(-1, one_step_ensemble_targets.shape[-1])
         ).detach()
 
         (
@@ -383,7 +369,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             )
             if self.image_goals is None:
                 extrinsic_reward = self.world_model.reward(imag_feat)
-
             intrinsic_reward = torch.cat(
                 [
                     intrinsic_reward[i : i + imag_feat.shape[1]]
@@ -397,12 +382,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 ],
                 0,
             )
-            if self.train_actor_with_intrinsic_and_extrinsic_reward:
-                imag_reward = (
-                    intrinsic_reward * self.exploration_reward_scale + extrinsic_reward
-                )
-            else:
-                imag_reward = extrinsic_reward
+            imag_reward = (
+                intrinsic_reward * self.evaluation_intrinsic_reward_scale
+                + extrinsic_reward * self.evaluation_extrinsic_reward_scale
+            )
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
                     discount = self.world_model.get_dist(
@@ -542,8 +525,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 exploration_extrinsic_reward = self.world_model.reward(
                     exploration_imag_feat
                 )
-
-            exploration_reward = torch.cat(
+            exploration_intrinsic_reward = torch.cat(
                 [
                     exploration_intrinsic_reward[i : i + exploration_imag_feat.shape[1]]
                     .unsqueeze(0)
@@ -556,11 +538,10 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 ],
                 0,
             )
-            if self.train_exploration_actor_with_intrinsic_and_extrinsic_reward:
-                exploration_reward = (
-                    exploration_reward * self.exploration_reward_scale
-                    + exploration_extrinsic_reward
-                )
+            exploration_reward = (
+                exploration_intrinsic_reward * self.exploration_intrinsic_reward_scale
+                + exploration_extrinsic_reward * self.exploration_extrinsic_reward_scale
+            )
 
             if self.use_pred_discount:
                 with FreezeParameters(pred_discount_params):
