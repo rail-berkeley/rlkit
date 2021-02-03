@@ -107,7 +107,6 @@ if __name__ == "__main__":
             log_disagreement=True,
             exploration_reward_scale=1.0,
             train_decoder_on_second_output_only=False,
-            use_next_feat_for_computing_reward=False,
             train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
             train_actor_with_intrinsic_and_extrinsic_reward=False,
             detach_rewards=True,

@@ -97,7 +97,7 @@ def preprocess_variant(variant, debug):
 
     if variant["reward_type"] == "intrinsic":
         variant["algorithm"] = variant["algorithm"] + "Intrinsic"
-        variant["trainer_kwargs"]["exploration_reward_scale"] = 10000
+        variant["trainer_kwargs"]["exploration_reward_scale"] = 1.0
         variant["trainer_kwargs"]["detach_rewards"] = True
 
         variant["trainer_kwargs"][
