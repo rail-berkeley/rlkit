@@ -736,6 +736,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
+            eval_statistics["Posterior State Std"] = post["std"].mean().item()
+            eval_statistics["Prior State Std"] = prior["std"].mean().item()
 
             eval_statistics["Actor Loss"] = actor_loss
             eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss

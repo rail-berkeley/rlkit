@@ -782,6 +782,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Transition Loss"] = transition_loss.item()
             eval_statistics["Entropy Loss"] = entropy_loss.item()
+            eval_statistics["Posterior State Std"] = post["std"].mean().item()
+            eval_statistics["Prior State Std"] = prior["std"].mean().item()
             if self.use_pred_discount:
                 eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
