@@ -34,7 +34,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         exploration_vf,
         one_step_ensemble,
         exploration_target_vf,
-        exploration_reward_scale=10000,
+        exploration_reward_scale=1.0,
         train_exploration_actor_with_intrinsic_and_extrinsic_reward=False,
         train_actor_with_intrinsic_and_extrinsic_reward=False,
         image_goals_path=None,
