@@ -54,7 +54,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 self.max_path_length,
                 self.min_num_steps_before_training,
                 runtime_policy=self.pretrain_policy,
-                discard_incomplete_paths=False,
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
@@ -66,7 +65,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.eval_data_collector.collect_new_paths(
                 self.max_path_length,
                 self.num_eval_steps_per_epoch,
-                discard_incomplete_paths=True,
             )
             gt.stamp("evaluation sampling")
 
@@ -85,7 +83,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 new_expl_paths = self.expl_data_collector.collect_new_paths(
                     self.max_path_length,
                     self.num_expl_steps_per_train_loop,
-                    discard_incomplete_paths=False,
                 )
                 gt.stamp("exploration sampling", unique=False)
 
