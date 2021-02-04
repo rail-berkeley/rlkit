@@ -375,8 +375,8 @@ class SplitDist:
         return self._dist1.entropy() + self._dist2.entropy()
 
     def log_prob(self, actions):
-        return self._dist1.log_prob(actions[:, :13]) + self._dist2.log_prob(
-            actions[:, 13:]
+        return self._dist1.log_prob(actions[:, :12]) + self._dist2.log_prob(
+            actions[:, 12:]
         )
 
 

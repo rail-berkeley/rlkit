@@ -13,7 +13,6 @@ def experiment(variant):
         KitchenKettleV0,
         KitchenLightSwitchV0,
         KitchenMicrowaveV0,
-        KitchenMultitaskAllV0,
         KitchenSlideCabinetV0,
         KitchenTopLeftBurnerV0,
     )
@@ -64,8 +63,6 @@ def experiment(variant):
         env_class_ = KitchenBottomLeftBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
-    elif env_class == "multitask_all":
-        env_class_ = KitchenMultitaskAllV0
     else:
         raise EnvironmentError("invalid env provided")
 

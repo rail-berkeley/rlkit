@@ -16,18 +16,18 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
-    parser.add_argument("--num_expl_envs", type=int, default=4)
     args = parser.parse_args()
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
             num_eval_steps_per_epoch=10,
-            num_trains_per_train_loop=10,
             num_expl_steps_per_train_loop=50,
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
+            num_trains_per_train_loop=10,
             batch_size=30,
+            max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -36,6 +36,11 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
+            max_path_length=5,
+            batch_size=416,
+            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=33,
+            num_trains_per_train_loop=6,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -47,7 +52,6 @@ if __name__ == "__main__":
             dense=False,
             image_obs=True,
             fixed_schema=False,
-            multitask=False,
             action_scale=1.4,
             use_combined_action_space=True,
             proprioception=False,
@@ -93,13 +97,13 @@ if __name__ == "__main__":
             reward_scale=1.0,
             forward_kl=False,
             free_nats=1.0,
+            pred_discount_loss_scale=10.0,
             kl_loss_scale=0.0,
             transition_loss_scale=0.8,
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=3e-4,
             reward_loss_scale=2.0,
-            imagination_horizon=15,
             use_pred_discount=False,
             policy_gradient_loss_scale=0.0,
             actor_entropy_loss_schedule="1e-4",
@@ -112,13 +116,13 @@ if __name__ == "__main__":
             train_decoder_on_second_output_only=False,
             detach_rewards=True,
             ensemble_training_states="post_to_next_post",
+            imagination_horizon=5,
         ),
-        num_expl_envs=args.num_expl_envs,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.0,
-        path_length_specific_discount=True,
-        eval_with_exploration_actor=False,
         reward_type="intrinsic",
+        eval_with_exploration_actor=False,
     )
 
     search_space = {
@@ -129,6 +133,13 @@ if __name__ == "__main__":
             "kettle",
             # "hinge_cabinet",
             # "light_switch",
+        ],
+        "trainer_kwargs.use_pred_discount": [True, False],
+        "trainer_kawrgs.imagination_horizon": [5, 6],
+        "trainer_kwargs.discount": [0.99, 0.8],
+        "expl_amount": [
+            0,
+            0.3,
         ],
         # "expl_amount": [0.3],
         # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
