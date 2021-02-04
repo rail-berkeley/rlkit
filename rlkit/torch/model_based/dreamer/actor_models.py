@@ -1,6 +1,6 @@
 import torch
 import torch.nn.functional as F
-from torch.distributions import Independent, Normal, Transform, TransformedDistribution
+from torch.distributions import Normal, Transform, TransformedDistribution
 from torch.distributions.one_hot_categorical import OneHotCategorical
 
 import rlkit.torch.pytorch_util as ptu
@@ -78,6 +78,8 @@ class ActorModel(Mlp):
 
                 dist2 = Normal(continuous_action_mean, continuous_action_std)
                 dist2 = TransformedDistribution(dist2, TanhBijector())
+                dist2 = Independent(dist2, 1)
+                dist2 = SampleDist(dist2)
             elif self._dist == "tanh_normal":
                 continuous_action_mean = torch.tanh(continuous_action_mean)
                 continuous_action_std = (
@@ -85,12 +87,16 @@ class ActorModel(Mlp):
                 )
                 dist2 = Normal(continuous_action_mean, continuous_action_std)
                 dist2 = TransformedDistribution(dist2, TanhBijector())
+                dist2 = Independent(dist2, 1)
+                dist2 = SampleDist(dist2)
             elif self._dist == "tanh_normal_5":
                 continuous_action_mean = 5 * torch.tanh(continuous_action_mean / 5)
                 continuous_action_std = F.softplus(continuous_action_std + 5) + 5
 
                 dist2 = Normal(continuous_action_mean, continuous_action_std)
                 dist2 = TransformedDistribution(dist2, TanhBijector())
+                dist2 = Independent(dist2, 1)
+                dist2 = SampleDist(dist2)
             elif self._dist == "trunc_normal":
                 continuous_action_mean = torch.tanh(continuous_action_mean)
                 continuous_action_std = (
@@ -99,8 +105,7 @@ class ActorModel(Mlp):
                 dist2 = SafeTruncatedNormal(
                     continuous_action_mean, continuous_action_std, -1, 1
                 )
-            dist2 = Independent(dist2, 1)
-            dist2 = SampleDist(dist2)
+                dist2 = Independent(dist2, 1)
             dist = SplitDist(dist1, dist2)
         else:
             action_mean, action_std = last.split(self.continuous_action_dim, -1)
@@ -112,24 +117,28 @@ class ActorModel(Mlp):
 
                 dist = Normal(action_mean, action_std)
                 dist = TransformedDistribution(dist, TanhBijector())
+                dist = Independent(dist, 1)
+                dist = SampleDist(dist)
             elif self._dist == "tanh_normal":
                 action_mean = torch.tanh(action_mean)
                 action_std = F.softplus(action_std + self._init_std) + self._min_std
                 dist = Normal(action_mean, action_std)
                 dist = TransformedDistribution(dist, TanhBijector())
+                dist = Independent(dist, 1)
+                dist = SampleDist(dist)
             elif self._dist == "tanh_normal_5":
                 action_mean = 5 * torch.tanh(action_mean / 5)
                 action_std = F.softplus(action_std + 5) + 5
 
                 dist = Normal(action_mean, action_std)
                 dist = TransformedDistribution(dist, TanhBijector())
+                dist = Independent(dist, 1)
+                dist = SampleDist(dist)
             elif self._dist == "trunc_normal":
                 action_mean = torch.tanh(action_mean)
                 action_std = 2 * torch.sigmoid(action_std / 2) + self._min_std
                 dist = SafeTruncatedNormal(action_mean, action_std, -1, 1)
-
-            dist = torch.distributions.Independent(dist, 1)
-            dist = SampleDist(dist)
+                dist = Independent(dist, 1)
         return dist
 
     def compute_exploration_action(self, action, expl_amount):
@@ -490,16 +499,12 @@ class SafeTruncatedNormal(TruncatedNormal):
         self._clip = clip
         self._mult = mult
 
-    def sample(self, *args, **kwargs):
-        event = super().sample(*args, **kwargs)
-        clipped = torch.max(torch.min(event, self.b - self._clip), self.a + self._clip)
-        event = event - event.detach() + clipped.detach()
-        event *= self._mult
-        return event
-
     def rsample(self, *args, **kwargs):
         event = super().rsample(*args, **kwargs)
-        clipped = torch.max(torch.min(event, self.b - self._clip), self.a + self._clip)
+        clipped = torch.max(
+            torch.min(event, ptu.ones_like(event) - self._clip),
+            -1 * ptu.ones_like(event) + self._clip,
+        )
         event = event - event.detach() + clipped.detach()
         event *= self._mult
         return event
@@ -518,3 +523,8 @@ class SafeTruncatedNormal(TruncatedNormal):
         )
         new._validate_args = self._validate_args
         return new
+
+
+class Independent(torch.distributions.Independent):
+    def mode(self):
+        return self.base_dist.mode()

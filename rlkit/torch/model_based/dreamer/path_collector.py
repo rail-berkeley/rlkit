@@ -39,7 +39,6 @@ class VecMdpPathCollector(PathCollector):
         self,
         max_path_length,
         num_steps,
-        discard_incomplete_paths,
         runtime_policy=None,
     ):
         paths = []

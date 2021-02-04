@@ -78,7 +78,6 @@ class TruncatedStandardNormal(Distribution):
     def variance(self):
         return self._variance
 
-    @property
     def entropy(self):
         return self._entropy
 
@@ -184,6 +183,13 @@ class TruncatedNormal(TruncatedStandardNormal):
             super(TruncatedNormal, self).log_prob(self._to_std_rv(value))
             - self._log_scale
         )
+
+    def mode(self):
+        mode = torch.max(
+            torch.min(self.mean, ptu.ones_like(self.mean)),
+            -1 * ptu.ones_like(self.mean),
+        )
+        return mode
 
     def expand(self, batch_shape, _instance=None):
         new = self._get_checked_instance(TruncatedNormal, _instance)
