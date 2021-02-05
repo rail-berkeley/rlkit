@@ -583,9 +583,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             _,
         ) = self.world_model(obs, actions)
         # stack obs, rewards and terminals along path dimension
-        obs = obs.transpose(1, 0).view(-1, np.prod(self.image_shape))
-        rewards = rewards.transpose(1, 0).view(-1, rewards.shape[-1])
-        terminals = terminals.transpose(1, 0).view(-1, terminals.shape[-1])
+        obs = obs.transpose(1, 0).reshape(-1, np.prod(self.image_shape))
+        rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+        terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
 
         (
             world_model_loss,

@@ -36,7 +36,7 @@ def preprocess_variant(variant, debug):
             variant["trainer_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"]
             variant["trainer_kwargs"]["mcts_kwargs"]["evaluation"] = False
 
-    if variant["reward_type"] == "intrinsic":
+    if variant["algorithm"] == "Plan2Explore" and variant["reward_type"] == "intrinsic":
         variant["algorithm"] = variant["algorithm"] + "Intrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 0.0
@@ -61,7 +61,10 @@ def preprocess_variant(variant, debug):
                     "exploration_actor_extrinsic_reward_scale"
                 ] = 0.0
                 variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
-    elif variant["reward_type"] == "intrinsic+extrinsic":
+    elif (
+        variant["algorithm"] == "Plan2Explore"
+        and variant["reward_type"] == "intrinsic+extrinsic"
+    ):
         variant["algorithm"] = variant["algorithm"] + "IntrinsicExtrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 1.0
@@ -83,7 +86,9 @@ def preprocess_variant(variant, debug):
                     "exploration_actor_extrinsic_reward_scale"
                 ] = 1.0
                 variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 1.0
-    else:
+    elif (
+        variant["algorithm"] == "Plan2Explore" and variant["reward_type"] == "extrinsic"
+    ):
         variant["algorithm"] = variant["algorithm"] + "Extrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 0.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 1.0

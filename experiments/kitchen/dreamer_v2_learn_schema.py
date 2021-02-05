@@ -44,7 +44,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="dreamer_v2",
         version="normal",
-        replay_buffer_size=int(1e6),
+        replay_buffer_size=int(1e5),
         algorithm_kwargs=algorithm_kwargs,
         env_class="hinge_cabinet",
         env_kwargs=dict(
@@ -117,9 +117,9 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "trainer_kwargs.use_pred_discount": [True, False],
-        "trainer_kawrgs.imagination_horizon": [5, 6],
+        "trainer_kwargs.imagination_horizon": [5, 6],
         "trainer_kwargs.discount": [0.99, 0.8],
-        "trainer_kwargs.actor_entropy_loss_scale": ["linear(3e-3,3e-4,5e4)", "1e-4"],
+        "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
         "trainer_kwargs.policy_gradient_loss_scale": [0.0, 0.9, 1.0],
         "actor_kwargs.dist": ["trunc_normal", "tanh_normal_5"],
         "expl_amount": [

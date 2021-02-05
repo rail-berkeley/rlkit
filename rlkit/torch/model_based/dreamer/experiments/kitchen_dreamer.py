@@ -1,15 +1,14 @@
 def experiment(variant):
     from rlkit.core import logger
 
-    if variant["algorithm_kwargs"]["use_wandb"]:
-        import wandb
-
-        with wandb.init(
-            project=variant["exp_prefix"], name=variant["exp_name"], config=variant
-        ):
-            run_experiment(variant)
-    else:
-        run_experiment(variant)
+    # if variant["algorithm_kwargs"]["use_wandb"]:
+    #     import wandb
+    #     with wandb.init(
+    #         project=variant["exp_prefix"], name=variant["exp_name"], config=variant
+    #     ):
+    #         run_experiment(variant)
+    # else:
+    run_experiment(variant)
 
 
 def run_experiment(variant):
@@ -23,7 +22,6 @@ def run_experiment(variant):
         KitchenKettleV0,
         KitchenLightSwitchV0,
         KitchenMicrowaveV0,
-        KitchenMultitaskAllV0,
         KitchenSlideCabinetV0,
         KitchenTopLeftBurnerV0,
     )
@@ -71,8 +69,6 @@ def run_experiment(variant):
         env_class_ = KitchenTopLeftBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
-    elif env_class == "multitask_all":
-        env_class_ = KitchenMultitaskAllV0
     else:
         raise EnvironmentError("invalid env provided")
 
@@ -123,27 +119,18 @@ def run_experiment(variant):
     else:
         continuous_action_dim = max_arg_len + num_primitives
 
-    if variant.get("algorithm", "dreamer") == "dreamer_v2":
-        trainer_class = DreamerV2Trainer
-    else:
-        trainer_class = DreamerTrainer
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
     else:
         actor_model_class = ActorModel
     actor = actor_model_class(
-        [variant["model_kwargs"]["model_hidden_size"]] * 4,
+        variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=num_primitives,
         continuous_action_dim=continuous_action_dim,
-        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-        and (not variant["env_kwargs"]["fixed_schema"]),
-        use_tanh_normal=variant["actor_kwargs"]["use_tanh_normal"],
-        mean_scale=variant["actor_kwargs"]["mean_scale"],
-        init_std=variant["actor_kwargs"]["init_std"],
         env=eval_envs[0],
-        use_per_primitive_actor=variant["actor_kwargs"]["use_per_primitive_actor"],
+        **variant["actor_kwargs"],
     )
     vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
@@ -230,6 +217,10 @@ def run_experiment(variant):
         action_dim,
         replace=False,
     )
+    if variant.get("algorithm", "dreamer") == "dreamer_v2":
+        trainer_class = DreamerV2Trainer
+    else:
+        trainer_class = DreamerTrainer
     trainer = trainer_class(
         env=eval_env,
         world_model=world_model,
