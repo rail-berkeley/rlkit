@@ -30,7 +30,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -63,7 +63,7 @@ if __name__ == "__main__":
             init_std=0.0,
             num_layers=4,
             min_std=0.1,
-            dist="tanh_normal_5",
+            dist="tanh_normal_dreamer_v1",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -96,15 +96,16 @@ if __name__ == "__main__":
             vf_lr=8e-5,
             world_model_lr=3e-4,
             reward_loss_scale=2.0,
-            use_pred_discount=False,
-            policy_gradient_loss_scale=0.0,
+            use_pred_discount=True,
+            policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
             detach_rewards=False,
+            imagination_horizon=5,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
-        expl_amount=0.0,
+        expl_amount=0.3,
     )
 
     search_space = {
@@ -112,20 +113,13 @@ if __name__ == "__main__":
             "microwave",
             "kettle",
             "slide_cabinet",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
         "trainer_kwargs.use_pred_discount": [True, False],
-        "trainer_kwargs.imagination_horizon": [5, 6],
         "trainer_kwargs.discount": [0.99, 0.8],
-        "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
-        "trainer_kwargs.policy_gradient_loss_scale": [0.0, 0.9, 1.0],
-        "actor_kwargs.dist": ["trunc_normal", "tanh_normal_5"],
-        "expl_amount": [
-            0,
-            0.3,
-        ],
+        # "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
