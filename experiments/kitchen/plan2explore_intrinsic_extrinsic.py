@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -46,7 +46,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="Plan2Explore",
         version="normal",
-        replay_buffer_size=int(1e5),
+        replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
             dense=False,
@@ -58,6 +58,7 @@ if __name__ == "__main__":
             wrist_cam_concat_with_fixed_view=False,
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
+            use_workspace_limits=False,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -134,8 +135,8 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "trainer_kwargs.use_pred_discount": [True, False],
         "trainer_kwargs.discount": [0.99, 0.8],
+        "env_kwargs.use_workspace_limits": [True, False],
         # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
         # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
         # "trainer_kwargs.ensemble_training_states": ['post_to_next_post', 'post_to_next_prior', 'prior_to_next_post', 'prior_to_next_prior'],
