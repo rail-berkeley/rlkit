@@ -37,10 +37,10 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=416,
+            batch_size=417,  # 417*6 = 2502
             num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=33,
-            num_trains_per_train_loop=6,
+            num_train_loops_per_epoch=40,  # 1000//(5*5)
+            num_trains_per_train_loop=5,  # 200//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -110,10 +110,6 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
             log_disagreement=True,
-            exploration_intrinsic_reward_scale=1.0,
-            exploration_extrinsic_reward_scale=0.0,
-            evaluation_intrinsic_reward_scale=0.0,
-            evaluation_extrinsic_reward_scale=1.0,
             train_decoder_on_second_output_only=False,
             detach_rewards=True,
             ensemble_training_states="post_to_next_post",
@@ -121,8 +117,8 @@ if __name__ == "__main__":
         ),
         num_expl_envs=5,
         num_eval_envs=1,
-        expl_amount=0.0,
-        reward_type="intrinsic",
+        expl_amount=0.3,
+        reward_type="intrinsic+extrinsic",
         eval_with_exploration_actor=False,
     )
 

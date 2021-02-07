@@ -35,10 +35,10 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=416,
+            batch_size=417,  # 417*6 = 2502
             num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=33,
-            num_trains_per_train_loop=6,
+            num_train_loops_per_epoch=40,  # 1000//(5*5)
+            num_trains_per_train_loop=5,  # 200//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -137,7 +137,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",  # saving doesn't seem to work with wandb atm
+                snapshot_mode="none",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
