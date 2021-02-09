@@ -140,7 +140,6 @@ def experiment(variant):
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
-    variant["trainer_kwargs"]["target_vf"] = target_vf
 
     one_step_ensemble = OneStepEnsembleModel(
         action_dim=action_dim,
@@ -173,7 +172,6 @@ def experiment(variant):
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
-    variant["trainer_kwargs"]["exploration_target_vf"] = exploration_target_vf
 
     if variant.get("use_mcts_policy", False):
         expl_policy = HybridAdvancedMCTSPolicy(
@@ -211,7 +209,7 @@ def experiment(variant):
             discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
             and (not variant["env_kwargs"]["fixed_schema"]),
         )
-        if variant["eval_with_exploration_actor"]:
+        if variant.get("eval_with_exploration_actor", False):
             eval_actor = exploration_actor
         else:
             eval_actor = actor
@@ -255,14 +253,16 @@ def experiment(variant):
         replace=False,
     )
     trainer = Plan2ExploreTrainer(
-        env=eval_env,
-        world_model=world_model,
-        actor=actor,
-        vf=vf,
-        image_shape=eval_envs[0].image_shape,
-        one_step_ensemble=one_step_ensemble,
-        exploration_actor=exploration_actor,
-        exploration_vf=exploration_vf,
+        eval_env,
+        actor,
+        vf,
+        target_vf,
+        world_model,
+        eval_envs[0].image_shape,
+        exploration_actor,
+        exploration_vf,
+        exploration_target_vf,
+        one_step_ensemble,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(

@@ -29,23 +29,32 @@ Plan2ExploreLosses = namedtuple(
 class Plan2ExploreTrainer(DreamerV2Trainer):
     def __init__(
         self,
-        *args,
+        env,
+        actor,
+        vf,
+        target_vf,
+        world_model,
+        image_shape,
         exploration_actor,
         exploration_vf,
-        one_step_ensemble,
         exploration_target_vf,
+        one_step_ensemble,
         exploration_intrinsic_reward_scale=1.0,
         exploration_extrinsic_reward_scale=0.0,
         evaluation_intrinsic_reward_scale=0.0,
         evaluation_extrinsic_reward_scale=1.0,
         image_goals_path=None,
-        one_step_ensemble_pred_prior_from_prior=True,
         log_disagreement=True,
         ensemble_training_states="post_to_next_post",
         **kwargs,
     ):
         super(Plan2ExploreTrainer, self).__init__(
-            *args,
+            env,
+            actor,
+            vf,
+            target_vf,
+            world_model,
+            image_shape,
             initialize_amp=False,
             **kwargs,
         )
@@ -133,9 +142,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         self.exploration_extrinsic_reward_scale = exploration_extrinsic_reward_scale
         self.evaluation_intrinsic_reward_scale = evaluation_intrinsic_reward_scale
         self.evaluation_extrinsic_reward_scale = evaluation_extrinsic_reward_scale
-        self.one_step_ensemble_pred_prior_from_prior = (
-            one_step_ensemble_pred_prior_from_prior
-        )
         self.log_disagreement = log_disagreement
         self.ensemble_training_states = ensemble_training_states
 
@@ -219,7 +225,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 action = action_dist.rsample()
                 log_prob = action_dist.log_prob(action)
             new_state = self.world_model.action_step(new_state, action)
-            new_feat = self.world_model.get_feat(new_state)
 
             feats.append(feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
@@ -351,12 +356,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             self.one_step_ensemble,
             self.one_step_ensemble_optimizer,
             ensemble_loss,
-            3,
+            1,
             self.world_model_gradient_clip,
         )
 
         """
-        Actor Loss
+        Actor Value Loss
         """
         world_model_params = list(self.world_model.parameters())
         vf_params = list(self.vf.parameters())
@@ -366,68 +371,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         exploration_target_vf_params = list(self.exploration_target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
 
-        with FreezeParameters(world_model_params):
-            if self.image_goals is not None:
-                (
-                    imag_feat,
-                    imag_actions,
-                    imag_log_probs,
-                    imag_states,
-                    extrinsic_reward,
-                ) = self.imagine_ahead(post, actor=self.actor)
-            else:
-                (
-                    imag_feat,
-                    imag_actions,
-                    imag_log_probs,
-                    imag_states,
-                ) = self.imagine_ahead(post, actor=self.actor)
-        with FreezeParameters(
-            world_model_params + vf_params + one_step_ensemble_params + target_vf_params
-        ):
-            intrinsic_reward = self.compute_exploration_reward(
-                imag_states, imag_actions
-            )
-            if self.image_goals is None:
-                extrinsic_reward = self.world_model.reward(imag_feat)
-            intrinsic_reward = torch.cat(
-                [
-                    intrinsic_reward[i : i + imag_feat.shape[1]]
-                    .unsqueeze(0)
-                    .unsqueeze(2)
-                    for i in range(
-                        0,
-                        intrinsic_reward.shape[0],
-                        imag_feat.shape[1],
-                    )
-                ],
-                0,
-            )
-            imag_reward = (
-                intrinsic_reward * self.evaluation_intrinsic_reward_scale
-                + extrinsic_reward * self.evaluation_extrinsic_reward_scale
-            )
-            if self.use_pred_discount:
-                with FreezeParameters(pred_discount_params):
-                    discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(imag_feat),
-                        std=None,
-                        normal=False,
-                    ).mean
-            else:
-                discount = self.discount * torch.ones_like(imag_reward)
-            imag_target_value = self.target_vf(imag_feat)
-            imag_value = self.vf(imag_feat)
-        imag_returns = lambda_return(
-            imag_reward[:-1],
-            imag_target_value[:-1],
-            discount[:-1],
-            bootstrap=imag_target_value[-1],
-            lambda_=self.lam,
-        )
-        weights = torch.cumprod(
-            torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
-        ).detach()[:-1]
         (
             actor_loss,
             dynamics_backprop_loss,
@@ -435,144 +378,160 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actor_entropy_loss,
             actor_entropy_loss_scale,
             log_probs,
-        ) = (0, 0, 0, 0, 0, 0)
-        for _ in range(self.num_actor_value_updates):
-            (
-                actor_loss_,
-                dynamics_backprop_loss_,
-                policy_gradient_loss_,
-                actor_entropy_loss_,
-                actor_entropy_loss_scale_,
-                log_probs_,
-            ) = self.actor_loss(
-                imag_returns,
-                imag_value,
-                imag_feat,
-                imag_actions,
-                weights,
-                imag_log_probs,
-                self.actor,
+            vf_loss,
+            imag_values_mean,
+        ) = (0, 0, 0, 0, 0, 0, 0, 0)
+        for _ in range(self.num_imagination_iterations):
+            with FreezeParameters(
+                world_model_params + one_step_ensemble_params + pred_discount_params
+            ):
+                if self.image_goals is not None:
+                    (
+                        imag_feat,
+                        imag_actions,
+                        imag_log_probs,
+                        imag_states,
+                        extrinsic_reward,
+                    ) = self.imagine_ahead(post, actor=self.actor)
+                else:
+                    (
+                        imag_feat,
+                        imag_actions,
+                        imag_log_probs,
+                        imag_states,
+                    ) = self.imagine_ahead(post, actor=self.actor)
+                intrinsic_reward = self.compute_exploration_reward(
+                    imag_states, imag_actions
+                )
+                if self.image_goals is None:
+                    extrinsic_reward = self.world_model.reward(imag_feat)
+                intrinsic_reward = torch.cat(
+                    [
+                        intrinsic_reward[i : i + imag_feat.shape[1]]
+                        .unsqueeze(0)
+                        .unsqueeze(2)
+                        for i in range(
+                            0,
+                            intrinsic_reward.shape[0],
+                            imag_feat.shape[1],
+                        )
+                    ],
+                    0,
+                )
+                imag_reward = (
+                    intrinsic_reward * self.evaluation_intrinsic_reward_scale
+                    + extrinsic_reward * self.evaluation_extrinsic_reward_scale
+                )
+                if self.use_pred_discount:
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+                else:
+                    discount = self.discount * torch.ones_like(imag_reward)
+            with FreezeParameters(vf_params):
+                old_imag_value = self.vf(imag_feat).detach()
+            for _ in range(self.num_actor_value_updates):
+                with FreezeParameters(vf_params + target_vf_params):
+                    imag_target_value = self.target_vf(imag_feat)
+                    imag_value = self.vf(imag_feat)
+                imag_returns = lambda_return(
+                    imag_reward[:-1],
+                    imag_target_value[:-1],
+                    discount[:-1],
+                    bootstrap=imag_target_value[-1],
+                    lambda_=self.lam,
+                )
+                weights = torch.cumprod(
+                    torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
+                ).detach()[:-1]
+
+                (
+                    actor_loss_,
+                    dynamics_backprop_loss_,
+                    policy_gradient_loss_,
+                    actor_entropy_loss_,
+                    actor_entropy_loss_scale_,
+                    log_probs_,
+                ) = self.actor_loss(
+                    imag_returns,
+                    imag_value,
+                    imag_feat,
+                    imag_actions,
+                    weights,
+                    imag_log_probs,
+                )
+
+                with torch.no_grad():
+                    imag_feat_v = imag_feat.detach()
+                    target = imag_returns.detach()
+                    weights = weights.detach()
+
+                vf_loss_, imag_values_mean_ = self.value_loss(
+                    imag_feat_v,
+                    weights,
+                    target,
+                    old_imag_value,
+                    vf=self.vf,
+                )
+
+                if self.use_actor_value_optimizer:
+                    self.update_network(
+                        [self.actor, self.vf],
+                        self.actor_value_optimizer,
+                        actor_loss_ + vf_loss_,
+                        2,
+                        self.actor_gradient_clip,
+                    )
+                else:
+                    self.update_network(
+                        self.actor,
+                        self.actor_optimizer,
+                        actor_loss_,
+                        2,
+                        self.actor_gradient_clip,
+                    )
+
+                    self.update_network(
+                        self.vf,
+                        self.vf_optimizer,
+                        vf_loss_,
+                        3,
+                        self.value_gradient_clip,
+                    )
+                actor_loss += actor_loss_.item()
+                dynamics_backprop_loss += dynamics_backprop_loss_.item()
+                policy_gradient_loss += policy_gradient_loss_.item()
+                actor_entropy_loss += actor_entropy_loss_.item()
+                actor_entropy_loss_scale += actor_entropy_loss_scale_
+                log_probs += log_probs_.item()
+                vf_loss += vf_loss_.item()
+                imag_values_mean += imag_values_mean_.item()
+
+        if self.num_imagination_iterations > 0:
+            actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            dynamics_backprop_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
             )
-            self.update_network(
-                self.actor,
-                self.actor_optimizer,
-                actor_loss_,
-                1,
-                self.actor_gradient_clip,
+            policy_gradient_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
             )
-            actor_loss += actor_loss_.item()
-            dynamics_backprop_loss += dynamics_backprop_loss_.item()
-            policy_gradient_loss += policy_gradient_loss_.item()
-            actor_entropy_loss += actor_entropy_loss_.item()
-            actor_entropy_loss_scale += actor_entropy_loss_scale_
-            log_probs += log_probs_.item()
-
-        actor_loss /= self.num_actor_value_updates
-        dynamics_backprop_loss /= self.num_actor_value_updates
-        policy_gradient_loss /= self.num_actor_value_updates
-        actor_entropy_loss /= self.num_actor_value_updates
-        actor_entropy_loss_scale /= self.num_actor_value_updates
-        log_probs /= self.num_actor_value_updates
-
-        """
-        Value Loss
-        """
-        with torch.no_grad():
-            imag_feat_v = imag_feat.detach()
-            target = imag_returns.detach()
-            weights = weights.detach()
-
-        vf_loss, imag_value_mean = self.value_loss(
-            imag_feat_v, weights, target, vf=self.vf
-        )
-
-        self.update_network(
-            self.vf, self.vf_optimizer, vf_loss, 2, self.value_gradient_clip
-        )
+            actor_entropy_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            actor_entropy_loss_scale /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
+            vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            imag_values_mean /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
 
         """
         Exploration Actor Loss
         """
-        with FreezeParameters(world_model_params):
-            if self.image_goals is not None:
-                (
-                    exploration_imag_feat,
-                    exploration_imag_actions,
-                    exploration_imag_log_probs,
-                    exploration_imag_states,
-                    exploration_extrinsic_reward,
-                ) = self.imagine_ahead(
-                    post,
-                    actor=self.exploration_actor,
-                )
-            else:
-                (
-                    exploration_imag_feat,
-                    exploration_imag_actions,
-                    exploration_imag_log_probs,
-                    exploration_imag_states,
-                ) = self.imagine_ahead(
-                    post,
-                    actor=self.exploration_actor,
-                )
-        with FreezeParameters(
-            world_model_params
-            + exploration_vf_params
-            + one_step_ensemble_params
-            + exploration_target_vf_params
-        ):
-            exploration_intrinsic_reward = self.compute_exploration_reward(
-                exploration_imag_states, exploration_imag_actions
-            )
-            if self.image_goals is None:
-                exploration_extrinsic_reward = self.world_model.reward(
-                    exploration_imag_feat
-                )
-            exploration_intrinsic_reward = torch.cat(
-                [
-                    exploration_intrinsic_reward[i : i + exploration_imag_feat.shape[1]]
-                    .unsqueeze(0)
-                    .unsqueeze(2)
-                    for i in range(
-                        0,
-                        exploration_intrinsic_reward.shape[0],
-                        exploration_imag_feat.shape[1],
-                    )
-                ],
-                0,
-            )
-            exploration_reward = (
-                exploration_intrinsic_reward * self.exploration_intrinsic_reward_scale
-                + exploration_extrinsic_reward * self.exploration_extrinsic_reward_scale
-            )
-
-            if self.use_pred_discount:
-                with FreezeParameters(pred_discount_params):
-                    exploration_discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(exploration_imag_feat),
-                        std=None,
-                        normal=False,
-                    ).mean
-            else:
-                exploration_discount = self.discount * torch.ones_like(imag_reward)
-            exploration_imag_target_value = self.exploration_target_vf(
-                exploration_imag_feat
-            )
-            exploration_imag_value = self.exploration_vf(exploration_imag_feat)
-        exploration_imag_returns = lambda_return(
-            exploration_reward[:-1],
-            exploration_imag_target_value[:-1],
-            exploration_discount[:-1],
-            bootstrap=exploration_imag_target_value[-1],
-            lambda_=self.lam,
-        )
-        exploration_weights = torch.cumprod(
-            torch.cat(
-                [torch.ones_like(exploration_discount[:1]), exploration_discount[:-1]],
-                0,
-            ),
-            0,
-        ).detach()[:-1]
         (
             exploration_actor_loss,
             exploration_dynamics_backprop_loss,
@@ -580,70 +539,180 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             exploration_actor_entropy_loss,
             exploration_actor_entropy_loss_scale,
             exploration_log_probs,
-        ) = (0, 0, 0, 0, 0, 0)
-        for _ in range(self.num_actor_value_updates):
-            (
-                exploration_actor_loss_,
-                exploration_dynamics_backprop_loss_,
-                exploration_policy_gradient_loss_,
-                exploration_actor_entropy_loss_,
-                exploration_actor_entropy_loss_scale_,
-                exploration_log_probs_,
-            ) = self.actor_loss(
-                exploration_imag_returns,
-                exploration_imag_value,
-                exploration_imag_feat,
-                exploration_imag_actions,
-                exploration_weights,
-                exploration_imag_log_probs,
-                self.exploration_actor,
-            )
-            self.update_network(
-                self.exploration_actor,
-                self.exploration_actor_optimizer,
-                exploration_actor_loss_,
-                4,
-                self.actor_gradient_clip,
-            )
-            exploration_actor_loss += exploration_actor_loss_.item()
-            exploration_dynamics_backprop_loss += (
-                exploration_dynamics_backprop_loss_.item()
-            )
-            exploration_policy_gradient_loss += exploration_policy_gradient_loss_.item()
-            exploration_actor_entropy_loss += exploration_actor_entropy_loss_.item()
-            exploration_actor_entropy_loss_scale += (
-                exploration_actor_entropy_loss_scale_
-            )
-            exploration_log_probs += exploration_log_probs_.item()
-
-        exploration_actor_loss /= self.num_actor_value_updates
-        exploration_dynamics_backprop_loss /= self.num_actor_value_updates
-        exploration_policy_gradient_loss /= self.num_actor_value_updates
-        exploration_actor_entropy_loss /= self.num_actor_value_updates
-        exploration_actor_entropy_loss_scale /= self.num_actor_value_updates
-        exploration_log_probs /= self.num_actor_value_updates
-        """
-        Exploration Value Loss
-        """
-        with torch.no_grad():
-            exploration_imag_feat_v = exploration_imag_feat.detach()
-            exploration_value_target = exploration_imag_returns.detach()
-            exploration_weights = exploration_weights.detach()
-
-        exploration_vf_loss, exploration_imag_value_mean = self.value_loss(
-            exploration_imag_feat_v,
-            exploration_weights,
-            exploration_value_target,
-            vf=self.exploration_vf,
-        )
-
-        self.update_network(
-            self.exploration_vf,
-            self.exploration_vf_optimizer,
             exploration_vf_loss,
-            5,
-            self.value_gradient_clip,
-        )
+            exploration_imag_values_mean,
+        ) = (0, 0, 0, 0, 0, 0, 0, 0)
+        for _ in range(self.num_imagination_iterations):
+            with FreezeParameters(
+                world_model_params + one_step_ensemble_params + pred_discount_params
+            ):
+                if self.image_goals is not None:
+                    (
+                        exploration_imag_feat,
+                        exploration_imag_actions,
+                        exploration_imag_log_probs,
+                        exploration_imag_states,
+                        exploration_extrinsic_reward,
+                    ) = self.imagine_ahead(
+                        post,
+                        actor=self.exploration_actor,
+                    )
+                else:
+                    (
+                        exploration_imag_feat,
+                        exploration_imag_actions,
+                        exploration_imag_log_probs,
+                        exploration_imag_states,
+                    ) = self.imagine_ahead(
+                        post,
+                        actor=self.exploration_actor,
+                    )
+                exploration_intrinsic_reward = self.compute_exploration_reward(
+                    exploration_imag_states, exploration_imag_actions
+                )
+                if self.image_goals is None:
+                    exploration_extrinsic_reward = self.world_model.reward(
+                        exploration_imag_feat
+                    )
+                exploration_intrinsic_reward = torch.cat(
+                    [
+                        exploration_intrinsic_reward[
+                            i : i + exploration_imag_feat.shape[1]
+                        ]
+                        .unsqueeze(0)
+                        .unsqueeze(2)
+                        for i in range(
+                            0,
+                            exploration_intrinsic_reward.shape[0],
+                            exploration_imag_feat.shape[1],
+                        )
+                    ],
+                    0,
+                )
+                exploration_imag_reward = (
+                    exploration_intrinsic_reward
+                    * self.exploration_intrinsic_reward_scale
+                    + exploration_extrinsic_reward
+                    * self.exploration_extrinsic_reward_scale
+                )
+
+                if self.use_pred_discount:
+                    exploration_discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(exploration_imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+                else:
+                    exploration_discount = self.discount * torch.ones_like(
+                        exploration_imag_reward
+                    )
+            with FreezeParameters(vf_params):
+                exploration_old_imag_value = self.exploration_vf(
+                    exploration_imag_feat
+                ).detach()
+            for _ in range(self.num_actor_value_updates):
+                with FreezeParameters(
+                    exploration_vf_params + exploration_target_vf_params
+                ):
+                    exploration_imag_target_value = self.exploration_target_vf(
+                        exploration_imag_feat
+                    )
+                    exploration_imag_value = self.exploration_vf(exploration_imag_feat)
+                exploration_imag_returns = lambda_return(
+                    exploration_imag_reward[:-1],
+                    exploration_imag_target_value[:-1],
+                    exploration_discount[:-1],
+                    bootstrap=exploration_imag_target_value[-1],
+                    lambda_=self.lam,
+                )
+                exploration_weights = torch.cumprod(
+                    torch.cat(
+                        [
+                            torch.ones_like(exploration_discount[:1]),
+                            exploration_discount[:-1],
+                        ],
+                        0,
+                    ),
+                    0,
+                ).detach()[:-1]
+                (
+                    exploration_actor_loss_,
+                    exploration_dynamics_backprop_loss_,
+                    exploration_policy_gradient_loss_,
+                    exploration_actor_entropy_loss_,
+                    exploration_actor_entropy_loss_scale_,
+                    exploration_log_probs_,
+                ) = self.actor_loss(
+                    exploration_imag_returns,
+                    exploration_imag_value,
+                    exploration_imag_feat,
+                    exploration_imag_actions,
+                    exploration_weights,
+                    exploration_imag_log_probs,
+                    self.exploration_actor,
+                )
+
+                with torch.no_grad():
+                    exploration_imag_feat_v = exploration_imag_feat.detach()
+                    exploration_value_target = exploration_imag_returns.detach()
+                    exploration_weights = exploration_weights.detach()
+
+                exploration_vf_loss_, exploration_imag_values_mean_ = self.value_loss(
+                    exploration_imag_feat_v,
+                    exploration_weights,
+                    exploration_value_target,
+                    exploration_old_imag_value,
+                    vf=self.exploration_vf,
+                )
+
+                if self.use_actor_value_optimizer:
+                    self.update_network(
+                        [self.exploration_actor, self.exploration_vf],
+                        self.exploration_actor_value_optimizer,
+                        exploration_actor_loss_ + exploration_vf_loss_,
+                        2,
+                        self.actor_gradient_clip,
+                    )
+                else:
+                    self.update_network(
+                        self.exploration_actor,
+                        self.exploration_actor_optimizer,
+                        exploration_actor_loss_,
+                        2,
+                        self.actor_gradient_clip,
+                    )
+
+                    self.update_network(
+                        self.exploration_vf,
+                        self.exploration_vf_optimizer,
+                        exploration_vf_loss_,
+                        3,
+                        self.value_gradient_clip,
+                    )
+
+                exploration_actor_loss += exploration_actor_loss_.item()
+                exploration_dynamics_backprop_loss += (
+                    exploration_dynamics_backprop_loss_.item()
+                )
+                exploration_policy_gradient_loss += (
+                    exploration_policy_gradient_loss_.item()
+                )
+                exploration_actor_entropy_loss += exploration_actor_entropy_loss_.item()
+                exploration_actor_entropy_loss_scale += (
+                    exploration_actor_entropy_loss_scale_
+                )
+                exploration_log_probs += exploration_log_probs_.item()
+                exploration_vf_loss += exploration_vf_loss_.item()
+                exploration_imag_values_mean += exploration_imag_values_mean_.item()
+
+        if self.num_imagination_iterations > 0:
+            exploration_actor_loss /= self.num_actor_value_updates
+            exploration_dynamics_backprop_loss /= self.num_actor_value_updates
+            exploration_policy_gradient_loss /= self.num_actor_value_updates
+            exploration_actor_entropy_loss /= self.num_actor_value_updates
+            exploration_actor_entropy_loss_scale /= self.num_actor_value_updates
+            exploration_log_probs /= self.num_actor_value_updates
+
         if type(image_pred_loss) == tuple:
             image_pred_loss, state_pred_loss = image_pred_loss
             log_state_pred_loss = True
@@ -655,13 +724,15 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
-            eval_statistics["Value Loss"] = vf_loss.item()
+            eval_statistics["Value Loss"] = vf_loss
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
             if log_state_pred_loss:
                 eval_statistics["State Prediction Loss"] = state_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
+            eval_statistics["Transition Loss"] = transition_loss.item()
+            eval_statistics["Entropy Loss"] = entropy_loss.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Posterior State Std"] = post["std"].mean().item()
             eval_statistics["Prior State Std"] = prior["std"].mean().item()
@@ -689,7 +760,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
 
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
-            eval_statistics["Imagined Values"] = imag_value_mean.item()
+            eval_statistics["Imagined Values"] = imag_values_mean
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
             eval_statistics[
                 "Imagined Intrinsic Rewards"
@@ -699,17 +770,17 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             ] = extrinsic_reward.mean().item()
 
             eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
-            eval_statistics["Exploration Value Loss"] = exploration_vf_loss.item()
+            eval_statistics["Exploration Value Loss"] = exploration_vf_loss
             eval_statistics[
                 "Exploration Imagined Values"
-            ] = exploration_imag_value_mean.item()
+            ] = exploration_imag_values_mean
 
             eval_statistics[
                 "Exploration Imagined Returns"
             ] = exploration_imag_returns.mean().item()
             eval_statistics[
                 "Exploration Imagined Rewards"
-            ] = exploration_reward.mean().item()
+            ] = exploration_imag_reward.mean().item()
             eval_statistics[
                 "Exploration Imagined Intrinsic Rewards"
             ] = exploration_intrinsic_reward.mean().item()

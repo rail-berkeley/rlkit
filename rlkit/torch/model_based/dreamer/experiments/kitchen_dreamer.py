@@ -96,12 +96,22 @@ def run_experiment(variant):
     max_arg_len = eval_envs[0].max_arg_len
 
     if (
+        variant["actor_kwargs"]["discrete_continuous_dist"]
+        or variant["env_kwargs"]["fixed_schema"]
+    ):
+        continuous_action_dim = max_arg_len
+    else:
+        continuous_action_dim = max_arg_len + num_primitives
+
+    if (
         variant.get("world_model_class", "world_model") == "multitask"
         or eval_envs[0].proprioception
     ):
         world_model_class = StateConcatObsWorldModel
         if eval_envs[0].proprioception:
-            variant["model_kwargs"]["embedding_size"] += 9
+            variant["model_kwargs"]["embedding_size"] += variant["model_kwargs"][
+                "state_output_size"
+            ]
     else:
         world_model_class = WorldModel
     world_model = world_model_class(
@@ -110,14 +120,6 @@ def run_experiment(variant):
         **variant["model_kwargs"],
         env=eval_envs[0],
     )
-
-    if (
-        variant["actor_kwargs"]["discrete_continuous_dist"]
-        or variant["env_kwargs"]["fixed_schema"]
-    ):
-        continuous_action_dim = max_arg_len
-    else:
-        continuous_action_dim = max_arg_len + num_primitives
 
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
@@ -146,7 +148,6 @@ def run_experiment(variant):
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
-    variant["trainer_kwargs"]["target_vf"] = target_vf
 
     if variant.get("use_mcts_policy", False):
         expl_policy = DiscreteMCTSPolicy(
@@ -222,11 +223,12 @@ def run_experiment(variant):
     else:
         trainer_class = DreamerTrainer
     trainer = trainer_class(
-        env=eval_env,
-        world_model=world_model,
-        actor=actor,
-        vf=vf,
-        image_shape=eval_envs[0].image_shape,
+        eval_env,
+        actor,
+        vf,
+        target_vf,
+        world_model,
+        eval_envs[0].image_shape,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(

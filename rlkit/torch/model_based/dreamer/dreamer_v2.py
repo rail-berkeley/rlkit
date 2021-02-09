@@ -37,10 +37,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         env,
         actor,
         vf,
-        world_model,
-        imagination_horizon,
-        image_shape,
         target_vf,
+        world_model,
+        image_shape,
+        imagination_horizon=None,
         discount=0.99,
         reward_scale=1.0,
         actor_lr=8e-5,
@@ -619,6 +619,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         """
         Actor Value Loss
         """
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        target_vf_params = list(self.target_vf.parameters())
+        pred_discount_params = list(self.world_model.pred_discount.parameters())
         (
             actor_loss,
             dynamics_backprop_loss,
@@ -630,28 +634,23 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             imag_values_mean,
         ) = (0, 0, 0, 0, 0, 0, 0, 0)
         for _ in range(self.num_imagination_iterations):
-            world_model_params = list(self.world_model.parameters())
-            vf_params = list(self.vf.parameters())
-            target_vf_params = list(self.target_vf.parameters())
-            pred_discount_params = list(self.world_model.pred_discount.parameters())
-            with FreezeParameters(world_model_params):
+
+            with FreezeParameters(world_model_params + pred_discount_params):
                 (
                     imag_feat,
                     imag_actions,
                     imag_log_probs,
                 ) = self.imagine_ahead(post)
-            with FreezeParameters(world_model_params):
                 imag_reward = self.world_model.reward(imag_feat)
                 if self.use_pred_discount:
-                    with FreezeParameters(pred_discount_params):
-                        discount = self.world_model.get_dist(
-                            self.world_model.pred_discount(imag_feat),
-                            std=None,
-                            normal=False,
-                        ).mean
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
                 else:
                     discount = self.discount * torch.ones_like(imag_reward)
-            with FreezeParameters(vf_params + target_vf_params):
+            with FreezeParameters(vf_params):
                 old_imag_value = self.vf(imag_feat).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(vf_params + target_vf_params):
