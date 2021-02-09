@@ -58,7 +58,7 @@ if __name__ == "__main__":
             wrist_cam_concat_with_fixed_view=False,
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
-            use_workspace_limits=False,
+            use_workspace_limits=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,

@@ -461,6 +461,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_actions,
                     weights,
                     imag_log_probs,
+                    self.actor,
                 )
 
                 with torch.no_grad():
@@ -472,8 +473,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_feat_v,
                     weights,
                     target,
+                    self.vf,
                     old_imag_value,
-                    vf=self.vf,
                 )
 
                 if self.use_actor_value_optimizer:
@@ -661,8 +662,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_feat_v,
                     exploration_weights,
                     exploration_value_target,
+                    self.exploration_vf,
                     exploration_old_imag_value,
-                    vf=self.exploration_vf,
                 )
 
                 if self.use_actor_value_optimizer:
@@ -670,7 +671,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                         [self.exploration_actor, self.exploration_vf],
                         self.exploration_actor_value_optimizer,
                         exploration_actor_loss_ + exploration_vf_loss_,
-                        2,
+                        3,
                         self.actor_gradient_clip,
                     )
                 else:
@@ -678,7 +679,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                         self.exploration_actor,
                         self.exploration_actor_optimizer,
                         exploration_actor_loss_,
-                        2,
+                        4,
                         self.actor_gradient_clip,
                     )
 
@@ -686,7 +687,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                         self.exploration_vf,
                         self.exploration_vf_optimizer,
                         exploration_vf_loss_,
-                        3,
+                        5,
                         self.value_gradient_clip,
                     )
 
@@ -724,7 +725,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
-            eval_statistics["Value Loss"] = vf_loss
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
             if log_state_pred_loss:
@@ -736,20 +736,22 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
             eval_statistics["Posterior State Std"] = post["std"].mean().item()
             eval_statistics["Prior State Std"] = prior["std"].mean().item()
+            eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
 
             eval_statistics["Actor Loss"] = actor_loss
             eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss
-            eval_statistics["Reinforce Loss"] = policy_gradient_loss
+            eval_statistics["Policy Gradient Loss"] = policy_gradient_loss
             eval_statistics["Actor Entropy Loss"] = actor_entropy_loss
             eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
-            if self.use_pred_discount:
-                eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
+            eval_statistics["Actor Log Probs"] = log_probs
+            eval_statistics["Value Loss"] = vf_loss
+
             eval_statistics["Exploration Actor Loss"] = exploration_actor_loss
             eval_statistics[
                 "Exploration Dynamics Backprop Loss"
             ] = exploration_dynamics_backprop_loss
             eval_statistics[
-                "Exploration Reinforce Loss"
+                "Exploration Policy Gradient Loss"
             ] = exploration_policy_gradient_loss
             eval_statistics[
                 "Exploration Actor Entropy Loss"
@@ -757,6 +759,8 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             eval_statistics[
                 "Exploration Actor Entropy Loss Scale"
             ] = exploration_actor_entropy_loss_scale
+            eval_statistics["Exploration Actor Log Probs"] = exploration_log_probs
+            eval_statistics["Exploration Value Loss"] = exploration_vf_loss
 
             eval_statistics["Imagined Returns"] = imag_returns.mean().item()
             eval_statistics["Imagined Rewards"] = imag_reward.mean().item()
@@ -769,8 +773,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 "Imagined Extrinsic Rewards"
             ] = extrinsic_reward.mean().item()
 
-            eval_statistics["One Step Ensemble Loss"] = ensemble_loss.item()
-            eval_statistics["Exploration Value Loss"] = exploration_vf_loss
             eval_statistics[
                 "Exploration Imagined Values"
             ] = exploration_imag_values_mean
@@ -828,6 +830,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actor=self.actor,
             world_model=self.world_model,
             vf=self.vf,
+            target_vf=self.target_vf,
             one_step_ensemble=self.one_step_ensemble,
             exploration_actor=self.exploration_actor,
             exploration_vf=self.exploration_vf,

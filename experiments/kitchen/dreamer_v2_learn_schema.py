@@ -57,6 +57,7 @@ if __name__ == "__main__":
             wrist_cam_concat_with_fixed_view=False,
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
+            use_workspace_limits=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -111,14 +112,14 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            "kettle",
-            "slide_cabinet",
+            # "kettle",
+            # "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
         ],
         "trainer_kwargs.discount": [0.99, 0.8],
-        "env_kwargs.use_workspace_limits": [True, False],
+        # "env_kwargs.use_workspace_limits": [True, False],
         # "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
