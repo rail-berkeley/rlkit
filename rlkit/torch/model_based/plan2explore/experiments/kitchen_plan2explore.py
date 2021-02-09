@@ -160,13 +160,15 @@ def experiment(variant):
         **variant["actor_kwargs"],
     )
     exploration_vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
     exploration_target_vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]] * 3,
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,

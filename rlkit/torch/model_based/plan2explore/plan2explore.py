@@ -337,6 +337,25 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         )
 
         """
+        One Step Ensemble Loss
+        """
+        ensemble_loss = 0
+        for mdl in range(self.one_step_ensemble.num_models):
+            member_pred = self.one_step_ensemble.forward_ith_model(
+                one_step_ensemble_inputs, mdl
+            )  # predict embedding of next state
+            member_loss = -1 * member_pred.log_prob(one_step_ensemble_targets).mean()
+            ensemble_loss += member_loss
+
+        self.update_network(
+            self.one_step_ensemble,
+            self.one_step_ensemble_optimizer,
+            ensemble_loss,
+            3,
+            self.world_model_gradient_clip,
+        )
+
+        """
         Actor Loss
         """
         world_model_params = list(self.world_model.parameters())
@@ -363,7 +382,9 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     imag_log_probs,
                     imag_states,
                 ) = self.imagine_ahead(post, actor=self.actor)
-        with FreezeParameters(world_model_params + vf_params + target_vf_params):
+        with FreezeParameters(
+            world_model_params + vf_params + one_step_ensemble_params + target_vf_params
+        ):
             intrinsic_reward = self.compute_exploration_reward(
                 imag_states, imag_actions
             )
@@ -452,6 +473,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         actor_entropy_loss /= self.num_actor_value_updates
         actor_entropy_loss_scale /= self.num_actor_value_updates
         log_probs /= self.num_actor_value_updates
+
         """
         Value Loss
         """
@@ -466,25 +488,6 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
 
         self.update_network(
             self.vf, self.vf_optimizer, vf_loss, 2, self.value_gradient_clip
-        )
-
-        """
-        One Step Ensemble Loss
-        """
-        ensemble_loss = 0
-        for mdl in range(self.one_step_ensemble.num_models):
-            member_pred = self.one_step_ensemble.forward_ith_model(
-                one_step_ensemble_inputs, mdl
-            )  # predict embedding of next state
-            member_loss = -1 * member_pred.log_prob(one_step_ensemble_targets).mean()
-            ensemble_loss += member_loss
-
-        self.update_network(
-            self.one_step_ensemble,
-            self.one_step_ensemble_optimizer,
-            ensemble_loss,
-            3,
-            self.world_model_gradient_clip,
         )
 
         """
@@ -565,12 +568,11 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         )
         exploration_weights = torch.cumprod(
             torch.cat(
-                [torch.ones_like(exploration_discount[:1]), exploration_discount[:-2]],
+                [torch.ones_like(exploration_discount[:1]), exploration_discount[:-1]],
                 0,
             ),
             0,
-        ).detach()
-
+        ).detach()[:-1]
         (
             exploration_actor_loss,
             exploration_dynamics_backprop_loss,
