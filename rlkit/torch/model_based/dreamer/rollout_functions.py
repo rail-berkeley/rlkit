@@ -93,6 +93,16 @@ def vec_rollout(
     rewards = np.array(rewards)
     if len(rewards.shape) == 1:
         rewards = rewards.reshape(-1, 1)
+    env_info_final = {}
+    for info in env_infos[1:]:
+        for k, v in info.items():
+            if k in env_info_final:
+                env_info_final[k].append(v)
+            else:
+                env_info_final[k] = [v]
+    for k, v in env_info_final.items():
+        env_info_final[k] = np.concatenate(v, 1)
+    env_infos = env_info_final
     return dict(
         observations=observations,
         actions=actions,

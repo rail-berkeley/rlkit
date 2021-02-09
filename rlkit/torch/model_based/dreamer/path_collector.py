@@ -58,18 +58,25 @@ class VecMdpPathCollector(PathCollector):
             paths.append(path)
         self._num_paths_total += len(paths) * self._env.n_envs
         self._num_steps_total += num_steps_collected
-        log_paths = [{} for i in range(len(paths))]
+        log_paths = [{} for i in range(len(paths) * self._env.n_envs)]
+        ctr = 0
         for i, path in enumerate(paths):
-            for k in [
-                "observations",
-                "actions",
-                "terminals",
-                "rewards",
-                "next_observations",
-            ]:
-                log_paths[i][k] = path[k][1:]
-            for k in ["agent_infos", "env_infos"]:
-                log_paths[i][k] = path[k][1:]
+            for j in range(self._env.n_envs):
+                for k in [
+                    "observations",
+                    "actions",
+                    "terminals",
+                    "rewards",
+                    "next_observations",
+                ]:
+                    log_paths[ctr][k] = path[k][1:, j]
+                log_paths[ctr]["agent_infos"] = [{}] * path["rewards"][1:, j].shape[0]
+                k = "env_infos"
+                log_paths[ctr][k] = [{}] * path["rewards"][1:, j].shape[0]
+                for key, value in path[k].items():
+                    for z in range(value[j].shape[0]):
+                        log_paths[ctr][k][z][key] = value[j][z]
+                ctr += 1
         self._epoch_paths.extend(log_paths)  # only used for logging
         return paths
 

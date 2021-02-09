@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -109,7 +109,7 @@ if __name__ == "__main__":
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
-            log_disagreement=True,
+            log_disagreement=False,
             train_decoder_on_second_output_only=False,
             detach_rewards=True,
             ensemble_training_states="post_to_next_post",
@@ -124,15 +124,17 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "slide_cabinet",
-            "microwave",
-            "kettle",
+            # "slide_cabinet",
+            # "microwave",
+            # "kettle",
             "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
-        "env_kwargs.use_workspace_limits": [True, False],
+        "trainer_kwargs.discount": [
+            0.99,
+        ],
+        "env_kwargs.use_workspace_limits": [True],
         # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
         # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
         # "trainer_kwargs.ensemble_training_states": ['post_to_next_post', 'post_to_next_prior', 'prior_to_next_post', 'prior_to_next_prior'],
