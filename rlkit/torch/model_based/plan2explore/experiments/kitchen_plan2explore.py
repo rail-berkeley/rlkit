@@ -280,12 +280,7 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
     )
 
-    algorithm.post_epoch_funcs.append(
-        video_post_epoch_func, algorithm.eval_data_collector._policy
-    )
-    algorithm.post_epoch_funcs.append(
-        video_post_epoch_func, algorithm.expl_data_collector._policy
-    )
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
     video_post_epoch_func(algorithm, -1)
