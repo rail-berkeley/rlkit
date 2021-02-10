@@ -26,6 +26,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         min_num_steps_before_training=0,
         pretrain_policy=None,
         num_pretrain_steps=0,
+        use_pretrain_policy_for_initial_data=True,
         use_wandb=False,
     ):
         super().__init__(
@@ -45,7 +46,10 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.num_train_loops_per_epoch = num_train_loops_per_epoch
         self.num_expl_steps_per_train_loop = num_expl_steps_per_train_loop
         self.min_num_steps_before_training = min_num_steps_before_training
-        self.pretrain_policy = pretrain_policy
+        if use_pretrain_policy_for_initial_data:
+            self.pretrain_policy = pretrain_policy
+        else:
+            self.pretrain_policy = None
         self.num_pretrain_steps = num_pretrain_steps
 
     def _train(self):
