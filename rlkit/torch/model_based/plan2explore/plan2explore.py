@@ -46,6 +46,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         image_goals_path=None,
         log_disagreement=True,
         ensemble_training_states="post_to_next_post",
+        train_eval_actor_from_reset_state=False,
         **kwargs,
     ):
         super(Plan2ExploreTrainer, self).__init__(
@@ -144,6 +145,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         self.evaluation_extrinsic_reward_scale = evaluation_extrinsic_reward_scale
         self.log_disagreement = log_disagreement
         self.ensemble_training_states = ensemble_training_states
+        self.train_eval_actor_from_reset_state = train_eval_actor_from_reset_state
 
     def try_update_target_networks(self):
         if self._n_train_steps_total % self.target_update_period == 0:
@@ -189,6 +191,18 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 if self.use_pred_discount:
                     v = v[:, :-1]  # avoid imagining forward from terminal states
                 new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
+
+        if self.actor == actor and self.train_eval_actor_from_reset_state:
+            null_state = self.world_model.initial(new_state["stoch"].shape[0])
+            null_acts = ptu.zeros(
+                (new_state["stoch"].shape[0], self.env.action_space.low.size)
+            )
+            reset_obs = ptu.from_numpy(np.concatenate([self.env.reset()])).repeat(
+                (new_state["stoch"].shape[0], 1)
+            )
+            embed = self.world_model.encode(reset_obs)
+            new_state, _ = self.world_model.obs_step(null_state, null_acts, embed)
+
         if self.image_goals is not None:
             image_goals = ptu.from_numpy(
                 self.image_goals[
