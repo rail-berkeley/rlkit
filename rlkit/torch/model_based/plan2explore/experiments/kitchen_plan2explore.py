@@ -197,9 +197,13 @@ def experiment(variant):
             **variant["eval_policy_kwargs"],
         )
     else:
+        if variant.get("expl_with_exploration_actor", True):
+            expl_actor = exploration_actor
+        else:
+            expl_actor = actor
         expl_policy = DreamerPolicy(
             world_model,
-            exploration_actor,
+            expl_actor,
             obs_dim,
             action_dim,
             exploration=True,
@@ -275,7 +279,13 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
+
+    algorithm.post_epoch_funcs.append(
+        video_post_epoch_func, algorithm.eval_data_collector._policy
+    )
+    algorithm.post_epoch_funcs.append(
+        video_post_epoch_func, algorithm.expl_data_collector._policy
+    )
     algorithm.to(ptu.device)
     algorithm.train()
-    # video_post_epoch_func(algorithm, -1)
+    video_post_epoch_func(algorithm, -1)

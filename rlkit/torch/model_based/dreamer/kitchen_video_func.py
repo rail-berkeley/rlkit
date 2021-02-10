@@ -8,14 +8,21 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
 
 
-def video_post_epoch_func(algorithm, epoch, img_size=256):
+def video_post_epoch_func(
+    algorithm,
+    epoch,
+    policy,
+    img_size=256,
+    mode="eval",
+):
     print(epoch)
     if epoch == -1 or epoch % 25 == 0:
         print("Generating Eval Video: ")
         env = algorithm.eval_env
-        policy = algorithm.eval_data_collector._policy
 
-        file_path = osp.join(logger.get_snapshot_dir(), "video.avi")
+        file_path = osp.join(
+            logger.get_snapshot_dir(), mode + "_" + str(epoch) + "_video.avi"
+        )
 
         img_array1 = []
         path_length = 0
@@ -165,7 +172,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
             .permute(0, 1, 3, 4, 2)
         ).astype(np.uint8)
         file_path = osp.join(
-            logger.get_snapshot_dir(), "reconstructions_epoch_{}.png".format(epoch)
+            logger.get_snapshot_dir(), mode + "_" + str(epoch) + "_reconstructions.png"
         )
         im = np.zeros((128 * 4, algorithm.max_path_length * 64, 3), dtype=np.uint8)
         for i in range(4):
@@ -191,7 +198,7 @@ def video_post_epoch_func(algorithm, epoch, img_size=256):
 
             file_path = osp.join(
                 logger.get_snapshot_dir(),
-                "reconstructions_wrist_cam_epoch_{}.png".format(epoch),
+                mode + "_" + str(epoch) + "_reconstructions_wrist_cam.png",
             )
             obs_np = ptu.get_numpy(
                 obs[:, :, 64 * 64 * 3 : 64 * 64 * 6]

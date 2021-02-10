@@ -95,7 +95,6 @@ if __name__ == "__main__":
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
-            reward_scale=1.0,
             forward_kl=False,
             free_nats=1.0,
             pred_discount_loss_scale=10.0,
@@ -118,19 +117,21 @@ if __name__ == "__main__":
         expl_amount=0.3,
         reward_type="extrinsic",
         eval_with_exploration_actor=False,
+        expl_with_exploration_actor=True,
     )
 
     search_space = {
         "env_class": [
-            "slide_cabinet",
+            # "slide_cabinet",
             "microwave",
-            "kettle",
+            # "kettle",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
+        "trainer_kwargs.discount": [0.8],
         "env_kwargs.use_workspace_limits": [True],
+        "algorithm_kwargs.num_trains_per_train_loop": [5, 10, 25, 50],
         # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
         # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
         # "trainer_kwargs.ensemble_training_states": ['post_to_next_post', 'post_to_next_prior', 'prior_to_next_post', 'prior_to_next_prior'],
