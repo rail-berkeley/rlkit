@@ -37,7 +37,16 @@ def video_post_epoch_func(algorithm, epoch):
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
     if epoch == -1 or epoch % 25 == 0:
-        new_state = algorithm.trainer.world_model.initial(4)
+        null_state = algorithm.trainer.world_model.initial(4)
+        null_acts = ptu.zeros((4, env.action_space.low.size))
+        reset_obs = []
+        for i in range(4):
+            reset_obs.append(env.reset())
+        reset_obs = ptu.from_numpy(np.concatenate(reset_obs))
+        embed = algorithm.trainer.world_model.encode(reset_obs)
+        new_state, _ = algorithm.trainer.world_model.obs_step(
+            null_state, null_acts, embed
+        )
         reconstructions = ptu.zeros(
             (4, algorithm.max_path_length, *algorithm.trainer.world_model.image_shape),
         )
