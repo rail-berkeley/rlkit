@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -179,8 +179,8 @@ if __name__ == "__main__":
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
         for s in range(3):
-            # models_path = variant["models_path"]
-            models_path = models_path_dict[variant["env_class"]][s]
+            variant["models_path"] = models_path_dict[variant["env_class"]][s]
+            models_path = variant["models_path"]
             seed = int(json.load(open(models_path + "/variant.json", "r"))["seed"])
             variant["seed"] = seed
             variant["exp_id"] = exp_id
