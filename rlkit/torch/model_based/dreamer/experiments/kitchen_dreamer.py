@@ -114,40 +114,48 @@ def run_experiment(variant):
             ]
     else:
         world_model_class = WorldModel
-    world_model = world_model_class(
-        action_dim,
-        image_shape=eval_envs[0].image_shape,
-        **variant["model_kwargs"],
-        env=eval_envs[0],
-    )
 
     if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
     else:
         actor_model_class = ActorModel
-    actor = actor_model_class(
-        variant["model_kwargs"]["model_hidden_size"],
-        world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
-        discrete_action_dim=num_primitives,
-        continuous_action_dim=continuous_action_dim,
-        env=eval_envs[0],
-        **variant["actor_kwargs"],
-    )
-    vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-        * variant["vf_kwargs"]["num_layers"],
-        output_size=1,
-        input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
-    )
-    target_vf = Mlp(
-        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-        * variant["vf_kwargs"]["num_layers"],
-        output_size=1,
-        input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
-    )
+    if variant.get("load_from_path", False):
+        data = torch.load(variant["models_path"] + "params.pkl")
+        actor = data["trainer/actor"]
+        vf = data["trainer/vf"]
+        target_vf = data["trainer/target_vf"]
+        world_model = data["trainer/world_model"]
+    else:
+        world_model = world_model_class(
+            action_dim,
+            image_shape=eval_envs[0].image_shape,
+            **variant["model_kwargs"],
+            env=eval_envs[0],
+        )
+    if variant.get("retrain_actor_and_vf", True):
+        actor = actor_model_class(
+            variant["model_kwargs"]["model_hidden_size"],
+            world_model.feature_size,
+            hidden_activation=torch.nn.functional.elu,
+            discrete_action_dim=num_primitives,
+            continuous_action_dim=continuous_action_dim,
+            env=eval_envs[0],
+            **variant["actor_kwargs"],
+        )
+        vf = Mlp(
+            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+            * variant["vf_kwargs"]["num_layers"],
+            output_size=1,
+            input_size=world_model.feature_size,
+            hidden_activation=torch.nn.functional.elu,
+        )
+        target_vf = Mlp(
+            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+            * variant["vf_kwargs"]["num_layers"],
+            output_size=1,
+            input_size=world_model.feature_size,
+            hidden_activation=torch.nn.functional.elu,
+        )
 
     if variant.get("use_mcts_policy", False):
         expl_policy = DiscreteMCTSPolicy(
