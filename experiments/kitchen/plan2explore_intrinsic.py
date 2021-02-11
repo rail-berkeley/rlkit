@@ -1,6 +1,4 @@
 import argparse
-import json
-import os
 import random
 
 import rlkit.util.hyperparameter as hyp
@@ -8,7 +6,9 @@ from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
+    experiment,
+)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -20,7 +20,7 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=10,
+            num_eval_steps_per_epoch=5,
             num_expl_steps_per_train_loop=50,
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
@@ -28,13 +28,12 @@ if __name__ == "__main__":
             num_trains_per_train_loop=10,
             batch_size=30,
             max_path_length=5,
-            use_pretrain_policy_for_initial_data=False,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
-            num_eval_steps_per_epoch=30,
+            num_epochs=1000,
+            num_eval_steps_per_epoch=5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
@@ -42,18 +41,15 @@ if __name__ == "__main__":
             num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40,  # 1000//(5*5)
             num_trains_per_train_loop=5,  # 200//40
-            use_pretrain_policy_for_initial_data=False,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="dreamer_v2",
+        algorithm="Plan2Explore",
         version="normal",
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
-        env_class="hinge_cabinet",
         env_kwargs=dict(
             dense=False,
-            image_obs=True,
             fixed_schema=False,
             action_scale=1.4,
             use_combined_action_space=True,
@@ -62,6 +58,7 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
+            image_obs=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -84,6 +81,13 @@ if __name__ == "__main__":
             gru_layer_norm=True,
             std_act="sigmoid2",
         ),
+        one_step_ensemble_kwargs=dict(
+            num_models=10,
+            hidden_size=400,
+            num_layers=4,
+            inputs="feat",
+            targets="stoch",
+        ),
         trainer_kwargs=dict(
             use_amp=True,
             opt_level="O1",
@@ -104,50 +108,45 @@ if __name__ == "__main__":
             policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
-            detach_rewards=False,
+            log_disagreement=False,
+            ensemble_training_states="post_to_next_post",
             imagination_horizon=5,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
-        load_from_path=True,
-        models_path="/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/02-10-p2exp_sc_expl_with_eval_actor_v1_2021_02_10_13_55_48_0001--s-11474/",
-        retrain_actor_and_vf=False,
+        reward_type="intrinsic",
+        eval_with_exploration_actor=False,
+        expl_with_exploration_actor=True,
     )
 
     search_space = {
         "env_class": [
             # "microwave",
-            # "kettle",
-            "slide_cabinet",
             # "top_left_burner",
-            # "hinge_cabinet",
+            "hinge_cabinet",
             # "light_switch",
+            # "slide_cabinet",
+            # "kettle",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
-        "algorithm_kwargs.use_pretrain_policy_for_initial_data": [False, True],
-        "models_path": [
-            os.path.join(
-                "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/",
-                path,
-            )
-            for path in os.listdir(
-                "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/"
-            )
-        ]
-        # "env_kwargs.use_workspace_limits": [True, False],
-        # "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
+        # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
+        # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
+        # "trainer_kwargs.ensemble_training_states": [
+        #     "post_to_next_post",
+        #     "post_to_next_prior",
+        #     "prior_to_next_post",
+        #     "prior_to_next_prior",
+        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
+    num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
-            seed = int(
-                json.load(open(variant["models_path"] + "/variant.json", "r"))["seed"]
-            )
+            seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
             run_experiment(
@@ -156,8 +155,11 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="gap",
+                snapshot_gap=100,
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
             )
+            num_exps_launched += 1
+    print("Num exps launched: ", num_exps_launched)
