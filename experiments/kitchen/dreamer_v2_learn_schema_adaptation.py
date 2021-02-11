@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+import time
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
@@ -176,9 +177,10 @@ if __name__ == "__main__":
         search_space,
         default_parameters=variant,
     )
+    num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
-        for s in range(3):
+        for s in range(len(models_path_dict[variant["env_class"]])):
             variant["models_path"] = models_path_dict[variant["env_class"]][s]
             models_path = variant["models_path"]
             seed = int(json.load(open(models_path + "/variant.json", "r"))["seed"])
@@ -195,3 +197,6 @@ if __name__ == "__main__":
                 seed=seed,
                 exp_id=exp_id,
             )
+            time.sleep(1)
+            num_exps_launched += 1
+    print("Num exps launched: ", num_exps_launched)
