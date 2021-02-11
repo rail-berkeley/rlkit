@@ -120,7 +120,7 @@ def run_experiment(variant):
     else:
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
-        data = torch.load(variant["models_path"] + "/params.pkl")
+        data = torch.load(variant["models_path"] + variant["pkl_file_name"])
         actor = data["trainer/actor"]
         vf = data["trainer/vf"]
         target_vf = data["trainer/target_vf"]
