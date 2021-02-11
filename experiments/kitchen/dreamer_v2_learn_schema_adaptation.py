@@ -126,6 +126,7 @@ if __name__ == "__main__":
         ],
         "trainer_kwargs.discount": [0.99, 0.8],
         "algorithm_kwargs.use_pretrain_policy_for_initial_data": [False, True],
+        "retrain_actor_and_vf": [True, False],
         "models_path": [
             os.path.join(
                 "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/",
