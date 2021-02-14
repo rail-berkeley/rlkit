@@ -34,7 +34,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -114,7 +114,7 @@ if __name__ == "__main__":
         load_from_path=True,
         # models_path="/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/02-10-p2exp_sc_expl_with_eval_actor_v1_2021_02_10_13_55_48_0001--s-11474/",
         retrain_actor_and_vf=False,
-        pkl_file_name="/itr_100.pkl",
+        pkl_file_name="/itr_400.pkl",
     )
 
     search_space = {
@@ -126,9 +126,16 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
-        "algorithm_kwargs.use_pretrain_policy_for_initial_data": [False, True],
-        "retrain_actor_and_vf": [True, False],
+        "trainer_kwargs.discount": [0.8],
+        "retrain_actor_and_vf": [False],
+        "trainer_kwargs.world_model_lr": [3e-4],
+        "trainer_kwargs.num_imagination_iterations": [50],
+        "pkl_file_name": [
+            "/itr_100.pkl",
+            "/itr_200.pkl",
+            "/itr_300.pkl",
+            "/itr_400.pkl",
+        ]
         # "models_path": [
         #     os.path.join(
         #         "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/",
@@ -180,6 +187,8 @@ if __name__ == "__main__":
     num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
+        if not variant["retrain_actor_and_vf"]:
+            variant["algorithm_kwargs"]["use_pretrain_policy_for_initial_data"] = True
         for s in range(len(models_path_dict[variant["env_class"]])):
             variant["models_path"] = models_path_dict[variant["env_class"]][s]
             models_path = variant["models_path"]

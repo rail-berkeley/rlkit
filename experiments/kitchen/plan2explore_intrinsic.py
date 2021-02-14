@@ -32,7 +32,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=100,
             num_eval_steps_per_epoch=5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -123,20 +123,20 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-            "slide_cabinet",
-            "kettle",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
+            # "slide_cabinet",
+            # "kettle",
         ],
-        # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
-        # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
-        # "trainer_kwargs.ensemble_training_states": [
-        #     "post_to_next_post",
-        #     "post_to_next_prior",
-        #     "prior_to_next_post",
-        #     "prior_to_next_prior",
-        # ],
+        "one_step_ensemble_kwargs.inputs": ["feat", "deter", "stoch"],
+        "one_step_ensemble_kwargs.targets": ["feat", "deter", "stoch", "embed"],
+        "trainer_kwargs.ensemble_training_states": [
+            "post_to_next_post",
+            "post_to_next_prior",
+            "prior_to_next_post",
+            "prior_to_next_prior",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -155,8 +155,8 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="gap",
-                snapshot_gap=100,
+                snapshot_mode="none",
+                # snapshot_gap=100,
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,
