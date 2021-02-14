@@ -119,22 +119,25 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
+            # "microwave",
             # "kettle",
             # "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
-            "light_switch",
+            # "light_switch",
         ],
         "trainer_kwargs.discount": [0.8],
         "retrain_actor_and_vf": [False],
+        # "algorithm_kwargs.use_pretrain_policy_for_initial_data": [False],
+        "num_actor_vf_pretrain_iters": [0, 100, 1000, 10000],
+        "algorithm_kwargs.use_pretrain_policy_for_initial_data": [True],
+        "algorithm_kwargs.num_pretrain_steps": [0],
         "trainer_kwargs.world_model_lr": [3e-4],
-        "trainer_kwargs.num_imagination_iterations": [50],
         "pkl_file_name": [
             "/itr_100.pkl",
-            "/itr_200.pkl",
-            "/itr_300.pkl",
-            "/itr_400.pkl",
+            # "/itr_200.pkl",
+            # "/itr_300.pkl",
+            # "/itr_400.pkl",
         ]
         # "models_path": [
         #     os.path.join(
@@ -187,8 +190,6 @@ if __name__ == "__main__":
     num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
-        if not variant["retrain_actor_and_vf"]:
-            variant["algorithm_kwargs"]["use_pretrain_policy_for_initial_data"] = True
         for s in range(len(models_path_dict[variant["env_class"]])):
             variant["models_path"] = models_path_dict[variant["env_class"]][s]
             models_path = variant["models_path"]

@@ -818,3 +818,143 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             vf=self.vf,
             target_vf=self.target_vf,
         )
+
+    def pretrain_actor_vf(self, num_imagination_iterations):
+        """
+        Actor Value Loss
+        """
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        target_vf_params = list(self.target_vf.parameters())
+        pred_discount_params = list(self.world_model.pred_discount.parameters())
+        null_state = self.world_model.initial(2500)
+        null_acts = ptu.zeros((2500, self.env.action_space.low.size))
+        reset_obs = ptu.from_numpy(np.concatenate([self.env.reset()])).repeat((2500, 1))
+        embed = self.world_model.encode(reset_obs)
+        post, _ = self.world_model.obs_step(null_state, null_acts, embed)
+        post_ = {}
+        for k, v in post.items():
+            post_[k] = v.reshape(50, 50, -1)
+        post = post_
+        (
+            actor_loss,
+            dynamics_backprop_loss,
+            policy_gradient_loss,
+            actor_entropy_loss,
+            actor_entropy_loss_scale,
+            log_probs,
+            vf_loss,
+            imag_values_mean,
+        ) = (0, 0, 0, 0, 0, 0, 0, 0)
+        for _ in range(num_imagination_iterations):
+
+            with FreezeParameters(world_model_params + pred_discount_params):
+                (
+                    imag_feat,
+                    imag_actions,
+                    imag_log_probs,
+                ) = self.imagine_ahead(post)
+                imag_reward = self.world_model.reward(imag_feat)
+                if self.use_pred_discount:
+                    discount = self.world_model.get_dist(
+                        self.world_model.pred_discount(imag_feat),
+                        std=None,
+                        normal=False,
+                    ).mean
+                else:
+                    discount = self.discount * torch.ones_like(imag_reward)
+            with FreezeParameters(vf_params):
+                old_imag_value = self.vf(imag_feat).detach()
+            for _ in range(self.num_actor_value_updates):
+                with FreezeParameters(vf_params + target_vf_params):
+                    imag_target_value = self.target_vf(imag_feat)
+                    imag_value = self.vf(imag_feat)
+                imag_returns = lambda_return(
+                    imag_reward[:-1],
+                    imag_target_value[:-1],
+                    discount[:-1],
+                    bootstrap=imag_target_value[-1],
+                    lambda_=self.lam,
+                )
+                weights = torch.cumprod(
+                    torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
+                ).detach()[:-1]
+
+                (
+                    actor_loss_,
+                    dynamics_backprop_loss_,
+                    policy_gradient_loss_,
+                    actor_entropy_loss_,
+                    actor_entropy_loss_scale_,
+                    log_probs_,
+                ) = self.actor_loss(
+                    imag_returns,
+                    imag_value,
+                    imag_feat,
+                    imag_actions,
+                    weights,
+                    imag_log_probs,
+                    self.actor,
+                )
+
+                with torch.no_grad():
+                    imag_feat_v = imag_feat.detach()
+                    target = imag_returns.detach()
+                    weights = weights.detach()
+
+                vf_loss_, imag_values_mean_ = self.value_loss(
+                    imag_feat_v, weights, target, self.vf, old_imag_value
+                )
+
+                if self.use_actor_value_optimizer:
+                    self.update_network(
+                        [self.actor, self.vf],
+                        self.actor_value_optimizer,
+                        actor_loss_ + vf_loss_,
+                        1,
+                        self.actor_gradient_clip,
+                    )
+                else:
+                    self.update_network(
+                        self.actor,
+                        self.actor_optimizer,
+                        actor_loss_,
+                        1,
+                        self.actor_gradient_clip,
+                    )
+
+                    self.update_network(
+                        self.vf,
+                        self.vf_optimizer,
+                        vf_loss_,
+                        2,
+                        self.value_gradient_clip,
+                    )
+                actor_loss += actor_loss_.item()
+                dynamics_backprop_loss += dynamics_backprop_loss_.item()
+                policy_gradient_loss += policy_gradient_loss_.item()
+                actor_entropy_loss += actor_entropy_loss_.item()
+                actor_entropy_loss_scale += actor_entropy_loss_scale_
+                log_probs += log_probs_.item()
+                vf_loss += vf_loss_.item()
+                imag_values_mean += imag_values_mean_.item()
+
+        if self.num_imagination_iterations > 0:
+            actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            dynamics_backprop_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            policy_gradient_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            actor_entropy_loss /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            actor_entropy_loss_scale /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
+            log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
+            vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
+            imag_values_mean /= (
+                self.num_actor_value_updates * self.num_imagination_iterations
+            )
