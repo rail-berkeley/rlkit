@@ -48,6 +48,7 @@ if __name__ == "__main__":
             mean_scale=5.0,
             init_std=5.0,
             num_layers=4,
+            dist="tanh_normal_dreamer_v1",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -62,7 +63,6 @@ if __name__ == "__main__":
         ),
         trainer_kwargs=dict(
             discount=0.99,
-            reward_scale=1.0,
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=6e-4,

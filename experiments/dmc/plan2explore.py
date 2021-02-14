@@ -47,7 +47,7 @@ if __name__ == "__main__":
             init_std=0.0,
             num_layers=4,
             min_std=0.1,
-            dist="tanh_normal_5",
+            dist="trunc_normal",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -77,7 +77,6 @@ if __name__ == "__main__":
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
-            reward_scale=1.0,
             forward_kl=False,
             free_nats=1.0,
             kl_loss_scale=0.0,
