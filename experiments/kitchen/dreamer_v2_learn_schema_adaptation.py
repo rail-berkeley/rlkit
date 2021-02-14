@@ -34,7 +34,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=15,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -120,8 +120,8 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            "kettle",
-            "slide_cabinet",
+            # "kettle",
+            # "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
