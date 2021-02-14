@@ -118,9 +118,6 @@ if __name__ == "__main__":
         # "model_kwargs.deterministic_state_size": [200, 400],
         # "model_kwargs.stochastic_state_size": [50, 60],
         # "trainer_kwargs.ensemble_training_states": ['post_to_next_post', 'post_to_next_prior', 'prior_to_next_post', 'prior_to_next_prior'],
-        "model_kwargs.embedding_size": [
-            1024,
-        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

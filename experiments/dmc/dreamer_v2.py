@@ -85,7 +85,7 @@ if __name__ == "__main__":
             target_update_period=100,
         ),
         num_eval_envs=1,
-        expl_amount=0.3,
+        expl_amount=0.0,
         dreamer_class="dreamerv2",
     )
 
@@ -104,11 +104,8 @@ if __name__ == "__main__":
             # "hopper_hop",
             # "cheetah_run",
         ],
-        "expl_amount": [0.0],
-        "actor_kwargs.dist": ["trunc_normal", "tanh_normal_5"],
-        "model_kwargs.embedding_size": [
-            1024,
-        ],
+        # "model_kwargs.deterministic_state_size": [200, 400],
+        # "model_kwargs.stochastic_state_size": [50, 60],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

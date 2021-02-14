@@ -76,7 +76,7 @@ if __name__ == "__main__":
             use_pred_discount=False,
         ),
         num_eval_envs=1,
-        expl_amount=0.3,
+        expl_amount=0.0,
     )
 
     search_space = {
@@ -89,10 +89,6 @@ if __name__ == "__main__":
             "quadruped_walk",
             # "acrobot_swingup",
             # "hopper_hop",
-        ],
-        "expl_amount": [0.3],
-        "model_kwargs.embedding_size": [
-            1024,
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
