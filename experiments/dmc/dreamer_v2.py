@@ -27,7 +27,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=500,
+            num_epochs=50,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -41,7 +41,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e3),
+        replay_buffer_size=int(1e4),
         algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
             init_std=0.0,
@@ -93,10 +93,10 @@ if __name__ == "__main__":
         "env_id": [
             "walker_walk",
             "pendulum_swingup",
-            # "cartpole_swingup_sparse",
-            "cartpole_swingup",
-            "cartpole_balance",
-            # "cartpole_balance_sparse",
+            "cartpole_swingup_sparse",
+            # "cartpole_swingup",
+            # "cartpole_balance",
+            "cartpole_balance_sparse",
             "hopper_stand",
             "walker_run",
             "quadruped_walk",

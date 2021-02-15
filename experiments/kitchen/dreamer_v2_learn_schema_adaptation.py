@@ -119,19 +119,20 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
-            # "kettle",
-            # "slide_cabinet",
+            "microwave",
+            "kettle",
+            "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
-            # "light_switch",
+            "light_switch",
         ],
         "trainer_kwargs.discount": [0.8],
         "retrain_actor_and_vf": [False],
         # "algorithm_kwargs.use_pretrain_policy_for_initial_data": [False],
-        "num_actor_vf_pretrain_iters": [0, 100, 1000, 10000],
+        "num_actor_vf_pretrain_iters": [1000, 10000],
         "algorithm_kwargs.use_pretrain_policy_for_initial_data": [True],
         "algorithm_kwargs.num_pretrain_steps": [0],
+        "algorithm_kwargs.num_trains_per_train_loop": [5, 10, 25, 50],
         "trainer_kwargs.world_model_lr": [3e-4],
         "pkl_file_name": [
             "/itr_100.pkl",

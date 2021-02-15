@@ -27,7 +27,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=500,
+            num_epochs=100,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -96,6 +96,7 @@ if __name__ == "__main__":
             ensemble_training_states="post_to_next_post",
         ),
         num_eval_envs=1,
+        expl_amount=0.0,
     )
 
     search_space = {
