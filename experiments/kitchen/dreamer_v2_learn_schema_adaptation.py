@@ -34,7 +34,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=15,
+            num_epochs=25,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         "num_actor_vf_pretrain_iters": [1000, 10000],
         "algorithm_kwargs.use_pretrain_policy_for_initial_data": [True],
         "algorithm_kwargs.num_pretrain_steps": [0],
-        "algorithm_kwargs.num_trains_per_train_loop": [5, 10, 25, 50],
+        "algorithm_kwargs.num_trains_per_train_loop": [50],
         "trainer_kwargs.world_model_lr": [3e-4],
         "pkl_file_name": [
             "/itr_100.pkl",

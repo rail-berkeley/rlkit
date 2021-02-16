@@ -27,7 +27,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -102,23 +102,26 @@ if __name__ == "__main__":
     search_space = {
         "env_id": [
             "walker_walk",
-            "pendulum_swingup",
-            "cartpole_swingup_sparse",
+            # "pendulum_swingup",
+            # "cartpole_swingup_sparse",
             # "cartpole_swingup",
             # "cartpole_balance",
-            "cartpole_balance_sparse",
-            "hopper_stand",
-            "walker_run",
-            "quadruped_walk",
-            "acrobot_swingup",
+            # "cartpole_balance_sparse",
+            # "hopper_stand",
+            # "walker_run",
+            # "quadruped_walk",
+            # "acrobot_swingup",
             # "hopper_hop",
             # "cheetah_run",
         ],
-        # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
-        # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
-        # "model_kwargs.deterministic_state_size": [200, 400],
-        # "model_kwargs.stochastic_state_size": [50, 60],
-        # "trainer_kwargs.ensemble_training_states": ['post_to_next_post', 'post_to_next_prior', 'prior_to_next_post', 'prior_to_next_prior'],
+        "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
+        "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
+        "trainer_kwargs.ensemble_training_states": [
+            "post_to_next_post",
+            "post_to_next_prior",
+            "prior_to_next_post",
+            "prior_to_next_prior",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

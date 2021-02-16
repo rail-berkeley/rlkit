@@ -118,8 +118,14 @@ if __name__ == "__main__":
             "light_switch",
         ],
         "trainer_kwargs.discount": [0.99, 0.8],
+        # "algorithm_kwargs.num_trains_per_train_loop": [5, 10, 25, 50],
+        "trainer_kwargs.actor_entropy_loss_schedule": [
+            "1e-4",
+            "linear(1e-3,1e-4,5e4)",
+            "linear(1e-3,1e-4,1e5)",
+            "1e-3",
+        ],
         # "env_kwargs.use_workspace_limits": [True, False],
-        # "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

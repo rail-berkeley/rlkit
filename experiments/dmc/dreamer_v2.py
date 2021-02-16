@@ -104,8 +104,6 @@ if __name__ == "__main__":
             # "hopper_hop",
             # "cheetah_run",
         ],
-        # "model_kwargs.deterministic_state_size": [200, 400],
-        # "model_kwargs.stochastic_state_size": [50, 60],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
