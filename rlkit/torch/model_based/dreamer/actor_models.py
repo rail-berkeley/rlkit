@@ -171,9 +171,10 @@ class ActorModel(Mlp):
 class ConditionalActorModel(torch.nn.Module):
     def __init__(
         self,
-        hidden_sizes,
+        hidden_size,
         obs_dim,
         env,
+        num_layers=4,
         discrete_continuous_dist=True,
         discrete_action_dim=0,
         continuous_action_dim=0,
@@ -183,11 +184,12 @@ class ConditionalActorModel(torch.nn.Module):
         mean_scale=5.0,
         use_tanh_normal=True,
         use_per_primitive_actor=False,
+        dist="tanh_normal_dreamer_v1",
         **kwargs,
     ):
         super().__init__()
         self.discrete_actor = Mlp(
-            hidden_sizes,
+            [hidden_size] * num_layers,
             input_size=obs_dim,
             output_size=discrete_action_dim,
             hidden_activation=hidden_activation,
@@ -207,7 +209,7 @@ class ConditionalActorModel(torch.nn.Module):
                 else:
                     len_v = len(v)
                 net = Mlp(
-                    hidden_sizes,
+                    [hidden_size] * num_layers,
                     input_size=obs_dim,
                     output_size=len_v * 2,
                     hidden_activation=hidden_activation,
@@ -217,7 +219,7 @@ class ConditionalActorModel(torch.nn.Module):
                 self.continuous_actor[k] = net
         else:
             self.continuous_actor = Mlp(
-                hidden_sizes,
+                [hidden_size] * num_layers,
                 input_size=obs_dim + discrete_action_dim,
                 output_size=continuous_action_dim * 2,
                 hidden_activation=hidden_activation,
@@ -251,6 +253,7 @@ class ConditionalActorModel(torch.nn.Module):
             self._min_std,
             self.use_per_primitive_actor,
             self.env,
+            dist="tanh_normal_dreamer_v1",
         )
         return dist
 
@@ -402,6 +405,7 @@ class SplitConditionalDist:
         min_std,
         use_per_primitive_actor,
         env,
+        dist,
     ):
         self._dist1 = dist1
         self.h = h
@@ -413,6 +417,7 @@ class SplitConditionalDist:
         self._min_std = min_std
         self.use_per_primitive_actor = use_per_primitive_actor
         self.env = env
+        self._dist = dist
 
     def compute_continuous_dist(self, discrete_action):
         if self.use_per_primitive_actor:
@@ -434,15 +439,47 @@ class SplitConditionalDist:
             h = torch.cat((self.h, discrete_action), dim=1)
             cont_output = self.continuous_actor(h)
             mean, std = cont_output.split(self.continuous_action_dim, -1)
-        if self.use_tanh_normal:
-            mean = self._mean_scale * torch.tanh(mean / self._mean_scale)
-        std = F.softplus(std + self.raw_init_std) + self._min_std
+        continuous_action_mean = mean
+        continuous_action_std = std
+        raw_init_std = self.raw_init_std
+        if self._dist == "tanh_normal_dreamer_v1":
+            continuous_action_mean = self._mean_scale * torch.tanh(
+                continuous_action_mean / self._mean_scale
+            )
+            continuous_action_std = (
+                F.softplus(continuous_action_std + raw_init_std) + self._min_std
+            )
 
-        dist2 = Normal(mean, std)
-        if self.use_tanh_normal:
+            dist2 = Normal(continuous_action_mean, continuous_action_std)
             dist2 = TransformedDistribution(dist2, TanhBijector())
-        dist2 = Independent(dist2, 1)
-        dist2 = SampleDist(dist2)
+            dist2 = Independent(dist2, 1)
+            dist2 = SampleDist(dist2)
+        elif self._dist == "tanh_normal":
+            continuous_action_mean = torch.tanh(continuous_action_mean)
+            continuous_action_std = (
+                F.softplus(continuous_action_std + self._init_std) + self._min_std
+            )
+            dist2 = Normal(continuous_action_mean, continuous_action_std)
+            dist2 = TransformedDistribution(dist2, TanhBijector())
+            dist2 = Independent(dist2, 1)
+            dist2 = SampleDist(dist2)
+        elif self._dist == "tanh_normal_5":
+            continuous_action_mean = 5 * torch.tanh(continuous_action_mean / 5)
+            continuous_action_std = F.softplus(continuous_action_std + 5) + 5
+
+            dist2 = Normal(continuous_action_mean, continuous_action_std)
+            dist2 = TransformedDistribution(dist2, TanhBijector())
+            dist2 = Independent(dist2, 1)
+            dist2 = SampleDist(dist2)
+        elif self._dist == "trunc_normal":
+            continuous_action_mean = torch.tanh(continuous_action_mean)
+            continuous_action_std = (
+                2 * torch.sigmoid(continuous_action_std / 2) + self._min_std
+            )
+            dist2 = SafeTruncatedNormal(
+                continuous_action_mean, continuous_action_std, -1, 1
+            )
+            dist2 = Independent(dist2, 1)
         return dist2
 
     def rsample(self):

@@ -71,14 +71,12 @@ def Advanced_UCT_search(
     one_step_ensemble,
     actor,
     state,
-    max_steps,
     num_primitives,
     vf,
     mcts_iterations=50,
     evaluation=False,
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
-    discount=1.0,
     dirichlet_alpha=0.03,
     progressive_widening_constant=0.0,
     use_dirichlet_exploration_noise=False,
@@ -99,9 +97,9 @@ def Advanced_UCT_search(
         actor,
         state,
         num_primitives,
-        max_steps,
         reward=0,
         prior=0,
+        discount=1,
         step_count=0,
         parent=None,
     )
@@ -127,7 +125,6 @@ def Advanced_UCT_search(
             extrinsic_reward_scale,
             evaluation,
             min_max_stats,
-            discount,
             normalize_q,
             use_reward_discount_value,
             c1,
@@ -143,24 +140,20 @@ def Advanced_UCT_search(
             states = wm.get_feat(leaf.state)
             value = vf(states)[0].item()
             leaf.value = value
-        if leaf.step_count < max_steps:
-            leaf.expand(
-                intrinsic_reward_scale=intrinsic_reward_scale,
-                extrinsic_reward_scale=extrinsic_reward_scale,
-                evaluation=evaluation,
-                use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
-                dirichlet_alpha=dirichlet_alpha,
-                exploration_fraction=exploration_fraction,
-                num_actions_per_primitive=num_actions_per_primitive,
-            )
-        else:
-            leaf.is_expanded = True  # for terminal states
-            leaf.is_terminal = True  # for terminal states
-        leaf.backup(leaf.value, discount, min_max_stats, use_reward_discount_value)
+        leaf.expand(
+            intrinsic_reward_scale=intrinsic_reward_scale,
+            extrinsic_reward_scale=extrinsic_reward_scale,
+            evaluation=evaluation,
+            use_dirichlet_exploration_noise=use_dirichlet_exploration_noise,
+            dirichlet_alpha=dirichlet_alpha,
+            exploration_fraction=exploration_fraction,
+            num_actions_per_primitive=num_actions_per_primitive,
+        )
+        leaf.backup(leaf.value, min_max_stats, use_reward_discount_value)
         ctr += 1
         if return_open_loop_plan and ctr >= mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
-            if path.shape[0] == max_steps:
+            if path.shape[0] == 5:
                 return path
     return compute_best_action(root, use_max_visit_count)[0]
 
@@ -205,11 +198,10 @@ def generate_full_actions(
             feat,
         )
         action_dist = actor(action_input)
-        if evaluation:
-            continuous_action = action_dist.sample().float()
-        else:
+        continuous_action = action_dist.mode().float()
+        if not evaluation:
             continuous_action = actor.compute_exploration_action(
-                action_dist.sample(),
+                continuous_action,
                 0.3,
             ).float()
         actions = torch.cat(
@@ -224,11 +216,10 @@ def generate_full_actions(
         action_input = feat
         action_dist = actor(action_input)
         cont_dist = action_dist.compute_continuous_dist(discrete_actions)
-        if evaluation:
-            continuous_action = cont_dist.sample().float()
-        else:
+        continuous_action = cont_dist.mode().float()
+        if not evaluation:
             continuous_action = actor.compute_continuous_exploration_action(
-                cont_dist.sample(), 0.3
+                continuous_action, 0.3
             ).float()
         actions = torch.cat(
             (
@@ -325,7 +316,8 @@ def step_wm(
         priors = priors[indices]
         r = r[indices]
         new_state = new_state_sorted
-    return new_state, action, priors, r
+    discounts = wm.pred_discount(wm.get_feat(new_state)).flatten()
+    return new_state, action, priors, r, discounts
 
 
 class UCTNode:
@@ -336,9 +328,9 @@ class UCTNode:
         actor,
         state,
         num_primitives,
-        max_steps,
         reward,
         prior,
+        discount,
         step_count=0,
         parent=None,
     ):
@@ -347,10 +339,10 @@ class UCTNode:
         self.actor = actor
         self.state = state
         self.reward = reward
+        self.discount = discount
         self.parent = parent
         self.num_primitives = num_primitives
         self.step_count = step_count
-        self.max_steps = max_steps
         self.is_expanded = False
         self.children = {}
         self.total_value = 0
@@ -366,10 +358,10 @@ class UCTNode:
             value = 0
         return value
 
-    def Q(self, min_max_stats, discount, normalize_q, use_reward_discount_value):
+    def Q(self, min_max_stats, normalize_q, use_reward_discount_value):
         q = self.average_value()
         if use_reward_discount_value:
-            q = self.reward + discount * q
+            q = self.reward + self.discount * q
         if normalize_q:
             return min_max_stats.normalize(q)
         else:
@@ -385,7 +377,6 @@ class UCTNode:
     def score(
         self,
         min_max_stats,
-        discount,
         normalize_q,
         use_reward_discount_value,
         c1,
@@ -393,14 +384,13 @@ class UCTNode:
         use_muzero_uct,
         prior,
     ):
-        q = self.Q(min_max_stats, discount, normalize_q, use_reward_discount_value)
+        q = self.Q(min_max_stats, normalize_q, use_reward_discount_value)
         u = self.U(c1, c2, use_muzero_uct, prior)
         return q + u
 
     def best_child(
         self,
         min_max_stats,
-        discount,
         normalize_q,
         use_reward_discount_value,
         c1,
@@ -419,7 +409,7 @@ class UCTNode:
         assert np.allclose(priors.sum(), 1)
         for node in self.children.values():
             if use_reward_discount_value:
-                min_max_stats.update(node.reward + discount * node.average_value())
+                min_max_stats.update(node.reward + node.discount * node.average_value())
             else:
                 min_max_stats.update(node.average_value())
             if use_puct:
@@ -436,7 +426,6 @@ class UCTNode:
 
             score = node.score(
                 min_max_stats,
-                discount,
                 normalize_q,
                 use_reward_discount_value,
                 c1,
@@ -456,7 +445,6 @@ class UCTNode:
         extrinsic_reward_scale,
         evaluation,
         min_max_stats,
-        discount,
         normalize_q,
         use_reward_discount_value,
         c1,
@@ -483,7 +471,6 @@ class UCTNode:
 
             current = current.best_child(
                 min_max_stats,
-                discount,
                 normalize_q,
                 use_reward_discount_value,
                 c1,
@@ -517,7 +504,7 @@ class UCTNode:
 
             sample new actions from continuous policy or from action space bounds and scale to -1,1
             """
-            child_states, actions, priors, rewards = step_wm(
+            child_states, actions, priors, rewards, discounts = step_wm(
                 self,
                 self.wm,
                 self.state,
@@ -535,6 +522,7 @@ class UCTNode:
                 actions,
                 priors,
                 rewards,
+                discounts,
                 use_dirichlet_exploration_noise,
                 dirichlet_alpha,
                 exploration_fraction,
@@ -550,7 +538,7 @@ class UCTNode:
         exploration_fraction,
         num_actions_per_primitive=-1,
     ):
-        child_states, actions, priors, rewards = step_wm(
+        child_states, actions, priors, rewards, discounts = step_wm(
             self,
             self.wm,
             self.state,
@@ -567,6 +555,7 @@ class UCTNode:
             actions,
             priors,
             rewards,
+            discounts,
             use_dirichlet_exploration_noise,
             dirichlet_alpha,
             exploration_fraction,
@@ -578,6 +567,7 @@ class UCTNode:
         actions,
         priors,
         rewards,
+        discounts,
         use_dirichlet_exploration_noise,
         dirichlet_alpha,
         exploration_fraction,
@@ -595,13 +585,14 @@ class UCTNode:
                 actions[i, :],
                 priors[i].item(),
                 rewards[i].item(),
+                discounts[i].item(),
             )
             if self.parent is None and use_dirichlet_exploration_noise:
                 node.exploration_fraction = exploration_fraction
                 node.dirichlet_noise = noise[i]
         self.is_expanded = True
 
-    def add_child(self, state, action, prior, reward):
+    def add_child(self, state, action, prior, reward, discount):
         key = tuple(ptu.get_numpy(action).tolist())
         node = UCTNode(
             self.wm,
@@ -609,25 +600,25 @@ class UCTNode:
             self.actor,
             state,
             self.num_primitives,
-            self.max_steps,
             reward,
             prior,
+            discount,
             step_count=self.step_count + 1,
             parent=self,
         )
         self.children[key] = node
         return node
 
-    def backup(self, value, discount, min_max_stats, use_reward_discount_value):
+    def backup(self, value, min_max_stats, use_reward_discount_value):
         current = self
         while current is not None:
             current.number_visits += 1
             current.total_value += value
             if use_reward_discount_value:
                 min_max_stats.update(
-                    current.reward + discount * current.average_value()
+                    current.reward + current.discount * current.average_value()
                 )
-                value = current.reward + discount * value
+                value = current.reward + current.discount * value
             else:
                 min_max_stats.update(current.average_value())
             current = current.parent
@@ -647,12 +638,12 @@ if __name__ == "__main__":
     ).to(ptu.device)
     one_step_ensemble = OneStepEnsembleModel(
         action_dim=env.action_space.low.size,
-        deterministic_state_size=400,
+        deterministic_state_size=200,
+        stochastic_state_size=50,
         embedding_size=1024,
         num_models=5,
         hidden_size=400,
         num_layers=4,
-        output_embeddings=False,
     ).to(ptu.device)
     actor = ConditionalContinuousActorModel(
         [400] * 4,
@@ -690,7 +681,6 @@ if __name__ == "__main__":
             actor,
             state,
             mcts_iterations=100,
-            max_steps=env.max_steps,
             num_primitives=env.num_primitives,
             vf=vf,
             evaluation=True,
@@ -703,7 +693,7 @@ if __name__ == "__main__":
             use_reward_discount_value=True,
             use_muzero_uct=False,
             use_max_visit_count=True,
-            return_open_loop_plan=True,
+            return_open_loop_plan=False,
             dirichlet_alpha=10,
             num_actions_per_primitive=100,
         )
@@ -716,7 +706,6 @@ if __name__ == "__main__":
     #     actor,
     #     (state, 0),
     #     10000,
-    #     env.max_steps,
     #     env.num_primitives,
     # )[0]
     # print(action)

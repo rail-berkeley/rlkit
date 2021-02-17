@@ -16,9 +16,7 @@ def preprocess_variant(variant, debug):
         )
         variant["trainer_kwargs"]["image_goals_path"] = d[variant["env_class"]]
     if variant.get("use_mcts_policy", False):
-        discount = variant["trainer_kwargs"]["discount"]
         randomly_sample_discrete_actions = variant["randomly_sample_discrete_actions"]
-        variant["mcts_kwargs"]["discount"] = discount
 
         variant["expl_policy_kwargs"][
             "randomly_sample_discrete_actions"

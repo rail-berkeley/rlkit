@@ -53,6 +53,9 @@ def run_experiment(variant):
         StateConcatObsWorldModel,
         WorldModel,
     )
+    from rlkit.torch.model_based.plan2explore.mcts_policy import (
+        HybridAdvancedMCTSPolicy,
+    )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     env_class = variant["env_class"]
@@ -158,20 +161,24 @@ def run_experiment(variant):
         )
 
     if variant.get("use_mcts_policy", False):
-        expl_policy = DiscreteMCTSPolicy(
+        expl_policy = HybridAdvancedMCTSPolicy(
             world_model,
-            eval_envs[0].max_steps,
             eval_envs[0].num_primitives,
             eval_envs[0].action_space.low.size,
             eval_envs[0].action_space,
+            actor,
+            None,
+            vf,
             **variant["expl_policy_kwargs"],
         )
-        eval_policy = DiscreteMCTSPolicy(
+        eval_policy = HybridAdvancedMCTSPolicy(
             world_model,
-            eval_envs[0].max_steps,
             eval_envs[0].num_primitives,
             eval_envs[0].action_space.low.size,
             eval_envs[0].action_space,
+            actor,
+            None,
+            vf,
             **variant["eval_policy_kwargs"],
         )
     else:

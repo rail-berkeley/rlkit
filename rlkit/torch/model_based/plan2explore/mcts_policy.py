@@ -148,7 +148,6 @@ class HybridAdvancedMCTSPolicy(Policy):
     def __init__(
         self,
         world_model,
-        max_steps,
         num_primitives,
         action_dim,
         action_space,
@@ -168,7 +167,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         )
         actions = ptu.from_numpy(actions)
         self.world_model.actions = actions
-        self.max_steps = max_steps
         self.num_primitives = num_primitives
         self.action_dim = action_dim
         self.actor = actor
@@ -203,7 +201,6 @@ class HybridAdvancedMCTSPolicy(Policy):
                     self.one_step_ensemble,
                     self.actor,
                     st,
-                    self.world_model.env.max_steps - self.ctr,
                     self.world_model.env.num_primitives,
                     self.vf,
                     **self.mcts_kwargs,
