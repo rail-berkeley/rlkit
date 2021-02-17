@@ -39,7 +39,7 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="DreamerV1",
+        algorithm="Dreamer",
         version="normal",
         replay_buffer_size=int(1e3),
         algorithm_kwargs=algorithm_kwargs,

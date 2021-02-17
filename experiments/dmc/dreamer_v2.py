@@ -86,7 +86,6 @@ if __name__ == "__main__":
         ),
         num_eval_envs=1,
         expl_amount=0.0,
-        dreamer_class="dreamerv2",
     )
 
     search_space = {
