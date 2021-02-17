@@ -28,9 +28,9 @@ def preprocess_variant(variant, debug):
         variant["expl_policy_kwargs"]["mcts_kwargs"]["evaluation"] = False
         variant["eval_policy_kwargs"]["mcts_kwargs"]["evaluation"] = True
         if variant["mcts_algorithm"]:
-            variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
-                "randomly_sample_discrete_actions"
-            ]
+            # variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
+            # "randomly_sample_discrete_actions"
+            # ]
             variant["trainer_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"]
             variant["trainer_kwargs"]["mcts_kwargs"]["evaluation"] = False
 

@@ -256,11 +256,12 @@ def experiment(variant):
         use_batch_length=True,
         batch_length=50,
     )
-    if variant.get("dreamer_class", "dreamerv1") == "dreamerv2":
-        dreamer_class = DreamerV2Trainer
+    trainer_class_name = variant.get("algorithm", "DreamerV2")
+    if trainer_class_name == "DreamerV2":
+        trainer_class = DreamerV2Trainer
     else:
-        dreamer_class = DreamerTrainer
-    trainer = dreamer_class(
+        trainer_class = DreamerTrainer
+    trainer = trainer_class(
         env=eval_env,
         world_model=world_model,
         actor=actor,

@@ -42,16 +42,19 @@ def run_experiment(variant):
         DreamerPolicy,
     )
     from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
+    from rlkit.torch.model_based.dreamer.dreamer_v2_mcts import DreamerV2MCTSTrainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-    from rlkit.torch.model_based.dreamer.mcts_policy import DiscreteMCTSPolicy
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
         StateConcatObsWorldModel,
         WorldModel,
+    )
+    from rlkit.torch.model_based.plan2explore.actor_models import (
+        ConditionalContinuousActorModel,
     )
     from rlkit.torch.model_based.plan2explore.mcts_policy import (
         HybridAdvancedMCTSPolicy,
@@ -97,10 +100,12 @@ def run_experiment(variant):
     action_dim = expl_env.action_space.low.size
     num_primitives = eval_envs[0].num_primitives
     max_arg_len = eval_envs[0].max_arg_len
+    actor_model_class_name = variant.get("actor_model_class", "actor_model")
 
     if (
         variant["actor_kwargs"]["discrete_continuous_dist"]
         or variant["env_kwargs"]["fixed_schema"]
+        or actor_model_class_name == "continuous_conditional_actor_model"
     ):
         continuous_action_dim = max_arg_len
     else:
@@ -117,10 +122,11 @@ def run_experiment(variant):
             ]
     else:
         world_model_class = WorldModel
-
-    if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
+    if actor_model_class_name == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
-    else:
+    elif actor_model_class_name == "continuous_conditional_actor_model":
+        actor_model_class = ConditionalContinuousActorModel
+    elif actor_model_class_name == "actor_model":
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
         data = torch.load(variant["models_path"] + variant["pkl_file_name"])
@@ -233,8 +239,11 @@ def run_experiment(variant):
         action_dim,
         replace=False,
     )
-    if variant.get("algorithm", "dreamer") == "dreamer_v2":
+    trainer_class_name = variant.get("algorithm", "DreamerV2")
+    if trainer_class_name == "DreamerV2":
         trainer_class = DreamerV2Trainer
+    elif trainer_class_name == "DreamerV2MCTS":
+        trainer_class = DreamerV2MCTSTrainer
     else:
         trainer_class = DreamerTrainer
     trainer = trainer_class(
