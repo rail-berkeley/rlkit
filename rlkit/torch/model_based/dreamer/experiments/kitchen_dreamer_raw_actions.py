@@ -259,7 +259,7 @@ def run_experiment(variant):
         trainer_class = DreamerV2Trainer
     else:
         trainer_class = DreamerTrainer
-    trainer = trainer_class_name(
+    trainer = trainer_class(
         eval_env,
         actor,
         vf,
