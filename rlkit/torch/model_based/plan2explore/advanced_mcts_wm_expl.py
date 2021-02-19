@@ -88,6 +88,7 @@ def Advanced_UCT_search(
     return_open_loop_plan=False,
     progressive_widening_type="all",
     num_actions_per_primitive=-1,
+    num_output_actions=1,
 ):
     global value_fn
     value_fn = vf
@@ -126,7 +127,6 @@ def Advanced_UCT_search(
             evaluation,
             min_max_stats,
             normalize_q,
-            use_reward_discount_value,
             c1,
             c2,
             use_puct,
@@ -153,35 +153,30 @@ def Advanced_UCT_search(
         ctr += 1
         if return_open_loop_plan and ctr >= mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
-            if path.shape[0] == 5:
+            if path.shape[0] >= 5:
                 return path
-    return compute_best_action(root, use_max_visit_count)[0]
+    return compute_best_action(root, use_max_visit_count, num_output_actions)[0]
 
 
 def compute_best_path(root, use_max_visit_count):
     output_actions = []
     cur = root
     while cur.children != {}:
-        action, cur = compute_best_action(cur, use_max_visit_count)
+        action, cur = compute_best_action(cur, use_max_visit_count, num_actions=1)
         output_actions.append(action)
     actions = np.concatenate(output_actions, 0)
     return actions
 
 
-def compute_best_action(node, use_max_visit_count):
-    max_val = -np.inf
-    max_a = None
-    max_child = None
-    for a, child in node.children.items():
-        if use_max_visit_count:
-            val = child.number_visits
-        else:
-            val = child.average_value()
-        if val >= max_val:
-            max_val = val
-            max_a = a
-            max_child = child
-    return np.array(max_a).reshape(1, -1), max_child
+def compute_best_action(node, use_max_visit_count, num_actions=1):
+    action_values = list([(a, child) for a, child in node.children.items()])
+    if use_max_visit_count:
+        action_values.sort(reverse=True, key=lambda x: x[1].number_visits)
+    else:
+        action_values.sort(reverse=True, key=lambda x: x[1].average_value())
+    max_a = [action_values[i][0] for i in range(num_actions)]
+    max_child = [action_values[i][1] for i in range(num_actions)]
+    return np.concatenate(max_a).reshape(num_actions, -1), max_child[0]
 
 
 def generate_full_actions(
@@ -294,14 +289,13 @@ def step_wm(
     new_state = wm.action_step(state_n, action)
     deter_state = state_n["deter"]
     r = ptu.zeros(deter_state.shape[0])
-    if intrinsic_reward_scale > 0.0:
-        r += (
-            compute_exploration_reward(one_step_ensemble, deter_state, action).flatten()
-            * intrinsic_reward_scale
-        )
+    # if intrinsic_reward_scale > 0.0:
+    #     r += (
+    #         compute_exploration_reward(one_step_ensemble, deter_state, action).flatten()
+    #         * intrinsic_reward_scale
+    #     )
     if extrinsic_reward_scale > 0.0:
         r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
-
     if num_actions_per_primitive > 0:
         values = value_fn(wm.get_feat(new_state)).flatten()
         values, indices = torch.sort(values, descending=True)
@@ -358,10 +352,8 @@ class UCTNode:
             value = 0
         return value
 
-    def Q(self, min_max_stats, normalize_q, use_reward_discount_value):
+    def Q(self, min_max_stats, normalize_q):
         q = self.average_value()
-        if use_reward_discount_value:
-            q = self.reward + self.discount * q
         if normalize_q:
             return min_max_stats.normalize(q)
         else:
@@ -378,13 +370,12 @@ class UCTNode:
         self,
         min_max_stats,
         normalize_q,
-        use_reward_discount_value,
         c1,
         c2,
         use_muzero_uct,
         prior,
     ):
-        q = self.Q(min_max_stats, normalize_q, use_reward_discount_value)
+        q = self.Q(min_max_stats, normalize_q)
         u = self.U(c1, c2, use_muzero_uct, prior)
         return q + u
 
@@ -392,7 +383,6 @@ class UCTNode:
         self,
         min_max_stats,
         normalize_q,
-        use_reward_discount_value,
         c1,
         c2,
         use_puct,
@@ -401,24 +391,22 @@ class UCTNode:
     ):
         max_score = -np.inf
         best_node = None
-        priors = np.array([node.prior for node in self.children.values()])
+        nodes = list(self.children.values())
+        priors = np.array([node.prior for node in nodes])
         max_prior = priors.max()
         priors = priors - max_prior
-        normalization = np.exp(priors).sum()
-        priors = np.exp(priors) / np.exp(priors).sum()
+        exp_priors = np.exp(priors)
+        normalization = exp_priors.sum()
+        priors = exp_priors / normalization
         assert np.allclose(priors.sum(), 1)
-        for node in self.children.values():
-            if use_reward_discount_value:
-                min_max_stats.update(node.reward + node.discount * node.average_value())
-            else:
-                min_max_stats.update(node.average_value())
-            if use_puct:
-                prior = np.exp(node.prior - max_prior) / normalization
-            else:
-                prior = 1.0
+        for prior, node in zip(priors, nodes):
+            if not use_puct:
+                prior = 1.0  # dont want to scale q wrt to u
             if self.parent is None and use_dirichlet_exploration_noise:  # must be root
                 if not use_puct:
-                    prior = prior / len(self.children)
+                    prior = prior / len(
+                        self.children
+                    )  # to sum prior with dirichlet noise - must be valid probability
                 prior = (
                     prior * (1 - node.exploration_fraction)
                     + node.dirichlet_noise * node.exploration_fraction
@@ -427,7 +415,6 @@ class UCTNode:
             score = node.score(
                 min_max_stats,
                 normalize_q,
-                use_reward_discount_value,
                 c1,
                 c2,
                 use_muzero_uct,
@@ -446,7 +433,6 @@ class UCTNode:
         evaluation,
         min_max_stats,
         normalize_q,
-        use_reward_discount_value,
         c1,
         c2,
         use_puct,
@@ -472,7 +458,6 @@ class UCTNode:
             current = current.best_child(
                 min_max_stats,
                 normalize_q,
-                use_reward_discount_value,
                 c1,
                 c2,
                 use_puct,
@@ -575,7 +560,6 @@ class UCTNode:
         if self.parent is None and use_dirichlet_exploration_noise:
             # therefore self must be the root
             noise = np.random.dirichlet([dirichlet_alpha] * actions.shape[0])
-            frac = exploration_fraction
         for i in range(actions.shape[0]):
             child_state = {}
             for k, v in child_states.items():
@@ -613,14 +597,10 @@ class UCTNode:
         current = self
         while current is not None:
             current.number_visits += 1
-            current.total_value += value
             if use_reward_discount_value:
-                min_max_stats.update(
-                    current.reward + current.discount * current.average_value()
-                )
                 value = current.reward + current.discount * value
-            else:
-                min_max_stats.update(current.average_value())
+            current.total_value += value
+            min_max_stats.update(current.average_value())
             current = current.parent
 
 

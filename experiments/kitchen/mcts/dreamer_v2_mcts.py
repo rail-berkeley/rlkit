@@ -30,15 +30,15 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=15,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=12,  # 2*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=100,  # 1000//(2*5)
-            num_trains_per_train_loop=2,  # 200//100
+            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40,  # 1000//(5*5)
+            num_trains_per_train_loop=5,  # 200//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -103,7 +103,7 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=2,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         use_mcts_policy=True,
@@ -120,7 +120,6 @@ if __name__ == "__main__":
             use_max_visit_count=False,
             normalize_q=False,
             progressive_widening_type="all",
-            num_actions_per_primitive=100,
             intrinsic_reward_scale=0.0,
             extrinsic_reward_scale=1.0,
         ),
@@ -133,14 +132,14 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
+            # "microwave",
             "kettle",
             "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
+        # "trainer_kwargs.discount": [0.99, 0.8],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
