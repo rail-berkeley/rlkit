@@ -30,15 +30,15 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
-            num_eval_steps_per_epoch=30,
+            num_epochs=6,
+            num_eval_steps_per_epoch=15,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=12,  # 2*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=100,  # 1000//(2*5)
-            num_trains_per_train_loop=2,  # 200//100
+            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40,  # 1000//(5*5)
+            num_trains_per_train_loop=5,  # 200//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -103,14 +103,14 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=2,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         use_mcts_policy=True,
         mcts_algorithm=False,
-        actor_model_class="conditional_actor_model",
+        # actor_model_class="conditional_actor_model",
         mcts_kwargs=dict(
-            mcts_iterations=100,
+            mcts_iterations=50,
             dirichlet_alpha=10,
             progressive_widening_constant=0.0,
             use_dirichlet_exploration_noise=True,
@@ -120,27 +120,32 @@ if __name__ == "__main__":
             use_max_visit_count=False,
             normalize_q=False,
             progressive_widening_type="all",
-            num_actions_per_primitive=100,
             intrinsic_reward_scale=0.0,
             extrinsic_reward_scale=1.0,
+            num_actions_per_primitive=100,
         ),
         expl_policy_kwargs=dict(),
-        eval_policy_kwargs=dict(
-            randomly_sample_discrete_actions=False,
-        ),
-        randomly_sample_discrete_actions=False,
+        eval_policy_kwargs=dict(),
     )
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
+            # "microwave",
+            # "kettle",
             "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
+        # "trainer_kwargs.discount": [0.99, 0.8],
+        "mcts_kwargs.mcts_iterations": [50, 100],
+        # "mcts_kwargs.dirichlet_alpha": [0.03, 1, 10],
+        # "mcts_kwargs.use_puct": [True, False],
+        # "mcts_kwargs.use_reward_discount_value": [True, False],
+        # "mcts_kwargs.use_muzero_uct": [True, False],
+        # "mcts_kwargs.use_max_visit_count": [True, False],
+        # "mcts_kwargs.normalize_q": [True, False],
+        # "mcts_kwargs.use_dirichlet_exploration_noise": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

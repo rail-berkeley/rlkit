@@ -13,7 +13,10 @@ from d4rl.kitchen.kitchen_envs import (
 )
 
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
+from rlkit.torch.model_based.dreamer.actor_models import (
+    ActorModel,
+    ConditionalActorModel,
+)
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 from rlkit.torch.model_based.dreamer.world_models import WorldModel
 from rlkit.torch.model_based.plan2explore.actor_models import (
@@ -105,6 +108,7 @@ def Advanced_UCT_search(
         parent=None,
     )
     exploration_fraction = 0.25
+    root.number_visits += 1
     root.expand(
         intrinsic_reward_scale=intrinsic_reward_scale,
         extrinsic_reward_scale=extrinsic_reward_scale,
@@ -136,10 +140,12 @@ def Advanced_UCT_search(
             exploration_fraction,
             progressive_widening_type,
         )
+
         if not leaf.value:
             states = wm.get_feat(leaf.state)
             value = vf(states)[0].item()
             leaf.value = value
+        leaf.backup(leaf.value, min_max_stats, use_reward_discount_value)
         leaf.expand(
             intrinsic_reward_scale=intrinsic_reward_scale,
             extrinsic_reward_scale=extrinsic_reward_scale,
@@ -149,7 +155,6 @@ def Advanced_UCT_search(
             exploration_fraction=exploration_fraction,
             num_actions_per_primitive=num_actions_per_primitive,
         )
-        leaf.backup(leaf.value, min_max_stats, use_reward_discount_value)
         ctr += 1
         if return_open_loop_plan and ctr >= mcts_iterations:
             path = compute_best_path(root, use_max_visit_count)
@@ -207,6 +212,23 @@ def generate_full_actions(
             -1,
         )
         priors = action_dist.log_prob(continuous_action)
+    elif type(actor) == ActorModel:
+        action_input = feat
+        action_dist = actor(action_input)
+        actions = action_dist.mode().float()
+        if not evaluation:
+            actions = actor.compute_exploration_action(
+                actions,
+                0.3,
+            ).float()
+        actions = torch.cat(
+            (
+                discrete_actions,
+                actions[:, 12:],
+            ),
+            -1,
+        )
+        priors = action_dist.log_prob(actions)
     elif type(actor) == ConditionalActorModel:
         action_input = feat
         action_dist = actor(action_input)
@@ -253,7 +275,7 @@ def step_wm(
     evaluation=False,
     intrinsic_reward_scale=1.0,
     extrinsic_reward_scale=0.0,
-    actions_type="all",  # max_prior, max_value
+    actions_type="all",  # or max_prior, max_value
     num_actions_per_primitive=-1,
 ):
 
@@ -399,9 +421,9 @@ class UCTNode:
         normalization = exp_priors.sum()
         priors = exp_priors / normalization
         assert np.allclose(priors.sum(), 1)
-        for prior, node in zip(priors, nodes):
-            if not use_puct:
-                prior = 1.0  # dont want to scale q wrt to u
+        if not use_puct:
+            priors = np.ones(len(priors))
+        for i, (prior, node) in enumerate(zip(priors, nodes)):
             if self.parent is None and use_dirichlet_exploration_noise:  # must be root
                 if not use_puct:
                     prior = prior / len(
@@ -411,6 +433,7 @@ class UCTNode:
                     prior * (1 - node.exploration_fraction)
                     + node.dirichlet_noise * node.exploration_fraction
                 )
+                priors[i] = prior
 
             score = node.score(
                 min_max_stats,
@@ -625,21 +648,22 @@ if __name__ == "__main__":
         hidden_size=400,
         num_layers=4,
     ).to(ptu.device)
-    actor = ConditionalContinuousActorModel(
-        [400] * 4,
-        wm.feature_size,
-        env,
-        discrete_action_dim=env.num_primitives,
-        continuous_action_dim=env.max_arg_len,
-    ).to(ptu.device)
-    # actor = ConditionalActorModel(
+    # actor = ConditionalContinuousActorModel(
     #     [400] * 4,
     #     wm.feature_size,
     #     env,
-    #     discrete_continuous_dist=True,
     #     discrete_action_dim=env.num_primitives,
     #     continuous_action_dim=env.max_arg_len,
     # ).to(ptu.device)
+    actor = ConditionalActorModel(
+        400,
+        wm.feature_size,
+        env,
+        num_layers=2,
+        discrete_continuous_dist=True,
+        discrete_action_dim=env.num_primitives,
+        continuous_action_dim=env.max_arg_len,
+    ).to(ptu.device)
     state = wm.initial(1)
 
     vf = Mlp(
@@ -669,10 +693,10 @@ if __name__ == "__main__":
             progressive_widening_constant=0,
             use_dirichlet_exploration_noise=True,
             use_puct=True,
-            normalize_q=False,
+            normalize_q=True,
             use_reward_discount_value=True,
             use_muzero_uct=False,
-            use_max_visit_count=True,
+            use_max_visit_count=False,
             return_open_loop_plan=False,
             dirichlet_alpha=10,
             num_actions_per_primitive=100,

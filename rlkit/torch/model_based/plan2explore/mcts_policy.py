@@ -155,7 +155,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         one_step_ensemble,
         vf,
         mcts_kwargs,
-        randomly_sample_discrete_actions=False,
     ):
         self.world_model = world_model
         cont_action = action_space.low[num_primitives:]
@@ -171,7 +170,6 @@ class HybridAdvancedMCTSPolicy(Policy):
         self.action_dim = action_dim
         self.actor = actor
         self.one_step_ensemble = one_step_ensemble
-        self.randomly_sample_discrete_actions = randomly_sample_discrete_actions
         self.vf = vf
         self.mcts_kwargs = mcts_kwargs
 
