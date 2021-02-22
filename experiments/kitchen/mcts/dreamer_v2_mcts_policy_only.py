@@ -30,7 +30,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=6,
+            num_epochs=50,
             num_eval_steps_per_epoch=15,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -110,6 +110,7 @@ if __name__ == "__main__":
         mcts_algorithm=False,
         # actor_model_class="conditional_actor_model",
         mcts_kwargs=dict(
+            # mcts_iterations=100,
             mcts_iterations=50,
             dirichlet_alpha=10,
             progressive_widening_constant=0.0,
@@ -130,22 +131,22 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "microwave",
+            "microwave",
             # "kettle",
-            "slide_cabinet",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            # "slide_cabinet",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
-        # "trainer_kwargs.discount": [0.99, 0.8],
+        "trainer_kwargs.discount": [0.99, 0.8],
         "mcts_kwargs.mcts_iterations": [50, 100],
         # "mcts_kwargs.dirichlet_alpha": [0.03, 1, 10],
-        # "mcts_kwargs.use_puct": [True, False],
-        # "mcts_kwargs.use_reward_discount_value": [True, False],
-        # "mcts_kwargs.use_muzero_uct": [True, False],
-        # "mcts_kwargs.use_max_visit_count": [True, False],
-        # "mcts_kwargs.normalize_q": [True, False],
-        # "mcts_kwargs.use_dirichlet_exploration_noise": [True, False],
+        "mcts_kwargs.use_puct": [True],
+        "mcts_kwargs.use_reward_discount_value": [False],
+        "mcts_kwargs.use_muzero_uct": [False],
+        "mcts_kwargs.use_max_visit_count": [False],
+        "mcts_kwargs.normalize_q": [False],
+        "mcts_kwargs.use_dirichlet_exploration_noise": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
