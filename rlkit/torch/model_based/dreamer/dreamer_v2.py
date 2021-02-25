@@ -519,7 +519,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             vf_clipped_dist = self.world_model.get_dist(value_pred_clipped, 1)
             vf_losses_clipped = vf_clipped_dist.log_prob(imag_returns)
             weights = weights.squeeze(-1)
-            vf_loss = -(torch.max(vf_losses, vf_losses_clipped) * weights).mean()
+            vf_loss = (torch.max(-vf_losses, -vf_losses_clipped) * weights).mean()
         else:
             log_probs = value_dist.log_prob(imag_returns)
             weights = weights.squeeze(-1)

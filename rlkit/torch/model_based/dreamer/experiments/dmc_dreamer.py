@@ -181,8 +181,7 @@ def experiment(variant):
         **variant["model_kwargs"],
         env=eval_env,
     )
-    actor_model_class = ActorModel
-    actor = actor_model_class(
+    actor = ActorModel(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
