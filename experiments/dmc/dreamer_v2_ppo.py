@@ -85,7 +85,7 @@ if __name__ == "__main__":
             policy_gradient_loss_scale=1.0,
             use_ppo_loss=True,
             use_actor_value_optimizer=False,
-            advantage_normalization=False,
+            use_advantage_normalization=False,
             use_clipped_value_loss=False,
         ),
         num_eval_envs=1,
@@ -112,7 +112,7 @@ if __name__ == "__main__":
         # "trainer_kwargs.use_actor_value_optimizer": [True, False],
         # "trainer_kwargs.num_actor_value_updates": [1, 10, 25],
         # "trainer_kwargs.num_imagination_iterations": [1, 10, 25],
-        # "trainer_kwargs.advantage_normalization": [True, False],
+        # "trainer_kwargs.use_advantage_normalization": [True, False],
         # "trainer_kwargs.use_clipped_value_loss": [True, False],
         "actor_kwargs.dist": ["tanh_normal_dreamer_v1", "trunc_normal"],
     }
