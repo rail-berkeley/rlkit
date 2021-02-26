@@ -272,7 +272,7 @@ def run_experiment(variant):
         **variant["algorithm_kwargs"],
     )
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
-    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    # video_post_epoch_func(algorithm, -1)
+    video_post_epoch_func(algorithm, -1)

@@ -38,7 +38,7 @@ if __name__ == "__main__":
             batch_size=417,  # 417*6 = 2502
             num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40,  # 1000//(5*5)
-            num_trains_per_train_loop=5,  # 200//40
+            num_trains_per_train_loop=10,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -85,7 +85,7 @@ if __name__ == "__main__":
             opt_level="O1",
             optimizer_class="apex_adam",
             adam_eps=1e-5,
-            discount=0.99,
+            discount=0.8,
             lam=0.95,
             forward_kl=False,
             free_nats=1.0,
@@ -111,21 +111,16 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            # "kettle",
-            # "slide_cabinet",
+            "kettle",
+            "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
         ],
-        "trainer_kwargs.discount": [0.99, 0.8],
-        # "algorithm_kwargs.num_trains_per_train_loop": [5, 10, 25, 50],
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-4",
-            "linear(1e-3,1e-4,5e4)",
-            "linear(1e-3,1e-4,1e5)",
-            "1e-3",
         ],
-        # "env_kwargs.use_workspace_limits": [True, False],
+        "env_kwargs.use_workspace_limits": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

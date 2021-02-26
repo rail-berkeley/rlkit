@@ -27,7 +27,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=50,
+            num_epochs=25,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -107,14 +107,14 @@ if __name__ == "__main__":
             # "hopper_hop",
             # "cheetah_run",
         ],
-        # "trainer_kwargs.policy_gradient_loss_scale": [0.1, 0.9, 1.0],
-        "trainer_kwargs.use_ppo_loss": [True],
+        "trainer_kwargs.policy_gradient_loss_scale": [0.1, 0.9, 1.0],
+        "trainer_kwargs.use_ppo_loss": [True, False],
         # "trainer_kwargs.use_actor_value_optimizer": [True, False],
         # "trainer_kwargs.num_actor_value_updates": [1, 10, 25],
         # "trainer_kwargs.num_imagination_iterations": [1, 10, 25],
         # "trainer_kwargs.use_advantage_normalization": [True, False],
         # "trainer_kwargs.use_clipped_value_loss": [True, False],
-        "actor_kwargs.dist": ["tanh_normal_dreamer_v1", "trunc_normal"],
+        "actor_kwargs.dist": ["tanh_normal_dreamer_v1"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

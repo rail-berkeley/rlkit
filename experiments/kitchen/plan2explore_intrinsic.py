@@ -40,7 +40,8 @@ if __name__ == "__main__":
             batch_size=417,  # 417*6 = 2502
             num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40,  # 1000//(5*5)
-            num_trains_per_train_loop=5,  # 200//40
+            num_trains_per_train_loop=10,  # 200//40
+            # num_trains_per_train_loop=5,  # 200//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -93,7 +94,7 @@ if __name__ == "__main__":
             opt_level="O1",
             optimizer_class="apex_adam",
             adam_eps=1e-5,
-            discount=0.99,
+            discount=0.8,
             lam=0.95,
             forward_kl=False,
             free_nats=1.0,
@@ -123,19 +124,16 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
             # "slide_cabinet",
             # "kettle",
         ],
-        "one_step_ensemble_kwargs.inputs": ["feat", "deter", "stoch"],
-        "one_step_ensemble_kwargs.targets": ["feat", "deter", "stoch", "embed"],
+        "one_step_ensemble_kwargs.inputs": ["deter"],
+        "one_step_ensemble_kwargs.targets": ["stoch"],
         "trainer_kwargs.ensemble_training_states": [
-            "post_to_next_post",
-            "post_to_next_prior",
             "prior_to_next_post",
-            "prior_to_next_prior",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -155,8 +153,8 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
-                # snapshot_gap=100,
+                # snapshot_mode="none",
+                snapshot_gap=25,
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,

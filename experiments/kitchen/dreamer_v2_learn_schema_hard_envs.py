@@ -31,20 +31,13 @@ if __name__ == "__main__":
     else:
         algorithm_kwargs = dict(
             num_epochs=1000,
-            num_eval_steps_per_epoch=105,  # 5*21
-            min_num_steps_before_training=50,
+            min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=20,
-            batch_size=119,  # 125*21 = 2499
-            num_expl_steps_per_train_loop=105,  # 5*(20+1) one trajectory per vec env
-            num_train_loops_per_epoch=10,  # 1000//(5*20)
-            num_trains_per_train_loop=20,  # 200//10
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(125000),
         algorithm_kwargs=algorithm_kwargs,
         env_class="hinge_cabinet",
         env_kwargs=dict(
@@ -58,7 +51,6 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_steps=20,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -102,7 +94,6 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
             detach_rewards=False,
-            imagination_horizon=15,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
@@ -118,12 +109,41 @@ if __name__ == "__main__":
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-4",
         ],
+        "max_steps": [10, 15, 20],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        max_steps = variant["max_steps"]
+        replay_buffer_size = 2500000 // max_steps
+
+        num_eval_steps_per_epoch = 5 * (max_steps + 1)
+        max_path_length = max_steps
+        batch_size = 2500 // (max_steps + 1)
+        num_expl_steps_per_train_loop = 5 * (max_steps + 1)
+        num_train_loops_per_epoch = 1000 // (5 * max_steps)
+        num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
+        variant["algorithm_kwargs"][
+            "num_eval_steps_per_epoch"
+        ] = num_eval_steps_per_epoch
+        variant["algorithm_kwargs"]["max_path_length"] = max_steps
+        variant["algorithm_kwargs"]["batch_size"] = batch_size
+        variant["algorithm_kwargs"][
+            "num_expl_steps_per_train_loop"
+        ] = num_expl_steps_per_train_loop
+        variant["algorithm_kwargs"][
+            "num_train_loops_per_epoch"
+        ] = num_train_loops_per_epoch
+        variant["algorithm_kwargs"][
+            "num_trains_per_train_loop"
+        ] = num_trains_per_train_loop
+        variant["replay_buffer_size"] = replay_buffer_size
+        variant["env_kwargs"]["max_steps"] = max_steps
+        variant["trainer_kwargs"]["imagination_horizon"] = min(max_steps, 15)
+        if variant["trainer_kwargs"]["discount"] != 0.99:
+            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_steps
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
