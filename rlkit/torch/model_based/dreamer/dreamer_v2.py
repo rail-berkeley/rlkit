@@ -277,24 +277,17 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
         feats = []
         actions = []
-        log_probs = []
         for _ in range(self.imagination_horizon):
             feat = self.world_model.get_feat(new_state)
             action_dist = self.actor(feat.detach())
-            if type(self.actor) == ConditionalActorModel:
-                action, log_prob = action_dist.rsample_and_log_prob()
-            else:
-                action = action_dist.rsample()
-                log_prob = action_dist.log_prob(action)
+            action = action_dist.rsample()
             new_state = self.world_model.action_step(new_state, action)
 
             feats.append(feat.unsqueeze(0))
             actions.append(action.unsqueeze(0))
-            log_probs.append(log_prob.unsqueeze(0))
         feats = torch.cat(feats)
         actions = torch.cat(actions)
-        log_probs = torch.cat(log_probs)
-        return feats, actions, log_probs
+        return feats, actions
 
     def world_model_loss(
         self,
@@ -442,7 +435,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
         imag_feat_a = imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
         imag_actions = imag_actions[:-1].reshape(-1, imag_actions.shape[-1]).detach()
-        old_imag_log_probs = old_imag_log_probs[:-1].reshape(-1).detach()
         assert imag_actions.shape[0] == imag_feat_a.shape[0]
 
         imag_actor_dist = actor(imag_feat_a)
@@ -633,7 +625,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 (
                     imag_feat,
                     imag_actions,
-                    imag_log_probs,
                 ) = self.imagine_ahead(post)
                 imag_reward = self.world_model.reward(imag_feat)
                 if self.use_pred_discount:
@@ -646,6 +637,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     discount = self.discount * torch.ones_like(imag_reward)
             with FreezeParameters(vf_params):
                 old_imag_value = self.vf(imag_feat).detach()
+            imag_feat_a = imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
+            imag_actions_a = (
+                imag_actions[:-1].reshape(-1, imag_actions.shape[-1]).detach()
+            )
+            imag_actor_dist = self.actor(imag_feat_a)
+            imag_log_probs = imag_actor_dist.log_prob(imag_actions_a).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(vf_params + target_vf_params):
                     imag_target_value = self.target_vf(imag_feat)
@@ -852,7 +849,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 (
                     imag_feat,
                     imag_actions,
-                    imag_log_probs,
                 ) = self.imagine_ahead(post)
                 imag_reward = self.world_model.reward(imag_feat)
                 if self.use_pred_discount:
@@ -863,6 +859,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     ).mean
                 else:
                     discount = self.discount * torch.ones_like(imag_reward)
+            imag_feat_a = imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
+            imag_actions_a = (
+                imag_actions[:-1].reshape(-1, imag_actions.shape[-1]).detach()
+            )
+            imag_actor_dist = self.actor(imag_feat_a)
+            imag_log_probs = imag_actor_dist.log_prob(imag_actions_a).detach()
             with FreezeParameters(vf_params):
                 old_imag_value = self.vf(imag_feat).detach()
             for _ in range(self.num_actor_value_updates):
