@@ -269,12 +269,18 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self._need_to_update_eval_statistics = False
 
     def imagine_ahead(self, state):
+
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
                 if self.use_pred_discount:  # Last step could be terminal.
                     v = v[:, :-1]
-                new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
+                if k == "stoch" and self.world_model.discrete_latents:
+                    new_state[k] = v.transpose(1, 0).reshape(
+                        -1, v.shape[-2], v.shape[-1]
+                    )
+                else:
+                    new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
         feats = []
         actions = []
         for _ in range(self.imagination_horizon):
@@ -757,8 +763,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Transition Loss"] = transition_loss.item()
             eval_statistics["Entropy Loss"] = entropy_loss.item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
-            eval_statistics["Posterior State Std"] = post["std"].mean().item()
-            eval_statistics["Prior State Std"] = prior["std"].mean().item()
+            if not self.world_model.discrete_latents:
+                eval_statistics["Posterior State Std"] = post["std"].mean().item()
+                eval_statistics["Prior State Std"] = prior["std"].mean().item()
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
 
             eval_statistics["Actor Loss"] = actor_loss

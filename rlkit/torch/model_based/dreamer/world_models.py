@@ -52,7 +52,7 @@ class WorldModel(PyTorchModule):
                 stochastic_state_size * discrete_latent_size
             )
             full_stochastic_state_size = img_and_obs_step_mlp_output_size
-            self.feature_size = full_stochastic_state_size + deterministic_state_size
+            feature_size = full_stochastic_state_size + deterministic_state_size
         else:
             img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
             full_stochastic_state_size = stochastic_state_size
@@ -318,6 +318,7 @@ class WorldModel(PyTorchModule):
     def get_feat(self, state):
         stoch = state["stoch"]
         if self.discrete_latents:
+
             shape = list(stoch.shape[:-2]) + [
                 self.stochastic_state_size * self.discrete_latent_size
             ]
