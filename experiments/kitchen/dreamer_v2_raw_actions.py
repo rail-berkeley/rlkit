@@ -56,8 +56,9 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            use_raw_action_space=True,
             max_steps=1000,
+            control_mode="joint_velocity",
+            frame_skip=40,
         ),
         actor_kwargs=dict(
             init_std=0.0,
@@ -114,7 +115,14 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "actor_kwargs.dist": ["trunc_normal", "tanh_normal_dreamer_v1"],
+        "actor_kwargs.dist": ["trunc_normal"],
+        "env_kwargs.control_mode": [
+            "joint_position",
+            "joint_velocity",
+            "torque",
+            "end_effector",
+        ],
+        "env_kwargs.frame_skip": [1, 2, 40],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

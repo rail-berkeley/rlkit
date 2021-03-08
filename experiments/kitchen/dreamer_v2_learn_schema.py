@@ -121,8 +121,8 @@ if __name__ == "__main__":
             "1e-4",
         ],
         # "env_kwargs.use_workspace_limits": [True, False],
-        "model_kwargs.discrete_latents": [True],
-        "model_kwargs.stochastic_state_size": [32],
+        # "model_kwargs.discrete_latents": [True],
+        # "model_kwargs.stochastic_state_size": [32],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
