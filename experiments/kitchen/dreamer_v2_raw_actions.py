@@ -103,7 +103,7 @@ if __name__ == "__main__":
         ),
         num_expl_envs=1,
         num_eval_envs=1,
-        expl_amount=0.0,
+        expl_amount=0.3,
     )
 
     search_space = {
