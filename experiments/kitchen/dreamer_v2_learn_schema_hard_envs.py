@@ -109,7 +109,7 @@ if __name__ == "__main__":
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-4",
         ],
-        "max_steps": [10, 15, 20],
+        "max_steps": [15],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

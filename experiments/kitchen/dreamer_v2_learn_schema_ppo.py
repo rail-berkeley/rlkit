@@ -115,21 +115,21 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
+            # "microwave",
+            # "top_left_burner",
             "hinge_cabinet",
-            "light_switch",
+            # "light_switch",
+            # "kettle",
+            # "slide_cabinet",
         ],
         "trainer_kwargs.actor_entropy_loss_schedule": [
             "1e-4",
         ],
-        # "trainer_kwargs.use_actor_value_optimizer": [True, False],
-        "trainer_kwargs.num_actor_value_updates": [1, 10],
+        "trainer_kwargs.use_actor_value_optimizer": [True, False],
+        "trainer_kwargs.num_actor_value_updates": [10],
         # "trainer_kwargs.num_imagination_iterations": [1, 10, 25],
-        # "trainer_kwargs.use_advantage_normalization": [True, False],
-        # "trainer_kwargs.use_clipped_value_loss": [True, False],
+        "trainer_kwargs.use_advantage_normalization": [True],
+        "trainer_kwargs.use_clipped_value_loss": [True],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

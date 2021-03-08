@@ -36,7 +36,7 @@ def video_post_epoch_func(algorithm, epoch):
 
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
-    if epoch == -1 or epoch % 25 == 0:
+    if epoch == -1 or epoch % 100 == 0:
         null_state = algorithm.trainer.world_model.initial(4)
         null_acts = ptu.zeros((4, env.action_space.low.size))
         reset_obs = []
@@ -116,7 +116,7 @@ def video_post_epoch_func_(
     img_size=256,
     mode="eval",
 ):
-    if epoch == -1 or epoch % 25 == 0:
+    if epoch == -1 or epoch % 100 == 0:
         print("Generating Video: ")
         env = algorithm.eval_env
 
