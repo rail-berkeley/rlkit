@@ -58,10 +58,10 @@ model = PPO(
     "CnnPolicy",
     env,
     verbose=2,
-    tensorboard_log="./data/kitchen_ppo_microwave/",
+    tensorboard_log="./data/ppo-data/kitchen_ppo_microwave/",
     n_steps=2048 // n_envs,
     batch_size=64,
     ent_coef=0.01,
-    device="gpu",
+    device="cuda",
 )
 model.learn(total_timesteps=1000000)
