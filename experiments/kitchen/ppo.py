@@ -1,6 +1,11 @@
 import gym
 import numpy as np
-from d4rl.kitchen.kitchen_envs import KitchenSlideCabinetV0
+import torch
+from d4rl.kitchen.kitchen_envs import (
+    KitchenHingeCabinetV0,
+    KitchenMicrowaveV0,
+    KitchenSlideCabinetV0,
+)
 from gym.spaces.box import Box
 from stable_baselines3 import PPO
 from stable_baselines3.common.env_checker import check_env
@@ -29,7 +34,7 @@ class KitchenWrapper(gym.Wrapper):
 
 n_envs = 15
 env = make_vec_env(
-    KitchenSlideCabinetV0,
+    KitchenMicrowaveV0,
     wrapper_class=KitchenWrapper,
     env_kwargs=dict(
         dense=False,
@@ -48,11 +53,15 @@ env = make_vec_env(
     ),
     n_envs=n_envs,
 )
+torch.backends.cudnn.benchmark = True
 model = PPO(
     "CnnPolicy",
     env,
     verbose=2,
-    tensorboard_log="./data/kitchen_ppo/",
+    tensorboard_log="./data/kitchen_ppo_microwave/",
     n_steps=2048 // n_envs,
+    batch_size=64,
+    ent_coef=0.01,
+    device="gpu",
 )
-model.learn(total_timesteps=100000)
+model.learn(total_timesteps=1000000)
