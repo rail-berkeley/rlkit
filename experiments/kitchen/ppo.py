@@ -2,50 +2,55 @@ import argparse
 import os
 import random
 
-import gym
 import numpy as np
 import torch
-from d4rl.kitchen.kitchen_envs import (
-    KitchenHingeCabinetV0,
-    KitchenHingeSlideBottomLeftBurnerLightV0,
-    KitchenKettleV0,
-    KitchenLightSwitchV0,
-    KitchenMicrowaveKettleLightTopLeftBurnerV0,
-    KitchenMicrowaveV0,
-    KitchenSlideCabinetV0,
-    KitchenTopLeftBurnerV0,
-)
-from gym.spaces.box import Box
-from stable_baselines3 import PPO
-from stable_baselines3.common.env_checker import check_env
-from stable_baselines3.common.env_util import make_vec_env
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 
 
-class KitchenWrapper(gym.Wrapper):
-    def __init__(self, env):
-        gym.Wrapper.__init__(self, env)
-        self._max_episode_steps = env.max_steps
-        self.observation_space = Box(
-            0, 255, (3, self.env.imwidth, self.env.imheight), dtype=np.uint8
-        )
-        self.action_space = Box(
-            -1, 1, (self.env.action_space.low.size,), dtype=np.float32
-        )
-
-    def reset(self):
-        obs = self.env.reset()
-        return obs.reshape(-1, self.env.imwidth, self.env.imheight)
-
-    def step(self, action):
-        obs, reward, done, info = self.env.step(action)
-        return obs.reshape(-1, self.env.imwidth, self.env.imheight), reward, done, info
-
-
 def experiment(variant):
+    import gym
+    from d4rl.kitchen.kitchen_envs import (
+        KitchenHingeCabinetV0,
+        KitchenHingeSlideBottomLeftBurnerLightV0,
+        KitchenKettleV0,
+        KitchenLightSwitchV0,
+        KitchenMicrowaveKettleLightTopLeftBurnerV0,
+        KitchenMicrowaveV0,
+        KitchenSlideCabinetV0,
+        KitchenTopLeftBurnerV0,
+    )
+    from gym.spaces.box import Box
+    from stable_baselines3 import PPO
+    from stable_baselines3.common.env_checker import check_env
+    from stable_baselines3.common.env_util import make_vec_env
+
     from rlkit.core import logger
+
+    class KitchenWrapper(gym.Wrapper):
+        def __init__(self, env):
+            gym.Wrapper.__init__(self, env)
+            self._max_episode_steps = env.max_steps
+            self.observation_space = Box(
+                0, 255, (3, self.env.imwidth, self.env.imheight), dtype=np.uint8
+            )
+            self.action_space = Box(
+                -1, 1, (self.env.action_space.low.size,), dtype=np.float32
+            )
+
+        def reset(self):
+            obs = self.env.reset()
+            return obs.reshape(-1, self.env.imwidth, self.env.imheight)
+
+        def step(self, action):
+            obs, reward, done, info = self.env.step(action)
+            return (
+                obs.reshape(-1, self.env.imwidth, self.env.imheight),
+                reward,
+                done,
+                info,
+            )
 
     env_class = variant["env_class"]
     if env_class == "microwave":
