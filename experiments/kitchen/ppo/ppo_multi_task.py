@@ -72,30 +72,16 @@ def experiment(variant):
     else:
         raise EnvironmentError("invalid env provided")
     n_envs = variant["n_envs"]
-    env = env_class_(
-        KitchenMicrowaveV0,
+    env = make_vec_env(
+        env_class_,
         wrapper_class=KitchenWrapper,
-        env_kwargs=dict(
-            dense=False,
-            image_obs=True,
-            fixed_schema=False,
-            action_scale=1.4,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
-            use_workspace_limits=True,
-            max_steps=5,
-            imwidth=84,
-            imheight=84,
-        ),
         n_envs=n_envs,
+        env_kwargs=variant["env_kwargs"],
     )
     model = PPO(
         "CnnPolicy",
         env,
-        tensorboard_log=logger.get_snapshot_dir(),
+        tensorboard_log=logger.get_snapshot_dir() + "/" + env_class,
         n_steps=2048 // n_envs,
         device="cuda",
         **variant["algorithm_kwargs"]
@@ -120,29 +106,40 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            gamma=0.99,
             ent_coef=0.01,
             learning_rate=3e-4,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm_kwargs=algorithm_kwargs,
-        env_class="microwave",
         n_envs=12,
         total_timesteps=100000,
+        env_kwargs=dict(
+            dense=False,
+            image_obs=True,
+            fixed_schema=False,
+            action_scale=1.4,
+            use_combined_action_space=True,
+            proprioception=False,
+            wrist_cam_concat_with_fixed_view=False,
+            use_wrist_cam=False,
+            normalize_proprioception_obs=True,
+            use_workspace_limits=True,
+            max_steps=10,
+            imwidth=84,
+            imheight=84,
+        ),
     )
 
     search_space = {
-        "algorithm_kwargs.gamma": [0.8],
+        "algorithm_kwargs.gamma": [0.99, 0.95],
         "algorithm_kwargs.ent_coef": [0.01],
+        "total_timesteps": [500000],
         "env_class": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
         ],
+        "env_kwargs.max_steps": [10, 15, 20],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -152,8 +149,7 @@ if __name__ == "__main__":
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
-            # variant["algorithm_kwargs"]["seed"] = seed
-            print(variant)
+            variant["algorithm_kwargs"]["seed"] = seed
             variant["exp_id"] = exp_id
             run_experiment(
                 experiment,

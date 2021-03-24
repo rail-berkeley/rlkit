@@ -75,22 +75,8 @@ def experiment(variant):
     env = make_vec_env(
         env_class_,
         wrapper_class=KitchenWrapper,
-        env_kwargs=dict(
-            dense=False,
-            image_obs=True,
-            fixed_schema=False,
-            action_scale=1.4,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
-            use_workspace_limits=True,
-            max_steps=5,
-            imwidth=84,
-            imheight=84,
-        ),
         n_envs=n_envs,
+        env_kwargs=variant["env_kwargs"],
     )
     model = PPO(
         "CnnPolicy",
@@ -128,6 +114,21 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         n_envs=12,
         total_timesteps=100000,
+        env_kwargs=dict(
+            dense=False,
+            image_obs=True,
+            fixed_schema=False,
+            action_scale=1.4,
+            use_combined_action_space=True,
+            proprioception=False,
+            wrist_cam_concat_with_fixed_view=False,
+            use_wrist_cam=False,
+            normalize_proprioception_obs=True,
+            use_workspace_limits=True,
+            max_steps=5,
+            imwidth=84,
+            imheight=84,
+        ),
     )
 
     search_space = {
