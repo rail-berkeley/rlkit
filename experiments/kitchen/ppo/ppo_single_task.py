@@ -71,24 +71,9 @@ def experiment(variant):
         env_class_ = KitchenHingeSlideBottomLeftBurnerLightV0
     else:
         raise EnvironmentError("invalid env provided")
-    env = env_class_(
-        dense=False,
-        image_obs=True,
-        fixed_schema=False,
-        action_scale=1.4,
-        use_combined_action_space=True,
-        proprioception=False,
-        wrist_cam_concat_with_fixed_view=False,
-        use_wrist_cam=False,
-        normalize_proprioception_obs=True,
-        use_workspace_limits=True,
-        max_steps=5,
-        imwidth=64,
-        imheight=64,
-    )
     n_envs = variant["n_envs"]
     env = make_vec_env(
-        KitchenMicrowaveV0,
+        env_class_,
         wrapper_class=KitchenWrapper,
         env_kwargs=dict(
             dense=False,
@@ -110,7 +95,7 @@ def experiment(variant):
     model = PPO(
         "CnnPolicy",
         env,
-        tensorboard_log=logger.get_snapshot_dir(),
+        tensorboard_log=logger.get_snapshot_dir() + "/" + env_class,
         n_steps=2048 // n_envs,
         device="cuda",
         **variant["algorithm_kwargs"]
@@ -135,14 +120,12 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            gamma=0.99,
             ent_coef=0.01,
             learning_rate=3e-4,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm_kwargs=algorithm_kwargs,
-        env_class="microwave",
         n_envs=12,
         total_timesteps=100000,
     )
@@ -167,8 +150,7 @@ if __name__ == "__main__":
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
-            # variant["algorithm_kwargs"]["seed"] = seed
-            print(variant)
+            variant["algorithm_kwargs"]["seed"] = seed
             variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
