@@ -113,7 +113,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm_kwargs=algorithm_kwargs,
         n_envs=12,
-        total_timesteps=100000,
+        total_timesteps=500000,
         env_kwargs=dict(
             dense=False,
             image_obs=True,
@@ -135,9 +135,9 @@ if __name__ == "__main__":
         "algorithm_kwargs.gamma": [0.8],
         "algorithm_kwargs.ent_coef": [0.01],
         "env_class": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
+            # "microwave",
+            # "kettle",
+            # "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",

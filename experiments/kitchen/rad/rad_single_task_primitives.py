@@ -1,10 +1,15 @@
 import argparse
 import random
 
-from rad.kitchen_train import experiment
-
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+
+
+def experiment(variant):
+    from rad.kitchen_train import experiment
+
+    experiment(variant)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -56,7 +61,7 @@ if __name__ == "__main__":
         "agent_kwargs.data_augs": [
             "no_aug",
         ],
-        "agent_kwargs.discrete_continuous_dist": [True, False],
+        "agent_kwargs.discrete_continuous_dist": [False],
         "env_class": [
             "microwave",
             "kettle",

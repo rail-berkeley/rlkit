@@ -1,10 +1,15 @@
 import argparse
 import random
 
-from rad.kitchen_train import experiment
-
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+
+
+def experiment(variant):
+    from rad.kitchen_train import experiment
+
+    experiment(variant)
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -24,7 +29,7 @@ if __name__ == "__main__":
             discrete_continuous_dist=False,
             data_augs="no_aug",
         ),
-        num_train_steps=250000,
+        num_train_steps=500000,
         frame_stack=1,
         replay_buffer_capacity=int(1e6),
         action_repeat=1,
@@ -55,7 +60,7 @@ if __name__ == "__main__":
         "agent_kwargs.data_augs": [
             "no_aug",
         ],
-        "agent_kwargs.discrete_continuous_dist": [True, False],
+        "agent_kwargs.discrete_continuous_dist": [False],
         "env_kwargs.max_steps": [15],
         "env_kwargs.discount": [0.99, 0.95],
         "env_class": [
