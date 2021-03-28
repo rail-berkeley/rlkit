@@ -54,6 +54,7 @@ if __name__ == "__main__":
             max_steps=15,
         ),
         seed=-1,
+        use_raw_actions=True,
     )
 
     search_space = {
