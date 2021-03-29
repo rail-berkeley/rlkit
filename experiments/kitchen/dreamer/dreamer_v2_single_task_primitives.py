@@ -117,12 +117,6 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "trainer_kwargs.actor_entropy_loss_schedule": [
-            "1e-4",
-        ],
-        # "env_kwargs.use_workspace_limits": [True, False],
-        # "model_kwargs.discrete_latents": [True],
-        # "model_kwargs.stochastic_state_size": [32],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

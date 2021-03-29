@@ -29,13 +29,13 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=1000 // 5,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=500,
-            num_expl_steps_per_train_loop=500,
-            num_trains_per_train_loop=100,
+            num_expl_steps_per_train_loop=500 * 5,
+            num_trains_per_train_loop=100 * 5,
             num_train_loops_per_epoch=2,
             batch_size=50,
         )
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(1e4),
+        replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
             dense=False,
@@ -58,7 +58,7 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             max_steps=1000,
             control_mode="joint_velocity",
-            frame_skip=40,
+            frame_skip=1,
         ),
         actor_kwargs=dict(
             init_std=0.0,
@@ -101,28 +101,23 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
         ),
-        num_expl_envs=1,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
     )
 
     search_space = {
         "env_class": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
         ],
-        "actor_kwargs.dist": ["trunc_normal"],
-        "env_kwargs.control_mode": [
-            "joint_position",
-            "joint_velocity",
-            "torque",
-            "end_effector",
-        ],
-        "env_kwargs.frame_skip": [1, 2, 40],
+        # "env_kwargs.control_mode": [
+        #     "joint_position",
+        #     "joint_velocity",
+        #     "torque",
+        #     "end_effector",
+        # ],
+        "env_kwargs.frame_skip": [1, 40],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

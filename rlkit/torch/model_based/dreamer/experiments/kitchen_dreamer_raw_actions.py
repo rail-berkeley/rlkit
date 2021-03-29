@@ -78,14 +78,22 @@ def run_experiment(variant):
     else:
         raise EnvironmentError("invalid env provided")
 
-    expl_env = make_env(
-        env_class=env_class_,
-        env_kwargs=variant["env_kwargs"],
-    )
-    expl_env.reset()
-    expl_env = ActionRepeat(expl_env, 2)
-    expl_env = NormalizeActions(expl_env)
-    expl_env = DummyVecEnv([TimeLimit(expl_env, 500)], pass_render_kwargs=False)
+    env_fns = [
+        lambda: TimeLimit(
+            NormalizeActions(
+                ActionRepeat(
+                    make_env(
+                        env_class=env_class_,
+                        env_kwargs=variant["env_kwargs"],
+                    ),
+                    2,
+                )
+            ),
+            500,
+        )
+        for _ in range(variant["num_expl_envs"])
+    ]
+    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
 
     eval_env = make_env(
         env_class=env_class_,
