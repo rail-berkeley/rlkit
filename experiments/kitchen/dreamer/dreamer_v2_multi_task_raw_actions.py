@@ -58,7 +58,7 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             max_steps=1000,
             control_mode="joint_velocity",
-            frame_skip=1,
+            frame_skip=40,
         ),
         actor_kwargs=dict(
             init_std=0.0,
@@ -117,7 +117,6 @@ if __name__ == "__main__":
         #     "torque",
         #     "end_effector",
         # ],
-        "env_kwargs.frame_skip": [1, 40],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -54,7 +54,7 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             max_steps=1000,
             control_mode="joint_velocity",
-            frame_skip=1,
+            frame_skip=40,
         ),
         seed=-1,
         use_raw_actions=True,
