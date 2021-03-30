@@ -12,6 +12,9 @@ def experiment(variant):
 
 
 def run_experiment(variant):
+    import gym
+
+    gym.logger.set_level(40)
     import os
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"

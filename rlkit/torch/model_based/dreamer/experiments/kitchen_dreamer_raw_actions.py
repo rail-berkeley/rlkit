@@ -18,6 +18,10 @@ def experiment(variant):
 def run_experiment(variant):
     import os
 
+    import gym
+
+    gym.logger.set_level(40)
+
     from rlkit.envs.dmc_wrappers import ActionRepeat, NormalizeActions, TimeLimit
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"

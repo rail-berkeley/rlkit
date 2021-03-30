@@ -63,7 +63,6 @@ if __name__ == "__main__":
         num_steps=2048 // 12,
         log_interval=1,
         eval_interval=1,
-        save_interval=1,
         use_raw_actions=False,
     )
 
