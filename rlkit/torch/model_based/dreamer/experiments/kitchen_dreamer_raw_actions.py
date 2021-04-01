@@ -29,8 +29,10 @@ def run_experiment(variant):
     import torch
     from d4rl.kitchen.kitchen_envs import (
         KitchenHingeCabinetV0,
+        KitchenHingeSlideBottomLeftBurnerLightV0,
         KitchenKettleV0,
         KitchenLightSwitchV0,
+        KitchenMicrowaveKettleLightTopLeftBurnerV0,
         KitchenMicrowaveV0,
         KitchenSlideCabinetV0,
         KitchenTopLeftBurnerV0,
@@ -79,6 +81,10 @@ def run_experiment(variant):
         env_class_ = KitchenTopLeftBurnerV0
     elif env_class == "light_switch":
         env_class_ = KitchenLightSwitchV0
+    elif env_class == "microwave_kettle_light_top_left_burner":
+        env_class_ = KitchenMicrowaveKettleLightTopLeftBurnerV0
+    elif env_class == "hinge_slide_bottom_left_burner_light":
+        env_class_ = KitchenHingeSlideBottomLeftBurnerLightV0
     else:
         raise EnvironmentError("invalid env provided")
 
