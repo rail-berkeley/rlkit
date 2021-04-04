@@ -1,6 +1,3 @@
-from rlkit.envs.mujoco_vec_wrappers import make_metaworld_env
-
-
 def experiment(variant):
     import os
 
