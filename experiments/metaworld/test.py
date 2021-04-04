@@ -7,16 +7,21 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld
 from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
 if __name__ == "__main__":
-    env = TimeLimit(
-        ImageEnvMetaworld(
-            make_metaworld_env("assembly-v2", {}), imwidth=64, imheight=64
-        ),
-        150,
-    )
+    env = make_metaworld_env("assembly-v2", dict(control_mode='primitives', use_combined_action_space=True, action_scale=1.4))
     obs = env.reset()
-    for i in range(150):
+    for i in range(1000000):
+        # a = np.zeros(env.action_space.low.size)
+        # primitive = 'angled_x_y_grasp'
+        # a[env.get_idx_from_primitive_name(primitive)] = 1
+        # a[
+        #         env.num_primitives
+        #         + np.array(env.primitive_name_to_action_idx[primitive])
+        #     ] = np.array([-np.pi / 6, -0.3, 1.4])
         env.step(env.action_space.sample())
-        env.reset()
+        env.render()
+        if i % 150 == 0:
+            env.reset()
+        # env.reset()
     # cv2.imwrite("test.png", obs.reshape(3, 84, 84).transpose(1, 2, 0))
     # import gym
 

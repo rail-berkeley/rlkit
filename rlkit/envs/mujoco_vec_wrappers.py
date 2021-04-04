@@ -9,7 +9,8 @@ from stable_baselines3.common.vec_env import CloudpickleWrapper, SubprocVecEnv, 
 
 
 def make_metaworld_env(env_class, env_kwargs):
-    env = ALL_V2_ENVIRONMENTS[env_class](**env_kwargs)
+    env = ALL_V2_ENVIRONMENTS[env_class]()
+    env.reset_action_space(**env_kwargs)
     env.random_init = False
     task = _encode_task(
         env_class,
