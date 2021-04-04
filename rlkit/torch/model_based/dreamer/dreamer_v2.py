@@ -80,6 +80,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         state_loss_scale=0,
         train_decoder_on_second_output_only=False,
         use_pred_discount=True,
+        reward_scale=1,
     ):
         super().__init__()
 
@@ -241,6 +242,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.use_clipped_value_loss = use_clipped_value_loss
         self.state_loss_scale = state_loss_scale
         self.train_decoder_on_second_output_only = train_decoder_on_second_output_only
+        self.reward_scale = reward_scale
 
     def try_update_target_networks(self):
         if (
@@ -557,7 +559,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         skip_statistics=False,
         **kwargs,
     ) -> Tuple[DreamerLosses, LossStatistics]:
-        rewards = batch["rewards"]
+        rewards = batch["rewards"] * self.reward_scale
         terminals = batch["terminals"]
         obs = batch["observations"]
         actions = batch["actions"]

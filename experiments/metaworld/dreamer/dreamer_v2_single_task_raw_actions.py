@@ -90,6 +90,7 @@ if __name__ == "__main__":
             policy_gradient_loss_scale=0.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
+            reward_scale=1 / 100,
         ),
         num_expl_envs=num_envs,
         num_eval_envs=1,

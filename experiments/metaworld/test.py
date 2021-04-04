@@ -22,23 +22,32 @@ if __name__ == "__main__":
     #     env.step(env.action_space.sample())
     #     env.reset()
     # cv2.imwrite("test.png", obs.reshape(3, 84, 84).transpose(1, 2, 0))
+    import gym
 
-    num_envs = 10
-    env_fns = [
-        lambda: TimeLimit(ImageEnvMetaworld(make_env_multiworld("assembly-v2")), 150)
-        for _ in range(num_envs)
-    ]
-    envs = StableBaselinesVecEnv(env_fns=env_fns, start_method="forkserver")
-    envs.reset()
-    d = [False] * num_envs
-    import time
+    gym.logger.set_level(40)
+    num_envs = 15
+    performance = {}
+    for num_envs in range(33, 34):
+        env_fns = [
+            lambda: TimeLimit(
+                ImageEnvMetaworld(
+                    make_env_multiworld("assembly-v2"), imwidth=64, imheight=64
+                ),
+                150,
+            )
+            for _ in range(num_envs)
+        ]
+        envs = StableBaselinesVecEnv(env_fns=env_fns, start_method="forkserver")
+        envs.reset()
+        d = [False] * num_envs
+        import time
 
-    st = time.time()
-    for i in range(10000):
-        o, r, d, _ = envs.step(
-            envs.action_space.sample().reshape(1, -1).repeat(num_envs, 0)
-        )
-        if i % 150 == 0:
-            envs.reset()
-            print((time.time() - st) / (i + 1))
-            print(o[0].shape)
+        st = time.time()
+        for i in range(10000):
+            o, r, d, _ = envs.step(
+                envs.action_space.sample().reshape(1, -1).repeat(num_envs, 0)
+            )
+            if i % 150 == 0:
+                envs.reset()
+        performance[num_envs] = (time.time() - st) / 10000 / num_envs
+    print(performance)
