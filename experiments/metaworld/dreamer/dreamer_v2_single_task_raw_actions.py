@@ -30,7 +30,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000 // num_envs,
+            num_epochs=100,
             num_eval_steps_per_epoch=150 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -151,12 +151,6 @@ if __name__ == "__main__":
             "window-open-v2",
             "window-close-v2",
         ],
-        # "env_kwargs.control_mode": [
-        #     "joint_position",
-        #     "joint_velocity",
-        #     "torque",
-        #     "end_effector",
-        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
