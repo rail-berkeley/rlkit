@@ -1,3 +1,4 @@
+import cv2
 import gym
 import numpy as np
 from gym.spaces.box import Box
@@ -97,3 +98,45 @@ class KitchenWrapper(gym.Wrapper):
             done,
             info,
         )
+
+
+class ImageEnvMetaworld(gym.Wrapper):
+    def __init__(
+        self,
+        env,
+        imwidth=84,
+        imheight=84,
+    ):
+        gym.Wrapper.__init__(self, env)
+        self.max_steps = 150
+        self.imwidth = imwidth
+        self.imheight = imheight
+        self.observation_space = Box(
+            0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
+        )
+        self.num_steps = 0
+
+    def _get_image(self):
+        img = cv2.cvtColor(
+            self.sim.render(
+                self.imwidth,
+                self.imheight,
+                mode="offscreen",
+            )[::-1],
+            cv2.COLOR_BGR2RGB,
+        )
+        img = img.transpose(2, 0, 1).flatten()
+        return img
+
+    def step(self, action):
+        o, r, d, i = super().step(action)
+        self.num_steps += 1
+        o = self._get_image()
+        if self.num_steps >= self.max_steps:
+            d = True
+        return o, r, d, i
+
+    def reset(self):
+        super().reset()
+        self.num_steps = 0
+        return self._get_image()
