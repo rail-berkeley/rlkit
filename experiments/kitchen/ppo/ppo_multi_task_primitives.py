@@ -64,6 +64,7 @@ if __name__ == "__main__":
         log_interval=1,
         eval_interval=1,
         use_raw_actions=False,
+        env_suite="kitchen",
     )
 
     search_space = {

@@ -45,6 +45,8 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
+        use_raw_actions=True,
+        env_suite="kitchen",
         env_kwargs=dict(
             dense=False,
             image_obs=True,

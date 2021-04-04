@@ -3,9 +3,7 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer_raw_actions import (
-    experiment,
-)
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -21,7 +19,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=1000,
             num_pretrain_steps=1,
             max_path_length=500,
-            num_expl_steps_per_train_loop=1000,
+            num_expl_steps_per_train_loop=501,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
             batch_size=50,
@@ -34,7 +32,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=500,
-            num_expl_steps_per_train_loop=500 * 5,
+            num_expl_steps_per_train_loop=501 * 5,
             num_trains_per_train_loop=100 * 5,
             num_train_loops_per_epoch=2,
             batch_size=50,
@@ -45,6 +43,8 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
+        use_raw_actions=True,
+        env_suite="kitchen",
         env_kwargs=dict(
             dense=False,
             image_obs=True,
@@ -109,11 +109,11 @@ if __name__ == "__main__":
     search_space = {
         "env_class": [
             "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "kettle",
+            # "slide_cabinet",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
         # "env_kwargs.control_mode": [
         #     "joint_position",

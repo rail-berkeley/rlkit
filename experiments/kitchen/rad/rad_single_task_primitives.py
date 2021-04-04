@@ -56,6 +56,7 @@ if __name__ == "__main__":
         ),
         seed=-1,
         use_raw_actions=False,
+        env_suite="kitchen",
     )
 
     search_space = {

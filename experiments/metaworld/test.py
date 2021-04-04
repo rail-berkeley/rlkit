@@ -2,18 +2,9 @@ import cv2
 import gym
 import numpy as np
 from gym.spaces import Box
-from hrl_exp.envs.mujoco_vec_wrappers import (
-    DummyVecEnv,
-    StableBaselinesVecEnv,
-    make_env_multiworld,
-)
 
-from rlkit.envs.dmc_wrappers import (
-    ActionRepeat,
-    ImageEnvMetaworld,
-    NormalizeActions,
-    TimeLimit,
-)
+from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld_env
+from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
 if __name__ == "__main__":
     # env = make_env_multiworld('assembly-v2')
@@ -31,7 +22,7 @@ if __name__ == "__main__":
         env_fns = [
             lambda: TimeLimit(
                 ImageEnvMetaworld(
-                    make_env_multiworld("assembly-v2"), imwidth=64, imheight=64
+                    make_metaworld_env("assembly-v2", {}), imwidth=64, imheight=64
                 ),
                 150,
             )

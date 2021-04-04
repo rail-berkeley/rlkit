@@ -47,6 +47,8 @@ if __name__ == "__main__":
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
         env_class="hinge_cabinet",
+        use_raw_actions=False,
+        env_suite="kitchen",
         env_kwargs=dict(
             dense=False,
             image_obs=True,

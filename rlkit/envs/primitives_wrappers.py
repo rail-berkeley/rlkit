@@ -72,7 +72,7 @@ class NormalizeActions(gym.Wrapper):
         return self.env.reset()
 
 
-class KitchenWrapper(gym.Wrapper):
+class ImageUnFlattenWrapper(gym.Wrapper):
     def __init__(self, env):
         gym.Wrapper.__init__(self, env)
         self._max_episode_steps = env.max_steps
@@ -86,12 +86,10 @@ class KitchenWrapper(gym.Wrapper):
 
     def reset(self):
         obs = self.env.reset()
-        self.reward_ctr = 0
         return obs.reshape(-1, self.env.imwidth, self.env.imheight)
 
     def step(self, action):
         obs, reward, done, info = self.env.step(action)
-        self.reward_ctr += reward
         return (
             obs.reshape(-1, self.env.imwidth, self.env.imheight),
             reward,
@@ -114,6 +112,7 @@ class ImageEnvMetaworld(gym.Wrapper):
         self.observation_space = Box(
             0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
         )
+        self.image_shape = (3, self.imwidth, self.imheight)
         self.num_steps = 0
 
     def _get_image(self):
@@ -132,8 +131,6 @@ class ImageEnvMetaworld(gym.Wrapper):
         o, r, d, i = super().step(action)
         self.num_steps += 1
         o = self._get_image()
-        if self.num_steps >= self.max_steps:
-            d = True
         return o, r, d, i
 
     def reset(self):

@@ -3,9 +3,7 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer_raw_actions import (
-    experiment,
-)
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -22,7 +20,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=1000,
             num_pretrain_steps=1,
             max_path_length=150,
-            num_expl_steps_per_train_loop=1000,
+            num_expl_steps_per_train_loop=151,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
             batch_size=50,
@@ -46,6 +44,8 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(5e3),
         algorithm_kwargs=algorithm_kwargs,
+        env_suite="metaworld",
+        use_raw_actions=True,
         env_kwargs=dict(
             imwidth=64,
             imheight=64,
@@ -95,7 +95,6 @@ if __name__ == "__main__":
         num_expl_envs=num_envs,
         num_eval_envs=1,
         expl_amount=0.3,
-        env_suite="metaworld",
     )
 
     search_space = {

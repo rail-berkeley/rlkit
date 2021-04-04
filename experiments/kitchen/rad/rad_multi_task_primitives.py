@@ -55,6 +55,7 @@ if __name__ == "__main__":
         ),
         seed=-1,
         use_raw_actions=False,
+        env_suite="kitchen",
     )
 
     search_space = {
@@ -63,7 +64,7 @@ if __name__ == "__main__":
         ],
         "agent_kwargs.discrete_continuous_dist": [False],
         "env_kwargs.max_steps": [15],
-        "agent_kwargs.discount": [0.95, .99],
+        "agent_kwargs.discount": [0.95, 0.99],
         "env_class": [
             "hinge_slide_bottom_left_burner_light",
             "microwave_kettle_light_top_left_burner",

@@ -1,42 +1,28 @@
+from rlkit.envs.mujoco_vec_wrappers import make_metaworld_env
+
+
 def experiment(variant):
-    from rlkit.core import logger
-
-    # if variant["algorithm_kwargs"]["use_wandb"]:
-    #     import wandb
-    #     with wandb.init(
-    #         project=variant["exp_prefix"], name=variant["exp_name"], config=variant
-    #     ):
-    #         run_experiment(variant)
-    # else:
-    run_experiment(variant)
-
-
-def run_experiment(variant):
-    import gym
-
-    gym.logger.set_level(40)
     import os
+
+    import gym
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     import torch
-    from d4rl.kitchen.kitchen_envs import (
-        KitchenHingeCabinetV0,
-        KitchenHingeSlideBottomLeftBurnerLightV0,
-        KitchenKettleV0,
-        KitchenLightSwitchV0,
-        KitchenMicrowaveKettleLightTopLeftBurnerV0,
-        KitchenMicrowaveV0,
-        KitchenSlideCabinetV0,
-        KitchenTopLeftBurnerV0,
-    )
-    from hrl_exp.envs.mujoco_vec_wrappers import (
-        DummyVecEnv,
-        StableBaselinesVecEnv,
-        make_env,
-    )
 
     import rlkit.torch.pytorch_util as ptu
+    from rlkit.envs.mujoco_vec_wrappers import (
+        DummyVecEnv,
+        StableBaselinesVecEnv,
+        make_kitchen_env,
+        make_metaworld_env,
+    )
+    from rlkit.envs.primitives_wrappers import (
+        ActionRepeat,
+        ImageEnvMetaworld,
+        NormalizeActions,
+        TimeLimit,
+    )
     from rlkit.torch.model_based.dreamer.actor_models import (
         ActorModel,
         ConditionalActorModel,
@@ -66,71 +52,135 @@ def run_experiment(variant):
     )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+    gym.logger.set_level(40)
+    env_suite = variant.get("env_suite", "kitchen")
     env_class = variant["env_class"]
     env_kwargs = variant["env_kwargs"]
-    if env_class == "microwave":
-        env_class_ = KitchenMicrowaveV0
-    elif env_class == "kettle":
-        env_class_ = KitchenKettleV0
-    elif env_class == "slide_cabinet":
-        env_class_ = KitchenSlideCabinetV0
-    elif env_class == "hinge_cabinet":
-        env_class_ = KitchenHingeCabinetV0
-    elif env_class == "top_left_burner":
-        env_class_ = KitchenTopLeftBurnerV0
-    elif env_class == "light_switch":
-        env_class_ = KitchenLightSwitchV0
-    elif env_class == "microwave_kettle_light_top_left_burner":
-        env_class_ = KitchenMicrowaveKettleLightTopLeftBurnerV0
-    elif env_class == "hinge_slide_bottom_left_burner_light":
-        env_class_ = KitchenHingeSlideBottomLeftBurnerLightV0
-    else:
-        raise EnvironmentError("invalid env provided")
-
-    env_fns = [
-        lambda: make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
-        )
-        for _ in range(variant["num_expl_envs"])
-    ]
-    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-
-    eval_envs = [
-        make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
-        )
-    ]
-
-    eval_env = DummyVecEnv(eval_envs)
-
-    obs_dim = expl_env.observation_space.low.size
-    action_dim = expl_env.action_space.low.size
-    num_primitives = eval_envs[0].num_primitives
-    max_arg_len = eval_envs[0].max_arg_len
+    use_raw_actions = variant["use_raw_actions"]
+    num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
 
-    if (
-        variant["actor_kwargs"]["discrete_continuous_dist"]
-        or variant["env_kwargs"]["fixed_schema"]
-        or actor_model_class_name == "continuous_conditional_actor_model"
-    ):
-        continuous_action_dim = max_arg_len
-    else:
-        continuous_action_dim = max_arg_len + num_primitives
-
-    if (
-        variant.get("world_model_class", "world_model") == "multitask"
-        or eval_envs[0].proprioception
-    ):
-        world_model_class = StateConcatObsWorldModel
-        if eval_envs[0].proprioception:
-            variant["model_kwargs"]["embedding_size"] += variant["model_kwargs"][
-                "state_output_size"
+    if env_suite == "metaworld":
+        if use_raw_actions:
+            env_kwargs = {}
+            env_fns = [
+                lambda: TimeLimit(
+                    ImageEnvMetaworld(
+                        make_metaworld_env(env_class, env_kwargs),
+                        imwidth=64,
+                        imheight=64,
+                    ),
+                    150,
+                )
+                for _ in range(num_expl_envs)
             ]
+            expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+            eval_envs = [
+                TimeLimit(
+                    ImageEnvMetaworld(
+                        make_metaworld_env(env_class, env_kwargs),
+                        imwidth=64,
+                        imheight=64,
+                    ),
+                    150,
+                )
+            ]
+            eval_env = DummyVecEnv(eval_envs, pass_render_kwargs=False)
+            discrete_continuous_dist = False
+            continuous_action_dim = eval_env.action_space.low.size
+            discrete_action_dim = 0
+            world_model_class = WorldModel
+            use_batch_length = True
+            action_dim = eval_env.action_space.low.size
     else:
-        world_model_class = WorldModel
+        if use_raw_actions:
+            env_fns = [
+                lambda: TimeLimit(
+                    NormalizeActions(
+                        ActionRepeat(
+                            make_kitchen_env(
+                                env_class=env_class,
+                                env_kwargs=variant["env_kwargs"],
+                            ),
+                            2,
+                        )
+                    ),
+                    500,
+                )
+                for _ in range(variant["num_expl_envs"])
+            ]
+            expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+
+            eval_envs = [
+                TimeLimit(
+                    NormalizeActions(
+                        ActionRepeat(
+                            make_kitchen_env(
+                                env_class=env_class,
+                                env_kwargs=variant["env_kwargs"],
+                            ),
+                            2,
+                        )
+                    ),
+                    500,
+                )
+            ]
+            eval_env = DummyVecEnv(eval_envs, pass_render_kwargs=False)
+            action_dim = expl_env.action_space.low.size
+            continuous_action_dim = eval_env.action_space.low.size
+            discrete_action_dim = 0
+            discrete_continuous_dist = False
+            world_model_class = WorldModel
+            use_batch_length = True
+        else:
+            env_fns = [
+                lambda: make_kitchen_env(
+                    env_class=env_class,
+                    env_kwargs=variant["env_kwargs"],
+                )
+                for _ in range(variant["num_expl_envs"])
+            ]
+            expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+
+            eval_envs = [
+                make_kitchen_env(
+                    env_class=env_class,
+                    env_kwargs=variant["env_kwargs"],
+                )
+            ]
+
+            eval_env = DummyVecEnv(eval_envs)
+
+            action_dim = expl_env.action_space.low.size
+            num_primitives = eval_envs[0].num_primitives
+            max_arg_len = eval_envs[0].max_arg_len
+            discrete_continuous_dist = variant["actor_kwargs"][
+                "discrete_continuous_dist"
+            ] and (not variant["env_kwargs"]["fixed_schema"])
+            if (
+                variant["actor_kwargs"]["discrete_continuous_dist"]
+                or variant["env_kwargs"]["fixed_schema"]
+                or actor_model_class_name == "continuous_conditional_actor_model"
+            ):
+                continuous_action_dim = max_arg_len
+                discrete_action_dim = num_primitives
+            else:
+                continuous_action_dim = max_arg_len + num_primitives
+                discrete_action_dim = 0
+
+            if (
+                variant.get("world_model_class", "world_model") == "multitask"
+                or eval_envs[0].proprioception
+            ):
+                world_model_class = StateConcatObsWorldModel
+                if eval_envs[0].proprioception:
+                    variant["model_kwargs"]["embedding_size"] += variant[
+                        "model_kwargs"
+                    ]["state_output_size"]
+            else:
+                world_model_class = WorldModel
+            use_batch_length = False
+    obs_dim = expl_env.observation_space.low.size
     if actor_model_class_name == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
     elif actor_model_class_name == "continuous_conditional_actor_model":
@@ -155,7 +205,7 @@ def run_experiment(variant):
             variant["model_kwargs"]["model_hidden_size"],
             world_model.feature_size,
             hidden_activation=torch.nn.functional.elu,
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
             env=eval_envs[0],
             **variant["actor_kwargs"],
@@ -178,8 +228,8 @@ def run_experiment(variant):
     if variant.get("use_mcts_policy", False):
         expl_policy = HybridAdvancedMCTSPolicy(
             world_model,
-            eval_envs[0].num_primitives,
-            eval_envs[0].action_space.low.size,
+            discrete_action_dim,
+            action_dim,
             eval_envs[0].action_space,
             actor,
             None,
@@ -188,8 +238,8 @@ def run_experiment(variant):
         )
         eval_policy = HybridAdvancedMCTSPolicy(
             world_model,
-            eval_envs[0].num_primitives,
-            eval_envs[0].action_space.low.size,
+            discrete_action_dim,
+            action_dim,
             eval_envs[0].action_space,
             actor,
             None,
@@ -204,10 +254,9 @@ def run_experiment(variant):
             action_dim,
             exploration=True,
             expl_amount=variant.get("expl_amount", 0.3),
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-            and (not variant["env_kwargs"]["fixed_schema"]),
+            discrete_continuous_dist=discrete_continuous_dist,
         )
         eval_policy = DreamerPolicy(
             world_model,
@@ -216,10 +265,9 @@ def run_experiment(variant):
             action_dim,
             exploration=False,
             expl_amount=0.0,
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-            and (not variant["env_kwargs"]["fixed_schema"]),
+            discrete_continuous_dist=discrete_continuous_dist,
         )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
@@ -247,6 +295,8 @@ def run_experiment(variant):
         obs_dim,
         action_dim,
         replace=False,
+        use_batch_length=use_batch_length,
+        batch_length=50,
     )
     trainer_class_name = variant.get("algorithm", "DreamerV2")
     if trainer_class_name == "DreamerV2":
@@ -275,7 +325,7 @@ def run_experiment(variant):
         **variant["algorithm_kwargs"],
     )
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
-    algorithm.post_epoch_funcs.append(video_post_epoch_func)
+    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    video_post_epoch_func(algorithm, -1)
+    # video_post_epoch_func(algorithm, -1)

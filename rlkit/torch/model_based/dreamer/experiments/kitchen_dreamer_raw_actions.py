@@ -64,7 +64,6 @@ def run_experiment(variant):
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-    from rlkit.torch.model_based.dreamer.mcts_policy import DiscreteMCTSPolicy
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import (
