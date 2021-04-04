@@ -7,8 +7,6 @@ from hrl_exp.envs.mujoco_vec_wrappers import (
     StableBaselinesVecEnv,
     make_env_multiworld,
 )
-from metaworld import _encode_task
-from metaworld.envs.mujoco.env_dict import ALL_V2_ENVIRONMENTS
 
 from rlkit.envs.dmc_wrappers import (
     ActionRepeat,
@@ -25,8 +23,11 @@ if __name__ == "__main__":
     #     env.reset()
     # cv2.imwrite("test.png", obs.reshape(3, 84, 84).transpose(1, 2, 0))
 
-    num_envs = 2
-    env_fns = [lambda: make_env_multiworld("assembly-v2") for _ in range(num_envs)]
+    num_envs = 10
+    env_fns = [
+        lambda: TimeLimit(ImageEnvMetaworld(make_env_multiworld("assembly-v2")), 150)
+        for _ in range(num_envs)
+    ]
     envs = StableBaselinesVecEnv(env_fns=env_fns, start_method="forkserver")
     envs.reset()
     d = [False] * num_envs

@@ -22,7 +22,12 @@ def run_experiment(variant):
 
     gym.logger.set_level(40)
 
-    from rlkit.envs.dmc_wrappers import ActionRepeat, NormalizeActions, TimeLimit
+    from rlkit.envs.dmc_wrappers import (
+        ActionRepeat,
+        ImageEnvMetaworld,
+        NormalizeActions,
+        TimeLimit,
+    )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
@@ -41,6 +46,7 @@ def run_experiment(variant):
         DummyVecEnv,
         StableBaselinesVecEnv,
         make_env,
+        make_env_multiworld,
     )
 
     import rlkit.torch.pytorch_util as ptu
@@ -68,10 +74,30 @@ def run_experiment(variant):
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
     env_suite = variant.get("env_suite", "kitchen")
+    num_expl_envs = variant["num_expl_envs"]
+    env_class_ = variant["env_class"]
     if env_suite == "metaworld":
-        env_class_ = ALL_V2_ENVIRONMENTS["assembly-v2"]
+        env_class = env_class_
+        env_kwargs = {}
+        env_fns = [
+            lambda: TimeLimit(
+                ImageEnvMetaworld(
+                    make_env_multiworld(env_class_),
+                    imwidth=64,
+                    imheight=64,
+                ),
+                150,
+            )
+            for _ in range(num_expl_envs)
+        ]
+        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+        eval_env = ImageEnvMetaworld(
+            make_env_multiworld(env_class_), imwidth=64, imheight=64
+        )
+        eval_env.reset()
+        eval_env = DummyVecEnv([TimeLimit(eval_env, 150)], pass_render_kwargs=False)
+        max_path_length = 151
     elif env_suite == "kitchen":
-        env_class = variant["env_class"]
         env_kwargs = variant["env_kwargs"]
         if env_class == "microwave":
             env_class_ = KitchenMicrowaveV0
@@ -105,18 +131,19 @@ def run_experiment(variant):
                 ),
                 500,
             )
-            for _ in range(variant["num_expl_envs"])
+            for _ in range(num_expl_envs)
         ]
-    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
 
-    eval_env = make_env(
-        env_class=env_class_,
-        env_kwargs=variant["env_kwargs"],
-    )
-    eval_env.reset()
-    eval_env = ActionRepeat(eval_env, 2)
-    eval_env = NormalizeActions(eval_env)
-    eval_env = DummyVecEnv([TimeLimit(eval_env, 500)], pass_render_kwargs=False)
+        eval_env = make_env(
+            env_class=env_class_,
+            env_kwargs=variant["env_kwargs"],
+        )
+        eval_env.reset()
+        eval_env = ActionRepeat(eval_env, 2)
+        eval_env = NormalizeActions(eval_env)
+        eval_env = DummyVecEnv([TimeLimit(eval_env, 500)], pass_render_kwargs=False)
+        max_path_length = 501
 
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
@@ -194,7 +221,7 @@ def run_experiment(variant):
     replay_buffer = EpisodeReplayBuffer(
         variant["replay_buffer_size"],
         expl_env,
-        501,
+        max_path_length,
         obs_dim,
         action_dim,
         replace=False,
