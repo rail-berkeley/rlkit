@@ -67,42 +67,46 @@ def run_experiment(variant):
     )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
-    env_class = variant["env_class"]
-    env_kwargs = variant["env_kwargs"]
-    if env_class == "microwave":
-        env_class_ = KitchenMicrowaveV0
-    elif env_class == "kettle":
-        env_class_ = KitchenKettleV0
-    elif env_class == "slide_cabinet":
-        env_class_ = KitchenSlideCabinetV0
-    elif env_class == "hinge_cabinet":
-        env_class_ = KitchenHingeCabinetV0
-    elif env_class == "top_left_burner":
-        env_class_ = KitchenTopLeftBurnerV0
-    elif env_class == "light_switch":
-        env_class_ = KitchenLightSwitchV0
-    elif env_class == "microwave_kettle_light_top_left_burner":
-        env_class_ = KitchenMicrowaveKettleLightTopLeftBurnerV0
-    elif env_class == "hinge_slide_bottom_left_burner_light":
-        env_class_ = KitchenHingeSlideBottomLeftBurnerLightV0
-    else:
-        raise EnvironmentError("invalid env provided")
+    env_suite = variant.get("env_suite", "kitchen")
+    if env_suite == "metaworld":
+        env_class_ = ALL_V2_ENVIRONMENTS["assembly-v2"]
+    elif env_suite == "kitchen":
+        env_class = variant["env_class"]
+        env_kwargs = variant["env_kwargs"]
+        if env_class == "microwave":
+            env_class_ = KitchenMicrowaveV0
+        elif env_class == "kettle":
+            env_class_ = KitchenKettleV0
+        elif env_class == "slide_cabinet":
+            env_class_ = KitchenSlideCabinetV0
+        elif env_class == "hinge_cabinet":
+            env_class_ = KitchenHingeCabinetV0
+        elif env_class == "top_left_burner":
+            env_class_ = KitchenTopLeftBurnerV0
+        elif env_class == "light_switch":
+            env_class_ = KitchenLightSwitchV0
+        elif env_class == "microwave_kettle_light_top_left_burner":
+            env_class_ = KitchenMicrowaveKettleLightTopLeftBurnerV0
+        elif env_class == "hinge_slide_bottom_left_burner_light":
+            env_class_ = KitchenHingeSlideBottomLeftBurnerLightV0
+        else:
+            raise EnvironmentError("invalid env provided")
 
-    env_fns = [
-        lambda: TimeLimit(
-            NormalizeActions(
-                ActionRepeat(
-                    make_env(
-                        env_class=env_class_,
-                        env_kwargs=variant["env_kwargs"],
-                    ),
-                    2,
-                )
-            ),
-            500,
-        )
-        for _ in range(variant["num_expl_envs"])
-    ]
+        env_fns = [
+            lambda: TimeLimit(
+                NormalizeActions(
+                    ActionRepeat(
+                        make_env(
+                            env_class=env_class_,
+                            env_kwargs=variant["env_kwargs"],
+                        ),
+                        2,
+                    )
+                ),
+                500,
+            )
+            for _ in range(variant["num_expl_envs"])
+        ]
     expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
 
     eval_env = make_env(
