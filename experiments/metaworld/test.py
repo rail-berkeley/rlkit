@@ -1,5 +1,6 @@
 import cv2
 import gym
+import matplotlib.pyplot as plt
 import numpy as np
 from gym.spaces import Box
 
@@ -7,9 +8,12 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld
 from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
 if __name__ == "__main__":
-    env = make_metaworld_env("assembly-v2", dict(control_mode='primitives', use_combined_action_space=True, action_scale=1.4))
+    # env = make_metaworld_env("assembly-v2", dict(control_mode='primitives', use_combined_action_space=True, action_scale=1.4))
+    env = ImageEnvMetaworld(
+        make_metaworld_env("assembly-v2", {}), imwidth=64, imheight=64
+    )
     obs = env.reset()
-    for i in range(1000000):
+    for i in range(10):
         # a = np.zeros(env.action_space.low.size)
         # primitive = 'angled_x_y_grasp'
         # a[env.get_idx_from_primitive_name(primitive)] = 1
@@ -18,11 +22,13 @@ if __name__ == "__main__":
         #         + np.array(env.primitive_name_to_action_idx[primitive])
         #     ] = np.array([-np.pi / 6, -0.3, 1.4])
         env.step(env.action_space.sample())
-        env.render()
+        env.render(mode='human')
         if i % 150 == 0:
             env.reset()
         # env.reset()
-    # cv2.imwrite("test.png", obs.reshape(3, 84, 84).transpose(1, 2, 0))
+    # cv2.imwrite("test.png", obs.reshape(3, 64, 64).transpose(1, 2, 0))
+    plt.imshow(obs.reshape(3, 64, 64).transpose(1, 2, 0))
+    plt.show()
     # import gym
 
     # gym.logger.set_level(40)
