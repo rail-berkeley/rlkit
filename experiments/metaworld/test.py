@@ -10,10 +10,10 @@ from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 if __name__ == "__main__":
     # env = make_metaworld_env("assembly-v2", dict(control_mode='primitives', use_combined_action_space=True, action_scale=1.4))
     env = ImageEnvMetaworld(
-        make_metaworld_env("assembly-v2", {}), imwidth=64, imheight=64
+        make_metaworld_env("assembly-v2", {}), imwidth=84, imheight=84
     )
     obs = env.reset()
-    for i in range(10):
+    for i in range(10000):
         # a = np.zeros(env.action_space.low.size)
         # primitive = 'angled_x_y_grasp'
         # a[env.get_idx_from_primitive_name(primitive)] = 1
@@ -27,8 +27,8 @@ if __name__ == "__main__":
             env.reset()
         # env.reset()
     # cv2.imwrite("test.png", obs.reshape(3, 64, 64).transpose(1, 2, 0))
-    plt.imshow(obs.reshape(3, 64, 64).transpose(1, 2, 0))
-    plt.show()
+        plt.imshow(obs.reshape(3, 84, 84).transpose(1, 2, 0))
+        plt.show()
     # import gym
 
     # gym.logger.set_level(40)
