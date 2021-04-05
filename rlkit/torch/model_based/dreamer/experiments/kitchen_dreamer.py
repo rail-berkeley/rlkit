@@ -58,37 +58,43 @@ def experiment(variant):
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
 
     if env_suite == "metaworld":
+        env_fns = [
+            lambda: TimeLimit(
+                ImageEnvMetaworld(
+                    make_metaworld_env(env_class, env_kwargs),
+                    imwidth=64,
+                    imheight=64,
+                ),
+                variant["algorithm_kwargs"]["max_path_length"],
+            )
+            for _ in range(num_expl_envs)
+        ]
+        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+        eval_envs = [
+            TimeLimit(
+                ImageEnvMetaworld(
+                    make_metaworld_env(env_class, env_kwargs),
+                    imwidth=64,
+                    imheight=64,
+                ),
+                variant["algorithm_kwargs"]["max_path_length"],
+            )
+        ]
+        eval_env = DummyVecEnv(eval_envs, pass_render_kwargs=False)
         if use_raw_actions:
-            env_kwargs = {}
-            env_fns = [
-                lambda: TimeLimit(
-                    ImageEnvMetaworld(
-                        make_metaworld_env(env_class, env_kwargs),
-                        imwidth=64,
-                        imheight=64,
-                    ),
-                    150,
-                )
-                for _ in range(num_expl_envs)
-            ]
-            expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-            eval_envs = [
-                TimeLimit(
-                    ImageEnvMetaworld(
-                        make_metaworld_env(env_class, env_kwargs),
-                        imwidth=64,
-                        imheight=64,
-                    ),
-                    150,
-                )
-            ]
-            eval_env = DummyVecEnv(eval_envs, pass_render_kwargs=False)
             discrete_continuous_dist = False
             continuous_action_dim = eval_env.action_space.low.size
             discrete_action_dim = 0
-            world_model_class = WorldModel
             use_batch_length = True
-            action_dim = eval_env.action_space.low.size
+        else:
+            discrete_continuous_dist = variant["actor_kwargs"][
+                "discrete_continuous_dist"
+            ]
+            continuous_action_dim = eval_envs[0].max_arg_len
+            discrete_action_dim = eval_envs[0].num_primitives
+            use_batch_length = False
+        world_model_class = WorldModel
+        action_dim = eval_env.action_space.low.size
     else:
         if use_raw_actions:
             env_fns = [

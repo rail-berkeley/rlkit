@@ -3,6 +3,9 @@ import random
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+    preprocess_variant,
+)
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
@@ -16,46 +19,47 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=1000,
-            min_num_steps_before_training=1000,
-            num_pretrain_steps=1,
-            max_path_length=150,
-            num_expl_steps_per_train_loop=151,
-            num_trains_per_train_loop=1,
+            num_eval_steps_per_epoch=10,
+            num_expl_steps_per_train_loop=50,
+            min_num_steps_before_training=10,
+            num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            batch_size=50,
+            num_trains_per_train_loop=10,
+            batch_size=30,
+            max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
-            num_eval_steps_per_epoch=150 * 5,
+            num_epochs=250,
+            num_eval_steps_per_epoch=5 * 6,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=150,
-            num_expl_steps_per_train_loop=150 * num_envs,
-            num_trains_per_train_loop=1250,
-            num_train_loops_per_epoch=2,
-            batch_size=50,
+            max_path_length=5,
+            batch_size=417,  # 417*6 = 2502
+            num_expl_steps_per_train_loop=198,  # 33*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=6,  # 1000//(33*5)
+            num_trains_per_train_loop=67,  # 400//6
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e3),
+        replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
+        use_raw_actions=False,
         env_suite="metaworld",
-        use_raw_actions=True,
         env_kwargs=dict(
-            control_mode="end_effector",
-            use_combined_action_space=False,
-            action_scale=1 / 100,
+            control_mode="primitives",
+            use_combined_action_space=True,
+            action_scale=1.4,
         ),
         actor_kwargs=dict(
+            discrete_continuous_dist=True,
             init_std=0.0,
             num_layers=4,
             min_std=0.1,
-            dist="trunc_normal",
+            dist="tanh_normal_dreamer_v1",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -76,22 +80,23 @@ if __name__ == "__main__":
             opt_level="O1",
             optimizer_class="apex_adam",
             adam_eps=1e-5,
-            discount=0.99,
+            discount=0.8,
             lam=0.95,
             forward_kl=False,
             free_nats=1.0,
+            pred_discount_loss_scale=10.0,
             kl_loss_scale=0.0,
             transition_loss_scale=0.8,
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=3e-4,
             reward_loss_scale=2.0,
-            imagination_horizon=15,
-            use_pred_discount=False,
-            policy_gradient_loss_scale=0.0,
+            use_pred_discount=True,
+            policy_gradient_loss_scale=1.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
-            reward_scale=1 / 100,
+            detach_rewards=False,
+            imagination_horizon=5,
         ),
         num_expl_envs=num_envs,
         num_eval_envs=1,
@@ -156,8 +161,8 @@ if __name__ == "__main__":
         search_space,
         default_parameters=variant,
     )
-    num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
@@ -173,5 +178,3 @@ if __name__ == "__main__":
                 seed=seed,
                 exp_id=exp_id,
             )
-            num_exps_launched += 1
-    print("Num exps launched: ", num_exps_launched)
