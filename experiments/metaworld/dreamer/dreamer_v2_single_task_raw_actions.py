@@ -168,7 +168,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="last",
                 python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
                 seed=seed,
                 exp_id=exp_id,

@@ -97,6 +97,7 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
+            reward_scale=1 / 100,
         ),
         num_expl_envs=num_envs,
         num_eval_envs=1,
