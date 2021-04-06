@@ -16,7 +16,7 @@ def make_metaworld_env(env_class, env_kwargs):
         env_class,
         {
             "env_cls": ALL_V2_ENVIRONMENTS[env_class],
-            "rand_vec": env.goal,
+            "rand_vec": env._last_rand_vec,
             "partially_observable": False,  # if true: goal is part of the observation
         },
     )
