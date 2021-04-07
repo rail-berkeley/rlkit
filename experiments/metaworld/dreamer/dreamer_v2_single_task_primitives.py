@@ -172,7 +172,7 @@ if __name__ == "__main__":
         num_envs = variant["num_expl_envs"]
         replay_buffer_size = 2500000 // max_steps
 
-        num_eval_steps_per_epoch = num_envs * (max_steps + 1)
+        num_eval_steps_per_epoch = 5 * (max_steps + 1)
         max_path_length = max_steps
         batch_size = 2500 // (max_steps + 1)
         num_expl_steps_per_train_loop = num_envs * (max_steps + 1)
