@@ -116,12 +116,25 @@ class ImageEnvMetaworld(gym.Wrapper):
         self.num_steps = 0
 
     def _get_image(self):
-        img = self.env.render(mode='rgb_array', width=self.imwidth, height=self.imheight)
+        img = self.env.render(
+            mode="rgb_array", width=self.imwidth, height=self.imheight
+        )
         img = img.transpose(2, 0, 1).flatten()
         return img
 
-    def step(self, action):
-        o, r, d, i = super().step(action)
+    def step(
+        self,
+        action,
+        render_every_step=True,
+        render_mode="human",
+        render_im_shape=(1000, 1000),
+    ):
+        o, r, d, i = self.env.step(
+            action,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
         self.num_steps += 1
         o = self._get_image()
         return o, r, d, i

@@ -15,7 +15,6 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
-    num_envs = 33
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
@@ -52,7 +51,8 @@ if __name__ == "__main__":
         env_kwargs=dict(
             control_mode="primitives",
             use_combined_action_space=True,
-            action_scale=1.4,
+            action_scale=1,
+            max_path_length=5,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -99,17 +99,18 @@ if __name__ == "__main__":
             imagination_horizon=5,
             reward_scale=1 / 100,
         ),
-        num_expl_envs=num_envs,
+        num_expl_envs=33,
+        max_steps=5,
         num_eval_envs=1,
         expl_amount=0.3,
     )
 
     search_space = {
         "env_class": [
-            "assembly-v2",
+            # "assembly-v2",
             # "basketball-v2",
-            "bin-picking-v2",
-            "box-close-v2",
+            # "bin-picking-v2",
+            # "box-close-v2",
             # "button-press-topdown-v2",
             # "button-press-topdown-wall-v2",
             # "button-press-v2",
@@ -123,11 +124,11 @@ if __name__ == "__main__":
             # "door-lock-v2",
             # "door-open-v2",
             # "door-unlock-v2",
-            # "hand-insert-v2",
-            # "drawer-close-v2",
-            # "drawer-open-v2",
-            # "faucet-open-v2",
-            # "faucet-close-v2",
+            # "hand-insert-v2", #no goal
+            # "drawer-close-v2", #no goal
+            # "drawer-open-v2", #no goal
+            # "faucet-open-v2", #no goal
+            # "faucet-close-v2", #no goal
             # "hammer-v2",
             # "handle-press-side-v2",
             # "handle-press-v2",
@@ -154,15 +155,48 @@ if __name__ == "__main__":
             # "shelf-place-v2",
             # "sweep-into-v2",
             # "sweep-v2",
-            # "window-open-v2",
-            # "window-close-v2",
+            # "window-open-v2", #no goal
+            # "window-close-v2", #no goal
         ],
+        "max_steps": [5, 10, 15],
+        "discount": [0.99, None],
+        "env_kwargs.action_scale": [0.25, 0.5, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        max_steps = variant["max_steps"]
+        num_envs = variant["num_expl_envs"]
+        replay_buffer_size = 2500000 // max_steps
+
+        num_eval_steps_per_epoch = num_envs * (max_steps + 1)
+        max_path_length = max_steps
+        batch_size = 2500 // (max_steps + 1)
+        num_expl_steps_per_train_loop = num_envs * (max_steps + 1)
+        num_train_loops_per_epoch = 1000 // (num_envs * max_steps)
+        num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
+        variant["algorithm_kwargs"][
+            "num_eval_steps_per_epoch"
+        ] = num_eval_steps_per_epoch
+        variant["algorithm_kwargs"]["max_path_length"] = max_steps
+        variant["env_kwargs"]["max_path_length"] = max_steps
+        variant["algorithm_kwargs"]["batch_size"] = batch_size
+        variant["algorithm_kwargs"][
+            "num_expl_steps_per_train_loop"
+        ] = num_expl_steps_per_train_loop
+        variant["algorithm_kwargs"][
+            "num_train_loops_per_epoch"
+        ] = num_train_loops_per_epoch
+        variant["algorithm_kwargs"][
+            "num_trains_per_train_loop"
+        ] = num_trains_per_train_loop
+        variant["replay_buffer_size"] = replay_buffer_size
+        variant["env_kwargs"]["max_steps"] = max_steps
+        variant["trainer_kwargs"]["imagination_horizon"] = max_steps
+        if variant["trainer_kwargs"]["discount"] != 0.99:
+            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_steps
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

@@ -10,9 +10,6 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld
 from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
 if __name__ == "__main__":
-    # env = make_metaworld_env("assembly-v2", dict(control_mode='primitives', use_combined_action_space=True, action_scale=1.4))
-
-    st = time.time()
     for env_name in [
         "assembly-v2",
         "basketball-v2",
@@ -31,11 +28,11 @@ if __name__ == "__main__":
         "door-lock-v2",
         "door-open-v2",
         "door-unlock-v2",
-        "hand-insert-v2",
-        "drawer-close-v2",
-        "drawer-open-v2",
-        "faucet-open-v2",
-        "faucet-close-v2",
+        # "hand-insert-v2", #no goal
+        # "drawer-close-v2", #no goal
+        # "drawer-open-v2", #no goal
+        # "faucet-open-v2", #no goal
+        # "faucet-close-v2", #no goal
         "hammer-v2",
         "handle-press-side-v2",
         "handle-press-v2",
@@ -62,15 +59,38 @@ if __name__ == "__main__":
         "shelf-place-v2",
         "sweep-into-v2",
         "sweep-v2",
-        "window-open-v2",
-        "window-close-v2",
+        # "window-open-v2", #no goal
+        # "window-close-v2", #no goal
     ]:
         print(env_name)
-        env = ImageEnvMetaworld(
-            make_metaworld_env(env_name, {}), imwidth=84, imheight=84
-        )
-        obs = env.reset()
-        for i in range(10):
+        # env = ImageEnvMetaworld(
+        #     make_metaworld_env(
+        #         env_name,
+        #         dict(
+        #             control_mode="primitives",
+        #             use_combined_action_space=True,
+        #             action_scale=0.5,
+        #             max_path_length=5,
+        #         ),
+        #         # {}
+        #     ),
+        #     imwidth=64,
+        #     imheight=64,
+        # )
+        # obs = env.reset()
+        num_envs = 20
+        env_fns = [
+            lambda: TimeLimit(
+                ImageEnvMetaworld(
+                    make_metaworld_env(env_name, {}), imwidth=64, imheight=64
+                ),
+                5,
+            )
+            for _ in range(num_envs)
+        ]
+        envs = StableBaselinesVecEnv(env_fns=env_fns, start_method="forkserver")
+        envs.reset()
+        for i in range(10000 // num_envs):
             # a = np.zeros(env.action_space.low.size)
             # primitive = 'angled_x_y_grasp'
             # a[env.get_idx_from_primitive_name(primitive)] = 1
@@ -78,11 +98,22 @@ if __name__ == "__main__":
             #         env.num_primitives
             #         + np.array(env.primitive_name_to_action_idx[primitive])
             #     ] = np.array([-np.pi / 6, -0.3, 1.4])
-            env.step(env.action_space.sample())
-            # env.render(mode='human')
-            if i % 150 == 0:
-                print((time.time() - st) / (i + 1))
-                env.reset()
+            a = [envs.action_space.sample() for _ in range(num_envs)]
+            # print(a[-14:])
+            # envs.step(
+            #     a, render_every_step=False, render_mode="human"
+            # )
+            print(i)
+            envs.step(
+                a,
+            )
+            # env.render()
+            if i % 5 == 0:
+                # if i % 150 == 0:
+                # st = time.time()
+
+                # print((time.time() - st) / (i + 1))
+                envs.reset()
         # env.reset()
     # cv2.imwrite("test.png", obs.reshape(3, 64, 64).transpose(1, 2, 0))
     # plt.imshow(obs.reshape(3, 84, 84).transpose(1, 2, 0))
