@@ -117,14 +117,14 @@ if __name__ == "__main__":
             "button-press-v2",
             "button-press-wall-v2",
             "coffee-button-v2",
-            # "coffee-pull-v2",
-            # "coffee-push-v2",
-            # "dial-turn-v2",
-            # "disassemble-v2",
-            # "door-close-v2",
-            # "door-lock-v2",
-            # "door-open-v2",
-            # "door-unlock-v2",
+            "coffee-pull-v2",
+            "coffee-push-v2",
+            "dial-turn-v2",
+            "disassemble-v2",
+            "door-close-v2",
+            "door-lock-v2",
+            "door-open-v2",
+            "door-unlock-v2",
             # "hand-insert-v2", #no goal
             # "drawer-close-v2", #no goal
             # "drawer-open-v2", #no goal
