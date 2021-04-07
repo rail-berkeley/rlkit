@@ -106,7 +106,7 @@ class ImageEnvMetaworld(gym.Wrapper):
         imheight=84,
     ):
         gym.Wrapper.__init__(self, env)
-        self.max_steps = 150
+        self.max_steps = self.env.max_path_length
         self.imwidth = imwidth
         self.imheight = imheight
         self.observation_space = Box(
@@ -125,7 +125,7 @@ class ImageEnvMetaworld(gym.Wrapper):
     def step(
         self,
         action,
-        render_every_step=True,
+        render_every_step=False,
         render_mode="human",
         render_im_shape=(1000, 1000),
     ):

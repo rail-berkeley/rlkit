@@ -159,7 +159,7 @@ if __name__ == "__main__":
             # "window-close-v2", #no goal
         ],
         "max_steps": [5, 10, 15],
-        "discount": [0.99, None],
+        "trainer_kwargs.discount": [0.99, None],
         "env_kwargs.action_scale": [0.25, 0.5, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -193,7 +193,6 @@ if __name__ == "__main__":
             "num_trains_per_train_loop"
         ] = num_trains_per_train_loop
         variant["replay_buffer_size"] = replay_buffer_size
-        variant["env_kwargs"]["max_steps"] = max_steps
         variant["trainer_kwargs"]["imagination_horizon"] = max_steps
         if variant["trainer_kwargs"]["discount"] != 0.99:
             variant["trainer_kwargs"]["discount"] = 1 - 1 / max_steps
