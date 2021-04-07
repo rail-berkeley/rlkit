@@ -103,18 +103,19 @@ if __name__ == "__main__":
         max_steps=5,
         num_eval_envs=1,
         expl_amount=0.3,
+        save_video=True,
     )
 
     search_space = {
         "env_class": [
-            # "assembly-v2",
-            # "basketball-v2",
-            # "bin-picking-v2",
-            # "box-close-v2",
-            # "button-press-topdown-v2",
-            # "button-press-topdown-wall-v2",
-            # "button-press-v2",
-            # "button-press-wall-v2",
+            "assembly-v2",
+            "basketball-v2",
+            "bin-picking-v2",
+            "box-close-v2",
+            "button-press-topdown-v2",
+            "button-press-topdown-wall-v2",
+            "button-press-v2",
+            "button-press-wall-v2",
             "coffee-button-v2",
             # "coffee-pull-v2",
             # "coffee-push-v2",
@@ -158,9 +159,9 @@ if __name__ == "__main__":
             # "window-open-v2", #no goal
             # "window-close-v2", #no goal
         ],
-        "max_steps": [5, 10, 15],
-        "trainer_kwargs.discount": [0.99, None],
-        "env_kwargs.action_scale": [0.25, 0.5, 1],
+        "max_steps": [10],
+        "trainer_kwargs.discount": [0.9],
+        "env_kwargs.action_scale": [0.25],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

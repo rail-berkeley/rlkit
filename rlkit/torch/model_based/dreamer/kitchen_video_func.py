@@ -17,21 +17,21 @@ def video_post_epoch_func(algorithm, epoch):
     video_post_epoch_func_(
         algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
     )
-    imagination_post_epoch_func(
-        algorithm,
-        algorithm.eval_env,
-        epoch,
-        algorithm.eval_data_collector._policy,
-        mode="eval",
-    )
+    # imagination_post_epoch_func(
+    #     algorithm,
+    #     algorithm.eval_env,
+    #     epoch,
+    #     algorithm.eval_data_collector._policy,
+    #     mode="eval",
+    # )
 
-    imagination_post_epoch_func(
-        algorithm,
-        algorithm.eval_env,
-        epoch,
-        algorithm.expl_data_collector._policy,
-        mode="expl",
-    )
+    # imagination_post_epoch_func(
+    #     algorithm,
+    #     algorithm.eval_env,
+    #     epoch,
+    #     algorithm.expl_data_collector._policy,
+    #     mode="expl",
+    # )
 
 
 @torch.no_grad()
