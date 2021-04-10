@@ -79,9 +79,6 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         self.observation_space = Box(
             0, 255, (3, self.env.imwidth, self.env.imheight), dtype=np.uint8
         )
-        self.action_space = Box(
-            -1, 1, (self.env.action_space.low.size,), dtype=np.float32
-        )
         self.reward_ctr = 0
 
     def reset(self):
@@ -89,9 +86,31 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         return obs.reshape(-1, self.env.imwidth, self.env.imheight)
 
     def step(self, action):
-        obs, reward, done, info = self.env.step(action)
+        obs, reward, done, info = super().step(action)
         return (
             obs.reshape(-1, self.env.imwidth, self.env.imheight),
+            reward,
+            done,
+            info,
+        )
+
+
+class ImageTransposeWrapper(gym.Wrapper):
+    def __init__(self, env):
+        gym.Wrapper.__init__(self, env)
+        self.observation_space = Box(
+            0, 255, (self.env.imwidth, self.env.imheight, 3), dtype=np.uint8
+        )
+        self.reward_ctr = 0
+
+    def reset(self):
+        obs = self.env.reset()
+        return obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0)
+
+    def step(self, action):
+        obs, reward, done, info = super().step(action)
+        return (
+            obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0),
             reward,
             done,
             info,
@@ -104,6 +123,7 @@ class ImageEnvMetaworld(gym.Wrapper):
         env,
         imwidth=84,
         imheight=84,
+        reward_scale=1.0,
     ):
         gym.Wrapper.__init__(self, env)
         self.max_steps = self.env.max_path_length
@@ -114,6 +134,7 @@ class ImageEnvMetaworld(gym.Wrapper):
         )
         self.image_shape = (3, self.imwidth, self.imheight)
         self.num_steps = 0
+        self.reward_scale = reward_scale
 
     def _get_image(self):
         img = self.env.render(
@@ -137,9 +158,28 @@ class ImageEnvMetaworld(gym.Wrapper):
         )
         self.num_steps += 1
         o = self._get_image()
+        r = self.reward_scale * r
         return o, r, d, i
 
     def reset(self):
         super().reset()
         self.num_steps = 0
         return self._get_image()
+
+
+class DictObsWrapper(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        spaces = {}
+        spaces["image"] = gym.spaces.Box(0, 255, (64, 64, 3), dtype=np.uint8)
+        self.observation_space = gym.spaces.Dict(spaces)
+
+    def step(
+        self,
+        action,
+    ):
+        o, r, d, i = super().step(action)
+        return {"image": o}, r, d, i
+
+    def reset(self):
+        return {"image": self.env.reset()}
