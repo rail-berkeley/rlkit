@@ -65,6 +65,7 @@ if __name__ == "__main__":
         eval_interval=1,
         use_raw_actions=False,
         env_suite="kitchen",
+        discrete_continuous_dist=True,
     )
 
     search_space = {
@@ -76,6 +77,7 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
+        "discrete_continuous_dist": [True],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
