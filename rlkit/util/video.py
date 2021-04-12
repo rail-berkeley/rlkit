@@ -55,6 +55,9 @@ def dump_video(
                     imsize=imsize,
                 )
             )
+        if len(l) < horizon:
+            frozen_img = l[-1] / 2
+            l += [frozen_img] * (horizon - len(l))
         frames += l
 
         if dirname_to_save_images:
