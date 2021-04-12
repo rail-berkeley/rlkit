@@ -3,27 +3,15 @@ import time
 import gym
 import numpy as np
 import robosuite as suite
+from robosuite.wrappers.gym_wrapper import GymWrapper
 
 from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
-
-
-class RobosuiteWrapper:
-    def __init__(self, env):
-        self.env = env
-        image_shape = env.observation_spec()["agentview_image"].shape
-        self.observation_space = gym.spaces.Box(0, 255, image_shape, dtype=np.uint8)
-        self.action_space = gym.spaces.Box(
-            env.action_spec[0], env.action_spec[1], dtype=np.float32
-        )
-
-    def __getattr__(self, name):
-        return getattr(self.env, name)
 
 
 def make_robosuite_env(env_name, robots, imwidth=64, imheight=64):
     # create environment instance
     gym.logger.setLevel(40)
-    env = RobosuiteWrapper(
+    env = GymWrapper(
         suite.make(
             env_name=env_name,  # try with other tasks like "Stack" and "Door"
             robots=robots,  # try with other robots like "Sawyer" and "Jaco"
