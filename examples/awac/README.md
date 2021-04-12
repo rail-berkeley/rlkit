@@ -12,6 +12,9 @@ environments in this repository:
 You can also use the follwing docker image, which has the required dependencies
 set up: anair17/railrl-hand-v3
 
+For the mj_envs repository, please use:
+https://github.com/anair13/mj_envs
+
 ## Data
 
 Data can be downloaded from the following links:
