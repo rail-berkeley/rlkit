@@ -1,5 +1,5 @@
 """
-Run DQN on grid world.
+Run DQN on CartPole-v0.
 """
 
 import gym
@@ -19,8 +19,8 @@ from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
 
 def experiment(variant):
-    expl_env = gym.make('CartPole-v0')
-    eval_env = gym.make('CartPole-v0')
+    expl_env = gym.make('CartPole-v0').env
+    eval_env = gym.make('CartPole-v0').env
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.n
 
@@ -71,12 +71,10 @@ def experiment(variant):
     algorithm.train()
 
 
-
-
 if __name__ == "__main__":
     # noinspection PyTypeChecker
     variant = dict(
-        algorithm="SAC",
+        algorithm="DQN",
         version="normal",
         layer_size=256,
         replay_buffer_size=int(1E6),
@@ -94,6 +92,6 @@ if __name__ == "__main__":
             learning_rate=3E-4,
         ),
     )
-    setup_logger('name-of-experiment', variant=variant)
+    setup_logger('dqn-CartPole', variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant)
