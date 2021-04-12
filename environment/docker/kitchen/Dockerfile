@@ -1,4 +1,4 @@
-FROM nvidia/cuda:10.2-cudnn7-devel-ubuntu18.04
+FROM nvidia/cuda:10.1-cudnn7-devel-ubuntu18.04
 
 
 RUN apt-get update -q \
@@ -20,6 +20,8 @@ RUN apt-get update -q \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
+RUN apt-get update && apt-get install -y zsh libglfw3-dev patchelf
+
 RUN DEBIAN_FRONTEND=noninteractive add-apt-repository --yes ppa:deadsnakes/ppa && apt-get update
 RUN DEBIAN_FRONTEND=noninteractive apt-get install --yes python3.7-dev python3.7 python3-pip
 RUN virtualenv --python=python3.7 env
@@ -29,9 +31,6 @@ RUN ln -s /env/bin/python3.7 /usr/bin/python
 RUN ln -s /env/bin/pip3.7 /usr/bin/pip
 RUN ln -s /env/bin/pytest /usr/bin/pytest
 RUN pip install --upgrade pip
-
-RUN curl -o /usr/local/bin/patchelf https://s3-us-west-2.amazonaws.com/openai-sci-artifacts/manual-builds/patchelf_0.9_amd64.elf \
-    && chmod +x /usr/local/bin/patchelf
 
 ENV LANG C.UTF-8
 
@@ -94,7 +93,6 @@ RUN pip install git+git://github.com/deepmind/dm_control@master#egg=dm_control
 RUN pip install git+git://github.com/aravindr93/mjrl@master#egg=mjrl
 RUN pip install numba
 RUN pip install numpy-quaternion
-ENV LD_PRELOAD $LD_PRELOAD:/usr/lib/x86_64-linux-gnu/libGLEW.so
 RUN mkdir /usr/lib/nvidia-000/
 ENV LD_LIBRARY_PATH $LD_LIBRARY_PATH:/usr/lib/nvidia-000
 RUN python -c "import mujoco_py"
