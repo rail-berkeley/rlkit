@@ -1,4 +1,5 @@
 import abc
+import time
 
 import gtimer as gt
 
@@ -51,8 +52,10 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         else:
             self.pretrain_policy = None
         self.num_pretrain_steps = num_pretrain_steps
+        self.total_train_expl_time = 0
 
     def _train(self):
+        st = time.time()
         if self.min_num_steps_before_training > 0:
             init_expl_paths = self.expl_data_collector.collect_new_paths(
                 self.max_path_length,
@@ -61,6 +64,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
+        self.total_train_expl_time += time.time() - st
 
         for epoch in gt.timed_for(
             range(self._start_epoch, self.num_epochs),
@@ -71,7 +75,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 self.num_eval_steps_per_epoch,
             )
             gt.stamp("evaluation sampling")
-
+            st = time.time()
             for train_loop in range(self.num_train_loops_per_epoch):
                 if epoch == 0 and train_loop == 0:  # absolute first iteration
                     num_train_steps = self.num_pretrain_steps
@@ -92,5 +96,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
 
                 self.replay_buffer.add_paths(new_expl_paths)
                 gt.stamp("data storing", unique=False)
+            self.total_train_expl_time += time.time() - st
 
             self._end_epoch(epoch)

@@ -188,10 +188,12 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         Misc
         """
         gt.stamp("logging")
-        logger.record_dict(_get_epoch_timings())
+        timings = _get_epoch_timings()
+        timings["time/training and exploration (s)"] = self.total_train_expl_time
+        logger.record_dict(timings)
         if self.use_wandb:
             self._log_wandb(
-                _get_epoch_timings(),
+                timings,
                 prefix="",
                 epoch=epoch,
             )
