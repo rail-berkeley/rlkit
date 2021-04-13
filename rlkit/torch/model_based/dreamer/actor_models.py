@@ -62,10 +62,12 @@ class ActorModel(Mlp):
                 last[:, : self.discrete_action_dim + self.continuous_action_dim],
                 last[:, self.discrete_action_dim + self.continuous_action_dim :],
             )
-            discrete_logits, continuous_action_mean, extra = mean.split(
-                self.discrete_action_dim, -1
-            )
-            continuous_action_mean = torch.cat((continuous_action_mean, extra), -1)
+            split = mean.split(self.discrete_action_dim, -1)
+            if len(split) == 2:
+                discrete_logits, continuous_action_mean = split
+            else:
+                discrete_logits, continuous_action_mean, extra = split
+                continuous_action_mean = torch.cat((continuous_action_mean, extra), -1)
             dist1 = OneHotDist(logits=discrete_logits)
 
             if self._dist == "tanh_normal_dreamer_v1":
@@ -106,7 +108,7 @@ class ActorModel(Mlp):
                     continuous_action_mean, continuous_action_std, -1, 1
                 )
                 dist2 = Independent(dist2, 1)
-            dist = SplitDist(dist1, dist2)
+            dist = SplitDist(dist1, dist2, self.discrete_action_dim)
         else:
             action_mean, action_std = last.split(self.continuous_action_dim, -1)
             if self._dist == "tanh_normal_dreamer_v1":
@@ -373,9 +375,10 @@ class OneHotDist(OneHotCategorical):
 
 
 class SplitDist:
-    def __init__(self, dist1, dist2):
+    def __init__(self, dist1, dist2, split_dim):
         self._dist1 = dist1
         self._dist2 = dist2
+        self.split_dim = split_dim
 
     def rsample(self):
         return torch.cat((self._dist1.rsample(), self._dist2.rsample()), -1)
@@ -387,9 +390,9 @@ class SplitDist:
         return self._dist1.entropy() + self._dist2.entropy()
 
     def log_prob(self, actions):
-        return self._dist1.log_prob(actions[:, :12]) + self._dist2.log_prob(
-            actions[:, 12:]
-        )
+        return self._dist1.log_prob(
+            actions[:, : self.split_dim]
+        ) + self._dist2.log_prob(actions[:, self.split_dim :])
 
 
 class SplitConditionalDist:
