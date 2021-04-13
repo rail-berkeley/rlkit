@@ -27,13 +27,13 @@ def make_robosuite_env(env_name, robots, imwidth=64, imheight=64):
 
 
 if __name__ == "__main__":
-    # env = make_robosuite_env('Lift', 'Panda')
+    # env = make_robosuite_env("Lift", "Panda")
     # st = time.time()
     # for i in range(1000):
-    #     action = np.random.randn(env.robots[0].dof) # sample random action
+    #     action = np.random.randn(env.robots[0].dof)  # sample random action
     #     obs, reward, done, info = env.step(action)  # take action in the environment
     #     # env.render()  # render on display
-    # print((time.time()-st)/1000)
+    # print((time.time() - st) / 1000)
 
     num_envs = 10
     env_fns = [lambda: make_robosuite_env("Lift", "Panda") for _ in range(num_envs)]

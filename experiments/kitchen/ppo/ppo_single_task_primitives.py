@@ -59,7 +59,7 @@ if __name__ == "__main__":
             imheight=84,
         ),
         num_processes=12,
-        num_env_steps=int(2.5e5),
+        num_env_steps=int(5e5),
         num_steps=2048 // 12,
         log_interval=1,
         eval_interval=1,
@@ -77,7 +77,7 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "discrete_continuous_dist": [True],
+        "discrete_continuous_dist": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
