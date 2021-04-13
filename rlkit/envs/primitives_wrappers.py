@@ -137,9 +137,16 @@ class ImageEnvMetaworld(gym.Wrapper):
         self.reward_scale = reward_scale
 
     def _get_image(self):
+        # img = self.env.sim.render(
+        #     width=self.imwidth,
+        #     height=self.imheight,
+        # )
+
+        # use this if using dm control backend!
         img = self.env.render(
             mode="rgb_array", width=self.imwidth, height=self.imheight
         )
+
         img = img.transpose(2, 0, 1).flatten()
         return img
 
@@ -152,14 +159,18 @@ class ImageEnvMetaworld(gym.Wrapper):
     ):
         o, r, d, i = self.env.step(
             action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
+            # render_every_step=render_every_step,
+            # render_mode=render_mode,
+            # render_im_shape=render_im_shape,
         )
         self.num_steps += 1
         o = self._get_image()
         r = self.reward_scale * r
-        return o, r, d, i
+        new_i = {}
+        for k, v in i.items():
+            if v is not None:
+                new_i[k] = v
+        return o, r, d, new_i
 
     def reset(self):
         super().reset()
