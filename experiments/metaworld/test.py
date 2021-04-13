@@ -5,12 +5,65 @@ import gym
 import matplotlib.pyplot as plt
 import numpy as np
 from gym.spaces import Box
+from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS
 
 from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld_env
 from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
 if __name__ == "__main__":
-    for env_name in [
+    V1_keys = [
+        "reach-v1",
+        "push-v1",
+        "pick-place-v1",
+        "door-open-v1",
+        "drawer-open-v1",
+        "drawer-close-v1",
+        "button-press-topdown-v1",
+        "peg-insert-side-v1",
+        "window-open-v1",
+        "window-close-v1",
+        "door-close-v1",
+        "reach-wall-v1",
+        "pick-place-wall-v1",
+        "push-wall-v1",
+        "button-press-v1",
+        "button-press-topdown-wall-v1",
+        "button-press-wall-v1",
+        "peg-unplug-side-v1",
+        "disassemble-v1",
+        "hammer-v1",
+        "plate-slide-v1",
+        "plate-slide-side-v1",
+        "plate-slide-back-v1",
+        "plate-slide-back-side-v1",
+        "handle-press-v1",
+        "handle-pull-v1",
+        "handle-press-side-v1",
+        "handle-pull-side-v1",
+        "stick-push-v1",
+        "stick-pull-v1",
+        "basketball-v1",
+        "soccer-v1",
+        "faucet-open-v1",
+        "faucet-close-v1",
+        "coffee-push-v1",
+        "coffee-pull-v1",
+        "coffee-button-v1",
+        "sweep-v1",
+        "sweep-into-v1",
+        "pick-out-of-hole-v1",
+        "assembly-v1",
+        "shelf-place-v1",
+        "push-back-v1",
+        "lever-pull-v1",
+        "dial-turn-v1",
+        "bin-picking-v1",
+        "box-close-v1",
+        # "hand-insert-v1",
+        "door-lock-v1",
+        "door-unlock-v1",
+    ]
+    V2_keys = [
         "assembly-v2",
         "basketball-v2",
         "bin-picking-v2",
@@ -61,7 +114,8 @@ if __name__ == "__main__":
         "sweep-v2",
         # "window-open-v2", #no goal
         # "window-close-v2", #no goal
-    ]:
+    ]
+    for env_name in V1_keys:
         print(env_name)
         # env = ImageEnvMetaworld(
         #     make_metaworld_env(
@@ -78,7 +132,7 @@ if __name__ == "__main__":
         #     imheight=64,
         # )
         # obs = env.reset()
-        num_envs = 20
+        num_envs = 1
         env_fns = [
             lambda: TimeLimit(
                 ImageEnvMetaworld(
@@ -90,7 +144,7 @@ if __name__ == "__main__":
         ]
         envs = StableBaselinesVecEnv(env_fns=env_fns, start_method="forkserver")
         envs.reset()
-        for i in range(10000 // num_envs):
+        for i in range(5 // num_envs):
             # a = np.zeros(env.action_space.low.size)
             # primitive = 'angled_x_y_grasp'
             # a[env.get_idx_from_primitive_name(primitive)] = 1
@@ -103,7 +157,7 @@ if __name__ == "__main__":
             # envs.step(
             #     a, render_every_step=False, render_mode="human"
             # )
-            print(i)
+            # print(i)
             envs.step(
                 a,
             )
