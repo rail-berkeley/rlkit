@@ -28,7 +28,7 @@ if __name__ == "__main__":
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm_kwargs=dict(
-            entropy_coef=0.01,
+            entropy_coef=1e-2,
             value_loss_coef=0.5,
             lr=3e-4,
             num_mini_batch=64,
@@ -78,11 +78,11 @@ if __name__ == "__main__":
             "door-lock-v2",
             "door-open-v2",
             "door-unlock-v2",
-            "hand-insert-v2",  # no goal
-            "drawer-close-v2",  # no goal
-            "drawer-open-v2",  # no goal
-            "faucet-open-v2",  # no goal
-            "faucet-close-v2",  # no goal
+            "hand-insert-v2",
+            "drawer-close-v2",
+            "drawer-open-v2",
+            "faucet-open-v2",
+            "faucet-close-v2",
             "hammer-v2",
             "handle-press-side-v2",
             "handle-press-v2",
@@ -109,8 +109,8 @@ if __name__ == "__main__":
             "shelf-place-v2",
             "sweep-into-v2",
             "sweep-v2",
-            "window-open-v2",  # no goal
-            "window-close-v2",  # no goal
+            "window-open-v2",
+            "window-close-v2",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
