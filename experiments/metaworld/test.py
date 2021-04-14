@@ -59,7 +59,7 @@ if __name__ == "__main__":
         "dial-turn-v1",
         "bin-picking-v1",
         "box-close-v1",
-        # "hand-insert-v1",
+        "hand-insert-v1",
         "door-lock-v1",
         "door-unlock-v1",
     ]
@@ -81,11 +81,11 @@ if __name__ == "__main__":
         "door-lock-v2",
         "door-open-v2",
         "door-unlock-v2",
-        # "hand-insert-v2", #no goal
-        # "drawer-close-v2", #no goal
-        # "drawer-open-v2", #no goal
-        # "faucet-open-v2", #no goal
-        # "faucet-close-v2", #no goal
+        "hand-insert-v2",
+        "drawer-close-v2",
+        "drawer-open-v2",
+        "faucet-open-v2",
+        "faucet-close-v2",
         "hammer-v2",
         "handle-press-side-v2",
         "handle-press-v2",
@@ -112,8 +112,8 @@ if __name__ == "__main__":
         "shelf-place-v2",
         "sweep-into-v2",
         "sweep-v2",
-        # "window-open-v2", #no goal
-        # "window-close-v2", #no goal
+        "window-open-v2",
+        "window-close-v2",
     ]
     for env_name in V1_keys:
         print(env_name)
@@ -135,9 +135,10 @@ if __name__ == "__main__":
         num_envs = 1
         env_fns = [
             lambda: TimeLimit(
-                ImageEnvMetaworld(
-                    make_metaworld_env(env_name, {}), imwidth=64, imheight=64
-                ),
+                # ImageEnvMetaworld(
+                #     make_metaworld_env(env_name, {}), imwidth=64, imheight=64
+                # ),
+                make_metaworld_env(env_name),
                 5,
             )
             for _ in range(num_envs)

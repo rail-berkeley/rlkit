@@ -3,64 +3,86 @@ import multiprocessing as mp
 import numpy as np
 from d4rl.kitchen.env_dict import ALL_KITCHEN_ENVIRONMENTS
 from gym import Env
-from metaworld import _encode_task
-from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS, ALL_V2_ENVIRONMENTS
+from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import (
+    SawyerMocapBase,
+    SawyerXYZEnv,
+)
 from stable_baselines3.common.vec_env import CloudpickleWrapper, SubprocVecEnv, VecEnv
 
-# def make_metaworld_env(env_class, env_kwargs):
-#     if env_class.endswith("-v1"):
-#         env_dict = ALL_V1_ENVIRONMENTS
-#     elif env_class.endswith("-v2"):
-#         env_dict = ALL_V2_ENVIRONMENTS
-#     env = env_dict[env_class]()
-#     env.reset_action_space(**env_kwargs)
-#     env.random_init = False
-#     task = _encode_task(
-#         env_class,
-#         {
-#             "env_cls": env_dict[env_class],
-#             "rand_vec": None,
-#             "partially_observable": False,  # if true: goal is part of the observation
-#         },
-#     )
-#     env.set_task(task)
-#     return env
+from rlkit.envs.primitives_wrappers import (
+    SawyerMocapBaseDMBackendMetaworld,
+    SawyerXYZEnvMetaworldPrimitives,
+)
 
 
-def make_metaworld_env(env_name, env_kwargs):
-    import metaworld
+def make_metaworld_env(env_name, env_kwargs=None):
+    if env_kwargs is None:
+        env_kwargs = {}
+    from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS, ALL_V2_ENVIRONMENTS
 
     if env_name in ALL_V1_ENVIRONMENTS:
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
         env_cls = ALL_V2_ENVIRONMENTS[env_name]
 
+    # hack from https://stackoverflow.com/questions/38397610/how-to-change-the-base-class-in-python
+    # assume linear hierarchy for now
+    parent = env_cls
+    while SawyerXYZEnv != parent.__bases__[0]:
+        parent = parent.__bases__[0]
+    parent.__bases__ = (SawyerXYZEnvMetaworldPrimitives,)
+    # SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
     env = env_cls()
     env.reset_action_space(**env_kwargs)
-
-    kwargs = {
-        "rand_vec": env._last_rand_vec,
-        "env_cls": env_cls,
-        "partially_observable": False,
-    }
     if env_name == "reach-v1" or env_name == "reach-wall-v1":
-        kwargs["task_type"] = "reach"
-        env._set_task_inner(task_type=kwargs["task_type"])
+        env._set_task_inner(task_type="reach")
     elif env_name == "push-v1" or env_name == "push-wall-v1":
-        kwargs["task_type"] = "push"
-        env._set_task_inner(task_type=kwargs["task_type"])
+        env._set_task_inner(task_type="push")
     elif env_name == "pick-place-v1" or env_name == "pick-place-wall-v1":
-        kwargs["task_type"] = "pick_place"
-        env._set_task_inner(task_type=kwargs["task_type"])
-
-    rand_vec = env._last_rand_vec
-    if rand_vec is None and hasattr(env, "goal"):
-        rand_vec = env.goal
-    kwargs["rand_vec"] = rand_vec
+        env._set_task_inner(task_type="pick_place")
+    env._partially_observable = False
+    env._freeze_rand_vec = False
+    env._set_task_called = True
+    env.reset()
     env._freeze_rand_vec = True
-    env.random_init = False
-    env.set_task(metaworld._encode_task(env_name, kwargs))
     return env
+
+
+# def make_metaworld_env(env_name, env_kwargs):
+#     import metaworld
+#     from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS, ALL_V2_ENVIRONMENTS
+
+#     if env_name in ALL_V1_ENVIRONMENTS:
+#         env_cls = ALL_V1_ENVIRONMENTS[env_name]
+#     else:
+#         env_cls = ALL_V2_ENVIRONMENTS[env_name]
+
+#     env = env_cls()
+#     env.reset_action_space(**env_kwargs)
+
+#     kwargs = {
+#         "rand_vec": env._last_rand_vec,
+#         "env_cls": env_cls,
+#         "partially_observable": False,
+#     }
+#     if env_name == "reach-v1" or env_name == "reach-wall-v1":
+#         kwargs["task_type"] = "reach"
+#         env._set_task_inner(task_type=kwargs["task_type"])
+#     elif env_name == "push-v1" or env_name == "push-wall-v1":
+#         kwargs["task_type"] = "push"
+#         env._set_task_inner(task_type=kwargs["task_type"])
+#     elif env_name == "pick-place-v1" or env_name == "pick-place-wall-v1":
+#         kwargs["task_type"] = "pick_place"
+#         env._set_task_inner(task_type=kwargs["task_type"])
+
+#     rand_vec = env._last_rand_vec
+#     if rand_vec is None and hasattr(env, "goal"):
+#         rand_vec = env.goal
+#     kwargs["rand_vec"] = rand_vec
+#     env._freeze_rand_vec = True
+#     env.random_init = False
+#     env.set_task(metaworld._encode_task(env_name, kwargs))
+#     return env
 
 
 def make_kitchen_env(env_class, env_kwargs):
