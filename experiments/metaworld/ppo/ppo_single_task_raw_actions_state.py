@@ -48,11 +48,11 @@ if __name__ == "__main__":
             use_combined_action_space=False,
             action_scale=1 / 100,
             max_path_length=150,
-            use_image_obs=True,
+            use_image_obs=False,
         ),
-        num_processes=64,
-        num_env_steps=int(1e7),
-        num_steps=2048 // 64,
+        num_processes=16,
+        num_env_steps=int(2e6),
+        num_steps=2048 // 16,
         log_interval=5,
         eval_interval=5,
         use_raw_actions=True,
@@ -78,11 +78,11 @@ if __name__ == "__main__":
             "door-lock-v2",
             "door-open-v2",
             "door-unlock-v2",
-            # "hand-insert-v2", #no goal
-            # "drawer-close-v2", #no goal
-            # "drawer-open-v2", #no goal
-            # "faucet-open-v2", #no goal
-            # "faucet-close-v2", #no goal
+            "hand-insert-v2",  # no goal
+            "drawer-close-v2",  # no goal
+            "drawer-open-v2",  # no goal
+            "faucet-open-v2",  # no goal
+            "faucet-close-v2",  # no goal
             "hammer-v2",
             "handle-press-side-v2",
             "handle-press-v2",
@@ -109,8 +109,8 @@ if __name__ == "__main__":
             "shelf-place-v2",
             "sweep-into-v2",
             "sweep-v2",
-            # "window-open-v2",  # no goal
-            # "window-close-v2",  # no goal
+            "window-open-v2",  # no goal
+            "window-close-v2",  # no goal
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
