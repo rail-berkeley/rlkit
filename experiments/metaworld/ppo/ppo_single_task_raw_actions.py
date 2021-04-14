@@ -28,10 +28,10 @@ if __name__ == "__main__":
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm_kwargs=dict(
-            entropy_coef=0.01,
+            entropy_coef=0.0,
             value_loss_coef=0.5,
             lr=3e-4,
-            num_mini_batch=64,
+            num_mini_batch=32,
             ppo_epoch=10,
             clip_param=0.2,
             eps=1e-5,
@@ -49,14 +49,16 @@ if __name__ == "__main__":
             action_scale=1 / 100,
             max_path_length=150,
             use_image_obs=True,
+            reward_scale=1,
         ),
-        num_processes=64,
+        num_processes=16,
         num_env_steps=int(1e7),
-        num_steps=2048 // 64,
+        num_steps=2048 // 16,
         log_interval=5,
         eval_interval=5,
         use_raw_actions=True,
         env_suite="metaworld",
+        use_linear_lr_decay=True,
     )
 
     search_space = {
