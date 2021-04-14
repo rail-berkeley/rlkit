@@ -134,7 +134,25 @@ class ImageTransposeWrapper(gym.Wrapper):
             done,
             info,
         )
-
+class MetaworldWrapper(gym.Wrapper):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="human",
+        render_im_shape=(1000, 1000),
+    ):
+        o, r, d, i = self.env.step(
+            action,
+            # render_every_step=render_every_step,
+            # render_mode=render_mode,
+            # render_im_shape=render_im_shape,
+        )
+        new_i = {}
+        for k, v in i.items():
+            if v is not None:
+                new_i[k] = v
+        return o, r, d, new_i
 
 class ImageEnvMetaworld(gym.Wrapper):
     def __init__(

@@ -10,6 +10,7 @@ from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import (
 from stable_baselines3.common.vec_env import CloudpickleWrapper, SubprocVecEnv, VecEnv
 
 from rlkit.envs.primitives_wrappers import (
+    MetaworldWrapper,
     SawyerMocapBaseDMBackendMetaworld,
     SawyerXYZEnvMetaworldPrimitives,
 )
@@ -45,6 +46,7 @@ def make_metaworld_env(env_name, env_kwargs=None):
     env._set_task_called = True
     env.reset()
     env._freeze_rand_vec = True
+    env = MetaworldWrapper(env)
     return env
 
 
