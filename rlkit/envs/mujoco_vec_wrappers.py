@@ -31,7 +31,7 @@ def make_metaworld_env(env_name, env_kwargs=None):
     while SawyerXYZEnv != parent.__bases__[0]:
         parent = parent.__bases__[0]
     parent.__bases__ = (SawyerXYZEnvMetaworldPrimitives,)
-    # SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
+    SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
     env = env_cls()
     env.reset_action_space(**env_kwargs)
     if env_name == "reach-v1" or env_name == "reach-wall-v1":
