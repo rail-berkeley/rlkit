@@ -41,7 +41,7 @@ if __name__ == "__main__":
             use_gae=True,
             gamma=0.99,
             gae_lambda=0.95,
-            use_proper_time_limits=False,
+            use_proper_time_limits=True,
         ),
         env_kwargs=dict(
             control_mode="end_effector",
@@ -50,11 +50,12 @@ if __name__ == "__main__":
             max_path_length=150,
             use_image_obs=False,
             reward_scale=1,  # let VecNormalize handle the reward scales
+            use_dm_backend=False,
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=64, hidden_activation="tanh"),
         num_processes=16,
-        num_env_steps=int(2e6),
-        num_steps=2048 // 16,
+        num_env_steps=int(5e6),
+        num_steps=2048,
         log_interval=5,
         eval_interval=5,
         use_raw_actions=True,
@@ -66,7 +67,8 @@ if __name__ == "__main__":
         "algorithm_kwargs.entropy_coef": [1e-2, 5e-3, 0],
         "algorithm_kwargs.lr": [3e-4, 5e-4],
         "actor_kwargs.hidden_size": [64, 128],
-        "num_steps": [2048 // 16, 4096 // 16],
+        "num_steps": [2048, 4096],
+        "use_dm_backend": [True, False],
         "env_class": [
             # "assembly-v2",
             # "basketball-v2",
@@ -119,7 +121,7 @@ if __name__ == "__main__":
             # "window-open-v2",
             # "window-close-v2",
             # v1:
-            "reach-v1",
+            # "reach-v1",
             # "push-v1",
             # "pick-place-v1",
             # "door-open-v1",

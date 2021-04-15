@@ -134,7 +134,19 @@ class ImageTransposeWrapper(gym.Wrapper):
             done,
             info,
         )
+
+
 class MetaworldWrapper(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self._max_episode_steps = env.max_path_length
+        self._elapsed_steps = 0
+
+    def reset(self):
+        obs = super().reset()
+        self._elapsed_steps = 0
+        return obs
+
     def step(
         self,
         action,
@@ -152,7 +164,11 @@ class MetaworldWrapper(gym.Wrapper):
         for k, v in i.items():
             if v is not None:
                 new_i[k] = v
+        self._elapsed_steps += 1
+        if self._elapsed_steps == self._max_episode_steps:
+            self.reset()
         return o, r, d, new_i
+
 
 class ImageEnvMetaworld(gym.Wrapper):
     def __init__(
