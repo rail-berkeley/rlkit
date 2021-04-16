@@ -1,5 +1,6 @@
 import abc
 import io
+import warnings
 import xml.etree.ElementTree as ET
 from os import path
 
@@ -27,6 +28,7 @@ class TimeLimit(gym.Wrapper):
     def __init__(self, env, duration):
         gym.Wrapper.__init__(self, env)
         self._duration = duration
+        self._max_episode_steps = duration
         self._step = None
 
     def __getattr__(self, name):
@@ -139,7 +141,6 @@ class ImageTransposeWrapper(gym.Wrapper):
 class MetaworldWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
-        self._max_episode_steps = env.max_path_length
         self._elapsed_steps = 0
 
     def reset(self):
@@ -165,8 +166,6 @@ class MetaworldWrapper(gym.Wrapper):
             if v is not None:
                 new_i[k] = v
         self._elapsed_steps += 1
-        if self._elapsed_steps == self._max_episode_steps:
-            self.reset()
         return o, r, d, new_i
 
 
@@ -256,7 +255,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         control_mode="end_effector",
         use_combined_action_space=False,
         action_scale=1 / 100,
-        max_path_length=150,
+        max_path_length=500,
         remove_rotation_primitives=True,
     ):
         self.max_path_length = max_path_length
@@ -891,13 +890,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
 
 class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
-
-    max_path_length = 150
-
     def __init__(self, model_path, frame_skip, rgb_array_res=(640, 480)):
         if not path.exists(model_path):
             raise IOError("File %s does not exist" % model_path)
-
         self.frame_skip = frame_skip
         self._use_dm_backend = True
         camera_settings = {}

@@ -5,6 +5,27 @@ import numpy as np
 from gym import Env
 from stable_baselines3.common.vec_env import CloudpickleWrapper, SubprocVecEnv, VecEnv
 
+from rlkit.envs.wrappers import NormalizedBoxEnv
+
+
+def make_robosuite_env(env_name, kwargs):
+    gym.logger.setLevel(40)
+    from robosuite.environments.base import REGISTERED_ENVS, MujocoEnv
+
+    # import robosuite as suite
+    from robosuite.wrappers.gym_wrapper import GymWrapper
+
+    from rlkit.envs.primitives_wrappers import DMControlBackendMetaworldRobosuiteEnv
+
+    env_cls = REGISTERED_ENVS[env_name]
+    parent = env_cls
+    while MujocoEnv != parent.__bases__[0]:
+        parent = parent.__bases__[0]
+
+    if parent != DMControlBackendMetaworldRobosuiteEnv:
+        parent.__bases__ = (DMControlBackendMetaworldRobosuiteEnv,)
+    return NormalizedBoxEnv(GymWrapper(REGISTERED_ENVS[env_name](**kwargs)))
+
 
 def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     gym.logger.setLevel(40)
