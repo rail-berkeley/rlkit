@@ -47,7 +47,7 @@ if __name__ == "__main__":
             control_mode="end_effector",
             use_combined_action_space=False,
             action_scale=1 / 100,
-            max_path_length=150,
+            max_path_length=200,
             use_image_obs=False,
             reward_scale=1,  # let VecNormalize handle the reward scales
             use_dm_backend=True,
