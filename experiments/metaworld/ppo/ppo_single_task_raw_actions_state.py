@@ -47,31 +47,29 @@ if __name__ == "__main__":
             control_mode="end_effector",
             use_combined_action_space=False,
             action_scale=1 / 100,
-            max_path_length=200,
+            max_path_length=500,
             use_image_obs=False,
             reward_scale=1,  # let VecNormalize handle the reward scales
             use_dm_backend=True,
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=64, hidden_activation="tanh"),
-        num_processes=16,
+        num_processes=12,
         num_env_steps=int(1e7),
         num_steps=2048,
         log_interval=1,
         eval_interval=1,
         use_raw_actions=True,
         env_suite="metaworld",
-        use_linear_lr_decay=True,
+        use_linear_lr_decay=False,
     )
 
     search_space = {
-        # "algorithm_kwargs.entropy_coef": [1e-2, 5e-3, 0],
-        # "algorithm_kwargs.lr": [3e-4, 5e-4],
-        # "actor_kwargs.hidden_size": [64, 128],
-        # "num_steps": [2048, 4096],
-        # "use_dm_backend": [True, False],
-        "env_kwargs.max_path_length":[200],
+        "algorithm_kwargs.entropy_coef": [1e-2],
+        "num_steps": [2048 // 12],
+        "algorithm_kwargs.num_mini_batch": [64],
+        "env_kwargs.max_path_length": [500],
         "env_class": [
-            # #solveable tasks with PPO
+            "reach-v2",
             "door-close-v2",
             "sweep-into-v2",
             "button-press-wall-v2",
@@ -84,7 +82,6 @@ if __name__ == "__main__":
             "handle-press-side-v2",
             "button-press-v2",
             "plate-slide-back-side-v2",
-            "reach-v2",
             "plate-slide-side-v2",
             "coffee-push-v2",
             "door-unlock-v2",
@@ -97,12 +94,11 @@ if __name__ == "__main__":
             "faucet-close-v2",
             "handle-pull-side-v2",
             "handle-pull-v2",
-            "push-v2",
-            "push-wall-v2",
+            # "push-v2", #errors
+            # "push-wall-v2", #errors
             "sweep-v2",
             "window-close-v2",
-
-            # #semi-solvable:
+            # semi-solvable:
             # "peg-insert-side-v2",
             # "reach-wall-v2",
             # "dial-turn-v2",
@@ -115,18 +111,16 @@ if __name__ == "__main__":
             # "lever-pull-v2",
             # "pick-place-v2",
             # "stick-pull-v2",
-
-            # #completely unsolveable
+            # # completely unsolveable
             # "stick-push-v2",
-            # "shelf-place-v2",
-            # "pick-place-wall-v2",
+            # # "shelf-place-v2", #errors
+            # # "pick-place-wall-v2", #errors
             # "pick-out-of-hole-v2",
             # "peg-unplug-side-v2",
             # "hammer-v2",
             # "disassemble-v2",
             # "bin-picking-v2",
             # "assembly-v2",
-
             # v1:
             # "reach-v1",
             # "push-v1",
@@ -162,9 +156,7 @@ if __name__ == "__main__":
             # "dial-turn-v1",
             # "hand-insert-v1",
             # "door-lock-v1",
-
-
-            #unsolveable
+            # unsolveable
             # "assembly-v1",
             # "basketball-v1",
             # "bin-picking-v1",
@@ -181,7 +173,6 @@ if __name__ == "__main__":
             # "stick-pull-v1",
             # "stick-push-v1",
             # "sweep-v1",
-
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

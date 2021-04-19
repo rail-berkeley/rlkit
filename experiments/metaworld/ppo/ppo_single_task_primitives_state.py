@@ -51,60 +51,61 @@ if __name__ == "__main__":
             use_image_obs=False,
             reward_scale=1,  # let VecNormalize handle the reward scales
             use_dm_backend=True,
+            remove_rotation_primitives=True,
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=64, hidden_activation="tanh"),
-        num_processes=16,
+        num_processes=12,
         num_env_steps=int(1e6),
         num_steps=2048,
         log_interval=1,
         eval_interval=1,
         use_raw_actions=False,
         env_suite="metaworld",
-        use_linear_lr_decay=True,
+        use_linear_lr_decay=False,
     )
 
     search_space = {
-        # "algorithm_kwargs.entropy_coef": [1e-2, 5e-3, 0],
-        # "algorithm_kwargs.lr": [3e-4, 5e-4],
-        # "actor_kwargs.hidden_size": [64, 128],
-        # "num_steps": [2048, 4096],
-        # "use_dm_backend": [True, False],
-        "env_kwargs.max_path_length":[10, 15, 20],
-        "env_kwargs.action_scale": [0.25, .5, 1],
-        "rollout_kwargs.gamma":[None],
+        "algorithm_kwargs.entropy_coef": [1e-2],
+        "num_steps": [2048 // 12],
+        "algorithm_kwargs.num_mini_batch": [64],
+        "env_kwargs.max_path_length": [
+            10,
+        ],
+        "env_kwargs.action_scale": [
+            0.25,
+        ],
+        "rollout_kwargs.gamma": [None],
         "env_class": [
-            # #solveable tasks with PPO
             "reach-v2",
             "door-close-v2",
             "sweep-into-v2",
             "button-press-wall-v2",
             "button-press-topdown-v2",
             "plate-slide-v2",
-            # "coffee-button-v2",
-            # "handle-press-v2",
-            # "window-open-v2",
-            # "drawer-close-v2",
-            # "handle-press-side-v2",
-            # "button-press-v2",
-            # "plate-slide-back-side-v2",
-            # "plate-slide-side-v2",
-            # "coffee-push-v2",
-            # "door-unlock-v2",
-            # "plate-slide-back-v2",
-            # "soccer-v2",
-            # "button-press-topdown-wall-v2",
-            # "door-lock-v2",
-            # "door-open-v2",
-            # "faucet-open-v2",
-            # "faucet-close-v2",
-            # "handle-pull-side-v2",
-            # "handle-pull-v2",
-            # "push-v2",
-            # "push-wall-v2",
-            # "sweep-v2",
-            # "window-close-v2",
-
-            # #semi-solvable:
+            "coffee-button-v2",
+            "handle-press-v2",
+            "window-open-v2",
+            "drawer-close-v2",
+            "handle-press-side-v2",
+            "button-press-v2",
+            "plate-slide-back-side-v2",
+            "plate-slide-side-v2",
+            "coffee-push-v2",
+            "door-unlock-v2",
+            "plate-slide-back-v2",
+            "soccer-v2",
+            "button-press-topdown-wall-v2",
+            "door-lock-v2",
+            "door-open-v2",
+            "faucet-open-v2",
+            "faucet-close-v2",
+            "handle-pull-side-v2",
+            "handle-pull-v2",
+            # "push-v2", #errors
+            # "push-wall-v2", #errors
+            "sweep-v2",
+            "window-close-v2",
+            # semi-solvable:
             # "peg-insert-side-v2",
             # "reach-wall-v2",
             # "dial-turn-v2",
@@ -117,18 +118,16 @@ if __name__ == "__main__":
             # "lever-pull-v2",
             # "pick-place-v2",
             # "stick-pull-v2",
-
-            # #completely unsolveable
+            # # completely unsolveable
             # "stick-push-v2",
-            # "shelf-place-v2",
-            # "pick-place-wall-v2",
+            # # "shelf-place-v2", #errors
+            # # "pick-place-wall-v2", #errors
             # "pick-out-of-hole-v2",
             # "peg-unplug-side-v2",
             # "hammer-v2",
             # "disassemble-v2",
             # "bin-picking-v2",
             # "assembly-v2",
-
             # v1:
             # "reach-v1",
             # "push-v1",
@@ -164,9 +163,7 @@ if __name__ == "__main__":
             # "dial-turn-v1",
             # "hand-insert-v1",
             # "door-lock-v1",
-
-
-            #unsolveable
+            # unsolveable
             # "assembly-v1",
             # "basketball-v1",
             # "bin-picking-v1",
@@ -183,7 +180,6 @@ if __name__ == "__main__":
             # "stick-pull-v1",
             # "stick-push-v1",
             # "sweep-v1",
-
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -191,7 +187,7 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        max_path_length = variant['env_kwargs']['max_path_length']
+        max_path_length = variant["env_kwargs"]["max_path_length"]
         if variant["rollout_kwargs"]["gamma"] != 0.99:
             variant["rollout_kwargs"]["gamma"] = 1 - 1 / max_path_length
         for _ in range(args.num_seeds):
