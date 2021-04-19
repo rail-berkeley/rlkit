@@ -216,8 +216,10 @@ class ImageEnvMetaworld(gym.Wrapper):
         return img
 
     def save_image(self):
-        img = self._get_image().reshape(3, self.imwidth, self.imheight).transpose(1, 2, 0)
-        cv2.imwrite('test/'+type(self.env.env).__name__ + '.png', img)
+        img = (
+            self._get_image().reshape(3, self.imwidth, self.imheight).transpose(1, 2, 0)
+        )
+        cv2.imwrite("test/" + type(self.env.env).__name__ + ".png", img)
 
     def step(
         self,
@@ -1006,7 +1008,6 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
             data.get_body_xquat = lambda name: data.body_xquat[model.body_name2id(name)]
 
         if not hasattr(data, "get_body_xmat"):
-            # (TODO): verify this is correct reshape and make sure xmat is the right thing for body_xmat
             data.get_body_xmat = lambda name: data.xmat[
                 model.body_name2id(name)
             ].reshape(3, 3)
@@ -1018,18 +1019,16 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
             data.get_geom_xquat = lambda name: data.geom_xquat[model.geom_name2id(name)]
 
         if not hasattr(data, "get_joint_qpos"):
-            # (TODO): verify this is the correct index
             data.get_joint_qpos = lambda name: data.qpos[model.joint_name2id(name)]
 
         if not hasattr(data, "set_joint_qpos"):
-            # (TODO): verify this is the correct index
+
             def set_joint_qpos(name, value):
                 data.qpos[model.joint_name2id(name)] = value
 
             data.set_joint_qpos = lambda name, value: set_joint_qpos(name, value)
 
         if not hasattr(data, "get_site_xmat"):
-            # (TODO): verify this is correct reshape
             data.get_site_xmat = lambda name: data.site_xmat[
                 model.site_name2id(name)
             ].reshape(3, 3)
@@ -1040,9 +1039,7 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
         if not hasattr(data, "get_geom_xmat"):
             data.get_geom_xmat = lambda name: data.geom_xmat[
                 model.geom_name2id(name)
-            ].reshape(
-                3, 3
-            )  # (TODO): verify this is correct reshape
+            ].reshape(3, 3)
 
         if not hasattr(data, "get_mocap_pos"):
             data.get_mocap_pos = lambda name: data.mocap_pos[
@@ -1392,7 +1389,6 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             data.get_body_xquat = lambda name: data.body_xquat[model.body_name2id(name)]
 
         if not hasattr(data, "get_body_xmat"):
-            # (TODO): verify this is correct reshape and make sure xmat is the right thing for body_xmat
             data.get_body_xmat = lambda name: data.xmat[
                 model.body_name2id(name)
             ].reshape(3, 3)
@@ -1404,11 +1400,10 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             data.get_geom_xquat = lambda name: data.geom_xquat[model.geom_name2id(name)]
 
         if not hasattr(data, "get_joint_qpos"):
-            # (TODO): verify this is the correct index
             data.get_joint_qpos = lambda name: data.qpos[model.joint_name2id(name)]
 
         if not hasattr(data, "set_joint_qpos"):
-            # (TODO): verify this is the correct index
+
             def set_joint_qpos(name, value):
                 data.qpos[
                     model.joint_name2id(name) : model.joint_name2id(name)
@@ -1418,7 +1413,6 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             data.set_joint_qpos = lambda name, value: set_joint_qpos(name, value)
 
         if not hasattr(data, "get_site_xmat"):
-            # (TODO): verify this is correct reshape
             data.get_site_xmat = lambda name: data.site_xmat[
                 model.site_name2id(name)
             ].reshape(3, 3)
@@ -1432,9 +1426,7 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         if not hasattr(data, "get_geom_xmat"):
             data.get_geom_xmat = lambda name: data.geom_xmat[
                 model.geom_name2id(name)
-            ].reshape(
-                3, 3
-            )  # (TODO): verify this is correct reshape
+            ].reshape(3, 3)
 
         if not hasattr(data, "get_mocap_pos"):
             data.get_mocap_pos = lambda name: data.mocap_pos[
@@ -1491,13 +1483,11 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             data.site_xvelr = site_xvelr()
 
         if not hasattr(data, "get_site_jacp"):
-            # (TODO): verify this is correct reshape
             data.get_site_jacp = lambda name: site_jacp()[
                 model.site_name2id(name)
             ].reshape(3, model.nv)
 
         if not hasattr(data, "get_site_jacr"):
-            # (TODO): verify this is correct reshape
             data.get_site_jacr = lambda name: site_jacr()[
                 model.site_name2id(name)
             ].reshape(3, model.nv)

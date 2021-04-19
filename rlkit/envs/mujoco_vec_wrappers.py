@@ -54,7 +54,7 @@ def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     if env_name in ALL_V1_ENVIRONMENTS:
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
-        env_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[env_name]
+        env_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[env_name + "-goal-observable"]
 
     # hack from https://stackoverflow.com/questions/38397610/how-to-change-the-base-class-in-python
     # assume linear hierarchy for now
