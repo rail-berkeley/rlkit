@@ -171,8 +171,6 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if variant["env_class"].endswith("v2"):
-            variant["env_class"] = variant["env_class"] + "-goal-observable"
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
