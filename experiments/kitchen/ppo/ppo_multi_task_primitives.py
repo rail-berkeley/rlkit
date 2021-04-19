@@ -58,6 +58,7 @@ if __name__ == "__main__":
             imwidth=84,
             imheight=84,
         ),
+        actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
         num_processes=12,
         num_env_steps=int(5e5),
         num_steps=2048 // 12,
@@ -65,6 +66,7 @@ if __name__ == "__main__":
         eval_interval=1,
         use_raw_actions=False,
         env_suite="kitchen",
+        use_linear_lr_decay=False,
     )
 
     search_space = {
