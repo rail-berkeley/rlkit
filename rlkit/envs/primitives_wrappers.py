@@ -102,6 +102,9 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         )
         self.reward_ctr = 0
 
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
     def reset(self):
         obs = self.env.reset()
         return obs.reshape(-1, self.env.imwidth, self.env.imheight)
@@ -123,6 +126,9 @@ class ImageTransposeWrapper(gym.Wrapper):
             0, 255, (self.env.imwidth, self.env.imheight, 3), dtype=np.uint8
         )
         self.reward_ctr = 0
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
 
     def reset(self):
         obs = self.env.reset()
@@ -188,6 +194,9 @@ class ImageEnvMetaworld(gym.Wrapper):
         self.num_steps = 0
         self.reward_scale = reward_scale
 
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
     def _get_image(self):
         # use this if using dm control backend!
         if hasattr(self.env, "_use_dm_backend"):
@@ -237,6 +246,9 @@ class DictObsWrapper(gym.Wrapper):
         spaces = {}
         spaces["image"] = gym.spaces.Box(0, 255, (64, 64, 3), dtype=np.uint8)
         self.observation_space = gym.spaces.Dict(spaces)
+
+    def __getattr__(self, name):
+        return getattr(self.env, name)
 
     def step(
         self,
@@ -380,12 +392,12 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             "end_effector",
         ]:
             if self.control_mode == "end_effector":
-                self.set_xyz_action(action[:3])
-                self.do_simulation([action[-1], -action[-1]])
+                self.set_xyz_action(a[:3])
+                self.do_simulation([a[-1], -a[-1]])
         else:
             self.img_array = []
             self.act(
-                action,
+                a,
                 render_every_step=render_every_step,
                 render_mode=render_mode,
                 render_im_shape=render_im_shape,

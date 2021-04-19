@@ -28,6 +28,11 @@ def make_robosuite_env(env_name, kwargs):
 
 
 def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
+    env_kwargs_new = env_kwargs.copy()
+    del env_kwargs_new["use_image_obs"]
+    del env_kwargs_new["reward_scale"]
+    del env_kwargs_new["use_dm_backend"]
+    env_kwargs = env_kwargs_new
     gym.logger.setLevel(40)
     if env_kwargs is None:
         env_kwargs = {}
@@ -65,10 +70,9 @@ def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     elif env_name == "pick-place-v1" or env_name == "pick-place-wall-v1":
         env._set_task_inner(task_type="pick_place")
     env._partially_observable = False
-    env._freeze_rand_vec = False
+    env.random_init = False
     env._set_task_called = True
     env.reset()
-    env._freeze_rand_vec = True
     env = MetaworldWrapper(env)
     return env
 
