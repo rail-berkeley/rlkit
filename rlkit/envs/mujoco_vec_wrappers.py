@@ -36,7 +36,10 @@ def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     gym.logger.setLevel(40)
     if env_kwargs is None:
         env_kwargs = {}
-    from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS, ALL_V2_ENVIRONMENTS
+    from metaworld.envs.mujoco.env_dict import (
+        ALL_V1_ENVIRONMENTS,
+        ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
+    )
     from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 
     from rlkit.envs.primitives_wrappers import (
@@ -48,7 +51,7 @@ def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     if env_name in ALL_V1_ENVIRONMENTS:
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
-        env_cls = ALL_V2_ENVIRONMENTS[env_name]
+        env_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[env_name]
 
     # hack from https://stackoverflow.com/questions/38397610/how-to-change-the-base-class-in-python
     # assume linear hierarchy for now
@@ -61,17 +64,20 @@ def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
         parent.__bases__ = (SawyerXYZEnvMetaworldPrimitives,)
     if use_dm_backend:
         SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
-    env = env_cls()
+    if env_name in ALL_V1_ENVIRONMENTS:
+        env = env_cls()
+        if env_name == "reach-v1" or env_name == "reach-wall-v1":
+            env._set_task_inner(task_type="reach")
+        elif env_name == "push-v1" or env_name == "push-wall-v1":
+            env._set_task_inner(task_type="push")
+        elif env_name == "pick-place-v1" or env_name == "pick-place-wall-v1":
+            env._set_task_inner(task_type="pick_place")
+        env._partially_observable = False
+        env.random_init = False
+        env._set_task_called = True
+    else:
+        env = env_cls(seed=42)
     env.reset_action_space(**env_kwargs)
-    if env_name == "reach-v1" or env_name == "reach-wall-v1":
-        env._set_task_inner(task_type="reach")
-    elif env_name == "push-v1" or env_name == "push-wall-v1":
-        env._set_task_inner(task_type="push")
-    elif env_name == "pick-place-v1" or env_name == "pick-place-wall-v1":
-        env._set_task_inner(task_type="pick_place")
-    env._partially_observable = False
-    env.random_init = False
-    env._set_task_called = True
     env.reset()
     env = MetaworldWrapper(env)
     return env

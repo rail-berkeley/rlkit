@@ -265,7 +265,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def reset_action_space(
         self,
         control_mode="end_effector",
-        use_combined_action_space=False,
+        use_combined_action_space=True,
         action_scale=1 / 100,
         max_path_length=500,
         remove_rotation_primitives=True,
@@ -550,6 +550,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     ):
         for _ in range(200):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, -1]))
+            self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             if render_every_step:
                 if render_mode == "rgb_array":
@@ -576,6 +577,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     ):
         for _ in range(200):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 1]))
+            self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             if render_every_step:
                 if render_mode == "rgb_array":
@@ -619,6 +621,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     ]
                 )
             )
+            self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             if render_every_step:
                 if render_mode == "rgb_array":
@@ -667,6 +670,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     ]
                 )
             )
+            self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             if render_every_step:
                 if render_mode == "rgb_array":
