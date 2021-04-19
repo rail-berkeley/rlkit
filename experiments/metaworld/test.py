@@ -65,57 +65,57 @@ if __name__ == "__main__":
     ]
     V2_keys = [
         "reach-v2",
-        "door-close-v2",
-        "sweep-into-v2",
-        "button-press-wall-v2",
-        "button-press-topdown-v2",
-        "plate-slide-v2",
-        "coffee-button-v2",
-        "handle-press-v2",
-        "window-open-v2",
-        "drawer-close-v2",
-        "handle-press-side-v2",
-        "button-press-v2",
-        "plate-slide-back-side-v2",
-        "plate-slide-side-v2",
-        "coffee-push-v2",
-        "door-unlock-v2",
-        "plate-slide-back-v2",
-        "soccer-v2",
-        "button-press-topdown-wall-v2",
-        "door-lock-v2",
-        "door-open-v2",
-        "faucet-open-v2",
-        "faucet-close-v2",
-        "handle-pull-side-v2",
-        "handle-pull-v2",
-        # "push-v2", #errors
-        # "push-wall-v2", #errors
-        "sweep-v2",
-        "window-close-v2",
-        # semi-solvable:
-        "peg-insert-side-v2",
-        "reach-wall-v2",
-        "dial-turn-v2",
-        "push-back-v2",
-        "basketball-v2",
-        "box-close-v2",
-        "coffee-pull-v2",
-        "drawer-open-v2",
-        "hand-insert-v2",
-        "lever-pull-v2",
-        "pick-place-v2",
-        "stick-pull-v2",
-        # completely unsolveable
-        "stick-push-v2",
-        # "shelf-place-v2", #errors
-        # "pick-place-wall-v2", #errors
-        "pick-out-of-hole-v2",
-        "peg-unplug-side-v2",
-        "hammer-v2",
-        "disassemble-v2",
-        "bin-picking-v2",
-        "assembly-v2",
+        # "door-close-v2",
+        # "sweep-into-v2",
+        # "button-press-wall-v2",
+        # "button-press-topdown-v2",
+        # "plate-slide-v2",
+        # "coffee-button-v2",
+        # "handle-press-v2",
+        # "window-open-v2",
+        # "drawer-close-v2",
+        # "handle-press-side-v2",
+        # "button-press-v2",
+        # "plate-slide-back-side-v2",
+        # "plate-slide-side-v2",
+        # "coffee-push-v2",
+        # "door-unlock-v2",
+        # "plate-slide-back-v2",
+        # "soccer-v2",
+        # "button-press-topdown-wall-v2",
+        # "door-lock-v2",
+        # "door-open-v2",
+        # "faucet-open-v2",
+        # "faucet-close-v2",
+        # "handle-pull-side-v2",
+        # "handle-pull-v2",
+        # # "push-v2", #errors
+        # # "push-wall-v2", #errors
+        # "sweep-v2",
+        # "window-close-v2",
+        # # semi-solvable:
+        # "peg-insert-side-v2",
+        # "reach-wall-v2",
+        # "dial-turn-v2",
+        # "push-back-v2",
+        # "basketball-v2",
+        # "box-close-v2",
+        # "coffee-pull-v2",
+        # "drawer-open-v2",
+        # "hand-insert-v2",
+        # "lever-pull-v2",
+        # "pick-place-v2",
+        # "stick-pull-v2",
+        # # completely unsolveable
+        # "stick-push-v2",
+        # # "shelf-place-v2", #errors
+        # # "pick-place-wall-v2", #errors
+        # "pick-out-of-hole-v2",
+        # "peg-unplug-side-v2",
+        # "hammer-v2",
+        # "disassemble-v2",
+        # "bin-picking-v2",
+        # "assembly-v2",
     ]
     for env_name in V2_keys:
         print(env_name)
@@ -140,8 +140,8 @@ if __name__ == "__main__":
                 # ImageEnvMetaworld(
                 #     make_metaworld_env(env_name, {}), imwidth=64, imheight=64
                 # ),
-                make_metaworld_env(env_name, {}),
-                5,
+                make_metaworld_env(env_name + "-goal-observable", {}),
+                500,
             )
             for _ in range(num_envs)
         ]

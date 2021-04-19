@@ -149,6 +149,9 @@ class MetaworldWrapper(gym.Wrapper):
         super().__init__(env)
         self._elapsed_steps = 0
 
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
     def reset(self):
         obs = super().reset()
         self._elapsed_steps = 0
@@ -209,8 +212,12 @@ class ImageEnvMetaworld(gym.Wrapper):
                 height=self.imheight,
             )
 
-        img = img.transpose(2, 0, 1).flatten()
+        img = img[:, :, ::-1].transpose(2, 0, 1).flatten()
         return img
+
+    def save_image(self):
+        img = self._get_image().reshape(3, self.imwidth, self.imheight).transpose(1, 2, 0)
+        cv2.imwrite('test/'+type(self.env.env).__name__ + '.png', img)
 
     def step(
         self,
@@ -911,7 +918,12 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
             raise IOError("File %s does not exist" % model_path)
         self.frame_skip = frame_skip
         self._use_dm_backend = True
-        camera_settings = {}
+        camera_settings = {
+            "distance": 1.878359835328275,
+            "lookat": [0.16854934, 0.27084485, 0.23161897],
+            "azimuth": 141.328125,
+            "elevation": -53.203125160653144,
+        }
         if self._use_dm_backend:
             dm_mujoco = module.get_dm_mujoco()
             if model_path.endswith(".mjb"):

@@ -29,9 +29,12 @@ def make_robosuite_env(env_name, kwargs):
 
 def make_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     env_kwargs_new = env_kwargs.copy()
-    del env_kwargs_new["use_image_obs"]
-    del env_kwargs_new["reward_scale"]
-    del env_kwargs_new["use_dm_backend"]
+    if "use_image_obs" in env_kwargs_new:
+        del env_kwargs_new["use_image_obs"]
+    if "reward_scale" in env_kwargs_new:
+        del env_kwargs_new["reward_scale"]
+    if "use_dm_backend" in env_kwargs_new:
+        del env_kwargs_new["use_dm_backend"]
     env_kwargs = env_kwargs_new
     gym.logger.setLevel(40)
     if env_kwargs is None:
