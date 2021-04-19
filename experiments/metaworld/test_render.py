@@ -33,7 +33,7 @@ if __name__ == "__main__":
         )
         o = env.reset()
         print(o[-3:])
-        for i in range(1000):
+        for i in range(100000):
             a = env.action_space.sample()
             a = np.zeros_like(a)
             primitive = "move_delta_ee_pose"

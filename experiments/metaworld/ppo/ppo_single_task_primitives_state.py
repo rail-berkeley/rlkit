@@ -62,7 +62,7 @@ if __name__ == "__main__":
         use_raw_actions=False,
         env_suite="metaworld",
         use_linear_lr_decay=False,
-        discrete_continuous_dist=False,
+        discrete_continuous_dist=True,
     )
 
     search_space = {
