@@ -97,23 +97,37 @@ def experiment(variant):
         action_dim = eval_env.action_space.low.size
     else:
         if use_raw_actions:
-            env_fns = [
-                lambda: TimeLimit(
-                    NormalizeActions(
-                        ActionRepeat(
-                            make_kitchen_env(
-                                env_class=env_class,
-                                env_kwargs=variant["env_kwargs"],
-                            ),
-                            2,
-                        )
-                    ),
-                    500,
+            if variant.get("use_raw_action_wrappers", True):
+                env_fns = [
+                    lambda: TimeLimit(
+                        NormalizeActions(
+                            ActionRepeat(
+                                make_kitchen_env(
+                                    env_class=env_class,
+                                    env_kwargs=variant["env_kwargs"],
+                                ),
+                                2,
+                            )
+                        ),
+                        500,
+                    )
+                ]
+            else:
+                env_fns = [
+                    lambda: make_kitchen_env(
+                        env_class=env_class,
+                        env_kwargs=variant["env_kwargs"],
+                    )
+                    for _ in range(variant["num_expl_envs"])
+                ]
+            # expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+            if variant["num_expl_envs"] > 1:
+                expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+            else:
+                expl_env = DummyVecEnv(
+                    [env_fn() for env_fn in env_fns], pass_render_kwargs=False
                 )
-                for _ in range(variant["num_expl_envs"])
-            ]
-            expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-
+            expl_env.step([expl_env.action_space.sample() for i in range(5)])
             eval_envs = [
                 TimeLimit(
                     NormalizeActions(

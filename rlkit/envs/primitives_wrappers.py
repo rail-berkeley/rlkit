@@ -68,7 +68,7 @@ class ActionRepeat(gym.Wrapper):
 
 
 class NormalizeActions(gym.Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, unused=None):
         gym.Wrapper.__init__(self, env)
         self._mask = np.logical_and(
             np.isfinite(env.action_space.low), np.isfinite(env.action_space.high)
