@@ -14,7 +14,7 @@ class VecMdpPathCollector(PathCollector):
         render=False,
         render_kwargs=None,
         rollout_fn=vec_rollout,
-        save_env_in_snapshot=True,
+        save_env_in_snapshot=False,
         env_params=None,
         env_class=None,
     ):

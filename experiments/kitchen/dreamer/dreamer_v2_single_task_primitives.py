@@ -46,7 +46,7 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
-        env_class="hinge_cabinet",
+        env_name="hinge_cabinet",
         use_raw_actions=False,
         env_suite="kitchen",
         env_kwargs=dict(
@@ -60,6 +60,14 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=5,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -111,7 +119,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_class": [
+        "env_name": [
             "microwave",
             "kettle",
             "slide_cabinet",
