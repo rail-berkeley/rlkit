@@ -20,6 +20,10 @@ def make_base_robosuite_env(env_name, kwargs):
 
 
 def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
+    reward_type = env_kwargs["reward_type"]
+    env_kwargs_new = env_kwargs.copy()
+    if "reward_type" in env_kwargs_new:
+        del env_kwargs_new["reward_type"]
     import gym
 
     gym.logger.setLevel(40)
@@ -66,9 +70,9 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
         env._set_task_called = True
     else:
         env = env_cls(seed=42)
-    env.reset_action_space(**env_kwargs)
+    env.reset_action_space(**env_kwargs_new)
     env.reset()
-    env = MetaworldWrapper(env)
+    env = MetaworldWrapper(env, reward_type=reward_type)
     return env
 
 

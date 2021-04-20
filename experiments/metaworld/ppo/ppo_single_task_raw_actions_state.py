@@ -47,11 +47,13 @@ if __name__ == "__main__":
             control_mode="end_effector",
             use_combined_action_space=False,
             action_scale=1 / 100,
+            reward_type="dense",
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=True,
                 use_image_obs=False,
                 max_path_length=500,
+                unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),

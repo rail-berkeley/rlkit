@@ -126,9 +126,10 @@ class ImageTransposeWrapper(gym.Wrapper):
 
 
 class MetaworldWrapper(gym.Wrapper):
-    def __init__(self, env):
+    def __init__(self, env, reward_type="dense"):
         super().__init__(env)
         self._elapsed_steps = 0
+        self.reward_type = reward_type
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -156,6 +157,10 @@ class MetaworldWrapper(gym.Wrapper):
             if v is not None:
                 new_i[k] = v
         self._elapsed_steps += 1
+        if self.reward_type == "dense":
+            r = r
+        elif self.reward_type == "sparse":
+            r = i["success"]
         return o, r, d, new_i
 
 
