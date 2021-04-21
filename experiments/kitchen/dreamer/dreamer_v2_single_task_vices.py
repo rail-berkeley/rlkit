@@ -58,6 +58,14 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             control_mode="vices",
             frame_skip=40,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=5,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(
             init_std=0.0,
@@ -104,18 +112,19 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         use_raw_action_wrappers=False,
-        max_steps=50,
+        max_path_length=50,
     )
 
     search_space = {
-        "env_class": [
+        "env_name": [
             "microwave",
-            # "kettle",
-            # "slide_cabinet",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "kettle",
+            "slide_cabinet",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
+        "max_path_length": [50, 75, 100],
         # "env_kwargs.control_mode": [
         #     "joint_position",
         #     "joint_velocity",
@@ -129,19 +138,19 @@ if __name__ == "__main__":
     )
     num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        max_steps = variant["max_steps"]
-        replay_buffer_size = 2500000 // max_steps
+        max_path_length = variant["max_path_length"]
+        replay_buffer_size = 2500000 // max_path_length
 
-        num_eval_steps_per_epoch = 5 * (max_steps + 1)
-        max_path_length = max_steps
-        batch_size = 2500 // (max_steps + 1)
-        num_expl_steps_per_train_loop = 5 * (max_steps + 1)
-        num_train_loops_per_epoch = 1000 // (5 * max_steps)
+        num_eval_steps_per_epoch = 5 * (max_path_length + 1)
+        max_path_length = max_path_length
+        batch_size = 2500 // (max_path_length + 1)
+        num_expl_steps_per_train_loop = 5 * (max_path_length + 1)
+        num_train_loops_per_epoch = 1000 // (5 * max_path_length)
         num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
         variant["algorithm_kwargs"][
             "num_eval_steps_per_epoch"
         ] = num_eval_steps_per_epoch
-        variant["algorithm_kwargs"]["max_path_length"] = max_steps
+        variant["algorithm_kwargs"]["max_path_length"] = max_path_length
         variant["algorithm_kwargs"]["batch_size"] = batch_size
         variant["algorithm_kwargs"][
             "num_expl_steps_per_train_loop"
@@ -153,10 +162,11 @@ if __name__ == "__main__":
             "num_trains_per_train_loop"
         ] = num_trains_per_train_loop
         variant["replay_buffer_size"] = replay_buffer_size
-        variant["env_kwargs"]["max_steps"] = max_steps
-        variant["trainer_kwargs"]["imagination_horizon"] = min(max_steps, 15)
+        variant["env_kwargs"]["max_path_length"] = max_path_length
+        variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = max_path_length
+        variant["trainer_kwargs"]["imagination_horizon"] = min(max_path_length, 15)
         if variant["trainer_kwargs"]["discount"] != 0.99:
-            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_steps
+            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
