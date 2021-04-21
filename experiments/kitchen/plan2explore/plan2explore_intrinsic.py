@@ -1,5 +1,6 @@
 import argparse
 import random
+import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
@@ -155,7 +156,9 @@ if __name__ == "__main__":
                 use_gpu=True,
                 # snapshot_mode="none",
                 snapshot_gap=25,
-                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+                python_cmd=subprocess.check_output("which python", shell=True).decode(
+                    "utf-8"
+                )[:-1],
                 seed=seed,
                 exp_id=exp_id,
             )

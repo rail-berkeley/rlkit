@@ -2,6 +2,7 @@ import argparse
 import json
 import os
 import random
+import subprocess
 import time
 
 import rlkit.util.hyperparameter as hyp
@@ -204,7 +205,9 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="none",
-                python_cmd="~/miniconda3/envs/hrl-exp-env/bin/python",
+                python_cmd=subprocess.check_output("which python", shell=True).decode(
+                    "utf-8"
+                )[:-1],
                 seed=seed,
                 exp_id=exp_id,
             )
