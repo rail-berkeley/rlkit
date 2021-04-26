@@ -335,29 +335,42 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         """Resets simulation internal configurations."""
 
         # create visualization screen or renderer
-        if self.has_renderer and self.viewer is None and not self._use_dm_backend:
-            self.viewer = MujocoPyRenderer(self.sim)
-            self.viewer.viewer.vopt.geomgroup[0] = (
-                1 if self.render_collision_mesh else 0
-            )
-            self.viewer.viewer.vopt.geomgroup[1] = 1 if self.render_visual_mesh else 0
-
-            # hiding the overlay speeds up rendering significantly
-            self.viewer.viewer._hide_overlay = True
-
-            # make sure mujoco-py doesn't block rendering frames
-            # (see https://github.com/StanfordVL/robosuite/issues/39)
-            self.viewer.viewer._render_every_frame = True
-
-            # Set the camera angle for viewing
-            if self.render_camera is not None:
-                self.viewer.set_camera(
-                    camera_id=self.sim.model.camera_name2id(self.render_camera)
+        if self.has_renderer and self.viewer is None:
+            if self._use_dm_backend:
+                self.viewer = DMRenderer(
+                    self.sim,
+                    clear_geom_group_0=True,
+                    camera_select_next=True,
+                    camera_settings={},
                 )
+                self.viewer.render = self.viewer.render_to_window
+            else:
+                self.viewer = MujocoPyRenderer(self.sim)
+                self.viewer.viewer.vopt.geomgroup[0] = (
+                    1 if self.render_collision_mesh else 0
+                )
+                self.viewer.viewer.vopt.geomgroup[1] = (
+                    1 if self.render_visual_mesh else 0
+                )
+
+                # hiding the overlay speeds up rendering significantly
+                self.viewer.viewer._hide_overlay = True
+
+                # make sure mujoco-py doesn't block rendering frames
+                # (see https://github.com/StanfordVL/robosuite/issues/39)
+                self.viewer.viewer._render_every_frame = True
+
+                # Set the camera angle for viewing
+                if self.render_camera is not None:
+                    self.viewer.set_camera(
+                        camera_id=self.sim.model.camera_name2id(self.render_camera)
+                    )
 
         elif self.has_offscreen_renderer:
             if self._use_dm_backend:
-                self.renderer = DMRenderer(self.sim, camera_settings={})
+                self.renderer = DMRenderer(
+                    self.sim, camera_settings={}, clear_geom_group_0=True
+                )
             else:
                 if self.sim._render_context_offscreen is None:
                     render_context = mujoco_py.MjRenderContextOffscreen(
@@ -417,6 +430,7 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
                 img = self.renderer.render_offscreen(
                     cam_w,
                     cam_h,
+                    camera_id=self.sim.model.camera_name2id(cam_name),
                 )
             else:
                 img = self.sim.render(
@@ -471,7 +485,9 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             self.mjpy_model = self.sim.model
             patch_mjlib_accessors(self.get_mjlib(), self.mjpy_model, self.sim.data)
 
-            self.renderer = DMRenderer(self.sim, camera_settings={})
+            self.renderer = DMRenderer(
+                self.sim, clear_geom_group_0=True, camera_settings={}
+            )
         else:  # Use mujoco_py
 
             with io.StringIO() as string:

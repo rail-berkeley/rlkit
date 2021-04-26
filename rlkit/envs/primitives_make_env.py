@@ -1,4 +1,4 @@
-def make_base_robosuite_env(env_name, kwargs):
+def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
 
     from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
@@ -7,16 +7,19 @@ def make_base_robosuite_env(env_name, kwargs):
     from robosuite.environments.base import REGISTERED_ENVS, MujocoEnv
     from robosuite.wrappers.gym_wrapper import GymWrapper
 
-    from rlkit.envs.primitives_wrappers import DMControlBackendMetaworldRobosuiteEnv
+    from rlkit.envs.dm_backend_wrappers import DMControlBackendMetaworldRobosuiteEnv
 
     env_cls = REGISTERED_ENVS[env_name]
     parent = env_cls
     while MujocoEnv != parent.__bases__[0]:
         parent = parent.__bases__[0]
 
-    if parent != DMControlBackendMetaworldRobosuiteEnv:
+    if parent != DMControlBackendMetaworldRobosuiteEnv and use_dm_backend:
         parent.__bases__ = (DMControlBackendMetaworldRobosuiteEnv,)
-    return NormalizedBoxEnv(GymWrapper(REGISTERED_ENVS[env_name](**kwargs)))
+    # env = NormalizedBoxEnv(GymWrapper(REGISTERED_ENVS[env_name](**kwargs)))
+    env = GymWrapper(REGISTERED_ENVS[env_name](**kwargs), keys=["image-state"])
+    # env = REGISTERED_ENVS[env_name](**kwargs)
+    return env
 
 
 def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
@@ -115,13 +118,17 @@ def make_env(env_suite, env_name, env_kwargs):
                 env,
                 **image_kwargs,
             )
+    elif env_suite == "robosuite":
+        env = make_base_robosuite_env(env_name, env_kwargs_new, use_dm_backend)
     if unflatten_images:
         env = ImageUnFlattenWrapper(env)
 
+    # need to comment out for running robosuite viewer:
     if use_raw_action_wrappers:
         env = ActionRepeat(env, 2)
         env = NormalizeActions(env)
         env = TimeLimit(env, max_path_length // 2)
     else:
         env = TimeLimit(env, max_path_length)
+    env.reset()
     return env
