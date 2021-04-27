@@ -7,6 +7,7 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+import subprocess
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -30,7 +31,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=500,
             num_eval_steps_per_epoch=5 * 6,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -52,7 +53,17 @@ if __name__ == "__main__":
             control_mode="primitives",
             use_combined_action_space=True,
             action_scale=1,
-            max_path_length=5,
+            max_path_length=10,
+            remove_rotation_primitives=True,
+            reward_type="dense",
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=10,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(imwidth=64, imheight=64),
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -99,37 +110,41 @@ if __name__ == "__main__":
             imagination_horizon=5,
             reward_scale=1 / 100,
         ),
-        num_expl_envs=33,
-        max_steps=5,
+        num_expl_envs=10,
+        max_path_length=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
     )
 
     search_space = {
-        "env_class": [
-            "assembly-v2",
+        "env_name": [
+            # subset 1: used to work
+            # solvable in 500K:
             "basketball-v2",
-            "bin-picking-v2",
-            "box-close-v2",
             "button-press-topdown-v2",
-            "button-press-topdown-wall-v2",
             "button-press-v2",
             "button-press-wall-v2",
             "coffee-button-v2",
-            "coffee-pull-v2",
-            "coffee-push-v2",
-            "dial-turn-v2",
-            "disassemble-v2",
-            "door-close-v2",
             "door-lock-v2",
-            "door-open-v2",
             "door-unlock-v2",
-            # "hand-insert-v2", #no goal
-            # "drawer-close-v2", #no goal
-            # "drawer-open-v2", #no goal
-            # "faucet-open-v2", #no goal
-            # "faucet-close-v2", #no goal
+            # need 1M steps to solve
+            # "box-close-v2",
+            # "door-open-v2",
+            # unsolvable before
+            # "door-close-v2",
+            # "assembly-v2",
+            # "bin-picking-v2",
+            # "button-press-topdown-wall-v2",
+            # "coffee-pull-v2",
+            # "coffee-push-v2",
+            # "dial-turn-v2",
+            # "disassemble-v2",
+            # "hand-insert-v2",
+            # "drawer-close-v2",
+            # "drawer-open-v2",
+            # "faucet-open-v2",
+            # "faucet-close-v2",
             # "hammer-v2",
             # "handle-press-side-v2",
             # "handle-press-v2",
@@ -139,7 +154,7 @@ if __name__ == "__main__":
             # "peg-insert-side-v2",
             # "pick-place-wall-v2",
             # "pick-out-of-hole-v2",
-            # "reach-v2",
+            # # "reach-v2",
             # "push-back-v2",
             # "push-v2",
             # "pick-place-v2",
@@ -156,10 +171,10 @@ if __name__ == "__main__":
             # "shelf-place-v2",
             # "sweep-into-v2",
             # "sweep-v2",
-            # "window-open-v2", #no goal
-            # "window-close-v2", #no goal
+            # "window-open-v2",
+            # "window-close-v2",
         ],
-        "max_steps": [10],
+        "max_path_length": [10],
         "trainer_kwargs.discount": [0.9],
         "env_kwargs.action_scale": [0.25],
     }
@@ -168,35 +183,36 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        max_steps = variant["max_steps"]
-        num_envs = variant["num_expl_envs"]
-        replay_buffer_size = 2500000 // max_steps
+        if not args.debug:
+            max_path_length = variant["max_path_length"]
+            num_envs = variant["num_expl_envs"]
+            replay_buffer_size = 2500000 // max_path_length
 
-        num_eval_steps_per_epoch = 5 * (max_steps + 1)
-        max_path_length = max_steps
-        batch_size = 2500 // (max_steps + 1)
-        num_expl_steps_per_train_loop = num_envs * (max_steps + 1)
-        num_train_loops_per_epoch = 1000 // (num_envs * max_steps)
-        num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
-        variant["algorithm_kwargs"][
-            "num_eval_steps_per_epoch"
-        ] = num_eval_steps_per_epoch
-        variant["algorithm_kwargs"]["max_path_length"] = max_steps
-        variant["env_kwargs"]["max_path_length"] = max_steps
-        variant["algorithm_kwargs"]["batch_size"] = batch_size
-        variant["algorithm_kwargs"][
-            "num_expl_steps_per_train_loop"
-        ] = num_expl_steps_per_train_loop
-        variant["algorithm_kwargs"][
-            "num_train_loops_per_epoch"
-        ] = num_train_loops_per_epoch
-        variant["algorithm_kwargs"][
-            "num_trains_per_train_loop"
-        ] = num_trains_per_train_loop
-        variant["replay_buffer_size"] = replay_buffer_size
-        variant["trainer_kwargs"]["imagination_horizon"] = max_steps
-        if variant["trainer_kwargs"]["discount"] != 0.99:
-            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_steps
+            num_eval_steps_per_epoch = 5 * (max_path_length + 1)
+            max_path_length = max_path_length
+            batch_size = 2500 // (max_path_length + 1)
+            num_expl_steps_per_train_loop = num_envs * (max_path_length + 1)
+            num_train_loops_per_epoch = 1000 // (num_envs * max_path_length)
+            num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
+            variant["algorithm_kwargs"][
+                "num_eval_steps_per_epoch"
+            ] = num_eval_steps_per_epoch
+            variant["algorithm_kwargs"]["max_path_length"] = max_path_length
+            variant["env_kwargs"]["max_path_length"] = max_path_length
+            variant["algorithm_kwargs"]["batch_size"] = batch_size
+            variant["algorithm_kwargs"][
+                "num_expl_steps_per_train_loop"
+            ] = num_expl_steps_per_train_loop
+            variant["algorithm_kwargs"][
+                "num_train_loops_per_epoch"
+            ] = num_train_loops_per_epoch
+            variant["algorithm_kwargs"][
+                "num_trains_per_train_loop"
+            ] = num_trains_per_train_loop
+            variant["replay_buffer_size"] = replay_buffer_size
+            variant["trainer_kwargs"]["imagination_horizon"] = max_path_length
+            if variant["trainer_kwargs"]["discount"] != 0.99:
+                variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

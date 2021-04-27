@@ -7,6 +7,7 @@ import torch
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
+from moviepy.editor import ImageSequenceClip
 
 
 def video_post_epoch_func(algorithm, epoch):
@@ -210,6 +211,7 @@ def video_post_epoch_func_(
         max_len = max(
             len(img_array1), len(img_array2), len(img_array3), len(img_array4)
         )
+        gif_clip = []
         for i in range(max_len):
             if i >= len(img_array1):
                 im1 = img_array1[-1]
@@ -236,8 +238,16 @@ def video_post_epoch_func_(
             im = np.concatenate((im12, im34), 0)
 
             out.write(im)
+            gif_clip.append(im)
         out.release()
         print("video saved to :", file_path)
+
+        # gif_file_path = osp.join(
+        #     logger.get_snapshot_dir(), mode + "_" + str(epoch) + ".gif"
+        # )
+        # clip = ImageSequenceClip(list(gif_clip), fps=20)
+        # clip.write_gif(gif_file_path, fps=20)
+        # takes way too much space
         obs, actions = ptu.from_numpy(obs), ptu.from_numpy(actions)
         (
             post,

@@ -18,9 +18,20 @@ class TimeLimit(gym.Wrapper):
     def __getattr__(self, name):
         return getattr(self.env, name)
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
         assert self._step is not None, "Must reset environment."
-        obs, reward, done, info = self.env.step(action)
+        obs, reward, done, info = self.env.step(
+            action,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
         self._step += 1
         if self._step >= self._duration:
             done = True
@@ -143,15 +154,14 @@ class MetaworldWrapper(gym.Wrapper):
         self,
         action,
         render_every_step=False,
-        render_mode="human",
+        render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
+        self.set_render_every_step(render_every_step, render_mode, render_im_shape)
         o, r, d, i = self.env.step(
             action,
-            # render_every_step=render_every_step,
-            # render_mode=render_mode,
-            # render_im_shape=render_im_shape,
         )
+        self.unset_render_every_step()
         new_i = {}
         for k, v in i.items():
             if v is not None:
@@ -210,14 +220,14 @@ class ImageEnvMetaworld(gym.Wrapper):
         self,
         action,
         render_every_step=False,
-        render_mode="human",
+        render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
         o, r, d, i = self.env.step(
             action,
-            # render_every_step=render_every_step,
-            # render_mode=render_mode,
-            # render_im_shape=render_im_shape,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
         )
         self.num_steps += 1
         o = self._get_image()
@@ -253,6 +263,17 @@ class DictObsWrapper(gym.Wrapper):
 
     def reset(self):
         return {"image": self.env.reset()}
+
+
+class IgnoreLastAction(gym.Wrapper):
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+    def step(
+        self,
+        action,
+    ):
+        return super().step(action[:-1])
 
 
 class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
@@ -369,14 +390,25 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                 )
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
+        self.unset_render_every_step()
+
+    def set_render_every_step(
+        self,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
+        self.render_every_step = render_every_step
+        self.render_mode = render_mode
+        self.render_im_shape = render_im_shape
+
+    def unset_render_every_step(self):
+        self.render_every_step = False
 
     @_assert_task_is_set
     def step(
         self,
         action,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
     ):
         a = np.clip(action, -1.0, 1.0)
         if self.control_mode in [
@@ -392,9 +424,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.img_array = []
             self.act(
                 a,
-                render_every_step=render_every_step,
-                render_mode=render_mode,
-                render_im_shape=render_im_shape,
+                render_every_step=self.render_every_step,
+                render_mode=self.render_mode,
+                render_im_shape=self.render_im_shape,
             )
 
         self.curr_path_length += 1
