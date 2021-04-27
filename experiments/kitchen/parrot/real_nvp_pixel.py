@@ -263,10 +263,10 @@ if __name__ == "__main__":
         ),
         logger_config=dict(
             snapshot_mode="gap_and_last",
-            snapshot_gap=10,
+            snapshot_gap=100,
         ),
         dump_buffer_kwargs=dict(
-            dump_buffer_period=50,
+            dump_buffer_period=10000,
         ),
         replay_buffer_size=int(5e5),
         expl_path_collector_kwargs=dict(),
@@ -279,7 +279,7 @@ if __name__ == "__main__":
             dense=False,
             image_obs=True,
             fixed_schema=False,
-            action_scale=1.4,
+            action_scale=1,
             use_combined_action_space=True,
             proprioception=False,
             wrist_cam_concat_with_fixed_view=False,

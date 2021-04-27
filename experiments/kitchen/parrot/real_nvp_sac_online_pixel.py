@@ -1,7 +1,7 @@
 import copy
 
 import numpy as np
-from rlkit.envs.primitives_wrappers import DictObsWrapper, IgnoreLastAction
+from rlkit.envs.primitives_wrappers import DictObsWrapper, IgnoreLastAction, GetObservationWrapper
 import torch.nn as nn
 
 import railrl.misc.hyperparameter as hyp
@@ -38,9 +38,9 @@ def experiment(variant):
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env"]
     env_kwargs = variant["env_kwargs"]
-    base_env = IgnoreLastAction(
+    base_env = GetObservationWrapper(IgnoreLastAction(
         DictObsWrapper(primitives_make_env.make_env(env_suite, env_name, env_kwargs))
-    )
+    ))
     action_dim = (
         int(np.prod(base_env.action_space.shape)) + 1
     )  # add this as a bogus dim to the env as well
@@ -142,7 +142,6 @@ def experiment(variant):
     target_qf1 = MlpQfWithObsProcessor(**target_qf_kwargs)
     target_qf2 = MlpQfWithObsProcessor(**target_qf_kwargs)
 
-    action_dim = int(np.prod(eval_env.action_space.shape))
     policy_cnn = CNN(**cnn_params)
 
     if variant["use_robot_state"]:
@@ -166,7 +165,6 @@ def experiment(variant):
     eval_path_collector = ObsDictPathCollector(
         eval_env,
         eval_policy,
-        action_dim=action_dim,
         observation_keys=observation_keys,
         **variant["eval_path_collector_kwargs"]
     )
@@ -272,7 +270,7 @@ if __name__ == "__main__":
         dump_buffer_kwargs=dict(
             dump_buffer_period=50,
         ),
-        replay_buffer_size=int(5e5),
+        replay_buffer_size=int(2.5e6),
         expl_path_collector_kwargs=dict(),
         eval_path_collector_kwargs=dict(),
         shared_qf_conv=False,
@@ -282,7 +280,7 @@ if __name__ == "__main__":
             dense=False,
             image_obs=True,
             fixed_schema=False,
-            action_scale=1.4,
+            action_scale=1,
             use_combined_action_space=True,
             proprioception=False,
             wrist_cam_concat_with_fixed_view=False,

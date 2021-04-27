@@ -275,6 +275,13 @@ class IgnoreLastAction(gym.Wrapper):
     ):
         return super().step(action[:-1])
 
+class GetObservationWrapper(gym.Wrapper):
+    def __getattr__(self, name):
+        return getattr(self.env, name)
+
+    def get_observation(self):
+        return self._get_obs()
+
 
 class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def reset_action_space(
