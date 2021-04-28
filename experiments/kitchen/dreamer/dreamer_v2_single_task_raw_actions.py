@@ -57,9 +57,17 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_steps=1000,
+            max_path_length=1000,
             control_mode="joint_velocity",
             frame_skip=40,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=True,
+                use_image_obs=True,
+                max_path_length=1000,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(
             init_std=0.0,
