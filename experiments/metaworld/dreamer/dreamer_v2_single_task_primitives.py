@@ -128,6 +128,10 @@ if __name__ == "__main__":
             # "coffee-button-v2",
             # "door-lock-v2",
             # "door-unlock-v2",
+            "drawer-close-v2",
+            "drawer-open-v2",
+            "faucet-open-v2",
+
             # need 1M steps to solve
             # "box-close-v2",
             # "door-open-v2",
@@ -142,9 +146,6 @@ if __name__ == "__main__":
             # "disassemble-v2",
             # untested
             "hand-insert-v2",
-            "drawer-close-v2",
-            "drawer-open-v2",
-            "faucet-open-v2",
             "faucet-close-v2",
             "hammer-v2",
             "handle-press-side-v2",
