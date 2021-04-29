@@ -61,7 +61,9 @@ def experiment(variant):
     eval_envs = [
         primitives_make_env.make_env(env_suite, env_name, env_kwargs) for _ in range(1)
     ]
-    eval_env = DummyVecEnv(eval_envs, pass_render_kwargs=True)
+    eval_env = DummyVecEnv(
+        eval_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
+    )
     if use_raw_actions:
         discrete_continuous_dist = False
         continuous_action_dim = eval_env.action_space.low.size

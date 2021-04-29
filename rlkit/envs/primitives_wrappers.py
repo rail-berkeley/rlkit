@@ -51,12 +51,23 @@ class ActionRepeat(gym.Wrapper):
     def __getattr__(self, name):
         return getattr(self.env, name)
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
         done = False
         total_reward = 0
         current_step = 0
         while current_step < self._amount and not done:
-            obs, reward, done, info = self.env.step(action)
+            obs, reward, done, info = self.env.step(
+                action,
+                render_every_step=render_every_step,
+                render_mode=render_mode,
+                render_im_shape=render_im_shape,
+            )
             total_reward += reward
             current_step += 1
         return obs, total_reward, done, info
@@ -78,10 +89,21 @@ class NormalizeActions(gym.Wrapper):
     def __getattr__(self, name):
         return getattr(self.env, name)
 
-    def step(self, action):
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
         original = (action + 1) / 2 * (self._high - self._low) + self._low
         original = np.where(self._mask, original, action)
-        o, r, d, i = self.env.step(original)
+        o, r, d, i = self.env.step(
+            original,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
         return o, r, d, i
 
     def reset(self):
@@ -274,6 +296,7 @@ class IgnoreLastAction(gym.Wrapper):
         action,
     ):
         return super().step(action[:-1])
+
 
 class GetObservationWrapper(gym.Wrapper):
     def __getattr__(self, name):
