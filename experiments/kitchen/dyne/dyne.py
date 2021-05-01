@@ -8,6 +8,7 @@ from rlkit.launchers.launcher_util import run_experiment
 
 def experiment(variant):
     from dyne.rl.main_dyne import experiment
+
     experiment(variant)
 
 
@@ -22,7 +23,7 @@ if __name__ == "__main__":
     variant = dict(
         env_kwargs=dict(
             dense=False,
-            image_obs=True,
+            image_obs=False,
             fixed_schema=False,
             action_scale=1,
             use_combined_action_space=True,
@@ -31,21 +32,21 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_path_length=1000,
+            max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 use_image_obs=False,
-                max_path_length=1000,
+                max_path_length=280,
                 unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),
         env_name="slide_cabinet",
         env_suite="kitchen",
-        decoder='kitchen_dyne',
+        decoder="kitchen_dyne",
         stack=4,
         replay_size=int(2.5e6),
         policy_noise=0.2,
@@ -55,24 +56,26 @@ if __name__ == "__main__":
         pixels=True,
         max_timesteps=1e6,
         batch_size=100,
-        discount=.99,
-        tau=.005,
-        noise_clip=.5,
+        discount=0.99,
+        tau=0.005,
+        noise_clip=0.5,
         policy_freq=2,
-        eval_freq=1e3,
+        eval_freq=1e4,
         start_timesteps=2500,
     )
 
     search_space = {
         "env_name": [
-            "microwave",
             "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "slide_cabinet",
+            # "microwave",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
-        'decoder':['kitchen_dyne', 'kitchen_dyne_no_straight_through']
+        "decoder": [
+            "kitchen_dyne",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -95,4 +98,5 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
+                skip_wait=True,
             )
