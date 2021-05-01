@@ -1,6 +1,6 @@
 import argparse
 import random
-
+import subprocess
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
@@ -12,15 +12,15 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
-    num_envs = 11
+    num_envs = 10
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
             num_eval_steps_per_epoch=1000,
             min_num_steps_before_training=1000,
             num_pretrain_steps=1,
-            max_path_length=150,
-            num_expl_steps_per_train_loop=151,
+            max_path_length=500,
+            num_expl_steps_per_train_loop=501,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
             batch_size=50,
@@ -29,13 +29,13 @@ if __name__ == "__main__":
     else:
         algorithm_kwargs = dict(
             num_epochs=250,
-            num_eval_steps_per_epoch=150 * 5,
+            num_eval_steps_per_epoch=500 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=150,
-            num_expl_steps_per_train_loop=150 * num_envs,
-            num_trains_per_train_loop=333,
-            num_train_loops_per_epoch=6,
+            max_path_length=500,
+            num_expl_steps_per_train_loop=501 * num_envs,
+            num_trains_per_train_loop=2000,
+            num_train_loops_per_epoch=2,
             batch_size=50,
         )
         exp_prefix = args.exp_prefix
@@ -48,8 +48,18 @@ if __name__ == "__main__":
         use_raw_actions=True,
         env_kwargs=dict(
             control_mode="end_effector",
-            use_combined_action_space=False,
-            action_scale=1 / 100,
+            use_combined_action_space=True,
+            action_scale=1/100,
+            max_path_length=500,
+            reward_type="dense",
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=500,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(imwidth=64, imheight=64),
         ),
         actor_kwargs=dict(
             init_std=0.0,
@@ -100,33 +110,32 @@ if __name__ == "__main__":
 
     search_space = {
         "env_class": [
-            # "assembly-v2",  # hard envs
-            # "basketball-v2",  # hard envs
-            # "bin-picking-v2",  # hard envs
-            # # "box-close-v2",
-            # # "button-press-topdown-v2",
-            # # "button-press-topdown-wall-v2",
-            # # "button-press-v2",
-            # # "button-press-wall-v2",
-            # # "coffee-button-v2",
-            # "coffee-pull-v2",  # hard envs
-            # # "coffee-push-v2",
-            # "dial-turn-v2",  # hard envs
-            # "disassemble-v2",  # hard envs
-            # "door-close-v2",  # hard envs
+            "assembly-v2",
+            "basketball-v2",
+            # "bin-picking-v2",
+            # "box-close-v2",
+            # "button-press-topdown-v2",
+            # "button-press-topdown-wall-v2",
+            # "button-press-v2",
+            # "button-press-wall-v2",
+            "coffee-button-v2",
+            # "coffee-pull-v2",
+            # "coffee-push-v2",
+            "dial-turn-v2",
+            # "disassemble-v2",
+            # "door-close-v2",
             # "door-lock-v2",
-            # "door-open-v2",
+            "door-open-v2",
             # "door-unlock-v2",
-            # "hand-insert-v2", #no goal
-            # "drawer-close-v2", #no goal
-            # "drawer-open-v2", #no goal
-            # "faucet-open-v2", #no goal
-            # "faucet-close-v2", #no goal
+            "hand-insert-v2",
+            "drawer-close-v2",
+            # "drawer-open-v2",
+            "faucet-open-v2",
             # "faucet-close-v2",
             # "hammer-v2",
             # "handle-press-side-v2",
             # "handle-press-v2",
-            # "handle-pull-side-v2",
+            "handle-pull-side-v2",
             # "handle-pull-v2",
             # "lever-pull-v2",
             # "peg-insert-side-v2",
@@ -139,7 +148,7 @@ if __name__ == "__main__":
             # "plate-slide-v2",
             # "plate-slide-side-v2",
             # "plate-slide-back-v2",
-            # "plate-slide-back-side-v2",
+            "plate-slide-back-side-v2",
             # "peg-unplug-side-v2",
             # "soccer-v2",
             # "stick-push-v2",
@@ -149,61 +158,8 @@ if __name__ == "__main__":
             # "shelf-place-v2",
             # "sweep-into-v2",
             # "sweep-v2",
-            # "window-open-v2", #no goal
-            # "window-close-v2", #no goal
-            #
-            # v1 envs:
-            "reach-v1",
-            "push-v1",
-            "pick-place-v1",
-            "door-open-v1",
-            "drawer-open-v1",
-            "drawer-close-v1",
-            "button-press-topdown-v1",
-            "peg-insert-side-v1",
-            "window-open-v1",
-            "window-close-v1",
-            "door-close-v1",
-            "reach-wall-v1",
-            "pick-place-wall-v1",
-            "push-wall-v1",
-            "button-press-v1",
-            "button-press-topdown-wall-v1",
-            "button-press-wall-v1",
-            "peg-unplug-side-v1",
-            "disassemble-v1",
-            # subset
-            # "hammer-v1",
-            # "plate-slide-v1",
-            # "plate-slide-side-v1",
-            # "plate-slide-back-v1",
-            # "plate-slide-back-side-v1",
-            # "handle-press-v1",
-            # "handle-pull-v1",
-            # "handle-press-side-v1",
-            # "handle-pull-side-v1",
-            # "stick-push-v1",
-            # "stick-pull-v1",
-            # "basketball-v1",
-            # "soccer-v1",
-            # "faucet-open-v1",
-            # "faucet-close-v1",
-            # "coffee-push-v1",
-            # "coffee-pull-v1",
-            # "coffee-button-v1",
-            # "sweep-v1",
-            # "sweep-into-v1",
-            # "pick-out-of-hole-v1",
-            # "assembly-v1",
-            # "shelf-place-v1",
-            # "push-back-v1",
-            # "lever-pull-v1",
-            # "dial-turn-v1",
-            # "bin-picking-v1",
-            # "box-close-v1",
-            # # "hand-insert-v1",
-            # "door-lock-v1",
-            # "door-unlock-v1",
+            # "window-open-v2",
+            # "window-close-v2",
         ],
         # "trainer_kwargs.reward_scale": [1 / 100, 1 / 1000],
     }
