@@ -50,7 +50,7 @@ def experiment(variant):
         )
     )
     action_dim = (
-        int(np.prod(base_env.action_space.shape)) + 1
+        int(np.prod(base_env.action_space.shape))
     )  # add this as a bogus dim to the env as well
     base_env.cnn_input_key = "image"  # TODO(avi) clean this up
     base_env.fc_input_key = "state"

@@ -19,8 +19,8 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=1000,
             min_num_steps_before_training=1000,
             num_pretrain_steps=1,
-            max_path_length=500,
-            num_expl_steps_per_train_loop=501,
+            max_path_length=280,
+            num_expl_steps_per_train_loop=281,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
             batch_size=50,
@@ -28,23 +28,27 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=200,
-            num_eval_steps_per_epoch=2500,
+            num_epochs=100,
+            num_eval_steps_per_epoch=280 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=500,
-            num_expl_steps_per_train_loop=501 * 5,
-            num_trains_per_train_loop=100 * 5,
-            num_train_loops_per_epoch=2,
+            max_path_length=280,
+            num_expl_steps_per_train_loop=281 * 5,
+            num_trains_per_train_loop=572,
+            num_train_loops_per_epoch=7,
             batch_size=50,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e3),
-        algorithm_kwargs=algorithm_kwargs,
+        replay_buffer_size=int(9e3),
+        num_expl_envs=5,
+        num_eval_envs=1,
+        expl_amount=0.3,
+        save_video=False,
         use_raw_actions=True,
+        pass_render_kwargs=True,
         env_suite="kitchen",
         env_kwargs=dict(
             dense=False,
@@ -62,13 +66,14 @@ if __name__ == "__main__":
             frame_skip=40,
             usage_kwargs=dict(
                 use_dm_backend=True,
-                use_raw_action_wrappers=True,
+                use_raw_action_wrappers=False,
                 use_image_obs=True,
                 max_path_length=280,
                 unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),
+        algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
             init_std=0.0,
             num_layers=4,
@@ -110,9 +115,6 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
         ),
-        num_expl_envs=5,
-        num_eval_envs=1,
-        expl_amount=0.3,
     )
 
     search_space = {
