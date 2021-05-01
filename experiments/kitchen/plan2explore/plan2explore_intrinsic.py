@@ -52,6 +52,7 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         env_kwargs=dict(
             dense=False,
+            image_obs=True,
             fixed_schema=False,
             action_scale=1.4,
             use_combined_action_space=True,
@@ -60,7 +61,14 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            image_obs=True,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=5,
+                unflatten_images=False,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -113,6 +121,7 @@ if __name__ == "__main__":
             log_disagreement=False,
             ensemble_training_states="post_to_next_post",
             imagination_horizon=5,
+            detach_rewards=True,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
@@ -120,15 +129,16 @@ if __name__ == "__main__":
         reward_type="intrinsic",
         eval_with_exploration_actor=False,
         expl_with_exploration_actor=True,
+        use_raw_actions=False,
     )
 
     search_space = {
-        "env_class": [
-            "microwave",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-            # "slide_cabinet",
+        "env_name": [
+            # "microwave",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
+            "slide_cabinet",
             # "kettle",
         ],
         "one_step_ensemble_kwargs.inputs": ["deter"],
