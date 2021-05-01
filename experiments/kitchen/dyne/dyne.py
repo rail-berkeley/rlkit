@@ -18,6 +18,7 @@ if __name__ == "__main__":
     parser.add_argument("--num_seeds", type=int, default=1)
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
+    parser.add_argument("--skip_wait", action="store_true", default=False)
     args = parser.parse_args()
     exp_prefix = args.exp_prefix
     variant = dict(
@@ -41,16 +42,16 @@ if __name__ == "__main__":
                 use_image_obs=False,
                 max_path_length=280,
                 unflatten_images=False,
+                use_real_nvp_wrappers=False,
             ),
             image_kwargs=dict(),
         ),
-        env_name="slide_cabinet",
         env_suite="kitchen",
         decoder="kitchen_dyne",
         stack=4,
         replay_size=int(2.5e6),
         policy_noise=0.2,
-        expl_noise=0.1,
+        expl_noise=0.3,
         max_e_action=None,
         policy_name="DynE-TD3",
         pixels=True,
@@ -98,5 +99,5 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
-                skip_wait=True,
+                skip_wait=args.skip_wait,
             )

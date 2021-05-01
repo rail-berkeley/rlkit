@@ -52,7 +52,14 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_steps=15,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=15,
+                unflatten_images=True,
+            ),
+            image_kwargs=dict(),
         ),
         seed=-1,
         use_raw_actions=False,
@@ -66,7 +73,7 @@ if __name__ == "__main__":
         "agent_kwargs.discrete_continuous_dist": [False],
         "env_kwargs.max_steps": [15],
         "agent_kwargs.discount": [0.95, 0.99],
-        "env_class": [
+        "env_name": [
             "hinge_slide_bottom_left_burner_light",
             "microwave_kettle_light_top_left_burner",
         ],

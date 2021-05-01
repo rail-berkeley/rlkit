@@ -55,9 +55,16 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_steps=5,
-            imwidth=84,
             imheight=84,
+            imwidth=84,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=5,
+                unflatten_images=True,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
         num_processes=12,
@@ -72,7 +79,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_class": [
+        "env_name": [
             "microwave",
             "kettle",
             "slide_cabinet",

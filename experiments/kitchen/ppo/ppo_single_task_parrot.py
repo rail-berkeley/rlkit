@@ -1,13 +1,17 @@
 import argparse
+import os
 import random
 import subprocess
+
+import numpy as np
+import torch
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 
 
 def experiment(variant):
-    from rad.kitchen_train import experiment
+    from a2c_ppo_acktr.main import experiment
 
     experiment(variant)
 
@@ -19,29 +23,27 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
-    exp_prefix = args.exp_prefix
+    if args.debug:
+        exp_prefix = "test" + args.exp_prefix
+    else:
+        exp_prefix = args.exp_prefix
     variant = dict(
-        agent_kwargs=dict(
-            discount=0.99,
-            critic_lr=2e-4,
-            actor_lr=2e-4,
-            encoder_lr=2e-4,
-            encoder_type="pixel",
-            discrete_continuous_dist=False,
-            data_augs="no_aug",
+        algorithm_kwargs=dict(
+            entropy_coef=0.01,
+            value_loss_coef=0.5,
+            lr=3e-4,
+            num_mini_batch=64,
+            ppo_epoch=10,
+            clip_param=0.2,
+            eps=1e-5,
+            max_grad_norm=0.5,
         ),
-        num_train_steps=int(1e6),
-        frame_stack=1,
-        replay_buffer_capacity=int(2.5e6),
-        action_repeat=1,
-        num_eval_episodes=5,
-        init_steps=2500,
-        pre_transform_image_size=64,
-        image_size=64,
-        env_name="slide_cabinet",
-        batch_size=512,
-        eval_freq=1000,
-        log_interval=1000,
+        rollout_kwargs=dict(
+            use_gae=True,
+            gamma=0.99,
+            gae_lambda=0.95,
+            use_proper_time_limits=True,
+        ),
         env_kwargs=dict(
             dense=False,
             image_obs=True,
@@ -56,27 +58,31 @@ if __name__ == "__main__":
             max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
-            imwidth=64,
-            imheight=64,
+            imwidth=84,
+            imheight=84,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 use_image_obs=True,
                 max_path_length=280,
                 unflatten_images=True,
+                use_real_nvp_wrappers=True,
+                model_path="/home/mdalal/research/rlkit/data/railrl-realNVP-slide-cabinet-pixels/railrl-realNVP-slide_cabinet-pixels_2021_04_28_19_25_34_id56704--s10/itr_200.pkl",
             ),
             image_kwargs=dict(),
         ),
-        seed=-1,
+        actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
+        num_processes=5,
+        num_env_steps=int(1e6),
+        num_steps=2048 // 5,
+        log_interval=1,
+        eval_interval=1,
         use_raw_actions=True,
         env_suite="kitchen",
+        use_linear_lr_decay=False,
     )
 
     search_space = {
-        "agent_kwargs.data_augs": [
-            "no_aug",
-        ],
-        "agent_kwargs.discrete_continuous_dist": [False],
         "env_name": [
             "microwave",
             "kettle",

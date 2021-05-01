@@ -33,9 +33,9 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=280,
-            num_expl_steps_per_train_loop=281 * 1,
-            num_trains_per_train_loop=114,
-            num_train_loops_per_epoch=35,
+            num_expl_steps_per_train_loop=281 * 5,
+            num_trains_per_train_loop=572,
+            num_train_loops_per_epoch=7,
             batch_size=50,
         )
         exp_prefix = args.exp_prefix
@@ -43,7 +43,7 @@ if __name__ == "__main__":
         algorithm="DreamerV2",
         version="normal",
         replay_buffer_size=int(9e3),
-        num_expl_envs=1,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=False,

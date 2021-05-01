@@ -38,7 +38,7 @@ if __name__ == "__main__":
         init_steps=2500,
         pre_transform_image_size=64,
         image_size=64,
-        env_class="slide_cabinet",
+        env_name="slide_cabinet",
         batch_size=512,
         eval_freq=1000,
         log_interval=1000,
@@ -53,7 +53,14 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_steps=5,
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=5,
+                unflatten_images=True,
+            ),
+            image_kwargs=dict(),
         ),
         seed=-1,
         use_raw_actions=False,
@@ -65,7 +72,7 @@ if __name__ == "__main__":
             "no_aug",
         ],
         "agent_kwargs.discrete_continuous_dist": [False],
-        "env_class": [
+        "env_name": [
             "microwave",
             "kettle",
             "slide_cabinet",

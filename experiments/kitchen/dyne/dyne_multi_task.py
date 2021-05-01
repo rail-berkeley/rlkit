@@ -7,7 +7,7 @@ from rlkit.launchers.launcher_util import run_experiment
 
 
 def experiment(variant):
-    from rad.kitchen_train import experiment
+    from dyne.rl.main_dyne import experiment
 
     experiment(variant)
 
@@ -21,30 +21,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
     exp_prefix = args.exp_prefix
     variant = dict(
-        agent_kwargs=dict(
-            discount=0.99,
-            critic_lr=2e-4,
-            actor_lr=2e-4,
-            encoder_lr=2e-4,
-            encoder_type="pixel",
-            discrete_continuous_dist=False,
-            data_augs="no_aug",
-        ),
-        num_train_steps=int(1e6),
-        frame_stack=1,
-        replay_buffer_capacity=int(2.5e6),
-        action_repeat=1,
-        num_eval_episodes=5,
-        init_steps=2500,
-        pre_transform_image_size=64,
-        image_size=64,
-        env_name="slide_cabinet",
-        batch_size=512,
-        eval_freq=1000,
-        log_interval=1000,
         env_kwargs=dict(
             dense=False,
-            image_obs=True,
+            image_obs=False,
             fixed_schema=False,
             action_scale=1,
             use_combined_action_space=True,
@@ -56,34 +35,42 @@ if __name__ == "__main__":
             max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
-            imwidth=64,
-            imheight=64,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=True,
+                use_image_obs=False,
                 max_path_length=280,
-                unflatten_images=True,
+                unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),
-        seed=-1,
-        use_raw_actions=True,
+        env_name="slide_cabinet",
         env_suite="kitchen",
+        decoder="kitchen_dyne",
+        stack=4,
+        replay_size=int(2.5e6),
+        policy_noise=0.2,
+        expl_noise=0.1,
+        max_e_action=None,
+        policy_name="DynE-TD3",
+        pixels=True,
+        max_timesteps=1e6,
+        batch_size=100,
+        discount=0.99,
+        tau=0.005,
+        noise_clip=0.5,
+        policy_freq=2,
+        eval_freq=1e4,
+        start_timesteps=2500,
     )
 
     search_space = {
-        "agent_kwargs.data_augs": [
-            "no_aug",
-        ],
-        "agent_kwargs.discrete_continuous_dist": [False],
         "env_name": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
+        ],
+        "decoder": [
+            "kitchen_dyne",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -107,4 +94,5 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
+                skip_wait=True,
             )
