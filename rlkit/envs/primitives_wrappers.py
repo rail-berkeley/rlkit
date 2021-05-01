@@ -1,3 +1,4 @@
+import pickle
 import cv2
 import gym
 import mujoco_py
@@ -288,14 +289,26 @@ class DictObsWrapper(gym.Wrapper):
 
 
 class IgnoreLastAction(gym.Wrapper):
+    def __init__(self, env):
+        super().__init__(env)
+        self.action_space = gym.spaces.Box(np.concatenate((self.env.action_space.low, [0])), np.concatenate((self.env.action_space.high, [0])))
+
     def __getattr__(self, name):
         return getattr(self.env, name)
 
     def step(
         self,
         action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
     ):
-        return super().step(action[:-1])
+        return self.env.step(
+            action[:-1],
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
 
 
 class GetObservationWrapper(gym.Wrapper):
@@ -304,6 +317,20 @@ class GetObservationWrapper(gym.Wrapper):
 
     def get_observation(self):
         return self._get_obs()
+
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
+        return self.env.step(
+            action,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
 
 
 class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):

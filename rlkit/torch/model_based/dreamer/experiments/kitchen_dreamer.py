@@ -53,11 +53,17 @@ def experiment(variant):
     num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
 
-    env_fns = [
-        lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
-        for _ in range(num_expl_envs)
-    ]
-    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+    if num_expl_envs > 1:
+        env_fns = [
+            lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
+            for _ in range(num_expl_envs)
+        ]
+        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+    else:
+        expl_envs = [primitives_make_env.make_env(env_suite, env_name, env_kwargs)]
+        expl_env = DummyVecEnv(
+            expl_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
+        )
     eval_envs = [
         primitives_make_env.make_env(env_suite, env_name, env_kwargs) for _ in range(1)
     ]

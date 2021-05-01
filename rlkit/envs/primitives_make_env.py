@@ -1,3 +1,7 @@
+from railrl.envs.wrappers.predictive_wrapper_env import RealNVPWrapper
+from rlkit.envs.primitives_wrappers import GetObservationWrapper, IgnoreLastAction
+
+
 def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
 
@@ -96,12 +100,13 @@ def make_env(env_suite, env_name, env_kwargs):
     )
 
     usage_kwargs = env_kwargs["usage_kwargs"]
-    use_dm_backend = usage_kwargs["use_dm_backend"]
-    use_raw_action_wrappers = usage_kwargs["use_raw_action_wrappers"]
-    use_image_obs = usage_kwargs["use_image_obs"]
-    max_path_length = usage_kwargs["max_path_length"]
-    unflatten_images = usage_kwargs["unflatten_images"]
     image_kwargs = env_kwargs["image_kwargs"]
+    max_path_length = usage_kwargs["max_path_length"]
+    use_dm_backend = usage_kwargs.get("use_dm_backend", True)
+    use_raw_action_wrappers = usage_kwargs.get("use_raw_action_wrappers", False)
+    use_image_obs = usage_kwargs.get("use_image_obs", True)
+    unflatten_images = usage_kwargs.get("unflatten_images", False)
+    use_real_nvp_wrappers = usage_kwargs.get("use_real_nvp_wrappers", False)
 
     env_kwargs_new = env_kwargs.copy()
     if "usage_kwargs" in env_kwargs_new:
@@ -122,6 +127,14 @@ def make_env(env_suite, env_name, env_kwargs):
         env = make_base_robosuite_env(env_name, env_kwargs_new, use_dm_backend)
     if unflatten_images:
         env = ImageUnFlattenWrapper(env)
+
+    if use_real_nvp_wrappers:
+        env = GetObservationWrapper(IgnoreLastAction(env))
+        env = RealNVPWrapper(
+            env,
+            usage_kwargs.get("model_path"),
+            action_scale=1,
+        )
 
     # need to comment out for running robosuite viewer:
     if use_raw_action_wrappers:
