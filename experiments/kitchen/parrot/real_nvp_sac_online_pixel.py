@@ -1,7 +1,11 @@
 import copy
 
 import numpy as np
-from rlkit.envs.primitives_wrappers import DictObsWrapper, IgnoreLastAction, GetObservationWrapper
+from rlkit.envs.primitives_wrappers import (
+    DictObsWrapper,
+    IgnoreLastAction,
+    GetObservationWrapper,
+)
 import torch.nn as nn
 
 import railrl.misc.hyperparameter as hyp
@@ -38,9 +42,13 @@ def experiment(variant):
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env"]
     env_kwargs = variant["env_kwargs"]
-    base_env = GetObservationWrapper(IgnoreLastAction(
-        DictObsWrapper(primitives_make_env.make_env(env_suite, env_name, env_kwargs))
-    ))
+    base_env = GetObservationWrapper(
+        IgnoreLastAction(
+            DictObsWrapper(
+                primitives_make_env.make_env(env_suite, env_name, env_kwargs)
+            )
+        )
+    )
     action_dim = (
         int(np.prod(base_env.action_space.shape)) + 1
     )  # add this as a bogus dim to the env as well
@@ -235,7 +243,7 @@ if __name__ == "__main__":
             # max_path_length=10,
             max_path_length=60,
             num_epochs=2000,
-            num_eval_steps_per_epoch=300,
+            num_eval_steps_per_epoch=280 * 5,
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1000,
             min_num_steps_before_training=10 * 1000,
@@ -252,7 +260,6 @@ if __name__ == "__main__":
             pool_paddings=[0, 0],
             image_augmentation=False,
         ),
-        # replay_buffer_size=int(1E6),
         qf_kwargs=dict(
             hidden_sizes=[256, 256],
         ),
@@ -260,15 +267,15 @@ if __name__ == "__main__":
             hidden_sizes=[256, 256],
         ),
         dump_video_kwargs=dict(
-            imsize=48,
-            save_video_period=5,
+            imsize=64,
+            save_video_period=50,
         ),
         logger_config=dict(
             snapshot_mode="gap_and_last",
             snapshot_gap=50,
         ),
         dump_buffer_kwargs=dict(
-            dump_buffer_period=50,
+            dump_buffer_period=10000,
         ),
         replay_buffer_size=int(2.5e6),
         expl_path_collector_kwargs=dict(),
@@ -319,7 +326,7 @@ if __name__ == "__main__":
     parser.add_argument("--gpu", type=int, default=0)
     parser.add_argument("--reward-type", default="sparse", type=str)
     parser.add_argument("--action-scale", default=1.0, type=float)
-    parser.add_argument("--use-img-aug", action="store_true", default=False)
+    parser.add_argument("--use-img-aug", action="store_true", default=True)
     parser.add_argument("--use-robot-state", action="store_true", default=False)
     parser.add_argument(
         "--cnn", type=str, default="large", choices=("small", "large", "xlarge")
@@ -383,8 +390,8 @@ if __name__ == "__main__":
 
     variant["cnn_params"]["image_augmentation"] = args.use_img_aug
 
-    n_seeds = 1
-    mode = "local"
+    n_seeds = 3
+    mode = "here_no_doodad"
     exp_prefix = "dev-{}".format(
         __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )

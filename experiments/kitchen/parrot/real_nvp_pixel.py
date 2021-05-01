@@ -115,7 +115,7 @@ def experiment(variant):
     #     variant, expl_env, observation_keys,
     #     limit_num_trajs=variant['limit_rb_num_trajs'])
     with h5py.File(
-        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-mixed-v0-vision-64.hdf5",
+        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-64.hdf5",
         "r",
     ) as f:
         dataset = dict(
@@ -259,7 +259,7 @@ if __name__ == "__main__":
         ),
         dump_video_kwargs=dict(
             imsize=48,
-            save_video_period=1,
+            save_video_period=50,
         ),
         logger_config=dict(
             snapshot_mode="gap_and_last",
@@ -318,7 +318,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--coupling-layers", type=int, default=4)
     parser.add_argument("--cnn-output-size", type=int, default=256)
-    parser.add_argument("--use-img-aug", action="store_true", default=False)
+    parser.add_argument("--use-img-aug", action="store_true", default=True)
     parser.add_argument("--no-use-atanh", action="store_true", default=False)
     parser.add_argument("--use-grad-clip", action="store_true", default=False)
     parser.add_argument("--grad-clip-threshold", type=float, default=50.0)
