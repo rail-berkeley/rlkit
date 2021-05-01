@@ -13,6 +13,7 @@ class TimeLimit(gym.Wrapper):
     def __init__(self, env, duration):
         gym.Wrapper.__init__(self, env)
         self._duration = duration
+        self._elapsed_steps = 0
         self._max_episode_steps = duration
         self._step = None
 
@@ -34,6 +35,7 @@ class TimeLimit(gym.Wrapper):
             render_im_shape=render_im_shape,
         )
         self._step += 1
+        self._elapsed_steps += 1
         if self._step >= self._duration:
             done = True
             self._step = None
@@ -41,6 +43,7 @@ class TimeLimit(gym.Wrapper):
 
     def reset(self):
         self._step = 0
+        self._elapsed_steps = 0
         return self.env.reset()
 
 
@@ -125,8 +128,19 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         obs = self.env.reset()
         return obs.reshape(-1, self.env.imwidth, self.env.imheight)
 
-    def step(self, action):
-        obs, reward, done, info = super().step(action)
+    def step(
+        self,
+        action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+    ):
+        obs, reward, done, info = self.env.step(
+            action,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
         return (
             obs.reshape(-1, self.env.imwidth, self.env.imheight),
             reward,
@@ -162,7 +176,6 @@ class ImageTransposeWrapper(gym.Wrapper):
 class MetaworldWrapper(gym.Wrapper):
     def __init__(self, env, reward_type="dense"):
         super().__init__(env)
-        self._elapsed_steps = 0
         self.reward_type = reward_type
 
     def __getattr__(self, name):
@@ -170,7 +183,6 @@ class MetaworldWrapper(gym.Wrapper):
 
     def reset(self):
         obs = super().reset()
-        self._elapsed_steps = 0
         return obs
 
     def step(
@@ -189,7 +201,6 @@ class MetaworldWrapper(gym.Wrapper):
         for k, v in i.items():
             if v is not None:
                 new_i[k] = v
-        self._elapsed_steps += 1
         if self.reward_type == "dense":
             r = r
         elif self.reward_type == "sparse":
@@ -291,7 +302,10 @@ class DictObsWrapper(gym.Wrapper):
 class IgnoreLastAction(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
-        self.action_space = gym.spaces.Box(np.concatenate((self.env.action_space.low, [0])), np.concatenate((self.env.action_space.high, [0])))
+        self.action_space = gym.spaces.Box(
+            np.concatenate((self.env.action_space.low, [0])),
+            np.concatenate((self.env.action_space.high, [0])),
+        )
 
     def __getattr__(self, name):
         return getattr(self.env, name)

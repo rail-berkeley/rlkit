@@ -1,8 +1,11 @@
 def experiment(variant):
     import os
-
+    import rlkit.envs.primitives_make_env as primitives_make_env
     from rlkit.torch.model_based.plan2explore.mcts_policy import (
         HybridAdvancedMCTSPolicy,
+    )
+    from rlkit.torch.model_based.plan2explore.actor_models import (
+        ConditionalContinuousActorModel,
     )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
@@ -46,69 +49,55 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    import gym
 
-    env_class = variant["env_class"]
+    gym.logger.set_level(40)
+    env_suite = variant.get("env_suite", "kitchen")
+    env_name = variant["env_name"]
     env_kwargs = variant["env_kwargs"]
-    if env_class == "microwave":
-        env_class_ = KitchenMicrowaveV0
-    elif env_class == "kettle":
-        env_class_ = KitchenKettleV0
-    elif env_class == "slide_cabinet":
-        env_class_ = KitchenSlideCabinetV0
-    elif env_class == "hinge_cabinet":
-        env_class_ = KitchenHingeCabinetV0
-    elif env_class == "top_left_burner":
-        env_class_ = KitchenTopLeftBurnerV0
-    elif env_class == "bottom_left_burner":
-        env_class_ = KitchenBottomLeftBurnerV0
-    elif env_class == "light_switch":
-        env_class_ = KitchenLightSwitchV0
+    use_raw_actions = variant["use_raw_actions"]
+    num_expl_envs = variant["num_expl_envs"]
+    actor_model_class_name = variant.get("actor_model_class", "actor_model")
+
+    if num_expl_envs > 1:
+        env_fns = [
+            lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
+            for _ in range(num_expl_envs)
+        ]
+        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
     else:
-        raise EnvironmentError("invalid env provided")
-
-    env_fns = [
-        lambda: make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
+        expl_envs = [primitives_make_env.make_env(env_suite, env_name, env_kwargs)]
+        expl_env = DummyVecEnv(
+            expl_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
         )
-        for _ in range(variant["num_expl_envs"])
-    ]
-    expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-
     eval_envs = [
-        make_env(
-            env_class=env_class_,
-            env_kwargs=variant["env_kwargs"],
-        )
+        primitives_make_env.make_env(env_suite, env_name, env_kwargs) for _ in range(1)
     ]
-    eval_env = DummyVecEnv(eval_envs)
-
+    eval_env = DummyVecEnv(
+        eval_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
+    )
+    if use_raw_actions:
+        discrete_continuous_dist = False
+        continuous_action_dim = eval_env.action_space.low.size
+        discrete_action_dim = 0
+        use_batch_length = True
+        action_dim = continuous_action_dim
+    else:
+        discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
+        continuous_action_dim = eval_envs[0].max_arg_len
+        discrete_action_dim = eval_envs[0].num_primitives
+        if not discrete_continuous_dist:
+            continuous_action_dim = continuous_action_dim + discrete_action_dim
+            discrete_action_dim = 0
+        action_dim = continuous_action_dim + discrete_action_dim
+        use_batch_length = False
+    world_model_class = WorldModel
     obs_dim = expl_env.observation_space.low.size
-    action_dim = expl_env.action_space.low.size
-    num_primitives = eval_envs[0].num_primitives
-    max_arg_len = eval_envs[0].max_arg_len
-
-    if (
-        variant["actor_kwargs"]["discrete_continuous_dist"]
-        or variant["env_kwargs"]["fixed_schema"]
-    ):
-        continuous_action_dim = max_arg_len
-    else:
-        continuous_action_dim = max_arg_len + num_primitives
-    if (
-        variant.get("world_model_class", "world_model") == "multitask"
-        or eval_envs[0].proprioception
-    ):
-        world_model_class = StateConcatObsWorldModel
-        if eval_envs[0].proprioception:
-            variant["model_kwargs"]["embedding_size"] += variant["model_kwargs"][
-                "state_output_size"
-            ]
-    else:
-        world_model_class = WorldModel
-    if variant.get("actor_model_class", "actor_model") == "conditional_actor_model":
+    if actor_model_class_name == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
-    else:
+    elif actor_model_class_name == "continuous_conditional_actor_model":
+        actor_model_class = ConditionalContinuousActorModel
+    elif actor_model_class_name == "actor_model":
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
         data = torch.load(variant["models_path"])
@@ -127,7 +116,7 @@ def experiment(variant):
             variant["model_kwargs"]["model_hidden_size"],
             world_model.feature_size,
             hidden_activation=torch.nn.functional.elu,
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
             env=eval_envs[0],
             **variant["actor_kwargs"],
@@ -159,7 +148,7 @@ def experiment(variant):
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
-        discrete_action_dim=num_primitives,
+        discrete_action_dim=discrete_action_dim,
         continuous_action_dim=continuous_action_dim,
         env=eval_envs[0],
         **variant["actor_kwargs"],
@@ -214,7 +203,7 @@ def experiment(variant):
             action_dim,
             exploration=True,
             expl_amount=variant.get("expl_amount", 0.3),
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
             discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
             and (not variant["env_kwargs"]["fixed_schema"]),
@@ -230,7 +219,7 @@ def experiment(variant):
             action_dim,
             exploration=False,
             expl_amount=0.0,
-            discrete_action_dim=num_primitives,
+            discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
             discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
             and (not variant["env_kwargs"]["fixed_schema"]),
@@ -243,7 +232,7 @@ def experiment(variant):
         expl_policy,
         save_env_in_snapshot=False,
         env_params=env_kwargs,
-        env_class=env_class,
+        env_class=env_name,
     )
 
     eval_path_collector = VecMdpPathCollector(
@@ -251,7 +240,7 @@ def experiment(variant):
         eval_policy,
         save_env_in_snapshot=False,
         env_params=env_kwargs,
-        env_class=env_class,
+        env_class=env_name,
     )
 
     replay_buffer = EpisodeReplayBuffer(
