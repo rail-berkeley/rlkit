@@ -21,14 +21,14 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=1000,
-            min_num_steps_before_training=1000,
-            num_pretrain_steps=1,
-            max_path_length=280,
-            num_expl_steps_per_train_loop=281,
-            num_trains_per_train_loop=1,
+            num_eval_steps_per_epoch=5,
+            num_expl_steps_per_train_loop=50,
+            min_num_steps_before_training=100,
+            num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
+            num_trains_per_train_loop=10,
             batch_size=50,
+            max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
@@ -49,7 +49,7 @@ if __name__ == "__main__":
         version="normal",
         replay_buffer_size=int(9e3),
         algorithm_kwargs=algorithm_kwargs,
-        num_expl_envs=1,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=False,

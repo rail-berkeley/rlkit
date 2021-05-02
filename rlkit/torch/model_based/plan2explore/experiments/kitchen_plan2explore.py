@@ -1,14 +1,16 @@
 def experiment(variant):
     import os
+
     import rlkit.envs.primitives_make_env as primitives_make_env
-    from rlkit.torch.model_based.plan2explore.mcts_policy import (
-        HybridAdvancedMCTSPolicy,
-    )
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
     )
+    from rlkit.torch.model_based.plan2explore.mcts_policy import (
+        HybridAdvancedMCTSPolicy,
+    )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
+    import gym
     import torch
     from d4rl.kitchen.kitchen_envs import (
         KitchenBottomLeftBurnerV0,
@@ -49,7 +51,6 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
-    import gym
 
     gym.logger.set_level(40)
     env_suite = variant.get("env_suite", "kitchen")
@@ -250,6 +251,7 @@ def experiment(variant):
         obs_dim,
         action_dim,
         replace=False,
+        use_batch_length=use_batch_length,
     )
     trainer = Plan2ExploreTrainer(
         eval_env,
