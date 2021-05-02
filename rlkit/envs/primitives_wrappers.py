@@ -1,4 +1,5 @@
 import pickle
+
 import cv2
 import gym
 import mujoco_py
@@ -164,7 +165,7 @@ class ImageTransposeWrapper(gym.Wrapper):
         return obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0)
 
     def step(self, action):
-        obs, reward, done, info = super().step(action)
+        obs, reward, done, info = self.env.step(action)
         return (
             obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0),
             reward,
@@ -291,8 +292,16 @@ class DictObsWrapper(gym.Wrapper):
     def step(
         self,
         action,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
     ):
-        o, r, d, i = super().step(action)
+        o, r, d, i = self.env.step(
+            action,
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
         return {"image": o}, r, d, i
 
     def reset(self):

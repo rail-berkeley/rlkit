@@ -1,31 +1,28 @@
 import copy
+import pickle
+
 import d4rl
-
 import gym
+import h5py
 import numpy as np
-from rlkit.envs.primitives_wrappers import DictObsWrapper, IgnoreLastAction
-import torch.nn as nn
-
 import railrl.misc.hyperparameter as hyp
 import railrl.torch.pytorch_util as ptu
+import torch.nn as nn
 from railrl.data_management.obs_dict_replay_buffer import ObsDictReplayBuffer
 from railrl.launchers.launcher_util import run_experiment
-from railrl.samplers.data_collector.path_collector import (
-    ObsDictPathCollector,
-    CustomObsDictPathCollector,
-)
-from railrl.visualization.video import VideoSaveFunctionBullet, OnlinePathSaveFunction
 from railrl.misc.buffer_save import BufferSaveFunction
-
+from railrl.samplers.data_collector.path_collector import (
+    CustomObsDictPathCollector,
+    ObsDictPathCollector,
+)
 from railrl.torch.networks import CNN
 from railrl.torch.sac.policies import ObservationConditionedRealNVP
-
 from railrl.torch.sac.real_nvp import RealNVPTrainer
-
 from railrl.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+from railrl.visualization.video import OnlinePathSaveFunction, VideoSaveFunctionBullet
+
 import rlkit.envs.primitives_make_env as primitives_make_env
-import pickle
-import h5py
+from rlkit.envs.primitives_wrappers import DictObsWrapper, IgnoreLastAction
 
 DEFAULT_BUFFER = (
     "/media/avi/data/Work/data/widow250/"
@@ -42,8 +39,8 @@ def experiment(variant):
     expl_env = IgnoreLastAction(
         DictObsWrapper(primitives_make_env.make_env(env_suite, env_name, env_kwargs))
     )
-    action_dim = (
-        int(np.prod(expl_env.action_space.shape)) + 1
+    action_dim = int(
+        np.prod(expl_env.action_space.shape)
     )  # add this as a bogus dim to the env as well
 
     expl_env.cnn_input_key = "image"  # TODO(avi) clean this up
@@ -115,13 +112,13 @@ def experiment(variant):
     #     variant, expl_env, observation_keys,
     #     limit_num_trajs=variant['limit_rb_num_trajs'])
     with h5py.File(
-        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-64.hdf5",
+        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-84.hdf5",
         "r",
     ) as f:
         dataset = dict(
             observations=np.array(f["images"])
             .transpose(0, 3, 1, 2)
-            .reshape(-1, 64 * 64 * 3),
+            .reshape(-1, 84 * 84 * 3),
             terminals=np.array(f["terminals"]),
             rewards=np.array(f["rewards"]),
             actions=np.array(f["actions"]),

@@ -47,8 +47,8 @@ if __name__ == "__main__":
             image_kwargs=dict(),
         ),
         env_suite="kitchen",
-        path='/home/mdalal/research/spirl/spirl/configs/hrl/kitchen/vision_cl_1/',
-        env_name='kettle',
+        path="/home/mdalal/research/spirl/spirl/configs/hrl/kitchen/vision_cl_1/",
+        env_name="kettle",
     )
 
     search_space = {

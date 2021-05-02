@@ -632,12 +632,22 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_feat
                 ).detach()
 
-            exploration_imag_feat_a = exploration_imag_feat[:-1].reshape(-1, exploration_imag_feat.shape[-1]).detach()
-            exploration_imag_actions_a = (
-                exploration_imag_actions[:-1].reshape(-1, exploration_imag_actions.shape[-1]).detach()
+            exploration_imag_feat_a = (
+                exploration_imag_feat[:-1]
+                .reshape(-1, exploration_imag_feat.shape[-1])
+                .detach()
             )
-            exploration_imag_actor_dist = self.exploration_actor(exploration_imag_feat_a)
-            exploration_imag_log_probs = exploration_imag_actor_dist.log_prob(exploration_imag_actions_a).detach()
+            exploration_imag_actions_a = (
+                exploration_imag_actions[:-1]
+                .reshape(-1, exploration_imag_actions.shape[-1])
+                .detach()
+            )
+            exploration_imag_actor_dist = self.exploration_actor(
+                exploration_imag_feat_a
+            )
+            exploration_imag_log_probs = exploration_imag_actor_dist.log_prob(
+                exploration_imag_actions_a
+            ).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(
                     exploration_vf_params + exploration_target_vf_params
