@@ -7,7 +7,7 @@ from rlkit.launchers.launcher_util import run_experiment
 
 
 def experiment(variant):
-    from dyne.rl.main_dyne import experiment
+    from dyne.rl.main_pixel_td3 import experiment
 
     experiment(variant)
 
@@ -44,13 +44,12 @@ if __name__ == "__main__":
         ),
         env_name="slide_cabinet",
         env_suite="kitchen",
-        decoder="kitchen_dyne",
-        stack=4,
+        stack=1,
         replay_size=int(2.5e6),
         policy_noise=0.2,
-        expl_noise=0.1,
+        expl_noise=0.3,
         max_e_action=None,
-        policy_name="TD3",
+        policy_name="Pixel-TD3",
         pixels=True,
         max_timesteps=1e6,
         batch_size=100,
@@ -58,7 +57,7 @@ if __name__ == "__main__":
         tau=0.005,
         noise_clip=0.5,
         policy_freq=2,
-        eval_freq=1e4,
+        eval_freq=int(1e3),
         start_timesteps=2500,
     )
 

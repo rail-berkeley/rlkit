@@ -4,7 +4,12 @@ import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+    preprocess_variant,
+)
+from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
+    experiment,
+)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -40,10 +45,11 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="DreamerV2",
+        algorithm="Plan2Explore",
         version="normal",
         replay_buffer_size=int(9e3),
-        num_expl_envs=5,
+        algorithm_kwargs=algorithm_kwargs,
+        num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=False,
@@ -62,7 +68,7 @@ if __name__ == "__main__":
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
             max_path_length=280,
-            control_mode="vices",
+            control_mode="joint_velocity",
             frame_skip=40,
             usage_kwargs=dict(
                 use_dm_backend=True,
@@ -72,13 +78,6 @@ if __name__ == "__main__":
                 unflatten_images=False,
             ),
             image_kwargs=dict(),
-        ),
-        algorithm_kwargs=algorithm_kwargs,
-        actor_kwargs=dict(
-            init_std=0.0,
-            num_layers=4,
-            min_std=0.1,
-            dist="trunc_normal",
         ),
         vf_kwargs=dict(
             num_layers=3,
@@ -93,6 +92,13 @@ if __name__ == "__main__":
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+        ),
+        one_step_ensemble_kwargs=dict(
+            num_models=10,
+            hidden_size=400,
+            num_layers=4,
+            inputs="feat",
+            targets="stoch",
         ),
         trainer_kwargs=dict(
             use_amp=True,
@@ -114,26 +120,36 @@ if __name__ == "__main__":
             policy_gradient_loss_scale=0.0,
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
+            log_disagreement=False,
+            ensemble_training_states="post_to_next_post",
+            detach_rewards=True,
+        ),
+        reward_type="intrinsic",
+        eval_with_exploration_actor=False,
+        expl_with_exploration_actor=True,
+        actor_kwargs=dict(
+            init_std=0.0,
+            num_layers=4,
+            min_std=0.1,
+            dist="trunc_normal",
+            discrete_continuous_dist=False,
         ),
     )
 
     search_space = {
         "env_name": [
-            "microwave",
-            "kettle",
+            # "microwave",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
             "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-            "microwave_kettle_light_top_left_burner",
-            "hinge_slide_bottom_left_burner_light",
+            # "kettle",
         ],
-        # "env_kwargs.control_mode": [
-        #     "joint_position",
-        #     "joint_velocity",
-        #     "torque",
-        #     "end_effector",
-        # ],
+        "one_step_ensemble_kwargs.inputs": ["deter"],
+        "one_step_ensemble_kwargs.targets": ["stoch"],
+        "trainer_kwargs.ensemble_training_states": [
+            "prior_to_next_post",
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -141,6 +157,7 @@ if __name__ == "__main__":
     )
     num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
@@ -151,7 +168,8 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                # snapshot_mode="none",
+                snapshot_gap=100,
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],
