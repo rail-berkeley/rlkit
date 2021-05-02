@@ -23,7 +23,7 @@ if __name__ == "__main__":
     variant = dict(
         env_kwargs=dict(
             dense=False,
-            image_obs=True,
+            image_obs=False,
             fixed_schema=False,
             action_scale=1,
             use_combined_action_space=True,
@@ -40,9 +40,9 @@ if __name__ == "__main__":
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=True,
+                use_image_obs=False,
                 max_path_length=280,
-                unflatten_images=True,
+                unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),

@@ -125,6 +125,8 @@ if __name__ == "__main__":
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
+            "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
         ],
         # "env_kwargs.control_mode": [
         #     "joint_position",
