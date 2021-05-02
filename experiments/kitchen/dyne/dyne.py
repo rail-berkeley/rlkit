@@ -55,13 +55,13 @@ if __name__ == "__main__":
         max_e_action=None,
         policy_name="DynE-TD3",
         pixels=True,
-        max_timesteps=1e6,
+        max_timesteps=int(1e6),
         batch_size=100,
         discount=0.99,
         tau=0.005,
         noise_clip=0.5,
         policy_freq=2,
-        eval_freq=1e4,
+        eval_freq=int(280*4),
         start_timesteps=2500,
     )
 
@@ -73,9 +73,6 @@ if __name__ == "__main__":
             # "top_left_burner",
             # "hinge_cabinet",
             # "light_switch",
-        ],
-        "decoder": [
-            "kitchen_dyne",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
