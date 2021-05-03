@@ -369,85 +369,43 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.action_scale = action_scale
 
         # primitives
-        if remove_rotation_primitives:
-            self.primitive_idx_to_name = {
-                0: "move_delta_ee_pose",
-                1: "lift",
-                2: "drop",
-                3: "move_left",
-                4: "move_right",
-                5: "move_forward",
-                6: "move_backward",
-                7: "open_gripper",
-                8: "close_gripper",
-            }
-            self.primitive_name_to_func = dict(
-                move_delta_ee_pose=self.move_delta_ee_pose,
-                lift=self.lift,
-                drop=self.drop,
-                move_left=self.move_left,
-                move_right=self.move_right,
-                move_forward=self.move_forward,
-                move_backward=self.move_backward,
-                open_gripper=self.open_gripper,
-                close_gripper=self.close_gripper,
-            )
-            self.primitive_name_to_action_idx = dict(
-                move_delta_ee_pose=[0, 1, 2],
-                lift=3,
-                drop=4,
-                move_left=5,
-                move_right=6,
-                move_forward=7,
-                move_backward=8,
-                open_gripper=[],  # doesn't matter
-                close_gripper=[],  # doesn't matter
-            )
-            self.max_arg_len = 9
-        else:
-            self.primitive_idx_to_name = {
-                0: "angled_x_y_grasp",
-                1: "move_delta_ee_pose",
-                2: "rotate_about_y_axis",
-                3: "lift",
-                4: "drop",
-                5: "move_left",
-                6: "move_right",
-                7: "move_forward",
-                8: "move_backward",
-                9: "open_gripper",
-                10: "close_gripper",
-                11: "rotate_about_x_axis",
-            }
-            self.primitive_name_to_func = dict(
-                angled_x_y_grasp=self.angled_x_y_grasp,
-                move_delta_ee_pose=self.move_delta_ee_pose,
-                rotate_about_y_axis=self.rotate_about_y_axis,
-                lift=self.lift,
-                drop=self.drop,
-                move_left=self.move_left,
-                move_right=self.move_right,
-                move_forward=self.move_forward,
-                move_backward=self.move_backward,
-                open_gripper=self.open_gripper,
-                close_gripper=self.close_gripper,
-                rotate_about_x_axis=self.rotate_about_x_axis,
-            )
-            self.primitive_name_to_action_idx = dict(
-                angled_x_y_grasp=[0, 1, 2],
-                move_delta_ee_pose=[3, 4, 5],
-                rotate_about_y_axis=6,
-                lift=7,
-                drop=8,
-                move_left=9,
-                move_right=10,
-                move_forward=11,
-                move_backward=12,
-                rotate_about_x_axis=13,
-                open_gripper=[],  # doesn't matter
-                close_gripper=[],  # doesn't matter
-            )
-            self.max_arg_len = 14
+        self.primitive_idx_to_name = {
+            0: "move_delta_ee_pose",
+            1: "top_x_y_grasp",
+            2: "lift",
+            3: "drop",
+            4: "move_left",
+            5: "move_right",
+            6: "move_forward",
+            7: "move_backward",
+            8: "open_gripper",
+            9: "close_gripper",
+        }
+        self.primitive_name_to_func = dict(
+            move_delta_ee_pose=self.move_delta_ee_pose,
+            top_x_y_grasp=self.top_x_y_grasp,
+            lift=self.lift,
+            drop=self.drop,
+            move_left=self.move_left,
+            move_right=self.move_right,
+            move_forward=self.move_forward,
+            move_backward=self.move_backward,
+            open_gripper=self.open_gripper,
+            close_gripper=self.close_gripper,
+        )
+        self.primitive_name_to_action_idx = dict(
+            move_delta_ee_pose=[0, 1, 2],
+            top_x_y_grasp=[3, 4, 5],
+            lift=6,
+            drop=7,
+            move_left=8,
+            move_right=9,
+            move_forward=10,
+            move_backward=11,
+            open_gripper=[],  # doesn't matter
+            close_gripper=[],  # doesn't matter
+        )
+        self.max_arg_len = 12
         self.num_primitives = len(self.primitive_name_to_func)
         self.control_mode = control_mode
 
@@ -459,6 +417,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.use_combined_action_space = use_combined_action_space
         self.fixed_schema = False
         if self.use_combined_action_space and self.control_mode == "primitives":
+            self.reset_mocap2body_xpos(self.sim)
             self.action_space = self.combined_action_space
             act_lower_primitive = np.zeros(self.num_primitives)
             act_upper_primitive = np.ones(self.num_primitives)
@@ -502,7 +461,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                 self.do_simulation([a[-1], -a[-1]])
         else:
             self.img_array = []
-            self.act(
+            stats = self.act(
                 a,
                 render_every_step=self.render_every_step,
                 render_mode=self.render_mode,
@@ -541,6 +500,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             return self._last_stable_obs
 
         reward, info = self.evaluate_state(self._last_stable_obs, action)
+        reward = stats[0]
+        info["success"] = float(stats[1] > 0)
         return self._last_stable_obs, reward, False, info
 
     def _get_site_pos(self, siteName):
@@ -577,8 +538,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.sim.data.mocap_quat[mocap_id] = value
 
     def ctrl_set_action(self, sim, action):
-        self.sim.data.ctrl[0] = action[-2]
-        self.sim.data.ctrl[1] = action[-1]
+        self.sim.data.ctrl[0] = action[0]
+        self.sim.data.ctrl[1] = action[1]
 
     def mocap_set_action(self, sim, action):
         if sim.model.nmocap > 0:
@@ -587,6 +548,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
             pos_delta = action[:, :3]
             quat_delta = action[:, 3:]
+            self.reset_mocap2body_xpos(sim)
             new_mocap_pos = self.data.mocap_pos + pos_delta[None]
             new_mocap_quat = self.data.mocap_quat + quat_delta[None]
 
@@ -597,6 +559,20 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             )
             self.data.set_mocap_pos("mocap", new_mocap_pos)
             self.data.set_mocap_quat("mocap", new_mocap_quat)
+
+    def _set_action(self, action):
+        assert action.shape == (9,)
+
+        action = action.copy()
+        pos_ctrl, rot_ctrl, gripper_ctrl = action[:3], action[3:7], action[7:9]
+
+        pos_ctrl *= 0.05
+        assert gripper_ctrl.shape == (2,)
+        action = np.concatenate([pos_ctrl, rot_ctrl])
+
+        # Apply action to simulation.
+        self.mocap_set_action(self.sim, action)
+        self.ctrl_set_action(self.sim, gripper_ctrl)
 
     def reset_mocap2body_xpos(self, sim):
         if (
@@ -622,39 +598,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             sim.data.mocap_pos[mocap_id][:] = sim.data.body_xpos[body_idx]
             sim.data.mocap_quat[mocap_id][:] = sim.data.body_xquat[body_idx]
 
-    def _set_action(self, action):
-        assert action.shape == (9,)
-
-        action = action.copy()
-        pos_ctrl, rot_ctrl, gripper_ctrl = action[:3], action[3:7], action[7:9]
-
-        pos_ctrl *= 0.05
-        assert gripper_ctrl.shape == (2,)
-        action = np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
-
-        # Apply action to simulation.
-        self.ctrl_set_action(self.sim, action)
-        self.mocap_set_action(self.sim, action)
-
-    def rpy_to_quat(self, rpy):
-        q = quaternion.from_euler_angles(rpy)
-        return np.array([q.x, q.y, q.z, q.w])
-
-    def quat_to_rpy(self, q):
-        q = quaternion.quaternion(q[0], q[1], q[2], q[3])
-        return quaternion.as_euler_angles(q)
-
-    def convert_xyzw_to_wxyz(self, q):
-        return np.array([q[3], q[0], q[1], q[2]])
-
     def close_gripper(
         self,
-        unusued=None,
+        unused=None,
         render_every_step=False,
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        for _ in range(200):
+        total_reward, total_success = 0, 0
+        for _ in range(300):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, -1]))
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
@@ -673,14 +625,19 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
+            r, info = self.evaluate_state(self._get_obs(), [0])
+            total_reward += r
+            total_success += info["success"]
+        return np.array((total_reward, total_success))
 
     def open_gripper(
         self,
-        unusued=None,
+        unused=None,
         render_every_step=False,
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
+        total_reward, total_success = 0, 0
         for _ in range(200):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 1]))
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
@@ -700,50 +657,10 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
-
-    def rotate_ee(
-        self,
-        rpy,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        gripper = self.sim.data.qpos[7:9]
-        for _ in range(200):
-            quat = self.rpy_to_quat(rpy)
-            quat_delta = self.convert_xyzw_to_wxyz(quat) - self.sim.data.body_xquat[10]
-            self._set_action(
-                np.array(
-                    [
-                        0.0,
-                        0.0,
-                        0.0,
-                        quat_delta[0],
-                        quat_delta[1],
-                        quat_delta[2],
-                        quat_delta[3],
-                        gripper[0],
-                        gripper[1],
-                    ]
-                )
-            )
-            self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
-            self.sim.step()
-            if render_every_step:
-                if render_mode == "rgb_array":
-                    self.img_array.append(
-                        self.render(
-                            render_mode,
-                            render_im_shape[0],
-                            render_im_shape[1],
-                        )
-                    )
-                else:
-                    self.render(
-                        render_mode,
-                        render_im_shape[0],
-                        render_im_shape[1],
-                    )
+            r, info = self.evaluate_state(self._get_obs(), [0])
+            total_reward += r
+            total_success += info["success"]
+        return np.array((total_reward, total_success))
 
     def goto_pose(
         self,
@@ -751,33 +668,20 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_every_step=False,
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
+        grasp=False,
     ):
-        # clamp the pose within workspace limits:
-        gripper = self.sim.data.qpos[7:9]
+        total_reward, total_success = 0, 0
         for _ in range(300):
-            pose = np.clip(
-                pose,
-                self.mocap_low,
-                self.mocap_high,
-            )
             delta = pose - self.get_endeff_pos()
+            gripper = self.sim.data.qpos[8:10]
+            if grasp:
+                gripper = [1, -1]
             self._set_action(
-                np.array(
-                    [
-                        delta[0],
-                        delta[1],
-                        delta[2],
-                        0.0,
-                        0.0,
-                        0.0,
-                        0.0,
-                        gripper[0],
-                        gripper[1],
-                    ]
-                )
+                np.array([delta[0], delta[1], delta[2], 0.0, 0.0, 0.0, 0.0, *gripper])
             )
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
+
             if render_every_step:
                 if render_mode == "rgb_array":
                     self.img_array.append(
@@ -793,59 +697,43 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
+            r, info = self.evaluate_state(self._get_obs(), [0])
+            total_reward += r
+            total_success += info["success"]
+        return np.array((total_reward, total_success))
 
-    def rotate_about_x_axis(
+    def top_x_y_grasp(
         self,
-        angle,
+        xyz,
         render_every_step=False,
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        rotation = self.quat_to_rpy(self.sim.data.body_xquat[10]) - np.array(
-            [angle, 0, 0]
-        )
-        self.rotate_ee(
-            rotation,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-
-    def angled_x_y_grasp(
-        self,
-        angle_and_xy,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        angle, x_dist, y_dist = angle_and_xy
-        angle = np.clip(angle, -np.pi, np.pi)
-        rotation = self.quat_to_rpy(self.sim.data.body_xquat[10]) - np.array(
-            [angle, 0, 0]
-        )
-        self.rotate_ee(
-            rotation,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        self.goto_pose(
-            self.get_endeff_pos() + np.array([x_dist, 0.0, 0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        self.goto_pose(
+        x_dist, y_dist, z_dist = xyz
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, y_dist, 0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        self.close_gripper(
+        stats += self.goto_pose(
+            self.get_endeff_pos() + np.array([x_dist, 0.0, 0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
+        stats += self.goto_pose(
+            self.get_endeff_pos() + np.array([0.0, 0, z_dist]),
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
+        stats += self.close_gripper(
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
+        return stats
 
     def move_delta_ee_pose(
         self,
@@ -854,30 +742,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + pose,
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-
-    def rotate_about_y_axis(
-        self,
-        angle,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        angle = np.clip(angle, -np.pi, np.pi)
-        rotation = self.quat_to_rpy(self.sim.data.body_xquat[10]) - np.array(
-            [0, 0, angle],
-        )
-        self.rotate_ee(
-            rotation,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
+        return stats
 
     def lift(
         self,
@@ -887,12 +758,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         z_dist = np.maximum(z_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def drop(
         self,
@@ -902,12 +775,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         z_dist = np.maximum(z_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def move_left(
         self,
@@ -917,12 +792,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         x_dist = np.maximum(x_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def move_right(
         self,
@@ -932,12 +809,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         x_dist = np.maximum(x_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def move_forward(
         self,
@@ -947,12 +826,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         y_dist = np.maximum(y_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def move_backward(
         self,
@@ -962,12 +843,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         y_dist = np.maximum(y_dist, 0.0)
-        self.goto_pose(
+        stats = self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
+        return stats
 
     def break_apart_action(self, a):
         broken_a = {}
@@ -996,12 +879,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             primitive_name_to_action_dict = self.break_apart_action(primitive_args)
             primitive_action = primitive_name_to_action_dict[primitive_name]
             primitive = self.primitive_name_to_func[primitive_name]
-            primitive(
+            print(primitive_name, primitive_action)
+            stats = primitive(
                 primitive_action,
                 render_every_step=render_every_step,
                 render_mode=render_mode,
                 render_im_shape=render_im_shape,
             )
+        return stats
 
     # (TODO): fix this for dm control backend
     def __getstate__(self):
