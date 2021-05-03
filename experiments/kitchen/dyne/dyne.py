@@ -61,7 +61,7 @@ if __name__ == "__main__":
         tau=0.005,
         noise_clip=0.5,
         policy_freq=2,
-        eval_freq=int(280*4),
+        eval_freq=int(280 * 4),
         start_timesteps=2500,
     )
 
