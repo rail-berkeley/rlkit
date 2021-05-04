@@ -242,7 +242,7 @@ class ImageEnvMetaworld(gym.Wrapper):
                 height=self.imheight,
             )
 
-        img = img[:, :, ::-1].transpose(2, 0, 1).flatten()
+        img = img.transpose(2, 0, 1).flatten()
         return img
 
     def save_image(self):

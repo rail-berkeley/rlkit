@@ -248,7 +248,7 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
             return self.renderer.render_offscreen(
                 width,
                 height,
-            )
+            )[:, :, ::-1]
         else:
             raise ValueError("mode can only be either 'human' or 'rgb_array'")
 
