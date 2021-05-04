@@ -625,7 +625,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
-            r, info = self.evaluate_state(self._get_obs(), [0])
+            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -1])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
@@ -657,7 +657,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
-            r, info = self.evaluate_state(self._get_obs(), [0])
+            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, 1])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
@@ -697,7 +697,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_im_shape[0],
                         render_im_shape[1],
                     )
-            r, info = self.evaluate_state(self._get_obs(), [0])
+            r, info = self.evaluate_state(self._get_obs(), [*delta, 0])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
@@ -710,7 +710,12 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         render_im_shape=(1000, 1000),
     ):
         x_dist, y_dist, z_dist = xyz
-        stats = self.goto_pose(
+        stats = self.open_gripper(
+            render_every_step=render_every_step,
+            render_mode=render_mode,
+            render_im_shape=render_im_shape,
+        )
+        stats += self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, y_dist, 0]),
             render_every_step=render_every_step,
             render_mode=render_mode,
