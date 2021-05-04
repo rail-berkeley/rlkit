@@ -28,10 +28,10 @@ if __name__ == "__main__":
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm_kwargs=dict(
-            entropy_coef=0.0,
+            entropy_coef=0.01,
             value_loss_coef=0.5,
             lr=3e-4,
-            num_mini_batch=32,
+            num_mini_batch=64,
             ppo_epoch=10,
             clip_param=0.2,
             eps=1e-5,
@@ -44,13 +44,19 @@ if __name__ == "__main__":
             use_proper_time_limits=True,
         ),
         env_kwargs=dict(
-            control_mode="end_effector",
-            use_combined_action_space=False,
+            control_mode="end-effector",
+            use_combined_action_space=True,
             action_scale=1 / 100,
             max_path_length=500,
-            use_image_obs=True,
-            reward_scale=1,  # let VecNormalize handle the reward scales
-            use_dm_backend=True,
+            reward_type="dense",
+            usage_kwargs=dict(
+                use_dm_backend=True,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=500,
+                unflatten_images=True,
+            ),
+            image_kwargs=dict(),
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
         num_processes=12,

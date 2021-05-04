@@ -49,9 +49,9 @@ if __name__ == "__main__":
             use_combined_action_space=True,
             action_scale=1,
             max_path_length=5,
-            reward_type="dense",
+            reward_type="sparse",
             usage_kwargs=dict(
-                use_dm_backend=True,
+                use_dm_backend=False,
                 use_raw_action_wrappers=False,
                 use_image_obs=False,
                 max_path_length=5,
@@ -61,7 +61,7 @@ if __name__ == "__main__":
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=64, hidden_activation="tanh"),
         num_processes=10,
-        num_env_steps=int(1e6),
+        num_env_steps=int(1e7),
         num_steps=2048 // 10,
         log_interval=1,
         eval_interval=1,
@@ -73,11 +73,11 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "plate-slide-v2",
+            # "plate-slide-v2",
             # 'basketball-v2',
             # 'bin-picking-v2',
             # 'assembly-v2',
-            # 'soccer-v2',
+            "soccer-v2",
             # 'sweep-into-v2',
         ],
     }

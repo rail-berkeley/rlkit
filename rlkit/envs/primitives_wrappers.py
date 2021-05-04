@@ -459,6 +459,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             if self.control_mode == "end_effector":
                 self.set_xyz_action(a[:3])
                 self.do_simulation([a[-1], -a[-1]])
+            stats = [0, 0]
         else:
             self.img_array = []
             stats = self.act(
@@ -500,8 +501,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             return self._last_stable_obs
 
         reward, info = self.evaluate_state(self._last_stable_obs, action)
-        reward = stats[0]
-        info["success"] = float(stats[1] > 0)
+        if self.control_mode == "primitives":
+            reward = stats[0]
+            info["success"] = float(stats[1] > 0)
         return self._last_stable_obs, reward, False, info
 
     def _get_site_pos(self, siteName):
