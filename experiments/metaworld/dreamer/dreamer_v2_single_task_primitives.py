@@ -1,5 +1,6 @@
 import argparse
 import random
+import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
@@ -7,7 +8,6 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
-import subprocess
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -31,15 +31,15 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=500,
             num_eval_steps_per_epoch=5 * 6,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=198,  # 33*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=6,  # 1000//(33*5)
-            num_trains_per_train_loop=67,  # 400//6
+            num_expl_steps_per_train_loop=60,  # 10*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=20,  # 1000//(10*5)
+            num_trains_per_train_loop=20,  # 400//20
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -53,14 +53,13 @@ if __name__ == "__main__":
             control_mode="primitives",
             use_combined_action_space=True,
             action_scale=1,
-            max_path_length=10,
-            remove_rotation_primitives=True,
+            max_path_length=5,
             reward_type="dense",
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 use_image_obs=True,
-                max_path_length=10,
+                max_path_length=5,
                 unflatten_images=False,
             ),
             image_kwargs=dict(imwidth=64, imheight=64),
@@ -111,7 +110,6 @@ if __name__ == "__main__":
             reward_scale=1 / 100,
         ),
         num_expl_envs=10,
-        max_path_length=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -122,7 +120,7 @@ if __name__ == "__main__":
             # subset 1: used to work
             # add: solvable in 300K
             # solvable in 500K:
-            # "basketball-v2",
+            "basketball-v2",
             # "coffee-button-v2",
             # "door-lock-v2",
             # "door-unlock-v2",
@@ -142,18 +140,18 @@ if __name__ == "__main__":
             # "door-open-v2",
             # "reach-wall-v2",
             # not solveable in 500K
-            "button-press-topdown-v2",
-            "button-press-v2",
-            "button-press-wall-v2",
-            # need 1M steps to solve
-            "box-close-v2",
-            # unsolvable before
-            "assembly-v2",
-            "bin-picking-v2",
-            "button-press-topdown-wall-v2",
-            "coffee-pull-v2",
-            "coffee-push-v2",
-            "disassemble-v2",
+            # "button-press-topdown-v2",
+            # "button-press-v2",
+            # "button-press-wall-v2",
+            # # need 1M steps to solve
+            # "box-close-v2",
+            # # unsolvable before
+            # "assembly-v2",
+            # "bin-picking-v2",
+            # "button-press-topdown-wall-v2",
+            # "coffee-pull-v2",
+            # "coffee-push-v2",
+            # "disassemble-v2",
             # not solveable in 300K
             # "hand-insert-v2",
             # "hammer-v2",
@@ -177,45 +175,15 @@ if __name__ == "__main__":
             # "window-close-v2",
             # # "reach-v2", #do not run
         ],
-        "max_path_length": [10],
-        "trainer_kwargs.discount": [0.9],
-        "env_kwargs.action_scale": [0.25],
+        "trainer_kwargs.discount": [0.8],
+        "env_kwargs.action_scale": [1],
+        "env_kwargs.reward_type": ["sparse"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if not args.debug:
-            max_path_length = variant["max_path_length"]
-            num_envs = variant["num_expl_envs"]
-            replay_buffer_size = 2500000 // max_path_length
-
-            num_eval_steps_per_epoch = 5 * (max_path_length + 1)
-            max_path_length = max_path_length
-            batch_size = 2500 // (max_path_length + 1)
-            num_expl_steps_per_train_loop = num_envs * (max_path_length + 1)
-            num_train_loops_per_epoch = 1000 // (num_envs * max_path_length)
-            num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
-            variant["algorithm_kwargs"][
-                "num_eval_steps_per_epoch"
-            ] = num_eval_steps_per_epoch
-            variant["algorithm_kwargs"]["max_path_length"] = max_path_length
-            variant["env_kwargs"]["max_path_length"] = max_path_length
-            variant["algorithm_kwargs"]["batch_size"] = batch_size
-            variant["algorithm_kwargs"][
-                "num_expl_steps_per_train_loop"
-            ] = num_expl_steps_per_train_loop
-            variant["algorithm_kwargs"][
-                "num_train_loops_per_epoch"
-            ] = num_train_loops_per_epoch
-            variant["algorithm_kwargs"][
-                "num_trains_per_train_loop"
-            ] = num_trains_per_train_loop
-            variant["replay_buffer_size"] = replay_buffer_size
-            variant["trainer_kwargs"]["imagination_horizon"] = max_path_length
-            if variant["trainer_kwargs"]["discount"] != 0.99:
-                variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

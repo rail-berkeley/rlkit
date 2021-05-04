@@ -879,7 +879,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             primitive_name_to_action_dict = self.break_apart_action(primitive_args)
             primitive_action = primitive_name_to_action_dict[primitive_name]
             primitive = self.primitive_name_to_func[primitive_name]
-            print(primitive_name, primitive_action)
             stats = primitive(
                 primitive_action,
                 render_every_step=render_every_step,
