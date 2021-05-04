@@ -31,7 +31,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=500,
+            num_epochs=250,
             num_eval_steps_per_epoch=5 * 6,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -49,12 +49,13 @@ if __name__ == "__main__":
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
         env_suite="metaworld",
+        pass_render_kwargs=True,
         env_kwargs=dict(
             control_mode="primitives",
             use_combined_action_space=True,
             action_scale=1,
             max_path_length=5,
-            reward_type="dense",
+            reward_type="sparse",
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -107,7 +108,6 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
-            reward_scale=1 / 100,
         ),
         num_expl_envs=10,
         num_eval_envs=1,
@@ -117,67 +117,13 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # subset 1: used to work
-            # add: solvable in 300K
-            # solvable in 500K:
-            "basketball-v2",
-            # "coffee-button-v2",
-            # "door-lock-v2",
-            # "door-unlock-v2",
-            # "drawer-close-v2",
-            # "drawer-open-v2",
-            # "faucet-open-v2",
-            # "faucet-close-v2",
-            # "handle-press-side-v2",
-            # "handle-press-v2",
-            # "handle-pull-v2",
-            # "handle-pull-side-v2",
-            # "plate-slide-back-side-v2",
-            # "plate-slide-back-v2",
             # "plate-slide-v2",
-            # "dial-turn-v2",
-            # "door-close-v2",
-            # "door-open-v2",
-            # "reach-wall-v2",
-            # not solveable in 500K
-            # "button-press-topdown-v2",
-            # "button-press-v2",
-            # "button-press-wall-v2",
-            # # need 1M steps to solve
-            # "box-close-v2",
-            # # unsolvable before
-            # "assembly-v2",
-            # "bin-picking-v2",
-            # "button-press-topdown-wall-v2",
-            # "coffee-pull-v2",
-            # "coffee-push-v2",
-            # "disassemble-v2",
-            # not solveable in 300K
-            # "hand-insert-v2",
-            # "hammer-v2",
-            # "lever-pull-v2",
-            # "peg-insert-side-v2",
-            # "pick-place-wall-v2",
-            # "pick-out-of-hole-v2",
-            # "push-back-v2",
-            # "push-v2",
-            # "pick-place-v2",
-            # "plate-slide-side-v2",
-            # "peg-unplug-side-v2",
+            # 'basketball-v2',
+            "bin-picking-v2",
+            # 'assembly-v2',
             # "soccer-v2",
-            # "stick-push-v2",
-            # "stick-pull-v2",
-            # "push-wall-v2",
-            # "shelf-place-v2",
-            # "sweep-into-v2",
-            # "sweep-v2",
-            # "window-open-v2",
-            # "window-close-v2",
-            # # "reach-v2", #do not run
+            # 'sweep-into-v2',
         ],
-        "trainer_kwargs.discount": [0.8],
-        "env_kwargs.action_scale": [1],
-        "env_kwargs.reward_type": ["sparse"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
