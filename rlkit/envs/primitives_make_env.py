@@ -1,4 +1,4 @@
-def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
+def make_base_robosuite_env(env_name, kwargs):
     import gym
 
     from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
@@ -18,7 +18,7 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     while MujocoEnv != parent.__bases__[0]:
         parent = parent.__bases__[0]
 
-    if parent != RobosuitePrimitives and use_dm_backend:
+    if parent != RobosuitePrimitives:
         parent.__bases__ = (RobosuitePrimitives,)
     if kwargs["has_offscreen_renderer"]:
         keys = ["image-state"]

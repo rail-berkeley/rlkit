@@ -940,9 +940,7 @@ class RobosuiteWrapper(GymWrapper):
         render_im_shape=(1000, 1000),
     ):
         self.env.set_render_every_step(render_every_step, render_mode, render_im_shape)
-        o, r, d, i = self.env.step(
-            action,
-        )
+        o, r, d, i = super().step(action)
         self.env.unset_render_every_step()
         new_i = {}
         for k, v in i.items():
