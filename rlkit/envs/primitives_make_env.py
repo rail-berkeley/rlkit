@@ -1,7 +1,3 @@
-from railrl.envs.wrappers.predictive_wrapper_env import RealNVPWrapper
-from rlkit.envs.primitives_wrappers import GetObservationWrapper, IgnoreLastAction
-
-
 def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
 
@@ -11,18 +7,34 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     from robosuite.environments.base import REGISTERED_ENVS, MujocoEnv
     from robosuite.wrappers.gym_wrapper import GymWrapper
 
-    from rlkit.envs.dm_backend_wrappers import DMControlBackendMetaworldRobosuiteEnv
+    from rlkit.envs.primitives_wrappers import (
+        NormalizeBoxEnvFixed,
+        RobosuitePrimitives,
+        RobosuiteWrapper,
+    )
 
     env_cls = REGISTERED_ENVS[env_name]
     parent = env_cls
     while MujocoEnv != parent.__bases__[0]:
         parent = parent.__bases__[0]
 
-    if parent != DMControlBackendMetaworldRobosuiteEnv and use_dm_backend:
-        parent.__bases__ = (DMControlBackendMetaworldRobosuiteEnv,)
-    # env = NormalizedBoxEnv(GymWrapper(REGISTERED_ENVS[env_name](**kwargs)))
-    env = GymWrapper(REGISTERED_ENVS[env_name](**kwargs), keys=["image-state"])
-    # env = REGISTERED_ENVS[env_name](**kwargs)
+    if parent != RobosuitePrimitives and use_dm_backend:
+        parent.__bases__ = (RobosuitePrimitives,)
+    if kwargs["has_offscreen_renderer"]:
+        keys = ["image-state"]
+    else:
+        keys = None
+    reset_action_space_kwargs = kwargs.get("reset_action_space_kwargs", {})
+    env_kwargs_new = kwargs.copy()
+    if "reset_action_space_kwargs" in kwargs:
+        del env_kwargs_new["reset_action_space_kwargs"]
+    env = RobosuiteWrapper(
+        REGISTERED_ENVS[env_name](**env_kwargs_new),
+        keys=keys,
+        **reset_action_space_kwargs,
+    )
+    if reset_action_space_kwargs["control_mode"] == "robosuite":
+        env = NormalizeBoxEnvFixed(env)
     return env
 
 
@@ -91,8 +103,12 @@ def make_base_kitchen_env(env_class, env_kwargs):
 
 
 def make_env(env_suite, env_name, env_kwargs):
+    from railrl.envs.wrappers.predictive_wrapper_env import RealNVPWrapper
+
     from rlkit.envs.primitives_wrappers import (
         ActionRepeat,
+        GetObservationWrapper,
+        IgnoreLastAction,
         ImageEnvMetaworld,
         ImageUnFlattenWrapper,
         NormalizeActions,

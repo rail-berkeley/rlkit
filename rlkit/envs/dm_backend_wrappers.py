@@ -335,13 +335,14 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         """Resets simulation internal configurations."""
 
         # create visualization screen or renderer
+        camera_settings = {}
         if self.has_renderer and self.viewer is None:
             if self._use_dm_backend:
                 self.viewer = DMRenderer(
                     self.sim,
                     clear_geom_group_0=True,
                     camera_select_next=True,
-                    camera_settings={},
+                    camera_settings=camera_settings,
                 )
                 self.viewer.render = self.viewer.render_to_window
             else:
@@ -369,7 +370,7 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         elif self.has_offscreen_renderer:
             if self._use_dm_backend:
                 self.renderer = DMRenderer(
-                    self.sim, camera_settings={}, clear_geom_group_0=True
+                    self.sim, camera_settings=camera_settings, clear_geom_group_0=True
                 )
             else:
                 if self.sim._render_context_offscreen is None:
@@ -486,7 +487,10 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             patch_mjlib_accessors(self.get_mjlib(), self.mjpy_model, self.sim.data)
 
             self.renderer = DMRenderer(
-                self.sim, clear_geom_group_0=True, camera_settings={}
+                self.sim,
+                clear_geom_group_0=True,
+                camera_settings={},
+                camera_select_next=False,
             )
         else:  # Use mujoco_py
 
