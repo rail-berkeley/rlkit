@@ -1121,7 +1121,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             reward = stats[0]
             info["success"] = float(stats[1] > 0)
         else:
-            info["success"] = self._check_success()
+            info["success"] = float(self._check_success())
         return self._get_observations(), reward, done, info
 
     def render(self, render_mode="human", imwidth=64, imheight=64):
@@ -1163,7 +1163,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                     )
             r = self.reward(action)
             total_reward += r
-            total_success += self._check_success()
+            total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
     def open_gripper(
@@ -1195,7 +1195,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                     )
             r = self.reward(action)
             total_reward += r
-            total_success += self._check_success()
+            total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
     def goto_pose(
@@ -1237,7 +1237,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                         )
                 r = self.reward(action)
                 total_reward += r
-                total_success += self._check_success()
+                total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
     def top_x_y_grasp(
