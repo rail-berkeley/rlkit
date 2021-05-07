@@ -926,12 +926,16 @@ class RobosuiteWrapper(GymWrapper):
             )
             if self.control_mode == "primitives":
                 self.action_space = self.env.action_space
+        self.imwidth = 64
+        self.imheight = 64
+        self.image_shape = (3, self.imwidth, self.imheight)
 
     def __getattr__(self, name):
         return getattr(self.env, name)
 
     def reset(self):
         obs = super().reset()
+        obs = obs.reshape(64, 64, 3).transpose(2, 0, 1).flatten()
         return obs
 
     def step(
@@ -952,6 +956,7 @@ class RobosuiteWrapper(GymWrapper):
         for k, v in i.items():
             if v is not None:
                 new_i[k] = v
+        o = o.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
         return o, r, d, new_i
 
     def __getattr__(self, name):
