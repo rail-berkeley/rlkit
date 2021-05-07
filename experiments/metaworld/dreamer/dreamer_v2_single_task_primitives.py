@@ -117,16 +117,23 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # "plate-slide-v2",
-            # 'basketball-v2',
-            # "bin-picking-v2",
-            # 'assembly-v2',
-            # "soccer-v2",
-            # 'sweep-into-v2',
+            # verified and hard
+            'basketball-v2',
+            "bin-picking-v2",
+            'assembly-v2',
+
+            #verified and medium
+            "soccer-v2",
+            'sweep-into-v2',
+
+
             # unverified:
-            # "stick-pull-v2",
-            # "disassemble-v2"
-            # "drawer-close-v2",
+            "stick-pull-v2",
+            "disassemble-v2"
+
+            #easy
+            "plate-slide-v2",
+            "drawer-close-v2",
             "faucet-open-v2",
         ],
     }
