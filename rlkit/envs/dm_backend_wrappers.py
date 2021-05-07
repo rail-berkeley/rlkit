@@ -233,12 +233,31 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
             raise IOError("File %s does not exist" % model_path)
         self.frame_skip = frame_skip
         self._use_dm_backend = True
+
+        # old zoomed out view
+        # camera_settings = {
+        #     "distance": 1.878359835328275,
+        #     "lookat": [0.16854934, 0.27084485, 0.23161897],
+        #     "azimuth": 141.328125,
+        #     "elevation": -53.203125160653144,
+        # }
+
+        # intermediate view
+        # camera_settings = {
+        #     "distance":0.8304056576521722,
+        #     "lookat":[0.21052547, 0.32329237, 0.587819 ],
+        #     "azimuth": 141.328125,
+        #     "elevation": -53.203125160653144,
+        # }
+
+        # super zoomed in
         camera_settings = {
-            "distance": 1.878359835328275,
-            "lookat": [0.16854934, 0.27084485, 0.23161897],
+            "distance": 0.38227044687537043,
+            "lookat": [0.21052547, 0.32329237, 0.587819],
             "azimuth": 141.328125,
             "elevation": -53.203125160653144,
         }
+
         if self._use_dm_backend:
             dm_mujoco = module.get_dm_mujoco()
             if model_path.endswith(".mjb"):
