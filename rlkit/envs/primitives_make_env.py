@@ -1,9 +1,10 @@
-def make_base_robosuite_env(env_name, kwargs):
+def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
 
     from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
 
     gym.logger.setLevel(40)
+    import robosuite as suite
     from robosuite.environments.base import REGISTERED_ENVS, MujocoEnv
     from robosuite.wrappers.gym_wrapper import GymWrapper
 
@@ -13,13 +14,8 @@ def make_base_robosuite_env(env_name, kwargs):
         RobosuiteWrapper,
     )
 
-    env_cls = REGISTERED_ENVS[env_name]
-    parent = env_cls
-    while MujocoEnv != parent.__bases__[0]:
-        parent = parent.__bases__[0]
-
-    if parent != RobosuitePrimitives:
-        parent.__bases__ = (RobosuitePrimitives,)
+    if suite.environments.robot_env.RobotEnv.__bases__[0] != RobosuitePrimitives:
+        suite.environments.robot_env.RobotEnv.__bases__ = (RobosuitePrimitives,)
     if kwargs["has_offscreen_renderer"]:
         keys = ["image-state"]
     else:
@@ -28,11 +24,9 @@ def make_base_robosuite_env(env_name, kwargs):
     env_kwargs_new = kwargs.copy()
     if "reset_action_space_kwargs" in kwargs:
         del env_kwargs_new["reset_action_space_kwargs"]
-    env = RobosuiteWrapper(
-        REGISTERED_ENVS[env_name](**env_kwargs_new),
-        keys=keys,
-        **reset_action_space_kwargs,
-    )
+    env = suite.make(env_name, **env_kwargs_new)
+    env._use_dm_backend = use_dm_backend
+    env = RobosuiteWrapper(env, keys=keys, **reset_action_space_kwargs)
     if reset_action_space_kwargs["control_mode"] == "robosuite":
         env = NormalizeBoxEnvFixed(env)
     return env

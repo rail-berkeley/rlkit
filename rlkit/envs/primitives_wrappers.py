@@ -920,10 +920,12 @@ class RobosuiteWrapper(GymWrapper):
             env,
             keys=keys,
         )
-        self.env.reset_action_space(
-            control_mode, use_combined_action_space, action_scale, max_path_length
-        )
-        self.action_space = self.env.action_space
+        if hasattr(self.env, "reset_action_space"):
+            self.env.reset_action_space(
+                control_mode, use_combined_action_space, action_scale, max_path_length
+            )
+            if self.control_mode == "primitives":
+                self.action_space = self.env.action_space
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -939,9 +941,13 @@ class RobosuiteWrapper(GymWrapper):
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        self.env.set_render_every_step(render_every_step, render_mode, render_im_shape)
+        if hasattr(self.env, "set_render_every_step"):
+            self.env.set_render_every_step(
+                render_every_step, render_mode, render_im_shape
+            )
         o, r, d, i = super().step(action)
-        self.env.unset_render_every_step()
+        if hasattr(self.env, "unset_render_every_step"):
+            self.env.unset_render_every_step()
         new_i = {}
         for k, v in i.items():
             if v is not None:

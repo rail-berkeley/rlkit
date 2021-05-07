@@ -82,14 +82,30 @@ def patch_mjlib_accessors(mjlib, model, data):
         data.get_geom_xquat = lambda name: data.geom_xquat[model.geom_name2id(name)]
 
     if not hasattr(data, "get_joint_qpos"):
-        data.get_joint_qpos = lambda name: data.qpos[model.joint_name2id(name)]
+
+        def get_joint_qpos(name):
+            addr = model.get_joint_qpos_addr(name)
+            if isinstance(addr, (int, np.int32, np.int64)):
+                return data.qpos[addr]
+            else:
+                start_i, end_i = addr
+                return data.qpos[start_i:end_i]
+
+        data.get_joint_qpos = lambda name: get_joint_qpos(name)
 
     if not hasattr(data, "set_joint_qpos"):
 
         def set_joint_qpos(name, value):
-            data.qpos[
-                model.joint_name2id(name) : model.joint_name2id(name) + value.shape[0]
-            ] = value
+            addr = model.get_joint_qpos_addr(name)
+            if isinstance(addr, (int, np.int32, np.int64)):
+                data.qpos[addr] = value
+            else:
+                start_i, end_i = addr
+                value = np.array(value)
+                assert value.shape == (
+                    end_i - start_i,
+                ), "Value has incorrect shape %s: %s" % (name, value)
+                data.qpos[start_i:end_i] = value
 
         data.set_joint_qpos = lambda name, value: set_joint_qpos(name, value)
 
@@ -99,10 +115,47 @@ def patch_mjlib_accessors(mjlib, model, data):
         ].reshape(3, 3)
 
     if not hasattr(model, "get_joint_qpos_addr"):
-        model.get_joint_qpos_addr = lambda name: model.joint_name2id(name)
+
+        def get_joint_qpos_addr(name):
+            joint_id = model.joint_name2id(name)
+            joint_type = model.jnt_type[joint_id]
+            joint_addr = model.jnt_qposadr[joint_id]
+            # TODO: remove hardcoded joint ids (find where mjtJoint is)
+            if joint_type == 0:
+                ndim = 7
+            elif joint_type == 1:
+                ndim = 4
+            else:
+                assert joint_type in (2, 3)
+                ndim = 1
+
+            if ndim == 1:
+                return joint_addr
+            else:
+                return (joint_addr, joint_addr + ndim)
+
+        model.get_joint_qpos_addr = lambda name: get_joint_qpos_addr(name)
 
     if not hasattr(model, "get_joint_qvel_addr"):
-        model.get_joint_qvel_addr = lambda name: model.joint_name2id(name)
+
+        def get_joint_qvel_addr(name):
+            joint_id = model.joint_name2id(name)
+            joint_type = model.jnt_type[joint_id]
+            joint_addr = model.jnt_dofadr[joint_id]
+            if joint_type == 0:
+                ndim = 6
+            elif joint_type == 1:
+                ndim = 3
+            else:
+                assert joint_type in (3, 2)
+                ndim = 1
+
+            if ndim == 1:
+                return joint_addr
+            else:
+                return (joint_addr, joint_addr + ndim)
+
+        model.get_joint_qvel_addr = lambda name: get_joint_qvel_addr(name)
 
     if not hasattr(data, "get_geom_xmat"):
         data.get_geom_xmat = lambda name: data.geom_xmat[
