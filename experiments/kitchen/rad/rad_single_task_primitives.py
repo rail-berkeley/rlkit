@@ -31,7 +31,7 @@ if __name__ == "__main__":
             data_augs="no_aug",
         ),
         num_train_steps=250000,
-        frame_stack=1,
+        frame_stack=4,
         replay_buffer_capacity=int(1e6),
         action_repeat=1,
         num_eval_episodes=5,
