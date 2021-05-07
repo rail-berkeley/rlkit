@@ -31,15 +31,15 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=250,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40,  # 1000//(5*5)
-            num_trains_per_train_loop=10,  # 400//40
+            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
+            num_trains_per_train_loop=10 * 2,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -52,9 +52,9 @@ if __name__ == "__main__":
         env_suite="robosuite",
         env_kwargs=dict(
             robots="Panda",
-            has_renderer=True,
-            has_offscreen_renderer=False,
-            use_camera_obs=False,
+            has_renderer=False,
+            has_offscreen_renderer=True,
+            use_camera_obs=True,
             camera_heights=64,
             camera_widths=64,
             controller_configs={
@@ -134,9 +134,11 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=5,
+        num_expl_envs=5 * 2,
         num_eval_envs=1,
         expl_amount=0.3,
+        pass_render_kwargs=True,
+        save_video=True,
     )
 
     search_space = {
