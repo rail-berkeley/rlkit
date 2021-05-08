@@ -288,7 +288,9 @@ class DictObsWrapper(gym.Wrapper):
     def __init__(self, env):
         super().__init__(env)
         spaces = {}
-        spaces["image"] = gym.spaces.Box(0, 255, (64, 64, 3), dtype=np.uint8)
+        spaces["image"] = gym.spaces.Box(
+            0, 255, (env.imwidth, env.imwidth, 3), dtype=np.uint8
+        )
         self.observation_space = gym.spaces.Dict(spaces)
 
     def __getattr__(self, name):
