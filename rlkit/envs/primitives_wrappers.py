@@ -937,7 +937,7 @@ class RobosuiteWrapper(GymWrapper):
 
     def reset(self):
         obs = super().reset()
-        obs = obs.reshape(64, 64, 3).transpose(2, 0, 1).flatten()
+        obs = obs.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
         return obs
 
     def step(
