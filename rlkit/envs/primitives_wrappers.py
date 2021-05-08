@@ -937,7 +937,8 @@ class RobosuiteWrapper(GymWrapper):
 
     def reset(self):
         obs = super().reset()
-        obs = obs.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
+        if self.env.use_camera_obs:
+            obs = obs.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
         return obs
 
     def step(
@@ -958,7 +959,8 @@ class RobosuiteWrapper(GymWrapper):
         for k, v in i.items():
             if v is not None:
                 new_i[k] = v
-        o = o.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
+        if self.env.use_camera_obs:
+            o = o.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
         return o, r, d, new_i
 
     def __getattr__(self, name):
@@ -1218,14 +1220,18 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         grasp=False,
     ):
         total_reward, total_success = 0, 0
-        for _ in range(50):
+        prev_delta = np.zeros_like(pose)
+        for _ in range(100):
             delta = pose - self._eef_xpos
             if grasp:
                 gripper = 1
             else:
                 gripper = 0
             action = [*delta, 0, 0, 0, gripper]
+            if all(np.abs(delta - prev_delta) < 1e-4):
+                break
             policy_step = True
+            prev_delta = delta
             for i in range(int(self.control_timestep / self.model_timestep)):
                 self.sim.forward()
                 self._pre_action(action, policy_step)
@@ -1276,8 +1282,8 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        stats += self.goto_pose(
-            self._eef_xpos + np.array([0.0, 0, z_dist]),
+        stats += self.drop(
+            z_dist,
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
@@ -1433,6 +1439,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             primitive_name_to_action_dict = self.break_apart_action(primitive_args)
             primitive_action = primitive_name_to_action_dict[primitive_name]
             primitive = self.primitive_name_to_func[primitive_name]
+            print(primitive_name, primitive_action)
             stats = primitive(
                 primitive_action,
                 render_every_step=render_every_step,
@@ -1440,3 +1447,8 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 render_im_shape=render_im_shape,
             )
         return stats
+
+    def get_idx_from_primitive_name(self, primitive_name):
+        for idx, pn in self.primitive_idx_to_name.items():
+            if pn == primitive_name:
+                return idx

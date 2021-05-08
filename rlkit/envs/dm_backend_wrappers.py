@@ -399,9 +399,7 @@ class SawyerMocapBaseDMBackendMetaworld(
 
 
 class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEnv):
-    def __init__(self, *args, use_dm_backend=True, **kwargs):
-        self._use_dm_backend = use_dm_backend
-        super().__init__(*args, **kwargs)
+    _use_dm_backend = True
 
     def _reset_internal(self):
         """Resets simulation internal configurations."""
@@ -562,7 +560,7 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
                 self.sim,
                 clear_geom_group_0=True,
                 camera_settings={},
-                camera_select_next=False,
+                camera_select_next=True,
             )
         else:  # Use mujoco_py
 
