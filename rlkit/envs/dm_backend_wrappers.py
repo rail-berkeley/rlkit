@@ -311,15 +311,15 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
     def render(
         self,
         mode="human",
-        width=64,
-        height=64,
+        imwidth=64,
+        imheight=64,
     ):
         if mode == "human":
             self.renderer.render_to_window()
         elif mode == "rgb_array":
             return self.renderer.render_offscreen(
-                width,
-                height,
+                imwidth,
+                imheight,
             )[:, :, ::-1]
         else:
             raise ValueError("mode can only be either 'human' or 'rgb_array'")

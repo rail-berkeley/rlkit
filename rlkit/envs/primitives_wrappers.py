@@ -229,7 +229,6 @@ class ImageEnvMetaworld(gym.Wrapper):
             0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
         )
         self.image_shape = (3, self.imwidth, self.imheight)
-        self.num_steps = 0
         self.reward_scale = reward_scale
 
     def __getattr__(self, name):
@@ -239,12 +238,12 @@ class ImageEnvMetaworld(gym.Wrapper):
         # use this if using dm control backend!
         if hasattr(self.env, "_use_dm_backend"):
             img = self.env.render(
-                mode="rgb_array", width=self.imwidth, height=self.imheight
+                mode="rgb_array", imwidth=self.imwidth, imheight=self.imheight
             )
         else:
             img = self.env.sim.render(
-                width=self.imwidth,
-                height=self.imheight,
+                imwidth=self.imwidth,
+                imheight=self.imheight,
             )
 
         img = img.transpose(2, 0, 1).flatten()
@@ -269,7 +268,6 @@ class ImageEnvMetaworld(gym.Wrapper):
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        self.num_steps += 1
         o = self._get_image()
         r = self.reward_scale * r
         new_i = {}
@@ -280,7 +278,6 @@ class ImageEnvMetaworld(gym.Wrapper):
 
     def reset(self):
         super().reset()
-        self.num_steps = 0
         return self._get_image()
 
 
