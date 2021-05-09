@@ -67,7 +67,7 @@ if __name__ == "__main__":
                 max_path_length=280,
                 unflatten_images=True,
                 use_real_nvp_wrappers=True,
-                model_path="/home/mdalal/research/rlkit/data/railrl-realNVP-slide-cabinet-pixels/railrl-realNVP-slide_cabinet-pixels_2021_05_01_20_05_28_id719641--s10/itr_200.pkl",
+                model_path="/home/mdalal/research/rlkit/data/railrl-realNVP-slide-cabinet-pixels/railrl-realNVP-slide_cabinet-pixels_2021_05_01_20_05_28_id719641--s10/params.pkl",
             ),
             image_kwargs=dict(),
         ),

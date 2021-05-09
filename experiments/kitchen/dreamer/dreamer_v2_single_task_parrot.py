@@ -71,7 +71,7 @@ if __name__ == "__main__":
                 max_path_length=280,
                 unflatten_images=False,
                 use_real_nvp_wrappers=True,
-                model_path="/home/mdalal/research/rlkit/data/railrl-realNVP-slide-cabinet-pixels/railrl-realNVP-slide_cabinet-pixels_2021_04_28_19_25_34_id56704--s10/itr_200.pkl",
+                model_path="/home/mdalal/research/rlkit/data/railrl-realNVP-slide-cabinet-pixels/railrl-realNVP-slide_cabinet-pixels_2021_05_07_21_20_56_id306830--s1975097/params.pkl",
             ),
             image_kwargs=dict(),
         ),
@@ -127,6 +127,8 @@ if __name__ == "__main__":
             "microwave",
             "hinge_cabinet",
             "light_switch",
+            "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
