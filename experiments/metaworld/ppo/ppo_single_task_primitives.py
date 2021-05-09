@@ -74,12 +74,12 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             # solveable
-            # 'basketball-v2',
-            # 'assembly-v2',
-            # "disassemble-v2"
+            'basketball-v2',
+            'assembly-v2',
+            "disassemble-v2"
             # #verified and medium
-            # "soccer-v2",
-            # 'sweep-into-v2',
+            "soccer-v2",
+            'sweep-into-v2',
             # easy
             # "plate-slide-v2",
             "drawer-close-v2",
