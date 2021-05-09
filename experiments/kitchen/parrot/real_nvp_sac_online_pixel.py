@@ -1,42 +1,39 @@
 import copy
 
 import numpy as np
-from rlkit.envs.primitives_wrappers import (
-    DictObsWrapper,
-    IgnoreLastAction,
-    GetObservationWrapper,
-)
-import torch.nn as nn
-
 import railrl.misc.hyperparameter as hyp
 import railrl.torch.pytorch_util as ptu
+import torch
+import torch.nn as nn
 from railrl.data_management.obs_dict_replay_buffer import ObsDictReplayBuffer
+from railrl.envs.wrappers.predictive_wrapper_env import (
+    RealNVPRewardShaperWrapper,
+    RealNVPWrapper,
+    ResidualRealNVPWrapper,
+)
 from railrl.launchers.launcher_util import run_experiment
 from railrl.samplers.data_collector.path_collector import ObsDictPathCollector
 from railrl.samplers.data_collector.step_collector import ObsDictStepCollector
-from railrl.visualization.video import VideoSaveFunctionBullet
-
-from railrl.torch.networks import (
-    CNN,
-    MlpQfWithObsProcessor,
-    Flatten,
-)
+from railrl.torch.networks import CNN, Flatten, MlpQfWithObsProcessor
 from railrl.torch.sac.policies import MakeDeterministic, TanhGaussianPolicyAdapter
 from railrl.torch.sac.sac import SACTrainer
 from railrl.torch.torch_rl_algorithm import (
     TorchBatchRLAlgorithm,
     TorchOnlineRLAlgorithm,
 )
+from railrl.visualization.video import VideoSaveFunctionBullet
+
 import rlkit.envs.primitives_make_env as primitives_make_env
-from railrl.envs.wrappers.predictive_wrapper_env import (
-    RealNVPWrapper,
-    RealNVPRewardShaperWrapper,
-    ResidualRealNVPWrapper,
+import rlkit.torch.pytorch_util as rlkit_ptu
+from rlkit.envs.primitives_wrappers import (
+    DictObsWrapper,
+    GetObservationWrapper,
+    IgnoreLastAction,
 )
 
 
 def experiment(variant):
-
+    ptu.set_gpu_mode(True, 0)
     model_path = variant["model_path"]
 
     env_suite = variant.get("env_suite", "kitchen")
@@ -54,7 +51,6 @@ def experiment(variant):
     )  # add this as a bogus dim to the env as well
     base_env.cnn_input_key = "image"  # TODO(avi) clean this up
     base_env.fc_input_key = "state"
-
     img_width, img_height = base_env.imwidth, base_env.imheight
     num_channels = 3
 
@@ -176,7 +172,6 @@ def experiment(variant):
         observation_keys=observation_keys,
         **variant["eval_path_collector_kwargs"]
     )
-
     replay_buffer = ObsDictReplayBuffer(
         variant["replay_buffer_size"],
         expl_env,
@@ -214,7 +209,6 @@ def experiment(variant):
 
     video_func = VideoSaveFunctionBullet(variant)
     algorithm.post_train_funcs.append(video_func)
-
     algorithm.to(ptu.device)
     algorithm.train()
 
@@ -246,7 +240,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=280 * 5,
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1000,
-            min_num_steps_before_training=10 * 1000,
+            min_num_steps_before_training=1 * 1000,
         ),
         cnn_params=dict(
             kernel_sizes=[3, 3],
@@ -267,7 +261,7 @@ if __name__ == "__main__":
             hidden_sizes=[256, 256],
         ),
         dump_video_kwargs=dict(
-            imsize=64,
+            imsize=84,
             save_video_period=50,
         ),
         logger_config=dict(
@@ -296,6 +290,8 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             max_path_length=280,
             control_mode="joint_velocity",
+            imheight=84,
+            imwidth=84,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,

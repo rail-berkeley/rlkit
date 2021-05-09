@@ -111,14 +111,26 @@ def experiment(variant):
     # replay_buffer, replay_buffer_validation = load_data_from_npy(
     #     variant, expl_env, observation_keys,
     #     limit_num_trajs=variant['limit_rb_num_trajs'])
+    # with h5py.File(
+    #     "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-84.hdf5",
+    #     "r",
+    # ) as f:
+    #     dataset = dict(
+    #         observations=np.array(f["images"])
+    #         .transpose(0, 3, 1, 2)
+    #         .reshape(-1, 84 * 84 * 3),
+    #         terminals=np.array(f["terminals"]),
+    #         rewards=np.array(f["rewards"]),
+    #         actions=np.array(f["actions"]),
+    #     )
     with h5py.File(
-        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-84.hdf5",
+        "/home/mdalal/research/spirl/data/kitchen-vision/kitchen-total-v0-vision-64.hdf5",
         "r",
     ) as f:
         dataset = dict(
             observations=np.array(f["images"])
             .transpose(0, 3, 1, 2)
-            .reshape(-1, 84 * 84 * 3),
+            .reshape(-1, 64 * 64 * 3),
             terminals=np.array(f["terminals"]),
             rewards=np.array(f["rewards"]),
             actions=np.array(f["actions"]),
@@ -214,7 +226,7 @@ def experiment(variant):
     # algorithm.post_train_funcs.append(online_data_func)
     # algorithm.post_train_funcs.append(dump_buffer_func)
 
-    algorithm.to(ptu.device)
+    algorithm.cuda()
     algorithm.train()
 
 
@@ -285,6 +297,8 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             max_path_length=280,
             control_mode="joint_velocity",
+            imwidth=64,
+            imheight=64,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
