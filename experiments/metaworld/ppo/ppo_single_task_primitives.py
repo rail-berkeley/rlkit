@@ -73,21 +73,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # solveable
             'basketball-v2',
             'assembly-v2',
-            "disassemble-v2"
-            # #verified and medium
+            "disassemble-v2",
             "soccer-v2",
             'sweep-into-v2',
-            # easy
-            # "plate-slide-v2",
             "drawer-close-v2",
-            # "faucet-open-v2",
-            # verified and unsolved:
-            # "bin-picking-v2",
-            # unverified and unsolved:
-            # "stick-pull-v2",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
