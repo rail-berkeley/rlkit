@@ -6,6 +6,7 @@ import mujoco_py
 import numpy as np
 import quaternion
 import robosuite
+from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
 from gym.spaces.box import Box
 from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
@@ -362,13 +363,20 @@ class GetObservationWrapper(gym.Wrapper):
 
 
 class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
+    def reset_camera(self, camera_settings):
+        if camera_settings is None:
+            camera_settings = {}
+        self.renderer = DMRenderer(self.sim, camera_settings=camera_settings)
+
     def reset_action_space(
         self,
         control_mode="end_effector",
         use_combined_action_space=True,
         action_scale=1 / 100,
         max_path_length=500,
+        camera_settings=None,
     ):
+        self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
         self.action_scale = action_scale
 
