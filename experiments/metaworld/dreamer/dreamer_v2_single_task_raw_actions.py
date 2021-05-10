@@ -1,6 +1,7 @@
 import argparse
 import random
 import subprocess
+
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
@@ -163,20 +164,16 @@ if __name__ == "__main__":
         # ],
         "env_name": [
             # verified and hard
-            'basketball-v2',
+            "basketball-v2",
             "bin-picking-v2",
-            'assembly-v2',
-
-            #verified and medium
+            "assembly-v2",
+            # verified and medium
             "soccer-v2",
-            'sweep-into-v2',
-
-
+            "sweep-into-v2",
             # unverified:
             "stick-pull-v2",
             "disassemble-v2"
-
-            #easy
+            # easy
             "plate-slide-v2",
             "drawer-close-v2",
             "faucet-open-v2",
