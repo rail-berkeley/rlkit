@@ -424,12 +424,28 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
         #     "elevation": -53.203125160653144,
         # }
 
-        # super zoomed in
+        # super zoomed in - working
+        # camera_settings = {
+        #     "distance": 0.38227044687537043,
+        #     "lookat": [0.21052547, 0.32329237, 0.587819],
+        #     "azimuth": 141.328125,
+        #     "elevation": -53.203125160653144,
+        # }
+
+        # side view - semi-close up
+        # camera_settings = {
+        #     "distance":0.513599996134662,
+        #     "lookat":[0.28850459, 0.56757972, 0.54530015],
+        #     "azimuth": 178.9453125,
+        #     "elevation": -60.00000040512532,
+        # }
+
+        # side view super zoomed in
         camera_settings = {
-            "distance": 0.38227044687537043,
-            "lookat": [0.21052547, 0.32329237, 0.587819],
-            "azimuth": 141.328125,
-            "elevation": -53.203125160653144,
+            "distance": 0.31785821791481395,
+            "lookat": [0.28850459, 0.56757972, 0.54530015],
+            "azimuth": 178.59375,
+            "elevation": -60.46875041909516,
         }
 
         if self._use_dm_backend:
@@ -485,15 +501,15 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
     def render(
         self,
         mode="human",
-        width=64,
-        height=64,
+        imwidth=64,
+        imheight=64,
     ):
         if mode == "human":
             self.renderer.render_to_window()
         elif mode == "rgb_array":
             return self.renderer.render_offscreen(
-                width,
-                height,
+                imwidth,
+                imheight,
             )[:, :, ::-1]
         else:
             raise ValueError("mode can only be either 'human' or 'rgb_array'")
