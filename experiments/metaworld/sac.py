@@ -103,7 +103,7 @@ if __name__ == "__main__":
         algorithm="SAC",
         version="normal",
         layer_size=256,
-        replay_buffer_size=int(1e6),
+        replay_buffer_size=int(5e6),
         algorithm_kwargs=dict(
             num_epochs=5000,
             num_eval_steps_per_epoch=2500,
