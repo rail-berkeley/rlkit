@@ -10,6 +10,7 @@ from gym.spaces.box import Box
 from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 from robosuite.wrappers.gym_wrapper import GymWrapper
+from robosuite_vices.controllers.arm_controller import PositionController
 
 from rlkit.envs.dm_backend_wrappers import DMControlBackendMetaworldRobosuiteEnv
 from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
@@ -435,7 +436,51 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                 )
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
+
+        if self.control_mode == "vices":
+            self.action_space = Box(-np.ones(10), np.ones(10))
+            ctrl_ratio = 1.0
+            control_range_pos = np.ones(3)
+            kp_max = 10
+            kp_max_abs_delta = 10
+            kp_min = 0.1
+            damping_max = 2
+            damping_max_abs_delta = 1
+            damping_min = 0.1
+            use_delta_impedance = False
+            initial_impedance_pos = 1
+            initial_impedance_ori = 1
+            initial_damping = 0.25
+            control_freq = 1.0 * ctrl_ratio
+
+            self.joint_index_vel = np.arange(7)
+            self.controller = PositionController(
+                control_range_pos,
+                kp_max,
+                kp_max_abs_delta,
+                kp_min,
+                damping_max,
+                damping_max_abs_delta,
+                damping_min,
+                use_delta_impedance,
+                initial_impedance_pos,
+                initial_impedance_ori,
+                initial_damping,
+                control_freq=control_freq,
+                interpolation="linear",
+            )
+            self.controller.update_model(
+                self.sim, self.joint_index_vel, self.joint_index_vel
+            )
         self.unset_render_every_step()
+
+    def _reset_hand(self):
+        if self.control_mode != "vices":
+            super()._reset_hand()
+        else:
+            self.sim.data.qpos[:] = self.reset_qpos
+            self.sim.forward()
+            self.init_tcp = self.tcp_center
 
     def set_render_every_step(
         self,
@@ -461,10 +506,22 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             "joint_velocity",
             "torque",
             "end_effector",
+            "vices",
         ]:
             if self.control_mode == "end_effector":
                 self.set_xyz_action(a[:3])
                 self.do_simulation([a[-1], -a[-1]])
+            elif self.control_mode == "vices":
+                for i in range(int(self.controller.interpolation_steps)):
+                    self.controller.update_model(
+                        self.sim, self.joint_index_vel, self.joint_index_vel
+                    )
+                    a = self.controller.action_to_torques(action[:-1], i == 0)
+                    act = np.zeros(9)
+                    act[-1] = -action[-1]
+                    act[-2] = action[-1]
+                    act[:7] = a
+                    self.do_simulation(act, n_frames=1)
             stats = [0, 0]
         else:
             self.img_array = []
@@ -1439,7 +1496,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             primitive_name_to_action_dict = self.break_apart_action(primitive_args)
             primitive_action = primitive_name_to_action_dict[primitive_name]
             primitive = self.primitive_name_to_func[primitive_name]
-            print(primitive_name, primitive_action)
             stats = primitive(
                 primitive_action,
                 render_every_step=render_every_step,

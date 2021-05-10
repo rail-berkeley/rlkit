@@ -9,6 +9,9 @@ import robosuite
 from d4rl.kitchen.adept_envs.simulation import module
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer, MjPyRenderer
 from metaworld.envs.mujoco.mujoco_env import MujocoEnv
+from metaworld.envs.mujoco.sawyer_xyz.v2.sawyer_assembly_peg_v2 import (
+    SawyerNutAssemblyEnvV2,
+)
 from robosuite.utils import macros
 from robosuite.utils.mjcf_utils import IMAGE_CONVENTION_MAPPING
 from robosuite.utils.mujoco_py_renderer import MujocoPyRenderer
@@ -63,6 +66,9 @@ def patch_mjlib_accessors(mjlib, model, data):
 
     if not hasattr(data, "body_xquat"):
         data.body_xquat = data.xquat
+
+    if not hasattr(data, "body_xmat"):
+        data.body_xmat = data.xmat
 
     if not hasattr(data, "get_body_xpos"):
         data.get_body_xpos = lambda name: data.body_xpos[model.body_name2id(name)]
@@ -226,11 +232,179 @@ def patch_mjlib_accessors(mjlib, model, data):
             3, model.nv
         )
 
+    def body_jacp():
+        jacps = np.zeros((model.nbody, 3 * model.nv))
+        for i, jacp in enumerate(jacps):
+            jacp_view = jacp
+            mjlib.mj_jacBody(model.ptr, data.ptr, jacp_view, None, i)
+        return jacps
+
+    def body_xvelp():
+        jacp = body_jacp().reshape((model.nbody, 3, model.nv))
+        xvelp = np.dot(jacp, data.qvel)
+        return xvelp
+
+    def body_jacr():
+        jacrs = np.zeros((model.nbody, 3 * model.nv))
+        for i, jacr in enumerate(jacrs):
+            jacr_view = jacr
+            mjlib.mj_jacBody(model.ptr, data.ptr, None, jacr_view, i)
+        return jacrs
+
+    def body_xvelr():
+        jacp = body_jacr().reshape((model.nbody, 3, model.nv))
+        xvelp = np.dot(jacp, data.qvel)
+        return xvelp
+
+    if not hasattr(data, "body_xvelp"):
+        data.body_xvelp = body_xvelp()
+
+    if not hasattr(data, "body_xvelr"):
+        data.body_xvelr = body_xvelr()
+
+    if not hasattr(data, "get_body_jacp"):
+        data.get_body_jacp = lambda name: body_jacp()[model.body_name2id(name)].reshape(
+            3, model.nv
+        )
+
+    if not hasattr(data, "get_body_jacr"):
+        data.get_body_jacr = lambda name: body_jacr()[model.body_name2id(name)].reshape(
+            3, model.nv
+        )
+
 
 class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
     def __init__(self, model_path, frame_skip, rgb_array_res=(640, 480)):
         if not path.exists(model_path):
             raise IOError("File %s does not exist" % model_path)
+        if self.control_mode == "vices":
+            if model_path == (
+                "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_basketball.xml"
+            ):
+                model_path = "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_basketball_torque.xml"
+                self.reset_qpos = np.array(
+                    [
+                        0.00000000e00,
+                        6.00000000e-01,
+                        2.98721632e-02,
+                        1.00000000e00,
+                        0.00000000e00,
+                        0.00000000e00,
+                        0.00000000e00,
+                        1.88500731e00,
+                        -5.88898933e-01,
+                        -2.50919766e-02,
+                        6.95071420e-01,
+                        2.99999993e-02,
+                        1.02969815e00,
+                        2.31183042e00,
+                        -1.71909704e-04,
+                        1.71743732e-04,
+                    ]
+                )
+            elif model_path == (
+                "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_drawer.xml"
+            ):
+                model_path = "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_drawer_torque.xml"
+                self.reset_qpos = [
+                    1.88500731e00,
+                    -5.88898933e-01,
+                    -9.64183847e-01,
+                    1.64749509e00,
+                    9.28632075e-01,
+                    1.02969815e00,
+                    2.31183042e00,
+                    -1.71909704e-04,
+                    1.71743732e-04,
+                    -1.50000000e-01,
+                ]
+            elif model_path == (
+                "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_soccer.xml"
+            ):
+                model_path = "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_soccer_torque.xml"
+                self.reset_qpos = [
+                    1.88500734e00,
+                    -5.88898932e-01,
+                    -9.64183883e-01,
+                    1.64749516e00,
+                    9.28632122e-01,
+                    1.02969813e00,
+                    2.31183036e00,
+                    -1.71909704e-04,
+                    1.71743732e-04,
+                    -8.83832789e-02,
+                    6.86617607e-01,
+                    3.00000000e-02,
+                    1.00000000e00,
+                    0.00000000e00,
+                    0.00000000e00,
+                    0.00000000e00,
+                ]
+            elif model_path == (
+                "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_table_with_hole.xml"
+            ):
+                model_path = "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_table_with_hole_torque.xml"
+                self.reset_qpos = [
+                    1.88500734e00,
+                    -5.88898932e-01,
+                    -9.64183883e-01,
+                    1.64749516e00,
+                    9.28632122e-01,
+                    1.02969813e00,
+                    2.31183036e00,
+                    -1.71909704e-04,
+                    1.71743732e-04,
+                    -8.83832789e-02,
+                    6.86617607e-01,
+                    6.99354863e-02,
+                    1.00000000e00,
+                    0.00000000e00,
+                    0.00000000e00,
+                    0.00000000e00,
+                ]
+            elif model_path == (
+                "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_assembly_peg.xml"
+            ):
+                model_path = "/home/mdalal/research/metaworld/metaworld/envs/assets_v2/sawyer_xyz/sawyer_assembly_peg_torque.xml"
+                if type(self) == SawyerNutAssemblyEnvV2:
+                    self.reset_qpos = [
+                        1.88500731e00,
+                        -5.88898933e-01,
+                        -9.64183847e-01,
+                        1.64749509e00,
+                        9.28632075e-01,
+                        1.02969815e00,
+                        2.31183042e00,
+                        -1.71909704e-04,
+                        1.71743732e-04,
+                        0.00000000e00,
+                        6.00000024e-01,
+                        1.99999996e-02,
+                        7.07106763e-01,
+                        1.36367940e-04,
+                        1.60057621e-04,
+                        7.07106768e-01,
+                    ]
+                else:
+                    self.reset_qpos = [
+                        2.16526293e00,
+                        -5.57054189e-01,
+                        -1.22832464e00,
+                        2.17377367e00,
+                        1.24233511e00,
+                        1.00706272e00,
+                        1.91061865e00,
+                        -1.71855687e-04,
+                        1.71795647e-04,
+                        6.25459890e-02,
+                        7.42607147e-01,
+                        2.50073207e-02,
+                        7.07106763e-01,
+                        1.36367940e-04,
+                        1.60057621e-04,
+                        7.07106768e-01,
+                    ]
+
         self.frame_skip = frame_skip
         self._use_dm_backend = True
 
