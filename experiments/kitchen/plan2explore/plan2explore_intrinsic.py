@@ -164,7 +164,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                # snapshot_mode="none",
+                snapshot_mode="gap_and_last",
                 snapshot_gap=25,
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
