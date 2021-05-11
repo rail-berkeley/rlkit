@@ -11,24 +11,24 @@ from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experime
 
 if __name__ == "__main__":
     cam_settings_list = [
-        {
-            "distance": 0.3211473534266694,
-            "lookat": [0.29015772, 0.63492059, 0.544268],
-            "azimuth": 178.59375,
-            "elevation": -60.46875041909516,
-        },
-        {
-            "distance": 0.513599996134662,
-            "lookat": [0.28850459, 0.56757972, 0.54530015],
-            "azimuth": 179.296875,
-            "elevation": -47.34375002793968,
-        },
-        {
-            "distance": 0.513599996134662,
-            "lookat": [0.28839241, 0.55843923, 0.70374719],
-            "azimuth": 179.82421875,
-            "elevation": -59.76562483236194,
-        },
+        # {
+        #     "distance": 0.3211473534266694,
+        #     "lookat": [0.29015772, 0.63492059, 0.544268],
+        #     "azimuth": 178.59375,
+        #     "elevation": -60.46875041909516,
+        # },
+        # {
+        #     "distance": 0.513599996134662,
+        #     "lookat": [0.28850459, 0.56757972, 0.54530015],
+        #     "azimuth": 179.296875,
+        #     "elevation": -47.34375002793968,
+        # },
+        # {
+        #     "distance": 0.513599996134662,
+        #     "lookat": [0.28839241, 0.55843923, 0.70374719],
+        #     "azimuth": 179.82421875,
+        #     "elevation": -59.76562483236194,
+        # },
         {
             "distance": 0.37864894603997346,
             "lookat": [0.28839241, 0.55843923, 0.70374719],
@@ -41,12 +41,12 @@ if __name__ == "__main__":
             "azimuth": 141.328125,
             "elevation": -53.203125160653144,
         },
-        {
-            "distance":0.513599996134662,
-            "lookat":[0.28850459, 0.56757972, 0.54530015],
-            "azimuth": 178.9453125,
-            "elevation": -60.00000040512532,
-        },
+        # {
+        #     "distance":0.513599996134662,
+        #     "lookat":[0.28850459, 0.56757972, 0.54530015],
+        #     "azimuth": 178.9453125,
+        #     "elevation": -60.00000040512532,
+        # },
 
     ]
     parser = argparse.ArgumentParser()
@@ -157,9 +157,9 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             # solveable
-            "basketball-v2",
-            # "assembly-v2",
-            # "disassemble-v2"
+            # "basketball-v2",
+            "assembly-v2",
+            "disassemble-v2"
             # verified and medium
             # "soccer-v2",
             # "sweep-into-v2",
@@ -175,10 +175,10 @@ if __name__ == "__main__":
         "env_kwargs.camera_settings":[
             cam_settings_list[0],
             cam_settings_list[1],
-            cam_settings_list[2],
-            cam_settings_list[3],
-            cam_settings_list[4],
-            cam_settings_list[5],
+            # cam_settings_list[2],
+            # cam_settings_list[3],
+            # cam_settings_list[4],
+            # cam_settings_list[5],
             ]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
