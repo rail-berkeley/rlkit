@@ -145,6 +145,7 @@ if __name__ == "__main__":
         "env_name": [
             "Lift",
         ],
+        "env_kwargs.reset_action_space_kwargs.action_scale":[.25, .5, .75, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
