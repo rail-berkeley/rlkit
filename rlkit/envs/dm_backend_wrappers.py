@@ -590,7 +590,6 @@ class SawyerMocapBaseDMBackendMetaworld(
 
 class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEnv):
     def _reset_internal(self):
-        super()._reset_internal()
         camera_settings = {}
         if self._use_dm_backend:
             if self.has_renderer and self.viewer is None:
@@ -609,6 +608,19 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
                     clear_geom_group_0=True,
                     mjpy_sim=self.sim,
                 )
+            # additional housekeeping
+            self.sim_state_initial = self.sim.get_state()
+            self._setup_references()
+            self.cur_time = 0
+            self.timestep = 0
+            self.done = False
+
+            # Empty observation cache and reset all observables
+            self._obs_cache = {}
+            for observable in self._observables.values():
+                observable.reset()
+        else:
+            super()._reset_internal()
 
     def _initialize_sim(self, xml_string=None):
         """
