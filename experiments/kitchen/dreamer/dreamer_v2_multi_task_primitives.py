@@ -19,26 +19,33 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=10,
+            num_eval_steps_per_epoch=15,
             num_expl_steps_per_train_loop=50,
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=119,
-            max_path_length=20,
+            batch_size=30,
+            max_path_length=15,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
             num_epochs=1000,
+            num_eval_steps_per_epoch=75,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
+            max_path_length=15,
+            batch_size=156,
+            num_expl_steps_per_train_loop=90,
+            num_train_loops_per_epoch=13,
+            num_trains_per_train_loop=31,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
+        replay_buffer_size=int(1.7e5),
         algorithm_kwargs=algorithm_kwargs,
         env_name="hinge_cabinet",
         use_raw_actions=False,
@@ -54,6 +61,7 @@ if __name__ == "__main__":
             use_wrist_cam=False,
             normalize_proprioception_obs=True,
             use_workspace_limits=True,
+            max_path_length=15,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -89,7 +97,7 @@ if __name__ == "__main__":
             opt_level="O1",
             optimizer_class="apex_adam",
             adam_eps=1e-5,
-            discount=0.99,
+            discount=1-1/15,
             lam=0.95,
             forward_kl=False,
             free_nats=1.0,
@@ -105,6 +113,7 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
             detach_rewards=False,
+            imagination_horizon=15,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
@@ -116,46 +125,12 @@ if __name__ == "__main__":
             "microwave_kettle_light_top_left_burner",
             "hinge_slide_bottom_left_burner_light",
         ],
-        "trainer_kwargs.discount": [0.99, 0.95],
-        "trainer_kwargs.actor_entropy_loss_schedule": [
-            "1e-4",
-        ],
-        "max_path_length": [15],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        max_path_length = variant["max_path_length"]
-        replay_buffer_size = 2500000 // max_path_length
-
-        num_eval_steps_per_epoch = 5 * (max_path_length + 1)
-        max_path_length = max_path_length
-        batch_size = 2500 // (max_path_length + 1)
-        num_expl_steps_per_train_loop = 5 * (max_path_length + 1)
-        num_train_loops_per_epoch = 1000 // (5 * max_path_length)
-        num_trains_per_train_loop = 400 // (num_train_loops_per_epoch)
-        variant["algorithm_kwargs"][
-            "num_eval_steps_per_epoch"
-        ] = num_eval_steps_per_epoch
-        variant["algorithm_kwargs"]["max_path_length"] = max_path_length
-        variant["algorithm_kwargs"]["batch_size"] = batch_size
-        variant["algorithm_kwargs"][
-            "num_expl_steps_per_train_loop"
-        ] = num_expl_steps_per_train_loop
-        variant["algorithm_kwargs"][
-            "num_train_loops_per_epoch"
-        ] = num_train_loops_per_epoch
-        variant["algorithm_kwargs"][
-            "num_trains_per_train_loop"
-        ] = num_trains_per_train_loop
-        variant["replay_buffer_size"] = replay_buffer_size
-        variant["env_kwargs"]["max_path_length"] = max_path_length
-        variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = max_path_length
-        variant["trainer_kwargs"]["imagination_horizon"] = min(max_path_length, 15)
-        if variant["trainer_kwargs"]["discount"] != 0.99:
-            variant["trainer_kwargs"]["discount"] = 1 - 1 / max_path_length
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
