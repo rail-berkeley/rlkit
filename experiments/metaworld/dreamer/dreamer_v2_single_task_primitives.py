@@ -47,7 +47,6 @@ if __name__ == "__main__":
         #     "azimuth": 178.9453125,
         #     "elevation": -60.00000040512532,
         # },
-
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_prefix", type=str, default="test")
@@ -158,8 +157,8 @@ if __name__ == "__main__":
         "env_name": [
             # solveable
             # "basketball-v2",
-            "assembly-v2",
-            "disassemble-v2"
+            # "assembly-v2",
+            # "disassemble-v2"
             # verified and medium
             # "soccer-v2",
             # "sweep-into-v2",
@@ -171,15 +170,19 @@ if __name__ == "__main__":
             # "bin-picking-v2",
             # unverified and unsolved:
             # "stick-pull-v2",
+            "hand-insert-v2",
+            "peg-insert-side-v2",
+            "pick-out-of-hole-v2",
+            "hammer-v2",
         ],
-        "env_kwargs.camera_settings":[
+        "env_kwargs.camera_settings": [
             cam_settings_list[0],
             cam_settings_list[1],
             # cam_settings_list[2],
             # cam_settings_list[3],
             # cam_settings_list[4],
             # cam_settings_list[5],
-            ]
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
