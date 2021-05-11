@@ -990,8 +990,8 @@ class RobosuiteWrapper(GymWrapper):
             )
             if self.control_mode == "primitives":
                 self.action_space = self.env.action_space
-        self.imwidth = 64
-        self.imheight = 64
+        self.imwidth = self.camera_widths[0]
+        self.imheight = self.camera_heights[0]
         self.image_shape = (3, self.imwidth, self.imheight)
 
     def __getattr__(self, name):
@@ -1000,7 +1000,11 @@ class RobosuiteWrapper(GymWrapper):
     def reset(self):
         obs = super().reset()
         if self.env.use_camera_obs:
-            obs = obs.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
+            obs = (
+                obs.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
+                .transpose(2, 0, 1)
+                .flatten()
+            )
         return obs
 
     def step(
@@ -1022,7 +1026,11 @@ class RobosuiteWrapper(GymWrapper):
             if v is not None:
                 new_i[k] = v
         if self.env.use_camera_obs:
-            o = o.reshape(64, 64, 3)[:, :, ::-1].transpose(2, 0, 1).flatten()
+            o = (
+                o.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
+                .transpose(2, 0, 1)
+                .flatten()
+            )
         return o, r, d, new_i
 
     def __getattr__(self, name):
@@ -1187,6 +1195,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 render_mode=self.render_mode,
                 render_im_shape=self.render_im_shape,
             )
+            self._update_observables()
 
         # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
@@ -1197,17 +1206,19 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             info["success"] = float(stats[1] > 0)
         else:
             info["success"] = float(self._check_success())
-        return self._get_observations(), reward, done, info
+        return self._get_observations(force_update=True), reward, done, info
 
     def render(self, render_mode="human", imwidth=64, imheight=64):
-        if render_mode == "human":
-            self.renderer.render_to_window()
-        else:
-            img = self.renderer.render_offscreen(
-                imwidth,
-                imheight,
-            )
-            return img
+        if self._use_dm_backend:
+            if render_mode == "human":
+                self.renderer.render_to_window()
+            else:
+                img = self.renderer.render_offscreen(
+                    imwidth,
+                    imheight,
+                    camera_id=self.sim.model.camera_name2id("agentview"),
+                )
+                return img
 
     def close_gripper(
         self,

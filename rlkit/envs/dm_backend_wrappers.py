@@ -61,65 +61,6 @@ def patch_mjlib_accessors(mjlib, model, data):
     if not hasattr(model, "sensor_name2id"):
         model.sensor_name2id = lambda name: name2id("sensor", name)
 
-    if not hasattr(data, "body_xpos"):
-        data.body_xpos = data.xpos
-
-    if not hasattr(data, "body_xquat"):
-        data.body_xquat = data.xquat
-
-    if not hasattr(data, "body_xmat"):
-        data.body_xmat = data.xmat
-
-    if not hasattr(data, "get_body_xpos"):
-        data.get_body_xpos = lambda name: data.body_xpos[model.body_name2id(name)]
-
-    if not hasattr(data, "get_body_xquat"):
-        data.get_body_xquat = lambda name: data.body_xquat[model.body_name2id(name)]
-
-    if not hasattr(data, "get_body_xmat"):
-        data.get_body_xmat = lambda name: data.xmat[model.body_name2id(name)].reshape(
-            3, 3
-        )
-
-    if not hasattr(data, "get_geom_xpos"):
-        data.get_geom_xpos = lambda name: data.geom_xpos[model.geom_name2id(name)]
-
-    if not hasattr(data, "get_geom_xquat"):
-        data.get_geom_xquat = lambda name: data.geom_xquat[model.geom_name2id(name)]
-
-    if not hasattr(data, "get_joint_qpos"):
-
-        def get_joint_qpos(name):
-            addr = model.get_joint_qpos_addr(name)
-            if isinstance(addr, (int, np.int32, np.int64)):
-                return data.qpos[addr]
-            else:
-                start_i, end_i = addr
-                return data.qpos[start_i:end_i]
-
-        data.get_joint_qpos = lambda name: get_joint_qpos(name)
-
-    if not hasattr(data, "set_joint_qpos"):
-
-        def set_joint_qpos(name, value):
-            addr = model.get_joint_qpos_addr(name)
-            if isinstance(addr, (int, np.int32, np.int64)):
-                data.qpos[addr] = value
-            else:
-                start_i, end_i = addr
-                value = np.array(value)
-                assert value.shape == (
-                    end_i - start_i,
-                ), "Value has incorrect shape %s: %s" % (name, value)
-                data.qpos[start_i:end_i] = value
-
-        data.set_joint_qpos = lambda name, value: set_joint_qpos(name, value)
-
-    if not hasattr(data, "get_site_xmat"):
-        data.get_site_xmat = lambda name: data.site_xmat[
-            model.site_name2id(name)
-        ].reshape(3, 3)
-
     if not hasattr(model, "get_joint_qpos_addr"):
 
         def get_joint_qpos_addr(name):
@@ -163,10 +104,69 @@ def patch_mjlib_accessors(mjlib, model, data):
 
         model.get_joint_qvel_addr = lambda name: get_joint_qvel_addr(name)
 
+    if not hasattr(data, "body_xpos"):
+        data.body_xpos = data.xpos
+
+    if not hasattr(data, "body_xquat"):
+        data.body_xquat = data.xquat
+
+    if not hasattr(data, "body_xmat"):
+        data.body_xmat = data.xmat
+
+    if not hasattr(data, "get_body_xpos"):
+        data.get_body_xpos = lambda name: data.body_xpos[model.body_name2id(name)]
+
+    if not hasattr(data, "get_body_xquat"):
+        data.get_body_xquat = lambda name: data.body_xquat[model.body_name2id(name)]
+
+    if not hasattr(data, "get_body_xmat"):
+        data.get_body_xmat = lambda name: data.xmat[model.body_name2id(name)].reshape(
+            (3, 3)
+        )
+
+    if not hasattr(data, "get_geom_xpos"):
+        data.get_geom_xpos = lambda name: data.geom_xpos[model.geom_name2id(name)]
+
+    if not hasattr(data, "get_geom_xquat"):
+        data.get_geom_xquat = lambda name: data.geom_xquat[model.geom_name2id(name)]
+
+    if not hasattr(data, "get_joint_qpos"):
+
+        def get_joint_qpos(name):
+            addr = model.get_joint_qpos_addr(name)
+            if isinstance(addr, (int, np.int32, np.int64)):
+                return data.qpos[addr]
+            else:
+                start_i, end_i = addr
+                return data.qpos[start_i:end_i]
+
+        data.get_joint_qpos = lambda name: get_joint_qpos(name)
+
+    if not hasattr(data, "set_joint_qpos"):
+
+        def set_joint_qpos(name, value):
+            addr = model.get_joint_qpos_addr(name)
+            if isinstance(addr, (int, np.int32, np.int64)):
+                data.qpos[addr] = value
+            else:
+                start_i, end_i = addr
+                value = np.array(value)
+                assert value.shape == (
+                    end_i - start_i,
+                ), "Value has incorrect shape %s: %s" % (name, value)
+                data.qpos[start_i:end_i] = value
+
+        data.set_joint_qpos = lambda name, value: set_joint_qpos(name, value)
+
+    if not hasattr(data, "get_site_xmat"):
+        data.get_site_xmat = lambda name: data.site_xmat[
+            model.site_name2id(name)
+        ].reshape((3, 3))
+
     if not hasattr(data, "get_geom_xmat"):
         data.get_geom_xmat = lambda name: data.geom_xmat[
             model.geom_name2id(name)
-        ].reshape(3, 3)
+        ].reshape((3, 3))
 
     if not hasattr(data, "get_mocap_pos"):
         data.get_mocap_pos = lambda name: data.mocap_pos[
@@ -224,12 +224,12 @@ def patch_mjlib_accessors(mjlib, model, data):
 
     if not hasattr(data, "get_site_jacp"):
         data.get_site_jacp = lambda name: site_jacp()[model.site_name2id(name)].reshape(
-            3, model.nv
+            (3, model.nv)
         )
 
     if not hasattr(data, "get_site_jacr"):
         data.get_site_jacr = lambda name: site_jacr()[model.site_name2id(name)].reshape(
-            3, model.nv
+            (3, model.nv)
         )
 
     def body_jacp():
@@ -264,12 +264,12 @@ def patch_mjlib_accessors(mjlib, model, data):
 
     if not hasattr(data, "get_body_jacp"):
         data.get_body_jacp = lambda name: body_jacp()[model.body_name2id(name)].reshape(
-            3, model.nv
+            (3, model.nv)
         )
 
     if not hasattr(data, "get_body_jacr"):
         data.get_body_jacr = lambda name: body_jacr()[model.body_name2id(name)].reshape(
-            3, model.nv
+            (3, model.nv)
         )
 
 
@@ -589,143 +589,26 @@ class SawyerMocapBaseDMBackendMetaworld(
 
 
 class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEnv):
-    _use_dm_backend = True
-
     def _reset_internal(self):
-        """Resets simulation internal configurations."""
-
-        # create visualization screen or renderer
+        super()._reset_internal()
         camera_settings = {}
-        if self.has_renderer and self.viewer is None:
-            if self._use_dm_backend:
+        if self._use_dm_backend:
+            if self.has_renderer and self.viewer is None:
                 self.viewer = DMRenderer(
-                    self.sim,
+                    self.dm_sim,
                     clear_geom_group_0=True,
                     camera_select_next=True,
                     camera_settings=camera_settings,
+                    mjpy_sim=self.sim,
                 )
                 self.viewer.render = self.viewer.render_to_window
-            else:
-                self.viewer = MujocoPyRenderer(self.sim)
-                self.viewer.viewer.vopt.geomgroup[0] = (
-                    1 if self.render_collision_mesh else 0
-                )
-                self.viewer.viewer.vopt.geomgroup[1] = (
-                    1 if self.render_visual_mesh else 0
-                )
-
-                # hiding the overlay speeds up rendering significantly
-                self.viewer.viewer._hide_overlay = True
-
-                # make sure mujoco-py doesn't block rendering frames
-                # (see https://github.com/StanfordVL/robosuite/issues/39)
-                self.viewer.viewer._render_every_frame = True
-
-                # Set the camera angle for viewing
-                if self.render_camera is not None:
-                    self.viewer.set_camera(
-                        camera_id=self.sim.model.camera_name2id(self.render_camera)
-                    )
-
-        elif self.has_offscreen_renderer:
-            if self._use_dm_backend:
+            elif self.has_offscreen_renderer:
                 self.renderer = DMRenderer(
-                    self.sim, camera_settings=camera_settings, clear_geom_group_0=True
+                    self.dm_sim,
+                    camera_settings=camera_settings,
+                    clear_geom_group_0=True,
+                    mjpy_sim=self.sim,
                 )
-            else:
-                if self.sim._render_context_offscreen is None:
-                    render_context = mujoco_py.MjRenderContextOffscreen(
-                        self.sim, device_id=self.render_gpu_device_id
-                    )
-                    self.sim.add_render_context(render_context)
-                self.sim._render_context_offscreen.vopt.geomgroup[0] = (
-                    1 if self.render_collision_mesh else 0
-                )
-                self.sim._render_context_offscreen.vopt.geomgroup[1] = (
-                    1 if self.render_visual_mesh else 0
-                )
-
-        # additional housekeeping
-        self.sim_state_initial = self.sim.get_state()
-        self._setup_references()
-        self.cur_time = 0
-        self.timestep = 0
-        self.done = False
-
-        # Empty observation cache and reset all observables
-        self._obs_cache = {}
-        for observable in self._observables.values():
-            observable.reset()
-
-    def _create_camera_sensors(self, cam_name, cam_w, cam_h, cam_d, modality="image"):
-        """
-        Helper function to create sensors for a given camera. This is abstracted in a separate function call so that we
-        don't have local function naming collisions during the _setup_observables() call.
-
-        Args:
-            cam_name (str): Name of camera to create sensors for
-            cam_w (int): Width of camera
-            cam_h (int): Height of camera
-            cam_d (bool): Whether to create a depth sensor as well
-            modality (str): Modality to assign to all sensors
-
-        Returns:
-            2-tuple:
-                sensors (list): Array of sensors for the given camera
-                names (list): array of corresponding observable names
-        """
-        # Make sure we get correct convention
-        convention = IMAGE_CONVENTION_MAPPING[macros.IMAGE_CONVENTION]
-
-        # Create sensor information
-        sensors = []
-        names = []
-
-        # Add camera observables to the dict
-        rgb_sensor_name = f"{cam_name}_image"
-        depth_sensor_name = f"{cam_name}_depth"
-
-        @sensor(modality=modality)
-        def camera_rgb(obs_cache):
-            if self._use_dm_backend:
-                img = self.renderer.render_offscreen(
-                    cam_w,
-                    cam_h,
-                    camera_id=self.sim.model.camera_name2id(cam_name),
-                )
-            else:
-                img = self.sim.render(
-                    camera_name=cam_name,
-                    width=cam_w,
-                    height=cam_h,
-                    depth=cam_d,
-                )
-            if cam_d:
-                rgb, depth = img
-                obs_cache[depth_sensor_name] = np.expand_dims(
-                    depth[::convention], axis=-1
-                )
-                return rgb[::convention]
-            else:
-                return img[::convention]
-
-        sensors.append(camera_rgb)
-        names.append(rgb_sensor_name)
-
-        if cam_d:
-
-            @sensor(modality=modality)
-            def camera_depth(obs_cache):
-                return (
-                    obs_cache[depth_sensor_name]
-                    if depth_sensor_name in obs_cache
-                    else np.zeros((cam_h, cam_w, 1))
-                )
-
-            sensors.append(camera_depth)
-            names.append(depth_sensor_name)
-
-        return sensors, names
 
     def _initialize_sim(self, xml_string=None):
         """
@@ -737,35 +620,25 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         """
         super()._initialize_sim(xml_string)
         if self._use_dm_backend:
-            dm_mujoco = module.get_dm_mujoco()
-
             with io.StringIO() as string:
                 string.write(ET.tostring(self.model.root, encoding="unicode"))
-                self.sim = dm_mujoco.Physics.from_xml_string(string.getvalue())
+                st = string.getvalue()
 
-            self.mjpy_model = self.sim.model
-            patch_mjlib_accessors(self.get_mjlib(), self.mjpy_model, self.sim.data)
-
+            dm_mujoco = module.get_dm_mujoco()
+            self.dm_sim = dm_mujoco.Physics.from_xml_string(st)
+            patch_mjlib_accessors(
+                module.get_dm_mujoco().wrapper.mjbindings.mjlib,
+                self.dm_sim.model,
+                self.dm_sim.data,
+            )
             self.renderer = DMRenderer(
-                self.sim,
+                self.dm_sim,
                 clear_geom_group_0=True,
                 camera_settings={},
                 camera_select_next=True,
+                mjpy_sim=self.sim,
             )
-        else:  # Use mujoco_py
-
-            with io.StringIO() as string:
-                string.write(ET.tostring(self.model.root, encoding="unicode"))
-                from mujoco_py import load_model_from_xml
-
-                self.mjpy_model = load_model_from_xml(string.getvalue())
-            mujoco_py = module.get_mujoco_py()
-            self.sim = mujoco_py.MjSim(self.mjpy_model)
-            self.renderer = MjPyRenderer(self.sim, camera_settings={})
 
     def get_mjlib(self):
         """Returns an object that exposes the low-level MuJoCo API."""
-        if self._use_dm_backend:
-            return module.get_dm_mujoco().wrapper.mjbindings.mjlib
-        else:
-            return module.get_mujoco_py_mjlib()
+        return module.get_dm_mujoco().wrapper.mjbindings.mjlib
