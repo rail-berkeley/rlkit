@@ -103,13 +103,13 @@ if __name__ == "__main__":
         algorithm="SAC",
         version="normal",
         layer_size=256,
-        replay_buffer_size=int(5e6),
+        replay_buffer_size=int(1e7),
         algorithm_kwargs=dict(
-            num_epochs=5000,
+            num_epochs=int(1e4),
             num_eval_steps_per_epoch=2500,
             num_trains_per_train_loop=1000,
             num_expl_steps_per_train_loop=1000,
-            min_num_steps_before_training=1000,
+            min_num_steps_before_training=10 * 1000,
             max_path_length=500,
             batch_size=256,
         ),
@@ -141,12 +141,13 @@ if __name__ == "__main__":
     )
     search_space = {
         "env_name": [
-            "basketball-v2",
-            "assembly-v2",
+            # "basketball-v2",
+            # "assembly-v2",
             "disassemble-v2",
             "soccer-v2",
-            "sweep-into-v2",
-            "drawer-close-v2",
+            "hand-insert-v2",
+            # "sweep-into-v2",
+            # "drawer-close-v2",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
