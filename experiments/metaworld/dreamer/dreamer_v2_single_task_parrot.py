@@ -117,7 +117,7 @@ if __name__ == "__main__":
             "assembly-v2",
             "soccer-v2",
             "sweep-into-v2",
-            "disassemble-v2"
+            "disassemble-v2",
             "drawer-close-v2",
         ],
     }

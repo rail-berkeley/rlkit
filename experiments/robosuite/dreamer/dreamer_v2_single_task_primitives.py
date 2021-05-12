@@ -81,7 +81,7 @@ if __name__ == "__main__":
             reset_action_space_kwargs=dict(
                 control_mode="primitives",
                 use_combined_action_space=True,
-                action_scale=.5,
+                action_scale=0.5,
                 max_path_length=5,
             ),
             usage_kwargs=dict(
@@ -145,7 +145,7 @@ if __name__ == "__main__":
         "env_name": [
             "Lift",
         ],
-        "env_kwargs.reset_action_space_kwargs.action_scale":[.25, .5, .75, 1],
+        "env_kwargs.reset_action_space_kwargs.action_scale": [0.25, 0.5, 0.75, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

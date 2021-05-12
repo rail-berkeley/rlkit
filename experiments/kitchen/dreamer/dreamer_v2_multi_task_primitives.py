@@ -97,7 +97,7 @@ if __name__ == "__main__":
             opt_level="O1",
             optimizer_class="apex_adam",
             adam_eps=1e-5,
-            discount=1-1/15,
+            discount=1 - 1 / 15,
             lam=0.95,
             forward_kl=False,
             free_nats=1.0,

@@ -49,12 +49,11 @@ if __name__ == "__main__":
             "elevation": -53.203125160653144,
         },
         {
-            "distance":0.513599996134662,
-            "lookat":[0.28850459, 0.56757972, 0.54530015],
+            "distance": 0.513599996134662,
+            "lookat": [0.28850459, 0.56757972, 0.54530015],
             "azimuth": 178.9453125,
             "elevation": -60.00000040512532,
         },
-
     ]
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_prefix", type=str, default="test")
@@ -119,14 +118,14 @@ if __name__ == "__main__":
             # "sweep-into-v2",
             # "drawer-close-v2",
         ],
-        "env_kwargs.camera_settings":[
+        "env_kwargs.camera_settings": [
             cam_settings_list[0],
             cam_settings_list[1],
             cam_settings_list[2],
             cam_settings_list[3],
             cam_settings_list[4],
             cam_settings_list[5],
-            ]
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -186,6 +186,21 @@ class MetaworldWrapper(gym.Wrapper):
         super().__init__(env)
         self.reward_type = reward_type
 
+    def _get_image(self):
+        # use this if using dm control backend!
+        if hasattr(self.env, "_use_dm_backend"):
+            img = self.env.render(
+                mode="rgb_array", imwidth=self.imwidth, imheight=self.imheight
+            )
+        else:
+            img = self.env.sim.render(
+                imwidth=self.imwidth,
+                imheight=self.imheight,
+            )
+
+        img = img.transpose(2, 0, 1).flatten()
+        return img
+
     def __getattr__(self, name):
         return getattr(self.env, name)
 
@@ -235,21 +250,6 @@ class ImageEnvMetaworld(gym.Wrapper):
 
     def __getattr__(self, name):
         return getattr(self.env, name)
-
-    def _get_image(self):
-        # use this if using dm control backend!
-        if hasattr(self.env, "_use_dm_backend"):
-            img = self.env.render(
-                mode="rgb_array", imwidth=self.imwidth, imheight=self.imheight
-            )
-        else:
-            img = self.env.sim.render(
-                imwidth=self.imwidth,
-                imheight=self.imheight,
-            )
-
-        img = img.transpose(2, 0, 1).flatten()
-        return img
 
     def save_image(self):
         img = (
