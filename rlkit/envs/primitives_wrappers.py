@@ -991,20 +991,15 @@ class RobosuiteWrapper(GymWrapper):
     def __init__(
         self,
         env,
+        reset_action_space_kwargs,
         keys=None,
-        control_mode="robosuite",
-        use_combined_action_space=True,
-        action_scale=1,
-        max_path_length=200,
     ):
         super().__init__(
             env,
             keys=keys,
         )
         if hasattr(self.env, "reset_action_space"):
-            self.env.reset_action_space(
-                control_mode, use_combined_action_space, action_scale, max_path_length
-            )
+            self.env.reset_action_space(**reset_action_space_kwargs)
             if self.control_mode == "primitives":
                 self.action_space = self.env.action_space
         self.imwidth = self.camera_widths[0]
@@ -1095,10 +1090,17 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
     def reset_action_space(
         self,
         control_mode="robosuite",
-        use_combined_action_space=True,
         action_scale=1,
         max_path_length=200,
+        camera_settings=None,
+        workspace_low=(),
+        workspace_high=(),
     ):
+        self.workspace_low = np.array(workspace_low)
+        self.workspace_high = np.array(workspace_high)
+        if camera_settings is None:
+            camera_settings = {}
+        self.camera_settings = camera_settings
         self.max_path_length = max_path_length
         self.action_scale = action_scale
 
@@ -1148,9 +1150,8 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         self.combined_action_space = Box(
             combined_action_space_low, combined_action_space_high, dtype=np.float32
         )
-        self.use_combined_action_space = use_combined_action_space
         self.fixed_schema = False
-        if self.use_combined_action_space and self.control_mode == "primitives":
+        if self.control_mode == "primitives":
             self.action_space = self.combined_action_space
             act_lower_primitive = np.zeros(self.num_primitives)
             act_upper_primitive = np.ones(self.num_primitives)
@@ -1236,6 +1237,8 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                     camera_id=self.sim.model.camera_name2id("agentview"),
                 )
                 return img
+        else:
+            super().render()
 
     def close_gripper(
         self,
@@ -1312,6 +1315,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         total_reward, total_success = 0, 0
         prev_delta = np.zeros_like(pose)
         for _ in range(100):
+            pose = np.clip(pose, self.workspace_low, self.workspace_high)
             delta = pose - self._eef_xpos
             if grasp:
                 gripper = 1
@@ -1323,6 +1327,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             policy_step = True
             prev_delta = delta
             for i in range(int(self.control_timestep / self.model_timestep)):
+
                 self.sim.forward()
                 self._pre_action(action, policy_step)
                 self.sim.step()

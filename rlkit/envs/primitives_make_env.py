@@ -26,7 +26,9 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     if "reset_action_space_kwargs" in kwargs:
         del env_kwargs_new["reset_action_space_kwargs"]
     env = suite.make(env_name, **env_kwargs_new)
-    env = RobosuiteWrapper(env, keys=keys, **reset_action_space_kwargs)
+    env = RobosuiteWrapper(
+        env, keys=keys, reset_action_space_kwargs=reset_action_space_kwargs
+    )
     if reset_action_space_kwargs["control_mode"] == "robosuite":
         env = NormalizeBoxEnvFixed(env)
     return env

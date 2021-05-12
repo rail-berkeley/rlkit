@@ -590,21 +590,20 @@ class SawyerMocapBaseDMBackendMetaworld(
 
 class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEnv):
     def _reset_internal(self):
-        camera_settings = {}
         if self._use_dm_backend:
             if self.has_renderer and self.viewer is None:
                 self.viewer = DMRenderer(
                     self.dm_sim,
                     clear_geom_group_0=True,
-                    camera_select_next=True,
-                    camera_settings=camera_settings,
+                    camera_select_next=False,
+                    camera_settings=self.camera_settings,
                     mjpy_sim=self.sim,
                 )
                 self.viewer.render = self.viewer.render_to_window
             elif self.has_offscreen_renderer:
                 self.renderer = DMRenderer(
                     self.dm_sim,
-                    camera_settings=camera_settings,
+                    camera_settings=self.camera_settings,
                     clear_geom_group_0=True,
                     mjpy_sim=self.sim,
                 )
@@ -632,6 +631,8 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
         """
         super()._initialize_sim(xml_string)
         if self._use_dm_backend:
+            if not hasattr(self, "camera_settings"):
+                self.camera_settings = {}
             with io.StringIO() as string:
                 string.write(ET.tostring(self.model.root, encoding="unicode"))
                 st = string.getvalue()
@@ -646,8 +647,8 @@ class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEn
             self.renderer = DMRenderer(
                 self.dm_sim,
                 clear_geom_group_0=True,
-                camera_settings={},
-                camera_select_next=True,
+                camera_settings=self.camera_settings,
+                camera_select_next=False,
                 mjpy_sim=self.sim,
             )
 
