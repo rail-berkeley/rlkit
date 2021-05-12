@@ -29,7 +29,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=250,
             num_eval_steps_per_epoch=500 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -54,6 +54,12 @@ if __name__ == "__main__":
             action_scale=1 / 100,
             max_path_length=500,
             reward_type="sparse",
+            camera_settings={
+                "distance": 0.38227044687537043,
+                "lookat": [0.21052547, 0.32329237, 0.587819],
+                "azimuth": 141.328125,
+                "elevation": -53.203125160653144,
+            },
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -111,11 +117,11 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "basketball-v2",
             "assembly-v2",
+            "disassemble-v2"
+            "hand-insert-v2",
             "soccer-v2",
             "sweep-into-v2",
-            "disassemble-v2",
             "drawer-close-v2",
         ],
     }

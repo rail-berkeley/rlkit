@@ -30,7 +30,7 @@ if __name__ == "__main__":
             discrete_continuous_dist=False,
             data_augs="no_aug",
         ),
-        num_train_steps=int(1e6),
+        num_train_steps=int(2.5e6),
         frame_stack=4,
         replay_buffer_capacity=int(2.5e6),
         action_repeat=1,
