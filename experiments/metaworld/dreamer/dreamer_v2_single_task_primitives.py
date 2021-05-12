@@ -124,7 +124,7 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "assembly-v2",
-            "disassemble-v2"
+            "disassemble-v2",
             "hand-insert-v2",
             "soccer-v2",
             "sweep-into-v2",
