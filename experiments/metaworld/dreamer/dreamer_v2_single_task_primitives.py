@@ -170,7 +170,7 @@ if __name__ == "__main__":
             # "bin-picking-v2",
             # unverified and unsolved:
             # "stick-pull-v2",
-            "hand-insert-v2",
+            # "hand-insert-v2",
             "peg-insert-side-v2",
             "pick-out-of-hole-v2",
             "hammer-v2",

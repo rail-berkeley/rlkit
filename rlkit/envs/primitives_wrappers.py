@@ -240,6 +240,8 @@ class ImageEnvMetaworld(gym.Wrapper):
         reward_scale=1.0,
     ):
         gym.Wrapper.__init__(self, env)
+        self.env.imwdith = imwidth
+        self.env.imheight = imheight
         self.imwidth = imwidth
         self.imheight = imheight
         self.observation_space = Box(
@@ -247,6 +249,21 @@ class ImageEnvMetaworld(gym.Wrapper):
         )
         self.image_shape = (3, self.imwidth, self.imheight)
         self.reward_scale = reward_scale
+
+    def _get_image(self):
+        # use this if using dm control backend!
+        if hasattr(self.env, "_use_dm_backend"):
+            img = self.env.render(
+                mode="rgb_array", imwidth=self.imwidth, imheight=self.imheight
+            )
+        else:
+            img = self.env.sim.render(
+                imwidth=self.imwidth,
+                imheight=self.imheight,
+            )
+
+        img = img.transpose(2, 0, 1).flatten()
+        return img
 
     def __getattr__(self, name):
         return getattr(self.env, name)
