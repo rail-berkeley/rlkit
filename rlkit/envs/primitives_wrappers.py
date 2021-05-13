@@ -7,6 +7,7 @@ import numpy as np
 import quaternion
 import robosuite
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
+from gym import spaces
 from gym.spaces.box import Box
 from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
@@ -1002,22 +1003,25 @@ class RobosuiteWrapper(GymWrapper):
             self.env.reset_action_space(**reset_action_space_kwargs)
             if self.control_mode == "primitives":
                 self.action_space = self.env.action_space
-        self.imwidth = self.camera_widths[0]
-        self.imheight = self.camera_heights[0]
         self.image_shape = (3, self.imwidth, self.imheight)
+        self.imlength = self.imwidth * self.imheight
+        self.imlength *= 3
+        self.observation_space = spaces.Box(0, 255, (self.imlength,), dtype=np.uint8)
 
     def __getattr__(self, name):
         return getattr(self.env, name)
 
     def reset(self):
-        obs = super().reset()
-        if self.env.use_camera_obs:
-            obs = (
-                obs.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
-                .transpose(2, 0, 1)
-                .flatten()
-            )
-        return obs
+        o = super().reset()
+        o = self.env.render(
+            render_mode="rgb_array", imheight=self.imheight, imwidth=self.imwidth
+        )
+        o = (
+            o.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
+            .transpose(2, 0, 1)
+            .flatten()
+        )
+        return o
 
     def step(
         self,
@@ -1031,18 +1035,20 @@ class RobosuiteWrapper(GymWrapper):
                 render_every_step, render_mode, render_im_shape
             )
         o, r, d, i = super().step(action)
+        o = self.env.render(
+            render_mode="rgb_array", imheight=self.imheight, imwidth=self.imwidth
+        )
         if hasattr(self.env, "unset_render_every_step"):
             self.env.unset_render_every_step()
         new_i = {}
         for k, v in i.items():
             if v is not None:
                 new_i[k] = v
-        if self.env.use_camera_obs:
-            o = (
-                o.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
-                .transpose(2, 0, 1)
-                .flatten()
-            )
+        o = (
+            o.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
+            .transpose(2, 0, 1)
+            .flatten()
+        )
         return o, r, d, new_i
 
     def __getattr__(self, name):
@@ -1095,7 +1101,11 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         camera_settings=None,
         workspace_low=(),
         workspace_high=(),
+        imwidth=64,
+        imheight=64,
     ):
+        self.imwidth = imwidth
+        self.imheight = imheight
         self.workspace_low = np.array(workspace_low)
         self.workspace_high = np.array(workspace_high)
         if camera_settings is None:
@@ -1234,7 +1244,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 img = self.renderer.render_offscreen(
                     imwidth,
                     imheight,
-                    camera_id=self.sim.model.camera_name2id("agentview"),
                 )
                 return img
         else:
