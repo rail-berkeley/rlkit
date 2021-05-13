@@ -74,11 +74,11 @@ if __name__ == "__main__":
         "agent_kwargs.discrete_continuous_dist": [False],
         "env_name": [
             "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
+            # "kettle",
+            # "slide_cabinet",
+            # "top_left_burner",
+            # "hinge_cabinet",
+            # "light_switch",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
