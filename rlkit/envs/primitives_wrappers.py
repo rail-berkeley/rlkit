@@ -1117,7 +1117,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         # primitives
         self.primitive_idx_to_name = {
             0: "move_delta_ee_pose",
-            1: "top_x_y_grasp",
+            1: "top_grasp",
             2: "lift",
             3: "drop",
             4: "move_left",
@@ -1129,7 +1129,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         }
         self.primitive_name_to_func = dict(
             move_delta_ee_pose=self.move_delta_ee_pose,
-            top_x_y_grasp=self.top_x_y_grasp,
+            top_grasp=self.top_grasp,
             lift=self.lift,
             drop=self.drop,
             move_left=self.move_left,
@@ -1141,17 +1141,17 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         )
         self.primitive_name_to_action_idx = dict(
             move_delta_ee_pose=[0, 1, 2],
-            top_x_y_grasp=[3, 4, 5],
-            lift=6,
-            drop=7,
-            move_left=8,
-            move_right=9,
-            move_forward=10,
-            move_backward=11,
+            top_grasp=3,
+            lift=4,
+            drop=5,
+            move_left=6,
+            move_right=7,
+            move_forward=8,
+            move_backward=9,
             open_gripper=[],  # doesn't matter
             close_gripper=[],  # doesn't matter
         )
-        self.max_arg_len = 12
+        self.max_arg_len = 10
         self.num_primitives = len(self.primitive_name_to_func)
         self.control_mode = control_mode
 
@@ -1257,7 +1257,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         render_im_shape=(1000, 1000),
     ):
         total_reward, total_success = 0, 0
-        for _ in range(300):
+        for _ in range(150):
             action = [0, 0, 0, 0, 0, 0, 1]
             self.robots[0].control(action, policy_step=False)
             self.sim.step()
@@ -1329,14 +1329,14 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             if grasp:
                 gripper = 1
             else:
-                gripper = 0
+                gripper = -1
             action = [*delta, 0, 0, 0, gripper]
-            if all(np.abs(delta - prev_delta) < 1e-4):
-                break
+            # if all(np.abs(delta - prev_delta) < 1e-4):
+            #     break
             policy_step = True
             prev_delta = delta
+            # print(int(self.control_timestep / self.model_timestep))
             for i in range(int(self.control_timestep / self.model_timestep)):
-
                 self.sim.forward()
                 self._pre_action(action, policy_step)
                 self.sim.step()
@@ -1356,41 +1356,25 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                             render_im_shape[0],
                             render_im_shape[1],
                         )
+                self.cur_time += self.control_timestep
                 r = self.reward(action)
                 total_reward += r
                 total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
-    def top_x_y_grasp(
+    def top_grasp(
         self,
-        xyz,
+        z_down,
         render_every_step=False,
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        x_dist, y_dist, z_dist = xyz
-        stats = self.open_gripper(
+        stats = self.goto_pose(
+            self._eef_xpos + np.array([0, 0, -np.abs(z_down)]),
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self._eef_xpos + np.array([y_dist, 0, 0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self._eef_xpos + np.array([0, x_dist, 0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self._eef_xpos + np.array([0, 0, z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
+            grasp=False,
         )
         stats += self.close_gripper(
             render_every_step=render_every_step,
