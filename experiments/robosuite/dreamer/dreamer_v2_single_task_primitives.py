@@ -2,6 +2,8 @@ import argparse
 import random
 import subprocess
 
+import numpy as np
+
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
@@ -10,6 +12,24 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
+    controller_configs = {
+        "type": "OSC_POSE",
+        "input_max": 1,
+        "input_min": -1,
+        "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
+        "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
+        "kp": 150,
+        "damping_ratio": 1,
+        "impedance_mode": "fixed",
+        "kp_limits": [0, 300],
+        "damping_ratio_limits": [0, 10],
+        "position_limits": None,
+        "orientation_limits": None,
+        "uncouple_pos_ori": True,
+        "control_delta": True,
+        "interpolation": None,
+        "ramp_ratio": 0.2,
+    }
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_prefix", type=str, default="test")
     parser.add_argument("--num_seeds", type=int, default=1)
@@ -37,9 +57,9 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=30 * 3,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40 // 3,  # 1000//(5*5)
-            num_trains_per_train_loop=10 * 3,  # 400//40
+            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
+            num_trains_per_train_loop=10 * 2,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -53,36 +73,26 @@ if __name__ == "__main__":
         env_kwargs=dict(
             robots="Panda",
             has_renderer=False,
-            has_offscreen_renderer=True,
-            use_camera_obs=True,
+            has_offscreen_renderer=False,
+            use_camera_obs=False,
             camera_heights=64,
             camera_widths=64,
-            controller_configs={
-                "type": "OSC_POSE",
-                "input_max": 1,
-                "input_min": -1,
-                "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
-                "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
-                "kp": 150,
-                "damping_ratio": 1,
-                "impedance_mode": "fixed",
-                "kp_limits": [0, 300],
-                "damping_ratio_limits": [0, 10],
-                "position_limits": None,
-                "orientation_limits": None,
-                "uncouple_pos_ori": True,
-                "control_delta": True,
-                "interpolation": None,
-                "ramp_ratio": 0.2,
-            },
+            controller_configs=controller_configs,
             horizon=5,
             control_freq=20,
             reward_shaping=False,
             reset_action_space_kwargs=dict(
                 control_mode="primitives",
-                use_combined_action_space=True,
                 action_scale=0.5,
                 max_path_length=5,
+                camera_settings={
+                    "distance": 0.45373685052055496,
+                    "lookat": [-0.11847941, -0.14572371, 0.91694407],
+                    "azimuth": 51.328125,
+                    "elevation": -28.828124748542905,
+                },
+                workspace_low=(-0.3, -0.3, 0.6),
+                workspace_high=(0.1, 0.3, 0.9),
             ),
             usage_kwargs=dict(
                 use_dm_backend=True,
@@ -134,7 +144,7 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=5 * 3,
+        num_expl_envs=5 * 2,
         num_eval_envs=1,
         expl_amount=0.3,
         pass_render_kwargs=True,
