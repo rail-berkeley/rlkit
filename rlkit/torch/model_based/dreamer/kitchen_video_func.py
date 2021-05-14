@@ -12,12 +12,15 @@ from moviepy.editor import ImageSequenceClip
 
 def video_post_epoch_func(algorithm, epoch):
     print(epoch)
-    video_post_epoch_func_(
-        algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
-    )
-    video_post_epoch_func_(
-        algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
-    )
+    try:
+        video_post_epoch_func_(
+            algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
+        )
+        video_post_epoch_func_(
+            algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
+        )
+    except error as e:
+        print(e)
     # imagination_post_epoch_func(
     #     algorithm,
     #     algorithm.eval_env,

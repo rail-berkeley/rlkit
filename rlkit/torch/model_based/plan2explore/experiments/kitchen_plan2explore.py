@@ -111,7 +111,7 @@ def experiment(variant):
             action_dim,
             image_shape=eval_envs[0].image_shape,
             **variant["model_kwargs"],
-            env=eval_envs[0],
+            env=eval_envs[0].env,
         )
         actor = actor_model_class(
             variant["model_kwargs"]["model_hidden_size"],
@@ -119,7 +119,7 @@ def experiment(variant):
             hidden_activation=torch.nn.functional.elu,
             discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            env=eval_envs[0],
+            env=eval_envs[0].env,
             **variant["actor_kwargs"],
         )
         vf = Mlp(
@@ -232,16 +232,16 @@ def experiment(variant):
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
-        env_params=env_kwargs,
-        env_class=env_name,
+        # env_params=env_kwargs,
+        # env_class=env_name,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
         save_env_in_snapshot=False,
-        env_params=env_kwargs,
-        env_class=env_name,
+        # env_params=env_kwargs,
+        # env_class=env_name,
     )
 
     replay_buffer = EpisodeReplayBuffer(

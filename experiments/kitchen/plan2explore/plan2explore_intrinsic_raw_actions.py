@@ -22,24 +22,24 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=5,
             num_eval_steps_per_epoch=5,
-            num_expl_steps_per_train_loop=50,
+            num_expl_steps_per_train_loop=500,
             min_num_steps_before_training=100,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
             batch_size=50,
-            max_path_length=5,
+            max_path_length=280,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=50,
             num_eval_steps_per_epoch=280 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=280,
             num_expl_steps_per_train_loop=281 * 5,
-            num_trains_per_train_loop=572,
+            num_trains_per_train_loop=285,
             num_train_loops_per_epoch=7,
             batch_size=50,
         )
@@ -54,7 +54,7 @@ if __name__ == "__main__":
         expl_amount=0.3,
         save_video=False,
         use_raw_actions=True,
-        pass_render_kwargs=True,
+        pass_render_kwargs=False,
         env_suite="kitchen",
         env_kwargs=dict(
             dense=False,
@@ -138,12 +138,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # "microwave",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "microwave",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
             "slide_cabinet",
-            # "kettle",
+            "kettle",
         ],
         "one_step_ensemble_kwargs.inputs": ["deter"],
         "one_step_ensemble_kwargs.targets": ["stoch"],

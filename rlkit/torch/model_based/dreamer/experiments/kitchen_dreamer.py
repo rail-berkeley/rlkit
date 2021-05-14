@@ -94,7 +94,9 @@ def experiment(variant):
     elif actor_model_class_name == "actor_model":
         actor_model_class = ActorModel
     if variant.get("load_from_path", False):
-        data = torch.load(variant["models_path"] + variant["pkl_file_name"])
+        filename = variant["models_path"] + variant["pkl_file_name"]
+        print(filename)
+        data = torch.load(filename)
         actor = data["trainer/actor"]
         vf = data["trainer/vf"]
         target_vf = data["trainer/target_vf"]
@@ -182,16 +184,16 @@ def experiment(variant):
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
-        env_params=env_kwargs,
-        env_class=env_name,
+        # env_params=env_kwargs,
+        # env_class=env_name,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
         save_env_in_snapshot=False,
-        env_params=env_kwargs,
-        env_class=env_name,
+        # env_params=env_kwargs,
+        # env_class=env_name,
     )
 
     replay_buffer = EpisodeReplayBuffer(
