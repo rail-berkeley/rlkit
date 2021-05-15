@@ -1,3 +1,4 @@
+import math
 import pickle
 
 import cv2
@@ -6,6 +7,7 @@ import mujoco_py
 import numpy as np
 import quaternion
 import robosuite
+import robosuite.utils.transform_utils as T
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
 from gym import spaces
 from gym.spaces.box import Box
@@ -1103,6 +1105,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         workspace_high=(),
         imwidth=64,
         imheight=64,
+        remove_rotation_primitives=True,
     ):
         self.imwidth = imwidth
         self.imheight = imheight
@@ -1115,43 +1118,85 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         self.action_scale = action_scale
 
         # primitives
-        self.primitive_idx_to_name = {
-            0: "move_delta_ee_pose",
-            1: "top_grasp",
-            2: "lift",
-            3: "drop",
-            4: "move_left",
-            5: "move_right",
-            6: "move_forward",
-            7: "move_backward",
-            8: "open_gripper",
-            9: "close_gripper",
-        }
-        self.primitive_name_to_func = dict(
-            move_delta_ee_pose=self.move_delta_ee_pose,
-            top_grasp=self.top_grasp,
-            lift=self.lift,
-            drop=self.drop,
-            move_left=self.move_left,
-            move_right=self.move_right,
-            move_forward=self.move_forward,
-            move_backward=self.move_backward,
-            open_gripper=self.open_gripper,
-            close_gripper=self.close_gripper,
-        )
-        self.primitive_name_to_action_idx = dict(
-            move_delta_ee_pose=[0, 1, 2],
-            top_grasp=3,
-            lift=4,
-            drop=5,
-            move_left=6,
-            move_right=7,
-            move_forward=8,
-            move_backward=9,
-            open_gripper=[],  # doesn't matter
-            close_gripper=[],  # doesn't matter
-        )
-        self.max_arg_len = 10
+        if remove_rotation_primitives:
+            self.primitive_idx_to_name = {
+                0: "move_delta_ee_pose",
+                1: "top_grasp",
+                2: "lift",
+                3: "drop",
+                4: "move_left",
+                5: "move_right",
+                6: "move_forward",
+                7: "move_backward",
+                8: "open_gripper",
+                9: "close_gripper",
+            }
+            self.primitive_name_to_func = dict(
+                move_delta_ee_pose=self.move_delta_ee_pose,
+                top_grasp=self.top_grasp,
+                lift=self.lift,
+                drop=self.drop,
+                move_left=self.move_left,
+                move_right=self.move_right,
+                move_forward=self.move_forward,
+                move_backward=self.move_backward,
+                open_gripper=self.open_gripper,
+                close_gripper=self.close_gripper,
+            )
+            self.primitive_name_to_action_idx = dict(
+                move_delta_ee_pose=[0, 1, 2],
+                top_grasp=3,
+                lift=4,
+                drop=5,
+                move_left=6,
+                move_right=7,
+                move_forward=8,
+                move_backward=9,
+                open_gripper=[],  # doesn't matter
+                close_gripper=[],  # doesn't matter
+            )
+            self.max_arg_len = 10
+        else:
+            self.primitive_idx_to_name = {
+                0: "move_delta_ee_pose",
+                1: "top_grasp",
+                2: "lift",
+                3: "drop",
+                4: "move_left",
+                5: "move_right",
+                6: "move_forward",
+                7: "move_backward",
+                8: "open_gripper",
+                9: "close_gripper",
+                10: "rotate_delta_ee",
+            }
+            self.primitive_name_to_func = dict(
+                move_delta_ee_pose=self.move_delta_ee_pose,
+                top_grasp=self.top_grasp,
+                lift=self.lift,
+                drop=self.drop,
+                move_left=self.move_left,
+                move_right=self.move_right,
+                move_forward=self.move_forward,
+                move_backward=self.move_backward,
+                open_gripper=self.open_gripper,
+                close_gripper=self.close_gripper,
+                rotate_delta_ee=self.rotate_delta_ee,
+            )
+            self.primitive_name_to_action_idx = dict(
+                move_delta_ee_pose=[0, 1, 2],
+                top_grasp=3,
+                lift=4,
+                drop=5,
+                move_left=6,
+                move_right=7,
+                move_forward=8,
+                move_backward=9,
+                open_gripper=[],  # doesn't matter
+                close_gripper=[],  # doesn't matter
+                rotate_delta_ee=[10, 11, 12],
+            )
+            self.max_arg_len = 13
         self.num_primitives = len(self.primitive_name_to_func)
         self.control_mode = control_mode
 
@@ -1331,11 +1376,8 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             else:
                 gripper = -1
             action = [*delta, 0, 0, 0, gripper]
-            # if all(np.abs(delta - prev_delta) < 1e-4):
-            #     break
             policy_step = True
             prev_delta = delta
-            # print(int(self.control_timestep / self.model_timestep))
             for i in range(int(self.control_timestep / self.model_timestep)):
                 self.sim.forward()
                 self._pre_action(action, policy_step)
@@ -1499,6 +1541,49 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             grasp=True,
         )
         return stats
+
+    def rotate_delta_ee(
+        self,
+        delta_rpy,
+        render_every_step=False,
+        render_mode="rgb_array",
+        render_im_shape=(1000, 1000),
+        grasp=False,
+    ):
+        delta_rpy *= 0.1
+        total_reward, total_success = 0, 0
+        for _ in range(100):
+            if grasp:
+                gripper = 1
+            else:
+                gripper = 0
+            action = np.array([0, 0, 0, *delta_rpy, gripper])
+            policy_step = True
+            for i in range(int(self.control_timestep / self.model_timestep)):
+                self.sim.forward()
+                self._pre_action(action, policy_step)
+                self.sim.step()
+                policy_step = False
+                self.cur_time += self.control_timestep
+                if render_every_step:
+                    if render_mode == "rgb_array":
+                        self.img_array.append(
+                            self.render(
+                                render_mode,
+                                render_im_shape[0],
+                                render_im_shape[1],
+                            )
+                        )
+                    else:
+                        self.render(
+                            render_mode,
+                            render_im_shape[0],
+                            render_im_shape[1],
+                        )
+                    r = self.reward(action)
+                    total_reward += r
+                    total_success += float(self._check_success())
+        return np.array((total_reward, total_success))
 
     def break_apart_action(self, a):
         broken_a = {}
