@@ -155,7 +155,8 @@ if __name__ == "__main__":
         "env_name": [
             "Door",
         ],
-        "env_kwargs.reset_action_space_kwargs.action_scale": [0.5, 0.75, 1],
+        "env_kwargs.reset_action_space_kwargs.action_scale": [1],
+        "expl_amount":[.1, .3, .5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

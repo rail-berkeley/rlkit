@@ -19,8 +19,8 @@ def video_post_epoch_func(algorithm, epoch):
         video_post_epoch_func_(
             algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
         )
-    except error as e:
-        print(e)
+    except Exception:
+        pass
     # imagination_post_epoch_func(
     #     algorithm,
     #     algorithm.eval_env,
