@@ -1106,6 +1106,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         imwidth=64,
         imheight=64,
         remove_rotation_primitives=True,
+        go_to_pose_iterations=100,
     ):
         self.imwidth = imwidth
         self.imheight = imheight
@@ -1116,6 +1117,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         self.camera_settings = camera_settings
         self.max_path_length = max_path_length
         self.action_scale = action_scale
+        self.go_to_pose_iterations = go_to_pose_iterations
 
         # primitives
         if remove_rotation_primitives:
@@ -1368,14 +1370,16 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
     ):
         total_reward, total_success = 0, 0
         prev_delta = np.zeros_like(pose)
-        for _ in range(100):
-            pose = np.clip(pose, self.workspace_low, self.workspace_high)
+        pose = np.clip(pose, self.workspace_low, self.workspace_high)
+        for _ in range(self.go_to_pose_iterations):
             delta = pose - self._eef_xpos
             if grasp:
                 gripper = 1
             else:
                 gripper = -1
             action = [*delta, 0, 0, 0, gripper]
+            if np.allclose(delta - prev_delta, 1e-4):
+                break
             policy_step = True
             prev_delta = delta
             for i in range(int(self.control_timestep / self.model_timestep)):
