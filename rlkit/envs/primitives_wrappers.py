@@ -1253,6 +1253,13 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
 
             # Loop through the simulation at the model timestep rate until we're ready to take the next policy step
             # (as defined by the control frequency specified at the environment level)
+            target_pos = action[:3] + self._eef_xpos
+            target_pos = np.clip(
+                target_pos, self.workspace_low, self.workspace_high
+            )  # apply work space limit
+            action[:3] = target_pos - self._eef_xpos
+            action[3:6] = 0  # we want to just do position control
+
             for i in range(int(self.control_timestep / self.model_timestep)):
                 self.sim.forward()
                 self._pre_action(action, policy_step)
