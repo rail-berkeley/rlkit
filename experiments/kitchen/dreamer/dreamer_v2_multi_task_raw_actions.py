@@ -46,7 +46,6 @@ if __name__ == "__main__":
         num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
-        save_video=False,
         use_raw_actions=True,
         pass_render_kwargs=True,
         save_video=False,
