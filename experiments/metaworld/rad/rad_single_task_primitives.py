@@ -77,7 +77,7 @@ if __name__ == "__main__":
             # solveable
             # "basketball-v2",
             "assembly-v2",
-            "disassemble-v2"
+            "disassemble-v2",
             "hand-insert-v2",
             # verified and medium
             "soccer-v2",
@@ -101,19 +101,19 @@ if __name__ == "__main__":
     )
     for _ in range(args.num_seeds):
         for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-                seed = random.randint(0, 100000)
-                variant["seed"] = seed
-                variant["exp_id"] = exp_id
-                run_experiment(
-                    experiment,
-                    exp_prefix=args.exp_prefix,
-                    mode=args.mode,
-                    variant=variant,
-                    use_gpu=True,
-                    snapshot_mode="none",
-                    python_cmd=subprocess.check_output("which python", shell=True).decode(
-                        "utf-8"
-                    )[:-1],
-                    seed=seed,
-                    exp_id=exp_id,
-                )
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
+            run_experiment(
+                experiment,
+                exp_prefix=args.exp_prefix,
+                mode=args.mode,
+                variant=variant,
+                use_gpu=True,
+                snapshot_mode="none",
+                python_cmd=subprocess.check_output("which python", shell=True).decode(
+                    "utf-8"
+                )[:-1],
+                seed=seed,
+                exp_id=exp_id,
+            )

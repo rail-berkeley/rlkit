@@ -76,7 +76,7 @@ if __name__ == "__main__":
             # solveable
             # "basketball-v2",
             "assembly-v2",
-            "disassemble-v2"
+            "disassemble-v2",
             "hand-insert-v2",
             # verified and medium
             "soccer-v2",
