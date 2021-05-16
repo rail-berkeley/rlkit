@@ -87,7 +87,16 @@ if __name__ == "__main__":
                 max_path_length=5,
                 workspace_low=(-0.0, -0.1, 0.6),
                 workspace_high=(0.3, 0.1, 0.9),
-                camera_settings={'distance': 0.2613113661860936, 'lookat': [-0.13466918548055004, -0.0808556895915784, 0.898754837869992], 'azimuth': 30.234375, 'elevation': -34.21874942723662}
+                camera_settings={
+                    "distance": 0.2613113661860936,
+                    "lookat": [
+                        -0.13466918548055004,
+                        -0.0808556895915784,
+                        0.898754837869992,
+                    ],
+                    "azimuth": 30.234375,
+                    "elevation": -34.21874942723662,
+                },
             ),
             usage_kwargs=dict(
                 use_dm_backend=True,
