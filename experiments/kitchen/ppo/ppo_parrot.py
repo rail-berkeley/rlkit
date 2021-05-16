@@ -73,7 +73,7 @@ if __name__ == "__main__":
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
         num_processes=5,
-        num_env_steps=int(1e6),
+        num_env_steps=int(2.5e6),
         num_steps=2048 // 5,
         log_interval=1,
         eval_interval=1,

@@ -138,12 +138,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "microwave",
-            "top_left_burner",
+            # "microwave",
+            # "top_left_burner",
             "hinge_cabinet",
-            "light_switch",
-            "slide_cabinet",
-            "kettle",
+            # "light_switch",
+            # "slide_cabinet",
+            # "kettle",
         ],
         "one_step_ensemble_kwargs.inputs": ["deter"],
         "one_step_ensemble_kwargs.targets": ["stoch"],
