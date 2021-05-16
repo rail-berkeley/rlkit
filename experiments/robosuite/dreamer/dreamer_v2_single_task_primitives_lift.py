@@ -51,7 +51,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=500,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -79,20 +79,15 @@ if __name__ == "__main__":
             camera_widths=64,
             controller_configs=controller_configs,
             horizon=5,
-            control_freq=20,
+            control_freq=40,
             reward_shaping=False,
             reset_action_space_kwargs=dict(
                 control_mode="primitives",
-                action_scale=0.5,
+                action_scale=1,
                 max_path_length=5,
-                camera_settings={
-                    "distance": 0.45373685052055496,
-                    "lookat": [-0.11847941, -0.14572371, 0.91694407],
-                    "azimuth": 51.328125,
-                    "elevation": -28.828124748542905,
-                },
-                workspace_low=(-0.3, -0.3, 0.6),
-                workspace_high=(0.1, 0.3, 0.9),
+                workspace_low=(-0.0, -0.1, 0.6),
+                workspace_high=(0.3, 0.1, 0.9),
+                camera_settings={'distance': 0.2613113661860936, 'lookat': [-0.13466918548055004, -0.0808556895915784, 0.898754837869992], 'azimuth': 30.234375, 'elevation': -34.21874942723662}
             ),
             usage_kwargs=dict(
                 use_dm_backend=True,
@@ -155,7 +150,6 @@ if __name__ == "__main__":
         "env_name": [
             "Lift",
         ],
-        "env_kwargs.reset_action_space_kwargs.action_scale": [0.5, 0.75, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

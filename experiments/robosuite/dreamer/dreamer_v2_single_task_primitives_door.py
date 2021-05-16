@@ -93,6 +93,7 @@ if __name__ == "__main__":
                 },
                 workspace_low=(-0.3, -0.35, 0.8),
                 workspace_high=(0.0, 0.2, 1.2),
+                remove_rotation_primitives=False,
             ),
             usage_kwargs=dict(
                 use_dm_backend=True,
@@ -156,7 +157,6 @@ if __name__ == "__main__":
             "Door",
         ],
         "env_kwargs.reset_action_space_kwargs.action_scale": [1],
-        "expl_amount":[.1, .3, .5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
