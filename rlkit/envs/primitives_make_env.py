@@ -2,6 +2,7 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
 
     from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
+    import numpy as np
 
     gym.logger.setLevel(40)
     import robosuite as suite
@@ -25,6 +26,7 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     env_kwargs_new = kwargs.copy()
     if "reset_action_space_kwargs" in kwargs:
         del env_kwargs_new["reset_action_space_kwargs"]
+    np.random.seed(42)
     env = suite.make(env_name, **env_kwargs_new)
     env = RobosuiteWrapper(
         env, keys=keys, reset_action_space_kwargs=reset_action_space_kwargs
