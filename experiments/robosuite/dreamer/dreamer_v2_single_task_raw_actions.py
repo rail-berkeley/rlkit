@@ -16,6 +16,25 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
+    num_envs=10
+    controller_configs = {
+        "type": "OSC_POSE",
+        "input_max": 1,
+        "input_min": -1,
+        "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
+        "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
+        "kp": 150,
+        "damping_ratio": 1,
+        "impedance_mode": "fixed",
+        "kp_limits": [0, 300],
+        "damping_ratio_limits": [0, 10],
+        "position_limits": None,
+        "orientation_limits": None,
+        "uncouple_pos_ori": True,
+        "control_delta": True,
+        "interpolation": None,
+        "ramp_ratio": 0.2,
+    }
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
@@ -53,41 +72,33 @@ if __name__ == "__main__":
         env_kwargs=dict(
             robots="Panda",
             has_renderer=False,
-            has_offscreen_renderer=True,
-            use_camera_obs=True,
+            has_offscreen_renderer=False,
+            use_camera_obs=False,
             camera_heights=64,
             camera_widths=64,
-            controller_configs={
-                "type": "OSC_POSE",
-                "input_max": 1,
-                "input_min": -1,
-                "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
-                "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
-                "kp": 150,
-                "damping_ratio": 1,
-                "impedance_mode": "fixed",
-                "kp_limits": [0, 300],
-                "damping_ratio_limits": [0, 10],
-                "position_limits": None,
-                "orientation_limits": None,
-                "uncouple_pos_ori": True,
-                "control_delta": True,
-                "interpolation": None,
-                "ramp_ratio": 0.2,
-            },
+            controller_configs=controller_configs,
             horizon=500,
-            control_freq=20,
+            control_freq=40,
             reward_shaping=False,
             reset_action_space_kwargs=dict(
                 control_mode="robosuite",
-                use_combined_action_space=True,
                 action_scale=1,
                 max_path_length=500,
+                workspace_low=(-0.0, -0.1, 0.6),
+                workspace_high=(0.3, 0.1, 0.9),
+                camera_settings={
+                    "distance": 0.2613113661860936,
+                    "lookat": [
+                        -0.13466918548055004,
+                        -0.0808556895915784,
+                        0.898754837869992,
+                    ],
+                    "azimuth": 30.234375,
+                    "elevation": -34.21874942723662,
+                },
             ),
             usage_kwargs=dict(
                 use_dm_backend=True,
-                use_raw_action_wrappers=False,
-                unflatten_images=False,
                 max_path_length=500,
             ),
             image_kwargs=dict(),
