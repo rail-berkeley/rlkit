@@ -34,6 +34,7 @@ from rlkit.envs.primitives_wrappers import (
 
 def experiment(variant):
     ptu.set_gpu_mode(True, 0)
+    rlkit_ptu.set_gpu_mode(True, 0)
     model_path = variant["model_path"]
 
     env_suite = variant.get("env_suite", "kitchen")
@@ -240,7 +241,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=280 * 5,
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1000,
-            min_num_steps_before_training=1 * 1000,
+            min_num_steps_before_training=400,
         ),
         cnn_params=dict(
             kernel_sizes=[3, 3],
@@ -387,7 +388,7 @@ if __name__ == "__main__":
     variant["cnn_params"]["image_augmentation"] = args.use_img_aug
 
     n_seeds = 3
-    mode = "here_no_doodad"
+    mode = "local"
     exp_prefix = "dev-{}".format(
         __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )
