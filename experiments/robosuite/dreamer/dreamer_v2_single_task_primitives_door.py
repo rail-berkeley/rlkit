@@ -10,7 +10,6 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_prefix", type=str, default="test")
@@ -84,8 +83,16 @@ if __name__ == "__main__":
                 control_mode="primitives",
                 action_scale=1,
                 max_path_length=5,
-                workspace_low=(-0.2, -0.4, 0.8),
-                workspace_high=(0.0, 0.0, 1.3),
+                #running
+                # workspace_low=(-0.3, -0.4, 0.8),
+                # workspace_high=(0.0, 0.2, 1.3),
+                workspace_low=(-0.2, -0.35, 0.8),
+                workspace_high=(0.0, 0.0, 1.2),
+                # to test
+                # workspace_low=(-0.2, -0.4, 0.8),
+                # workspace_high=(0.0, 0.0, 1.3),
+                # workspace_low=(-0.3, -0.35, 0.8),
+                # workspace_high=(0.0, 0.2, 1.2),
                 remove_rotation_primitives=True,
                 go_to_pose_iterations=40,
                 camera_settings={

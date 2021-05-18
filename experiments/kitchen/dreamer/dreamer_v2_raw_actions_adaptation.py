@@ -35,7 +35,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=25,
+            num_epochs=100,
             num_eval_steps_per_epoch=280 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -137,12 +137,12 @@ if __name__ == "__main__":
             # "light_switch",
         ],
         "retrain_actor_and_vf": [False],
-        "num_actor_vf_pretrain_iters": [1000, 10000],
+        "num_actor_vf_pretrain_iters": [1000],
         "algorithm_kwargs.use_pretrain_policy_for_initial_data": [True],
         "algorithm_kwargs.num_pretrain_steps": [0],
         "trainer_kwargs.world_model_lr": [3e-4],
         "pkl_file_name": [
-            "/itr_0.pkl",
+            "/params.pkl",
         ]
         # "models_path": [
         #     os.path.join(
@@ -168,10 +168,9 @@ if __name__ == "__main__":
         #     "/home/mdalal/research/rlkit/data/02-10-kitchen-p2exp-intrinsic-run-long-v1/02-10-kitchen_p2exp_intrinsic_run_long_v1_2021_02_10_20_55_32_0000--s-92834",
         # ],
         "hinge_cabinet": [
-            # "/home/mdalal/research/rlkit/data/02-10-kitchen-p2exp-intrinsic-run-long-v1/02-10-kitchen_p2exp_intrinsic_run_long_v1_2021_02_10_20_55_32_0000--s-59167",
-            # "/home/mdalal/research/rlkit/data/02-10-kitchen-p2exp-intrinsic-run-long-v1/02-10-kitchen_p2exp_intrinsic_run_long_v1_2021_02_10_20_55_32_0000--s-75453",
-            # "/home/mdalal/research/rlkit/data/05-10-kitchen-p2exp-raw-actions-v3/05-10-kitchen_p2exp_raw_actions_v3_2021_05_10_01_34_56_0000--s-31412",
-            "/home/mdalal/research/rlkit/data/05-16-test-p2exp-data/05-16-test_p2exp_data_2021_05_16_12_37_52_0000--s-54629",
+            "/home/mdalal/research/rlkit/data/05-16-kitchen-p2exp-raw-actions-hinge-v1/05-16-kitchen_p2exp_raw_actions_hinge_v1_2021_05_16_12_51_24_0000--s-55945/",
+            "/home/mdalal/research/rlkit/data/05-16-kitchen-p2exp-raw-actions-hinge-v1/05-16-kitchen_p2exp_raw_actions_hinge_v1_2021_05_16_12_51_24_0000--s-73949/",
+            "/home/mdalal/research/rlkit/data/05-16-kitchen-p2exp-raw-actions-hinge-v1/05-16-kitchen_p2exp_raw_actions_hinge_v1_2021_05_16_12_51_24_0000--s-54978/",
         ],
         # "top_left_burner": [
         #     "/home/mdalal/research/rlkit/data/02-10-kitchen-p2exp-intrinsic-run-long-v1/02-10-kitchen_p2exp_intrinsic_run_long_v1_2021_02_10_20_55_31_0000--s-34797",
