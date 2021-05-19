@@ -207,7 +207,7 @@ def experiment(variant):
         use_robot_state=variant["use_robot_state"],
         **variant["algo_kwargs"]
     )
-
+    print('TRAINING')
     video_func = VideoSaveFunctionBullet(variant)
     algorithm.post_train_funcs.append(video_func)
     algorithm.to(ptu.device)
@@ -241,7 +241,7 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=280 * 5,
             num_expl_steps_per_train_loop=1000,
             num_trains_per_train_loop=1000,
-            min_num_steps_before_training=400,
+            min_num_steps_before_training=2500,
         ),
         cnn_params=dict(
             kernel_sizes=[3, 3],
@@ -388,7 +388,7 @@ if __name__ == "__main__":
     variant["cnn_params"]["image_augmentation"] = args.use_img_aug
 
     n_seeds = 3
-    mode = "local"
+    mode = "here_no_doodad"
     exp_prefix = "dev-{}".format(
         __file__.replace("/", "-").replace("_", "-").split(".")[0]
     )

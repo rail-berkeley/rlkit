@@ -53,14 +53,14 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # "microwave",
-            # "kettle",
-            # "slide_cabinet",
-            # "top_left_burner",
+            "microwave",
+            "kettle",
+            "slide_cabinet",
+            "top_left_burner",
             # "hinge_cabinet",
             # "light_switch",
-            "microwave_kettle_light_top_left_burner",
-            "hinge_slide_bottom_left_burner_light",
+            # "microwave_kettle_light_top_left_burner",
+            # "hinge_slide_bottom_left_burner_light",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -84,5 +84,5 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
-                # skip_wait=Trueq
+                skip_wait=True
             )

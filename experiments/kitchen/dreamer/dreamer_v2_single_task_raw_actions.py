@@ -28,13 +28,13 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=250,
             num_eval_steps_per_epoch=280 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=280,
             num_expl_steps_per_train_loop=281 * 5,
-            num_trains_per_train_loop=572,
+            num_trains_per_train_loop=572//2,
             num_train_loops_per_epoch=7,
             batch_size=50,
         )
@@ -121,11 +121,12 @@ if __name__ == "__main__":
         "env_name": [
             "microwave",
             "kettle",
-            "slide_cabinet",
-            "top_left_burner",
             "hinge_cabinet",
+            "top_left_burner",
             "light_switch",
+            "slide_cabinet",
         ],
+        # "env_kwargs.dense":[True],
         # "env_kwargs.control_mode": [
         #     "joint_position",
         #     "joint_velocity",

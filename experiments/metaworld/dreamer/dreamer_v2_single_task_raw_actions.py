@@ -29,13 +29,13 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=250,
+            num_epochs=500,
             num_eval_steps_per_epoch=500 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=500,
             num_expl_steps_per_train_loop=501 * num_envs,
-            num_trains_per_train_loop=2000,
+            num_trains_per_train_loop=1000,
             num_train_loops_per_epoch=2,
             batch_size=50,
         )
@@ -117,13 +117,14 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
+            "drawer-close-v2",
+            "hand-insert-v2",
             "assembly-v2",
             "disassemble-v2",
-            "hand-insert-v2",
             "soccer-v2",
             "sweep-into-v2",
-            "drawer-close-v2",
         ],
+        # "env_kwargs.reward_type":['dense'],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
