@@ -84,5 +84,5 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
-                skip_wait=True
+                skip_wait=True,
             )

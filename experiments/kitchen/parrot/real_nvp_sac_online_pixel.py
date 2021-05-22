@@ -207,7 +207,7 @@ def experiment(variant):
         use_robot_state=variant["use_robot_state"],
         **variant["algo_kwargs"]
     )
-    print('TRAINING')
+    print("TRAINING")
     video_func = VideoSaveFunctionBullet(variant)
     algorithm.post_train_funcs.append(video_func)
     algorithm.to(ptu.device)

@@ -10,6 +10,7 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--exp_prefix", type=str, default="test")
@@ -155,8 +156,7 @@ if __name__ == "__main__":
         save_video=True,
     )
 
-    search_space = {
-    }
+    search_space = {}
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,

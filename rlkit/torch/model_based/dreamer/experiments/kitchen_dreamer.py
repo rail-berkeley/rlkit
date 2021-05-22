@@ -235,7 +235,7 @@ def experiment(variant):
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_post_epoch_func)
-    print('TRAINING')
+    print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
     if variant.get("save_video", False):

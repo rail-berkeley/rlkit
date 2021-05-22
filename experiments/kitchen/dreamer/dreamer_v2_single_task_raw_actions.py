@@ -34,7 +34,7 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             max_path_length=280,
             num_expl_steps_per_train_loop=281 * 5,
-            num_trains_per_train_loop=572//2,
+            num_trains_per_train_loop=572 // 2,
             num_train_loops_per_epoch=7,
             batch_size=50,
         )

@@ -4,9 +4,6 @@ import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
-    preprocess_variant,
-)
 from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
@@ -16,33 +13,14 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
-    num_envs = 10
-    controller_configs = {
-        "type": "OSC_POSE",
-        "input_max": 1,
-        "input_min": -1,
-        "output_max": [0.05, 0.05, 0.05, 0.5, 0.5, 0.5],
-        "output_min": [-0.05, -0.05, -0.05, -0.5, -0.5, -0.5],
-        "kp": 150,
-        "damping_ratio": 1,
-        "impedance_mode": "fixed",
-        "kp_limits": [0, 300],
-        "damping_ratio_limits": [0, 10],
-        "position_limits": None,
-        "orientation_limits": None,
-        "uncouple_pos_ori": True,
-        "control_delta": True,
-        "interpolation": None,
-        "ramp_ratio": 0.2,
-    }
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
             num_eval_steps_per_epoch=1000,
-            min_num_steps_before_training=1000,
+            min_num_steps_before_training=280,
             num_pretrain_steps=1,
-            max_path_length=500,
-            num_expl_steps_per_train_loop=501,
+            max_path_length=280,
+            num_expl_steps_per_train_loop=281,
             num_trains_per_train_loop=1,
             num_train_loops_per_epoch=1,
             batch_size=50,
@@ -50,67 +28,62 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
-            num_eval_steps_per_epoch=500 * 5,
+            num_epochs=250,
+            num_eval_steps_per_epoch=280 * 5,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=500,
-            num_expl_steps_per_train_loop=501 * num_envs,
-            num_trains_per_train_loop=2000,
-            num_train_loops_per_epoch=2,
+            max_path_length=280,
+            num_expl_steps_per_train_loop=281 * 5,
+            num_trains_per_train_loop=572 // 2,
+            num_train_loops_per_epoch=7,
             batch_size=50,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e3),
-        algorithm_kwargs=algorithm_kwargs,
-        env_name="Lift",
+        replay_buffer_size=int(9e3),
+        num_expl_envs=5,
+        num_eval_envs=1,
+        expl_amount=0.3,
+        save_video=False,
         use_raw_actions=True,
-        env_suite="robosuite",
+        pass_render_kwargs=True,
+        env_suite="kitchen",
         env_kwargs=dict(
-            robots="Panda",
-            has_renderer=False,
-            has_offscreen_renderer=False,
-            use_camera_obs=False,
-            camera_heights=64,
-            camera_widths=64,
-            controller_configs=controller_configs,
-            horizon=500,
-            control_freq=40,
-            reward_shaping=False,
-            reset_action_space_kwargs=dict(
-                control_mode="robosuite",
-                action_scale=1,
-                max_path_length=500,
-                workspace_low=(0.0, -0.2, 0.6),
-                workspace_high=(0.3, 0.2, 1),
-                camera_settings={
-                    "distance": 0.2613113661860936,
-                    "lookat": [
-                        -0.13466918548055004,
-                        -0.0808556895915784,
-                        0.898754837869992,
-                    ],
-                    "azimuth": 30.234375,
-                    "elevation": -34.21874942723662,
-                },
-            ),
+            dense=False,
+            image_obs=True,
+            fixed_schema=False,
+            action_scale=1,
+            use_combined_action_space=True,
+            proprioception=False,
+            wrist_cam_concat_with_fixed_view=False,
+            use_wrist_cam=False,
+            normalize_proprioception_obs=True,
+            use_workspace_limits=True,
+            max_path_length=280,
+            control_mode="joint_velocity",
+            frame_skip=40,
             usage_kwargs=dict(
                 use_dm_backend=True,
-                max_path_length=500,
+                use_raw_action_wrappers=False,
+                use_image_obs=True,
+                max_path_length=280,
+                unflatten_images=False,
             ),
             image_kwargs=dict(),
         ),
+        algorithm_kwargs=algorithm_kwargs,
         actor_kwargs=dict(
             init_std=0.0,
             num_layers=4,
             min_std=0.1,
             dist="trunc_normal",
+            multi_step_horizon=2,
         ),
         vf_kwargs=dict(
             num_layers=3,
+            multi_step_horizon=1,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -144,25 +117,31 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
         ),
-        num_expl_envs=5 * 2,
-        num_eval_envs=1,
-        expl_amount=0.3,
-        pass_render_kwargs=False,
-        save_video=False,
     )
 
     search_space = {
         "env_name": [
-            "Lift",
+            "microwave",
+            "kettle",
+            "hinge_cabinet",
+            "top_left_burner",
+            "light_switch",
+            "slide_cabinet",
         ],
-        "env_kwargs.reward_shaping": [True, False],
+        # "env_kwargs.dense":[True],
+        # "env_kwargs.control_mode": [
+        #     "joint_position",
+        #     "joint_velocity",
+        #     "torque",
+        #     "end_effector",
+        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
+    num_exps_launched = 0
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
@@ -180,3 +159,5 @@ if __name__ == "__main__":
                 seed=seed,
                 exp_id=exp_id,
             )
+            num_exps_launched += 1
+    print("Num exps launched: ", num_exps_launched)
