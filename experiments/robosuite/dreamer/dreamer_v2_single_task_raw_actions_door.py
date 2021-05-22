@@ -156,6 +156,7 @@ if __name__ == "__main__":
         "env_name": [
             "Door",
         ],
+        "env_kwargs.reward_shaping":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -83,7 +83,6 @@ if __name__ == "__main__":
                 control_mode="primitives",
                 action_scale=1,
                 max_path_length=5,
-                #running
                 workspace_low=(-0.3, -0.4, 0.8),
                 workspace_high=(0.0, 0.2, 1.3),
                 remove_rotation_primitives=True,

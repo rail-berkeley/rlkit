@@ -84,8 +84,8 @@ if __name__ == "__main__":
                 control_mode="robosuite",
                 action_scale=1,
                 max_path_length=500,
-                workspace_low=(-0.0, -0.1, 0.6),
-                workspace_high=(0.3, 0.1, 0.9),
+                workspace_low=(0.0, -0.2, 0.6),
+                workspace_high=(0.3, 0.2, 1),
                 camera_settings={
                     "distance": 0.2613113661860936,
                     "lookat": [
@@ -155,6 +155,7 @@ if __name__ == "__main__":
         "env_name": [
             "Lift",
         ],
+        "env_kwargs.reward_shaping":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
