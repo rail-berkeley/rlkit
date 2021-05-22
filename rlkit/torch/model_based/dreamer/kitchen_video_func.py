@@ -3,11 +3,11 @@ import os.path as osp
 import cv2
 import numpy as np
 import torch
+from moviepy.editor import ImageSequenceClip
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
-from moviepy.editor import ImageSequenceClip
 
 
 def video_post_epoch_func(algorithm, epoch):

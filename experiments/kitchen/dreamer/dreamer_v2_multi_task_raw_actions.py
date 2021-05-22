@@ -1,9 +1,10 @@
 import argparse
 import random
 import subprocess
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
