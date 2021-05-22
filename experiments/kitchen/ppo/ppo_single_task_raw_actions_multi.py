@@ -83,6 +83,8 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
+            "hinge_slide_bottom_left_burner_light",
+            "microwave_kettle_light_top_left_burner",
             "kettle",
             "microwave",
             "top_left_burner",
