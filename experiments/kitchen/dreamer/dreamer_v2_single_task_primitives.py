@@ -50,6 +50,8 @@ if __name__ == "__main__":
         env_name="hinge_cabinet",
         use_raw_actions=False,
         env_suite="kitchen",
+        pass_render_kwargs=True,
+        save_video=True,
         env_kwargs=dict(
             dense=False,
             image_obs=True,
