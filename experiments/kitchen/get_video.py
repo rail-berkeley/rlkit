@@ -6,9 +6,9 @@ from glob import glob
 import cv2
 import torch
 from d4rl.kitchen.kitchen_envs import *
-from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv, make_env
 
 import rlkit.torch.pytorch_util as ptu
+from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, make_env
 from rlkit.torch.pytorch_util import set_gpu_mode
 
 filename = str(uuid.uuid4())

@@ -7,9 +7,6 @@ from metaworld.envs.mujoco.env_dict import ALL_V1_ENVIRONMENTS
 from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv, make_metaworld_env
 from rlkit.envs.primitives_wrappers import ImageEnvMetaworld, TimeLimit
 
-gym.logger.set_level(40)
-
-
 if __name__ == "__main__":
     test_chunk = False
     num_envs = 5

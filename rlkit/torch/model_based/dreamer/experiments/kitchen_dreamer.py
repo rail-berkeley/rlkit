@@ -45,7 +45,6 @@ def experiment(variant):
     )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
-    gym.logger.set_level(40)
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env_name"]
     env_kwargs = variant["env_kwargs"]

@@ -177,7 +177,7 @@ if __name__ == "__main__":
     # plt.show()
     # import gym
 
-    # gym.logger.set_level(40)
+    #
     # num_envs = 15
     # performance = {}
     # for num_envs in range(33, 34):
