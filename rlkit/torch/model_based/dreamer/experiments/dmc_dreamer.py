@@ -140,9 +140,9 @@ def experiment(variant):
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
-    from hrl_exp.envs.mujoco_vec_wrappers import DummyVecEnv
 
     import rlkit.torch.pytorch_util as ptu
+    from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv
     from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (

@@ -45,7 +45,6 @@ def experiment(variant):
     )
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
-    gym.logger.set_level(40)
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env_name"]
     env_kwargs = variant["env_kwargs"]
@@ -235,7 +234,7 @@ def experiment(variant):
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_post_epoch_func)
-    print('TRAINING')
+    print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
     if variant.get("save_video", False):

@@ -21,13 +21,13 @@ def experiment(variant):
         KitchenSlideCabinetV0,
         KitchenTopLeftBurnerV0,
     )
-    from hrl_exp.envs.mujoco_vec_wrappers import (
+
+    import rlkit.torch.pytorch_util as ptu
+    from rlkit.envs.mujoco_vec_wrappers import (
         DummyVecEnv,
         StableBaselinesVecEnv,
         make_env,
     )
-
-    import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.actor_models import (
         ActorModel,
         ConditionalActorModel,
@@ -52,7 +52,6 @@ def experiment(variant):
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
     from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
-    gym.logger.set_level(40)
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env_name"]
     env_kwargs = variant["env_kwargs"]

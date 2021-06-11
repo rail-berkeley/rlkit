@@ -1,8 +1,8 @@
 def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
+    import numpy as np
 
     from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
-    import numpy as np
 
     gym.logger.setLevel(40)
     import robosuite as suite

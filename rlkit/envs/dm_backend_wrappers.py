@@ -404,6 +404,8 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
                         1.60057621e-04,
                         7.07106768e-01,
                     ]
+            else:
+                raise ValueError("no model found")
 
         self.frame_skip = frame_skip
         self._use_dm_backend = True

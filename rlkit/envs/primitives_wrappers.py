@@ -1003,7 +1003,7 @@ class RobosuiteWrapper(GymWrapper):
         )
         if hasattr(self.env, "reset_action_space"):
             self.env.reset_action_space(**reset_action_space_kwargs)
-            if self.control_mode == "primitives":
+            if self.control_mode == "primitives" or self.control_mode == "vices":
                 self.action_space = self.env.action_space
         self.image_shape = (3, self.imwidth, self.imheight)
         self.imlength = self.imwidth * self.imheight
@@ -1220,6 +1220,44 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 )
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
+        elif self.control_mode == "vices":
+            self.action_space = Box(-np.ones(10), np.ones(10))
+            ctrl_ratio = 1.0
+            control_range_pos = np.ones(3)
+            kp_max = 10
+            kp_max_abs_delta = 10
+            kp_min = 0.1
+            damping_max = 2
+            damping_max_abs_delta = 1
+            damping_min = 0.1
+            use_delta_impedance = False
+            initial_impedance_pos = 1
+            initial_impedance_ori = 1
+            initial_damping = 0.25
+            control_freq = 1.0 * ctrl_ratio
+
+            self.joint_index_vel = np.arange(7)
+            self.controller = PositionController(
+                control_range_pos,
+                kp_max,
+                kp_max_abs_delta,
+                kp_min,
+                damping_max,
+                damping_max_abs_delta,
+                damping_min,
+                use_delta_impedance,
+                initial_impedance_pos,
+                initial_impedance_ori,
+                initial_damping,
+                control_freq=control_freq,
+                interpolation="linear",
+            )
+            self.controller.update_model(
+                self.sim,
+                self.joint_index_vel,
+                self.joint_index_vel,
+                id_name="robot0_right_hand",
+            )
 
     def step(self, action):
         """
@@ -1268,6 +1306,24 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 policy_step = False
                 if self.render_every_step:
                     self.render()
+            stats = [0, 0]
+        elif self.control_mode == "vices":
+            for i in range(int(self.controller.interpolation_steps)):
+                self.controller.update_model(
+                    self.sim,
+                    self.joint_index_vel,
+                    self.joint_index_vel,
+                    id_name="robot0_right_hand",
+                )
+                a = self.controller.action_to_torques(action[:-1], i == 0)
+                act = np.zeros(9)
+                act[-1] = -action[-1]
+                act[-2] = action[-1]
+                act[:7] = a
+                self.sim.data.ctrl[:] = act
+                self.sim.step()
+                self._update_observables()
+
             stats = [0, 0]
         else:
             self.img_array = []

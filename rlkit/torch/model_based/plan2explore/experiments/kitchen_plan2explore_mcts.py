@@ -21,13 +21,13 @@ def experiment(variant):
         KitchenSlideCabinetV0,
         KitchenTopLeftBurnerV0,
     )
-    from hrl_exp.envs.mujoco_vec_wrappers import (
+
+    import rlkit.torch.pytorch_util as ptu
+    from rlkit.envs.mujoco_vec_wrappers import (
         DummyVecEnv,
         StableBaselinesVecEnv,
         make_env,
     )
-
-    import rlkit.torch.pytorch_util as ptu
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,

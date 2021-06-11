@@ -12,13 +12,11 @@ from d4rl.kitchen.kitchen_envs import (
     KitchenSlideCabinetV0,
     KitchenTopLeftBurnerV0,
 )
-from hrl_exp.envs.mujoco_vec_wrappers import (
+from fromrlkit.envs.mujoco_vec_wrappers import (
     DummyVecEnv,
     StableBaselinesVecEnv,
     make_env,
 )
-
-gym.logger.set_level(40)
 
 
 def make_env():

@@ -5,10 +5,10 @@ import uuid
 import cv2
 import torch
 from d4rl.kitchen.kitchen_envs import *
-from hrl_exp.envs.mujoco_vec_wrappers import Async, DummyVecEnv, VecEnv, make_env
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
+from rlkit.envs.mujoco_vec_wrappers import Async, DummyVecEnv, VecEnv, make_env
 from rlkit.torch.model_based.dreamer.rollout_functions import vec_rollout
 from rlkit.torch.pytorch_util import set_gpu_mode
 
