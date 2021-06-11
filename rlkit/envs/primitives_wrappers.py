@@ -1448,6 +1448,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
+            grasp=True,
         )
         return stats
 
