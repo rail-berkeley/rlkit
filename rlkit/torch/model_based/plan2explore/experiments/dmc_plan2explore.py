@@ -165,7 +165,7 @@ def experiment(variant):
         OneStepEnsembleModel,
     )
     from rlkit.torch.model_based.plan2explore.plan2explore import Plan2ExploreTrainer
-    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     expl_env = DeepMindControl(variant["env_id"])
     expl_env.reset()

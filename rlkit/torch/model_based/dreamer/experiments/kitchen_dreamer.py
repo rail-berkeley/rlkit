@@ -1,8 +1,6 @@
 def experiment(variant):
     import os
 
-    import gym
-
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     import torch
@@ -10,12 +8,6 @@ def experiment(variant):
     import rlkit.envs.primitives_make_env as primitives_make_env
     import rlkit.torch.pytorch_util as ptu
     from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
-    from rlkit.envs.primitives_wrappers import (
-        ActionRepeat,
-        ImageEnvMetaworld,
-        NormalizeActions,
-        TimeLimit,
-    )
     from rlkit.torch.model_based.dreamer.actor_models import (
         ActorModel,
         ConditionalActorModel,
@@ -33,17 +25,14 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-    from rlkit.torch.model_based.dreamer.world_models import (
-        StateConcatObsWorldModel,
-        WorldModel,
-    )
+    from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
     )
     from rlkit.torch.model_based.plan2explore.mcts_policy import (
         HybridAdvancedMCTSPolicy,
     )
-    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     env_suite = variant.get("env_suite", "kitchen")
     env_name = variant["env_name"]
@@ -183,16 +172,12 @@ def experiment(variant):
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
-        # env_params=env_kwargs,
-        # env_class=env_name,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
         save_env_in_snapshot=False,
-        # env_params=env_kwargs,
-        # env_class=env_name,
     )
 
     replay_buffer = EpisodeReplayBuffer(

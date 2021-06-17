@@ -156,7 +156,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
-    from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
+    from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     expl_env = DeepMindControl(variant["env_id"])
     expl_env.reset()

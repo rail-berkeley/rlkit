@@ -2,7 +2,6 @@ import abc
 from collections import OrderedDict
 
 import gtimer as gt
-import wandb
 
 from rlkit.core import eval_util, logger
 from rlkit.data_management.replay_buffer import ReplayBuffer
@@ -31,7 +30,6 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         exploration_data_collector: DataCollector,
         evaluation_data_collector: DataCollector,
         replay_buffer: ReplayBuffer,
-        use_wandb: bool = False,
     ):
         self.trainer = trainer
         self.expl_env = exploration_env
@@ -42,10 +40,6 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         self._start_epoch = 0
 
         self.post_epoch_funcs = []
-        self.use_wandb = use_wandb
-        if use_wandb:
-            for network in trainer.networks:
-                wandb.watch(network, log="all")
 
     def train(self, start_epoch=0):
         self._start_epoch = start_epoch
@@ -83,12 +77,6 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             snapshot["replay_buffer/" + k] = v
         return snapshot
 
-    def _log_wandb(self, d, prefix, epoch):
-        updated_d = {}
-        for k, v in d.items():
-            updated_d[prefix + k] = v
-        wandb.log(updated_d, step=epoch)
-
     def _log_stats(self, epoch):
         logger.log("Epoch {} finished".format(epoch), with_timestamp=True)
 
@@ -98,21 +86,11 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(
             self.replay_buffer.get_diagnostics(), prefix="replay_buffer/"
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.replay_buffer.get_diagnostics(),
-                prefix="replay_buffer/",
-                epoch=epoch,
-            )
 
         """
         Trainer
         """
         logger.record_dict(self.trainer.get_diagnostics(), prefix="trainer/")
-        if self.use_wandb:
-            self._log_wandb(
-                self.trainer.get_diagnostics(), prefix="trainer/", epoch=epoch
-            )
 
         """
         Exploration
@@ -120,34 +98,16 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(
             self.expl_data_collector.get_diagnostics(), prefix="exploration/"
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.expl_data_collector.get_diagnostics(),
-                prefix="exploration/",
-                epoch=epoch,
-            )
         expl_paths = self.expl_data_collector.get_epoch_paths()
         if hasattr(self.expl_env, "get_diagnostics"):
             logger.record_dict(
                 self.expl_env.get_diagnostics(expl_paths),
                 prefix="exploration/",
             )
-            if self.use_wandb:
-                self._log_wandb(
-                    self.expl_env.get_diagnostics(expl_paths),
-                    prefix="exploration/",
-                    epoch=epoch,
-                )
         logger.record_dict(
             eval_util.get_generic_path_information(expl_paths),
             prefix="exploration/",
         )
-        if self.use_wandb:
-            self._log_wandb(
-                eval_util.get_generic_path_information(expl_paths),
-                prefix="exploration/",
-                epoch=epoch,
-            )
         """
         Evaluation
         """
@@ -155,48 +115,22 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             self.eval_data_collector.get_diagnostics(),
             prefix="evaluation/",
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.eval_data_collector.get_diagnostics(),
-                prefix="evaluation/",
-                epoch=epoch,
-            )
         eval_paths = self.eval_data_collector.get_epoch_paths()
         if hasattr(self.eval_env, "get_diagnostics"):
             logger.record_dict(
                 self.eval_env.get_diagnostics(eval_paths),
                 prefix="evaluation/",
             )
-            if self.use_wandb:
-                self._log_wandb(
-                    self.eval_env.get_diagnostics(eval_paths),
-                    prefix="evaluation/",
-                    epoch=epoch,
-                )
         logger.record_dict(
             eval_util.get_generic_path_information(eval_paths),
             prefix="evaluation/",
         )
-        if self.use_wandb:
-            self._log_wandb(
-                eval_util.get_generic_path_information(eval_paths),
-                prefix="evaluation/",
-                epoch=epoch,
-            )
 
         """
         Misc
         """
         gt.stamp("logging")
-        timings = _get_epoch_timings()
-        timings["time/training and exploration (s)"] = self.total_train_expl_time
-        logger.record_dict(timings)
-        if self.use_wandb:
-            self._log_wandb(
-                timings,
-                prefix="",
-                epoch=epoch,
-            )
+        logger.record_dict(_get_epoch_timings())
         logger.record_tabular("Epoch", epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
 
