@@ -53,15 +53,8 @@ if __name__ == "__main__":
         env_kwargs=dict(
             dense=False,
             image_obs=True,
-            fixed_schema=False,
             action_scale=1.4,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_path_length=15,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,

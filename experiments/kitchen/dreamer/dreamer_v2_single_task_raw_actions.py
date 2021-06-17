@@ -53,15 +53,7 @@ if __name__ == "__main__":
         env_kwargs=dict(
             dense=False,
             image_obs=True,
-            fixed_schema=False,
             action_scale=1,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
-            use_workspace_limits=True,
-            max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
             usage_kwargs=dict(
@@ -126,13 +118,6 @@ if __name__ == "__main__":
             "light_switch",
             "slide_cabinet",
         ],
-        # "env_kwargs.dense":[True],
-        # "env_kwargs.control_mode": [
-        #     "joint_position",
-        #     "joint_velocity",
-        #     "torque",
-        #     "end_effector",
-        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

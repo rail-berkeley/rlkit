@@ -447,7 +447,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             combined_action_space_low, combined_action_space_high, dtype=np.float32
         )
         self.use_combined_action_space = use_combined_action_space
-        self.fixed_schema = False
         if self.use_combined_action_space and self.control_mode == "primitives":
             self.reset_mocap2body_xpos(self.sim)
             self.action_space = self.combined_action_space
@@ -1207,7 +1206,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         self.combined_action_space = Box(
             combined_action_space_low, combined_action_space_high, dtype=np.float32
         )
-        self.fixed_schema = False
         if self.control_mode == "primitives":
             self.action_space = self.combined_action_space
             act_lower_primitive = np.zeros(self.num_primitives)

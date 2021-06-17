@@ -56,15 +56,9 @@ if __name__ == "__main__":
         env_kwargs=dict(
             dense=False,
             image_obs=True,
-            fixed_schema=False,
             action_scale=1,
-            use_combined_action_space=True,
             proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
             usage_kwargs=dict(
@@ -122,7 +116,6 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         load_from_path=True,
-        # models_path="/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/02-10-p2exp_sc_expl_with_eval_actor_v1_2021_02_10_13_55_48_0001--s-11474/",
         retrain_actor_and_vf=False,
         pkl_file_name="/itr_30.pkl",
     )
@@ -143,18 +136,7 @@ if __name__ == "__main__":
         "trainer_kwargs.world_model_lr": [3e-4],
         "pkl_file_name": [
             "/params.pkl",
-        ]
-        # "models_path": [
-        #     os.path.join(
-        #         "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/",
-        #         path,
-        #     )
-        #     for path in os.listdir(
-        #         "/home/mdalal/research/rlkit/data/02-10-p2exp-sc-expl-with-eval-actor-v1/"
-        #     )
-        # ]
-        # "env_kwargs.use_workspace_limits": [True, False],
-        # "trainer_kwargs.actor_entropy_loss_schedule": ["linear(3e-3,3e-4,5e4)", "1e-4"],
+        ],
     }
     models_path_dict = {
         # "microwave": [

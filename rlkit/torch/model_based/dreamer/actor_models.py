@@ -27,9 +27,7 @@ class ActorModel(Mlp):
         dist="tanh_normal_dreamer_v1",
         **kwargs,
     ):
-        self.discrete_continuous_dist = (
-            discrete_continuous_dist and not env.fixed_schema
-        )
+        self.discrete_continuous_dist = discrete_continuous_dist
         self.discrete_action_dim = discrete_action_dim
         self.continuous_action_dim = continuous_action_dim
         if self.discrete_continuous_dist:
@@ -152,7 +150,6 @@ class ActorModel(Mlp):
             indices = torch.distributions.Categorical(logits=0 * discrete).sample()
             rand_action = F.one_hot(indices, discrete.shape[-1])
             probs = ptu.rand(discrete.shape[:1])
-            # epsilon greedy
             discrete = torch.where(
                 probs.reshape(-1, 1) < expl_amount,
                 rand_action.int(),
@@ -235,9 +232,7 @@ class ConditionalActorModel(torch.nn.Module):
         self._mean_scale = mean_scale
         self.use_tanh_normal = use_tanh_normal
         self.raw_init_std = torch.log(torch.exp(self._init_std) - 1)
-        self.discrete_continuous_dist = (
-            discrete_continuous_dist and not env.fixed_schema
-        )
+        self.discrete_continuous_dist = discrete_continuous_dist
 
     def forward(self, input):
         h = input

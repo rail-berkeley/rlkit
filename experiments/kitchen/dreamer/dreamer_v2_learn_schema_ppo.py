@@ -51,13 +51,7 @@ if __name__ == "__main__":
         env_kwargs=dict(
             dense=False,
             image_obs=True,
-            fixed_schema=False,
             action_scale=1.4,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
             use_workspace_limits=True,
         ),
         actor_kwargs=dict(
@@ -128,7 +122,6 @@ if __name__ == "__main__":
         ],
         "trainer_kwargs.use_actor_value_optimizer": [True, False],
         "trainer_kwargs.num_actor_value_updates": [10],
-        # "trainer_kwargs.num_imagination_iterations": [1, 10, 25],
         "trainer_kwargs.use_advantage_normalization": [True],
         "trainer_kwargs.use_clipped_value_loss": [True],
     }

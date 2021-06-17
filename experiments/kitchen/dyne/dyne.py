@@ -24,25 +24,18 @@ if __name__ == "__main__":
     variant = dict(
         env_kwargs=dict(
             dense=False,
-            image_obs=False,
-            fixed_schema=False,
+            image_obs=True,
             action_scale=1,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
-            use_workspace_limits=True,
-            max_path_length=280,
             control_mode="joint_velocity",
             frame_skip=40,
+            imwidth=84,
+            imheight=84,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=False,
+                use_image_obs=True,
                 max_path_length=280,
                 unflatten_images=False,
-                use_real_nvp_wrappers=False,
             ),
             image_kwargs=dict(),
         ),
@@ -68,11 +61,13 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "kettle",
-            # "slide_cabinet",
-            # "microwave",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "slide_cabinet",
+            "microwave",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
+            "microwave_kettle_light_top_left_burner",
+            "hinge_slide_bottom_left_burner_light",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

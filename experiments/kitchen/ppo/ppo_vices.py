@@ -1,13 +1,17 @@
 import argparse
+import os
 import random
 import subprocess
+
+import numpy as np
+import torch
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 
 
 def experiment(variant):
-    from dyne.rl.main_dyne import experiment
+    from a2c_ppo_acktr.main import experiment
 
     experiment(variant)
 
@@ -19,58 +23,66 @@ if __name__ == "__main__":
     parser.add_argument("--mode", type=str, default="local")
     parser.add_argument("--debug", action="store_true", default=False)
     args = parser.parse_args()
-    exp_prefix = args.exp_prefix
+    if args.debug:
+        exp_prefix = "test" + args.exp_prefix
+    else:
+        exp_prefix = args.exp_prefix
     variant = dict(
+        algorithm_kwargs=dict(
+            entropy_coef=0.01,
+            value_loss_coef=0.5,
+            lr=3e-4,
+            num_mini_batch=64,
+            ppo_epoch=10,
+            clip_param=0.2,
+            eps=1e-5,
+            max_grad_norm=0.5,
+        ),
+        rollout_kwargs=dict(
+            use_gae=True,
+            gamma=0.99,
+            gae_lambda=0.95,
+            use_proper_time_limits=True,
+        ),
         env_kwargs=dict(
             dense=False,
-            image_obs=False,
-            fixed_schema=False,
+            image_obs=True,
             action_scale=1,
-            use_combined_action_space=True,
-            proprioception=False,
-            wrist_cam_concat_with_fixed_view=False,
-            use_wrist_cam=False,
-            normalize_proprioception_obs=True,
             use_workspace_limits=True,
-            max_path_length=280,
-            control_mode="joint_velocity",
+            control_mode="vices",
             frame_skip=40,
+            imwidth=84,
+            imheight=84,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=False,
+                use_image_obs=True,
                 max_path_length=280,
-                unflatten_images=False,
+                unflatten_images=True,
             ),
             image_kwargs=dict(),
         ),
-        env_name="slide_cabinet",
+        actor_kwargs=dict(recurrent=False, hidden_size=512, hidden_activation="relu"),
+        num_processes=12,
+        num_env_steps=int(1e6),
+        num_steps=2048 // 12,
+        log_interval=1,
+        eval_interval=1,
+        use_raw_actions=True,
         env_suite="kitchen",
-        decoder="kitchen_dyne",
-        stack=4,
-        replay_size=int(2.5e6),
-        policy_noise=0.2,
-        expl_noise=0.1,
-        max_e_action=None,
-        policy_name="DynE-TD3",
-        pixels=True,
-        max_timesteps=1e6,
-        batch_size=100,
-        discount=0.99,
-        tau=0.005,
-        noise_clip=0.5,
-        policy_freq=2,
-        eval_freq=1e4,
-        start_timesteps=2500,
+        use_linear_lr_decay=False,
     )
 
     search_space = {
         "env_name": [
-            # "microwave_kettle_light_top_left_burner",
+            "microwave",
+            "kettle",
+            "slide_cabinet",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
+            "microwave_kettle_light_top_left_burner",
             "hinge_slide_bottom_left_burner_light",
-        ],
-        "decoder": [
-            "kitchen_dyne",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -94,5 +106,4 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
-                skip_wait=True,
             )
