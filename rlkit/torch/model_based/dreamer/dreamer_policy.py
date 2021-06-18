@@ -46,7 +46,7 @@ class DreamerPolicy(Policy):
             action = ptu.zeros((observation.shape[0], self.action_dim))
         embed = self.world_model.encode(observation)
         new_state, _ = self.world_model.obs_step(prev_state, action, embed)
-        feat = self.world_model.get_feat(new_state)
+        feat = self.world_model.get_features(new_state)
         dist = self.actor(feat)
         action = dist.mode()
         if self.exploration:

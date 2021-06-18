@@ -13,13 +13,13 @@ from rlkit.torch.model_based.dreamer.world_models import WorldModel
 
 def random_rollout(wm, state, max_steps, num_primitives, step_count):
     if step_count == max_steps:
-        return wm.reward(wm.get_feat(state))[0].item()
+        return wm.reward(wm.get_features(state))[0].item()
     returns = 0
     for i in range(step_count, max_steps):
         idx = np.random.choice(num_primitives)
         action = wm.actions[idx : idx + 1, :]
         state = wm.action_step(state, action)
-        r = wm.reward(wm.get_feat(state))[0]
+        r = wm.reward(wm.get_features(state))[0]
         returns += r
     return returns.item()
 

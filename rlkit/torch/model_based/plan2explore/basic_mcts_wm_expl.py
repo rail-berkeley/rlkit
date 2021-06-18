@@ -60,7 +60,7 @@ def random_rollout(
     returns = 0
     for i in range(step_count, max_steps):
         idx = np.random.choice(num_primitives)
-        feat = wm.get_feat(state)
+        feat = wm.get_features(state)
         discrete_action = ptu.zeros(num_primitives).reshape(1, -1)
         discrete_action[0][idx] = 1.0
         action_input = (discrete_action, feat)
@@ -81,7 +81,9 @@ def random_rollout(
                 * intrinsic_reward_scale
             )
         if extrinsic_reward_scale > 0.0:
-            r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
+            r += (
+                wm.reward(wm.get_features(new_state)).flatten() * extrinsic_reward_scale
+            )
         state = new_state
         returns += r
     return returns[0].item()
@@ -236,7 +238,7 @@ def generate_full_actions(
 ):
 
     discrete_actions = ptu.eye(num_primitives)
-    feat = wm.get_feat(state)
+    feat = wm.get_features(state)
     action_input = (discrete_actions, feat)
     action_dist = actor(action_input)
     if evaluation:
@@ -271,7 +273,7 @@ def step_wm(
             * intrinsic_reward_scale
         )
     if extrinsic_reward_scale > 0.0:
-        r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
+        r += wm.reward(wm.get_features(new_state)).flatten() * extrinsic_reward_scale
     return new_state, r, action
 
 

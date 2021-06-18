@@ -56,7 +56,7 @@ def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
         )
         actions = ptu.zeros((4, algorithm.max_path_length, env.action_space.low.size))
         for k in range(algorithm.max_path_length):
-            feat = algorithm.trainer.world_model.get_feat(new_state)
+            feat = algorithm.trainer.world_model.get_features(new_state)
             action_dist = algorithm.trainer.actor(feat.detach())
             if type(algorithm.trainer.actor) == ConditionalActorModel:
                 action, _ = action_dist.rsample_and_log_prob()
@@ -64,7 +64,7 @@ def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
                 action = action_dist.rsample()
             new_state = algorithm.trainer.world_model.action_step(new_state, action)
             new_img = algorithm.trainer.world_model.decode(
-                algorithm.trainer.world_model.get_feat(new_state)
+                algorithm.trainer.world_model.get_features(new_state)
             )
             reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
             actions[:, k : k + 1] = action.unsqueeze(1)

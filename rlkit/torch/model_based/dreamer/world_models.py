@@ -229,7 +229,7 @@ class WorldModel(PyTorchModule):
         state=None,
     ):
         post_params, prior_params = self.obs_step(state, action, embed)
-        feat = self.get_feat(post_params)
+        feat = self.get_features(post_params)
         image_params = self.decode(feat)
         reward_params = self.reward(feat)
         pred_discount_params = self.pred_discount(feat)
@@ -315,7 +315,7 @@ class WorldModel(PyTorchModule):
             embed,
         )
 
-    def get_feat(self, state):
+    def get_features(self, state):
         stoch = state["stoch"]
         if self.discrete_latents:
 

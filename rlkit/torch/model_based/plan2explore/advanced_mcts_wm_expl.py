@@ -142,7 +142,7 @@ def Advanced_UCT_search(
         )
 
         if not leaf.value:
-            states = wm.get_feat(leaf.state)
+            states = wm.get_features(leaf.state)
             value = vf(states)[0].item()
             leaf.value = value
         leaf.backup(leaf.value, min_max_stats, use_reward_discount_value)
@@ -191,7 +191,7 @@ def generate_full_actions(
     discrete_actions,
     evaluation=False,
 ):
-    feat = wm.get_feat(state)
+    feat = wm.get_features(state)
     if type(actor) == ConditionalContinuousActorModel:
         action_input = (
             discrete_actions,
@@ -317,9 +317,9 @@ def step_wm(
     #         * intrinsic_reward_scale
     #     )
     if extrinsic_reward_scale > 0.0:
-        r += wm.reward(wm.get_feat(new_state)).flatten() * extrinsic_reward_scale
+        r += wm.reward(wm.get_features(new_state)).flatten() * extrinsic_reward_scale
     if num_actions_per_primitive > 0:
-        values = value_fn(wm.get_feat(new_state)).flatten()
+        values = value_fn(wm.get_features(new_state)).flatten()
         values, indices = torch.sort(values, descending=True)
         new_state_sorted = {}
         num_actions_to_output = min(
@@ -332,7 +332,7 @@ def step_wm(
         priors = priors[indices]
         r = r[indices]
         new_state = new_state_sorted
-    discounts = wm.pred_discount(wm.get_feat(new_state)).flatten()
+    discounts = wm.pred_discount(wm.get_features(new_state)).flatten()
     return new_state, action, priors, r, discounts
 
 

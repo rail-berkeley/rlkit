@@ -10,24 +10,10 @@ def experiment(variant):
     )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
-    import gym
     import torch
-    from d4rl.kitchen.kitchen_envs import (
-        KitchenBottomLeftBurnerV0,
-        KitchenHingeCabinetV0,
-        KitchenKettleV0,
-        KitchenLightSwitchV0,
-        KitchenMicrowaveV0,
-        KitchenSlideCabinetV0,
-        KitchenTopLeftBurnerV0,
-    )
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.envs.mujoco_vec_wrappers import (
-        DummyVecEnv,
-        StableBaselinesVecEnv,
-        make_env,
-    )
+    from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
     from rlkit.torch.model_based.dreamer.actor_models import (
         ActorModel,
         ConditionalActorModel,
@@ -42,10 +28,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-    from rlkit.torch.model_based.dreamer.world_models import (
-        StateConcatObsWorldModel,
-        WorldModel,
-    )
+    from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
         OneStepEnsembleModel,
     )
@@ -205,8 +188,9 @@ def experiment(variant):
             expl_amount=variant.get("expl_amount", 0.3),
             discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-            and (not variant["env_kwargs"]["fixed_schema"]),
+            discrete_continuous_dist=variant["actor_kwargs"][
+                "discrete_continuous_dist"
+            ],
         )
         if variant.get("eval_with_exploration_actor", False):
             eval_actor = exploration_actor
@@ -221,8 +205,9 @@ def experiment(variant):
             expl_amount=0.0,
             discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"]
-            and (not variant["env_kwargs"]["fixed_schema"]),
+            discrete_continuous_dist=variant["actor_kwargs"][
+                "discrete_continuous_dist"
+            ],
         )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
@@ -231,16 +216,12 @@ def experiment(variant):
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
-        # env_params=env_kwargs,
-        # env_class=env_name,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
         save_env_in_snapshot=False,
-        # env_params=env_kwargs,
-        # env_class=env_name,
     )
 
     replay_buffer = EpisodeReplayBuffer(
@@ -276,7 +257,7 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
     )
 
-    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
+    algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    # video_post_epoch_func(algorithm, -1)
+    video_post_epoch_func(algorithm, -1)

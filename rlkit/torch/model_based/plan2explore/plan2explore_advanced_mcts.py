@@ -269,7 +269,7 @@ class Plan2ExploreAdvancedMCTSTrainer(Plan2ExploreTrainer):
                 ]
             )
             init_state = self.world_model.initial(new_state["stoch"].shape[0])
-            feat = self.world_model.get_feat(init_state).detach()
+            feat = self.world_model.get_features(init_state).detach()
             action = actor(feat).rsample().detach()
             action = ptu.zeros_like(action)  # ensures it is a dummy action
             encoded_image_goals = self.world_model.encode(
@@ -278,7 +278,7 @@ class Plan2ExploreAdvancedMCTSTrainer(Plan2ExploreTrainer):
             post_params, _, _, _, _ = self.world_model.forward_batch(
                 encoded_image_goals, action, init_state
             )
-            featurized_image_goals = self.world_model.get_feat(post_params).detach()
+            featurized_image_goals = self.world_model.get_features(post_params).detach()
             rewards = []
 
         feats = []
@@ -286,7 +286,7 @@ class Plan2ExploreAdvancedMCTSTrainer(Plan2ExploreTrainer):
         log_probs = []
         states = []
         for i in range(self.imagination_horizon):
-            feat = self.world_model.get_feat(new_state)
+            feat = self.world_model.get_features(new_state)
             states.append(new_state["deter"])
             discrete_action = discrete_actions[
                 i : i + 1, : self.world_model.env.num_primitives
@@ -302,7 +302,8 @@ class Plan2ExploreAdvancedMCTSTrainer(Plan2ExploreTrainer):
             log_probs.append(action_dist.log_prob(continuous_action).unsqueeze(0))
             if self.image_goals is not None:
                 reward = torch.linalg.norm(
-                    featurized_image_goals - self.world_model.get_feat(new_state), dim=1
+                    featurized_image_goals - self.world_model.get_features(new_state),
+                    dim=1,
                 ).unsqueeze(0)
                 rewards.append(reward)
 

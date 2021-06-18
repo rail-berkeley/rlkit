@@ -164,7 +164,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         d = {
             "deter": exploration_imag_states["deter"],
             "stoch": exploration_imag_states["stoch"],
-            "feat": self.world_model.get_feat(exploration_imag_states),
+            "feat": self.world_model.get_features(exploration_imag_states),
         }
         input_state = d[self.one_step_ensemble.inputs]
         input_state = input_state.reshape(-1, input_state.shape[-1])
@@ -212,7 +212,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 ]
             )
             init_state = self.world_model.initial(new_state["stoch"].shape[0])
-            feat = self.world_model.get_feat(init_state).detach()
+            feat = self.world_model.get_features(init_state).detach()
             action = actor(feat).rsample().detach()
             action = ptu.zeros_like(action)  # ensures it is a dummy action
             encoded_image_goals = self.world_model.encode(
@@ -221,7 +221,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             post_params, _, _, _, _ = self.world_model.forward_batch(
                 encoded_image_goals, action, init_state
             )
-            featurized_image_goals = self.world_model.get_feat(post_params).detach()
+            featurized_image_goals = self.world_model.get_features(post_params).detach()
             rewards = []
 
         feats = []
@@ -229,7 +229,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
         log_probs = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
         for _ in range(self.imagination_horizon):
-            feat = self.world_model.get_feat(new_state)
+            feat = self.world_model.get_features(new_state)
             for k in states.keys():
                 states[k].append(new_state[k].unsqueeze(0))
             action_dist = actor(feat.detach())
@@ -244,9 +244,14 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             actions.append(action.unsqueeze(0))
             log_probs.append(log_prob.unsqueeze(0))
             if self.image_goals is not None:
-                reward = -1 * torch.linalg.norm(
-                    featurized_image_goals - self.world_model.get_feat(new_state), dim=1
-                ).unsqueeze(0)
+                reward = (
+                    -1
+                    * torch.linalg.norm(
+                        featurized_image_goals
+                        - self.world_model.get_features(new_state),
+                        dim=1,
+                    ).unsqueeze(0)
+                )
                 rewards.append(reward)
 
         feats = torch.cat(feats)
@@ -259,7 +264,7 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             return feats, actions, log_probs, states, rewards
         return feats, actions, log_probs, states
 
-    def compute_loss(
+    def train_networks(
         self,
         batch,
         skip_statistics=False,
@@ -292,13 +297,13 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
             "embed": embed,
             "stoch": post["stoch"],
             "deter": post["deter"],
-            "feat": self.world_model.get_feat(post),
+            "feat": self.world_model.get_features(post),
         }
         prior_vals = {
             "embed": embed,
             "stoch": prior["stoch"],
             "deter": prior["deter"],
-            "feat": self.world_model.get_feat(prior),
+            "feat": self.world_model.get_features(prior),
         }
         ensemble_training_input_target_state = {
             "post_to_next_post": [post_vals, post_vals],
@@ -446,12 +451,14 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     discount = self.discount * torch.ones_like(imag_reward)
             with FreezeParameters(vf_params):
                 old_imag_value = self.vf(imag_feat).detach()
-            imag_feat_a = imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
-            imag_actions_a = (
+            imag_features_actions = (
+                imag_feat[:-1].reshape(-1, imag_feat.shape[-1]).detach()
+            )
+            imag_actions_actions = (
                 imag_actions[:-1].reshape(-1, imag_actions.shape[-1]).detach()
             )
-            imag_actor_dist = self.actor(imag_feat_a)
-            imag_log_probs = imag_actor_dist.log_prob(imag_actions_a).detach()
+            imag_actor_dist = self.actor(imag_features_actions)
+            imag_log_probs = imag_actor_dist.log_prob(imag_actions_actions).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(vf_params + target_vf_params):
                     imag_target_value = self.target_vf(imag_feat)
@@ -485,12 +492,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 )
 
                 with torch.no_grad():
-                    imag_feat_v = imag_feat.detach()
+                    imag_features_v = imag_feat.detach()
                     target = imag_returns.detach()
                     weights = weights.detach()
 
                 vf_loss_, imag_values_mean_ = self.value_loss(
-                    imag_feat_v,
+                    imag_features_v,
                     weights,
                     target,
                     self.vf,
@@ -632,21 +639,21 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                     exploration_imag_feat
                 ).detach()
 
-            exploration_imag_feat_a = (
+            exploration_imag_features_actions = (
                 exploration_imag_feat[:-1]
                 .reshape(-1, exploration_imag_feat.shape[-1])
                 .detach()
             )
-            exploration_imag_actions_a = (
+            exploration_imag_actions_actions = (
                 exploration_imag_actions[:-1]
                 .reshape(-1, exploration_imag_actions.shape[-1])
                 .detach()
             )
             exploration_imag_actor_dist = self.exploration_actor(
-                exploration_imag_feat_a
+                exploration_imag_features_actions
             )
             exploration_imag_log_probs = exploration_imag_actor_dist.log_prob(
-                exploration_imag_actions_a
+                exploration_imag_actions_actions
             ).detach()
             for _ in range(self.num_actor_value_updates):
                 with FreezeParameters(
@@ -691,12 +698,12 @@ class Plan2ExploreTrainer(DreamerV2Trainer):
                 )
 
                 with torch.no_grad():
-                    exploration_imag_feat_v = exploration_imag_feat.detach()
+                    exploration_imag_features_v = exploration_imag_feat.detach()
                     exploration_value_target = exploration_imag_returns.detach()
                     exploration_weights = exploration_weights.detach()
 
                 exploration_vf_loss_, exploration_imag_values_mean_ = self.value_loss(
-                    exploration_imag_feat_v,
+                    exploration_imag_features_v,
                     exploration_weights,
                     exploration_value_target,
                     self.exploration_vf,

@@ -145,7 +145,7 @@ class DreamerV2MCTSTrainer(DreamerV2Trainer):
         actions = []
         log_probs = []
         for i in range(self.imagination_horizon):
-            feat = self.world_model.get_feat(new_state)
+            feat = self.world_model.get_features(new_state)
             discrete_action = ptu.from_numpy(
                 discrete_actions[i : i + 1, : self.world_model.env.num_primitives]
             ).repeat(feat.shape[0], 1)

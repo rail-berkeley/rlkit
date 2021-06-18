@@ -82,7 +82,10 @@ class HybridMCTSPolicy(Policy):
                 )
                 embed = self.world_model.encode(observation)
                 start_state, _ = self.world_model.obs_step(latent, action, embed)
-                action_input = (discrete_action, self.world_model.get_feat(start_state))
+                action_input = (
+                    discrete_action,
+                    self.world_model.get_features(start_state),
+                )
                 action_dist = self.actor(action_input)
                 continuous_action = self.actor.compute_exploration_action(
                     action_dist.sample(), 0.3
