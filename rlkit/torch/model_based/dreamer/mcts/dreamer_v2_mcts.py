@@ -9,7 +9,7 @@ from rlkit.core.loss import LossStatistics
 from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
 from rlkit.torch.model_based.dreamer.utils import FreezeParameters, lambda_return
-from rlkit.torch.model_based.plan2explore.advanced_mcts_wm_expl import (
+from rlkit.torch.model_based.plan2explore.mcts.advanced_mcts_wm_expl import (
     Advanced_UCT_search,
 )
 

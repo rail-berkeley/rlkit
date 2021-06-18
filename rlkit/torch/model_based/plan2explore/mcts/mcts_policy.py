@@ -3,10 +3,10 @@ import torch
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import Policy
-from rlkit.torch.model_based.plan2explore.advanced_mcts_wm_expl import (
+from rlkit.torch.model_based.plan2explore.mcts.advanced_mcts_wm_expl import (
     Advanced_UCT_search,
 )
-from rlkit.torch.model_based.plan2explore.basic_mcts_wm_expl import UCT_search
+from rlkit.torch.model_based.plan2explore.mcts.basic_mcts_wm_expl import UCT_search
 
 
 class HybridMCTSPolicy(Policy):
