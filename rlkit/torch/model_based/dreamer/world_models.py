@@ -52,7 +52,6 @@ class WorldModel(PyTorchModule):
                 stochastic_state_size * discrete_latent_size
             )
             full_stochastic_state_size = img_and_obs_step_mlp_output_size
-            feature_size = full_stochastic_state_size + deterministic_state_size
         else:
             img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
             full_stochastic_state_size = stochastic_state_size
@@ -334,7 +333,13 @@ class WorldModel(PyTorchModule):
         else:
             return Independent(Bernoulli(logits=mean), dims)
 
-    def get_detached_dist(self, mean, std, dims=1, normal=True, latent=False):
+    def get_detached_dist(self, params, dims=1, normal=True, latent=False):
+        if self.discrete_latents:
+            mean = params["logits"]
+            std = params["logits"]
+        else:
+            mean = params["mean"]
+            std = params["std"]
         return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)
 
     def encode(self, obs):
@@ -406,28 +411,6 @@ class StateConcatObsWorldModel(WorldModel):
         )
         image_obs = self.preprocess(obs)
         encoded_obs = self.conv_encoder(image_obs)
-        # print(
-        #     "Mean Encoded {}, Mean state {}".format(
-        #         encoded_obs.mean().item(), state.mean().item()
-        #     )
-        # )
-        # print(
-        #     "Std Encoded {}, Std state {}".format(
-        #         encoded_obs.std().item(), state.std().item()
-        #     )
-        # )
-        # print(
-        #     "Max Encoded {}, Max state {}".format(
-        #         encoded_obs.max().item(), state.max().item()
-        #     )
-        # )
-        # print(
-        #     "Min Encoded {}, Min state {}".format(
-        #         encoded_obs.min().item(), state.min().item()
-        #     )
-        # )
-        # print()
-
         latent = torch.cat((encoded_obs, state), dim=1)
         return latent
 

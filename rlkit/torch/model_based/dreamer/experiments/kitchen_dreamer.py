@@ -18,18 +18,20 @@ def experiment(variant):
         DreamerPolicy,
     )
     from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
-    from rlkit.torch.model_based.dreamer.dreamer_v2_mcts import DreamerV2MCTSTrainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+    from rlkit.torch.model_based.dreamer.mcts.dreamer_v2_mcts import (
+        DreamerV2MCTSTrainer,
+    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
     )
-    from rlkit.torch.model_based.plan2explore.mcts_policy import (
+    from rlkit.torch.model_based.plan2explore.mcts.mcts_policy import (
         HybridAdvancedMCTSPolicy,
     )
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm

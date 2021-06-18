@@ -1,4 +1,4 @@
-from collections import OrderedDict, namedtuple
+from collections import Counter, OrderedDict, namedtuple
 from typing import Tuple
 
 import numpy as np
@@ -39,18 +39,18 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         target_vf,
         world_model,
         image_shape,
-        imagination_horizon=None,
+        imagination_horizon=15,
         discount=0.99,
         actor_lr=8e-5,
         vf_lr=8e-5,
         world_model_lr=3e-4,
+        world_model_gradient_clip=100.0,
+        actor_gradient_clip=100.0,
+        value_gradient_clip=100.0,
         adam_eps=1e-5,
         weight_decay=0.0,
         soft_target_tau=1,
         target_update_period=100,
-        optimizer_class="torch_adam",
-        use_amp=False,
-        opt_level="O1",
         lam=0.95,
         free_nats=1.0,
         kl_loss_scale=0.0,
@@ -58,24 +58,24 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         image_loss_scale=1.0,
         reward_loss_scale=2.0,
         transition_loss_scale=0.8,
+        detach_rewards=False,
         forward_kl=False,
         policy_gradient_loss_scale=1.0,
         actor_entropy_loss_schedule="1e-4",
-        world_model_gradient_clip=100.0,
-        actor_gradient_clip=100.0,
-        value_gradient_clip=100.0,
         use_baseline=True,
         use_ppo_loss=False,
         ppo_clip_param=0.2,
         num_actor_value_updates=1,
         use_advantage_normalization=False,
-        detach_rewards=False,
         num_imagination_iterations=1,
         use_clipped_value_loss=False,
         actor_value_lr=8e-5,
         use_actor_value_optimizer=False,
         use_pred_discount=True,
         reward_scale=1,
+        optimizer_class="torch_adam",
+        use_amp=False,
+        opt_level="O1",
         debug=False,
         initialize_amp=True,
     ):
@@ -150,9 +150,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.forward_kl = forward_kl
         self.soft_target_tau = soft_target_tau
         self.target_update_period = target_update_period
-        self._n_train_steps_total = 0
-        self._need_to_update_eval_statistics = True
-        self.eval_statistics = OrderedDict()
         self.image_shape = image_shape
         self.use_baseline = use_baseline
         self.use_ppo_loss = use_ppo_loss
@@ -166,6 +163,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.num_imagination_iterations = num_imagination_iterations
         self.use_clipped_value_loss = use_clipped_value_loss
         self.reward_scale = reward_scale
+        self._n_train_steps_total = 0
+        self._need_to_update_eval_statistics = True
+        self.eval_statistics = OrderedDict()
 
     def try_update_target_networks(self):
         if (
@@ -187,14 +187,13 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self._n_train_steps_total += 1
         if self._need_to_update_eval_statistics:
             self.eval_statistics = stats
-            # Compute statistics using only one batch per epoch
             self._need_to_update_eval_statistics = False
 
     def imagine_ahead(self, state):
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
-                if self.use_pred_discount:  # Last step could be terminal.
+                if self.use_pred_discount:
                     v = v[:, :-1]
                 if k == "stoch" and self.world_model.discrete_latents:
                     new_state[k] = v.transpose(1, 0).reshape(
@@ -229,12 +228,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         rewards,
         terminals,
     ):
-        image_pred_loss = (
-            -1
-            * image_dist.log_prob(
-                self.world_model.preprocess(obs).reshape(-1, *self.image_shape)
-            ).mean()
+        preprocessed_obs = self.world_model.preprocess(obs).reshape(
+            -1, *self.image_shape
         )
+        image_pred_loss = -1 * image_dist.log_prob(preprocessed_obs).mean()
         if self.detach_rewards:
             reward_pred_loss = -1 * reward_dist.log_prob(rewards.detach()).mean()
         else:
@@ -244,28 +241,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
         )
 
-        if self.world_model.discrete_latents:
-            post_detached_dist = self.world_model.get_detached_dist(
-                post["logits"],
-                post["logits"],
-                latent=True,
-            )
-            prior_detached_dist = self.world_model.get_detached_dist(
-                prior["logits"],
-                prior["logits"],
-                latent=True,
-            )
-        else:
-            post_detached_dist = self.world_model.get_detached_dist(
-                post["mean"],
-                post["std"],
-                latent=True,
-            )
-            prior_detached_dist = self.world_model.get_detached_dist(
-                prior["mean"],
-                prior["std"],
-                latent=True,
-            )
+        post_detached_dist = self.world_model.get_detached_dist(post)
+        prior_detached_dist = self.world_model.get_detached_dist(prior)
         if self.forward_kl:
             div = kld(post_dist, prior_dist).mean()
             div = torch.max(div, ptu.tensor(self.free_nats))
@@ -310,6 +287,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         weights,
         old_imagined_log_probs,
         actor,
+        log_keys,
     ):
         if self.use_baseline:
             advantages = imagined_returns - value[:-1]
@@ -362,14 +340,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 )
                 * weights
             ).mean()
-        return (
-            actor_loss,
-            dynamics_backprop_loss.mean(),
-            policy_gradient_loss.mean(),
-            actor_entropy_loss.mean(),
-            actor_entropy_loss_scale,
-            imagined_log_probs.mean(),
-        )
+        log_keys["actor_loss"] += actor_loss.item()
+        log_keys["dynamics_backprop_loss"] += dynamics_backprop_loss.mean().item()
+        log_keys["actor_entropy_loss"] += actor_entropy_loss.mean().item()
+        log_keys["actor_entropy_loss_scale"] += actor_entropy_loss_scale
+        log_keys["imagined_log_probs"] += imagined_log_probs.mean().item()
+        return actor_loss
 
     def value_loss(
         self,
@@ -377,6 +353,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         weights,
         imagined_returns,
         vf,
+        log_keys,
         old_imagined_value=None,
     ):
         values = vf(imagined_features_v)[:-1]
@@ -394,7 +371,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             log_probs = value_dist.log_prob(imagined_returns)
             weights = weights.squeeze(-1)
             vf_loss = -(weights * log_probs).mean()
-        return vf_loss, value_dist.mean.mean()
+        log_keys["vf_loss"] += vf_loss.item()
+        log_keys["value_dist"] += value_dist.mean.mean().item()
+        return vf_loss
 
     def update_network(self, network, optimizer, loss, loss_id, gradient_clip):
         if type(network) == list:
@@ -444,7 +423,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             pred_discount_dist,
             _,
         ) = self.world_model(obs, actions)
-        # stack obs, rewards and terminals along path dimension
         obs = obs.transpose(1, 0).reshape(-1, np.prod(self.image_shape))
         rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
         terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
@@ -485,18 +463,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         vf_params = list(self.vf.parameters())
         target_vf_params = list(self.target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
-        (
-            actor_loss,
-            dynamics_backprop_loss,
-            policy_gradient_loss,
-            actor_entropy_loss,
-            actor_entropy_loss_scale,
-            log_probs,
-            vf_loss,
-            imagined_values_mean,
-        ) = (0, 0, 0, 0, 0, 0, 0, 0)
+        log_keys = Counter()
         for _ in range(self.num_imagination_iterations):
-
             with FreezeParameters(world_model_params + pred_discount_params):
                 (
                     imagined_features,
@@ -538,14 +506,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
                 ).detach()[:-1]
 
-                (
-                    actor_loss_,
-                    dynamics_backprop_loss_,
-                    policy_gradient_loss_,
-                    actor_entropy_loss_,
-                    actor_entropy_loss_scale_,
-                    log_probs_,
-                ) = self.actor_loss(
+                actor_loss = self.actor_loss(
                     imagined_returns,
                     imagined_value,
                     imagined_features,
@@ -553,22 +514,28 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     weights,
                     imagined_log_probs,
                     self.actor,
+                    log_keys,
                 )
 
                 with torch.no_grad():
-                    imagined_features_v = imagined_features.detach()
+                    imagined_features_values = imagined_features.detach()
                     target = imagined_returns.detach()
                     weights = weights.detach()
 
-                vf_loss_, imagined_values_mean_ = self.value_loss(
-                    imagined_features_v, weights, target, self.vf, old_imagined_value
+                vf_loss = self.value_loss(
+                    imagined_features_values,
+                    weights,
+                    target,
+                    self.vf,
+                    log_keys,
+                    old_imagined_value,
                 )
 
                 if self.use_actor_value_optimizer:
                     self.update_network(
                         [self.actor, self.vf],
                         self.actor_value_optimizer,
-                        actor_loss_ + vf_loss_,
+                        actor_loss + vf_loss,
                         1,
                         self.actor_gradient_clip,
                     )
@@ -576,7 +543,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.update_network(
                         self.actor,
                         self.actor_optimizer,
-                        actor_loss_,
+                        actor_loss,
                         1,
                         self.actor_gradient_clip,
                     )
@@ -584,44 +551,15 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.update_network(
                         self.vf,
                         self.vf_optimizer,
-                        vf_loss_,
+                        vf_loss,
                         2,
                         self.value_gradient_clip,
                     )
-                actor_loss += actor_loss_.item()
-                dynamics_backprop_loss += dynamics_backprop_loss_.item()
-                policy_gradient_loss += policy_gradient_loss_.item()
-                actor_entropy_loss += actor_entropy_loss_.item()
-                actor_entropy_loss_scale += actor_entropy_loss_scale_
-                log_probs += log_probs_.item()
-                vf_loss += vf_loss_.item()
-                imagined_values_mean += imagined_values_mean_.item()
-
         if self.num_imagination_iterations > 0:
-            actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-            dynamics_backprop_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            policy_gradient_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            actor_entropy_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            actor_entropy_loss_scale /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
-            vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-            imagined_values_mean /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-
-        if type(image_pred_loss) == tuple:
-            image_pred_loss, state_pred_loss = image_pred_loss
-            log_state_pred_loss = True
-        else:
-            log_state_pred_loss = False
+            for key in log_keys:
+                log_keys[key] /= (
+                    self.num_actor_value_updates * self.num_imagination_iterations
+                )
 
         """
         Save some statistics for eval
@@ -630,8 +568,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         if not skip_statistics:
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
-            if log_state_pred_loss:
-                eval_statistics["State Prediction Loss"] = state_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
             eval_statistics["Divergence Loss"] = div.item()
             eval_statistics["Transition Loss"] = transition_loss.item()
@@ -643,17 +579,21 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             eval_statistics["Pred Discount Loss"] = pred_discount_loss.item()
 
             eval_statistics["Actor Loss"] = actor_loss
-            eval_statistics["Dynamics Backprop Loss"] = dynamics_backprop_loss
-            eval_statistics["Policy Gradient Loss"] = policy_gradient_loss
-            eval_statistics["Actor Entropy Loss"] = actor_entropy_loss
-            eval_statistics["Actor Entropy Loss Scale"] = actor_entropy_loss_scale
-            eval_statistics["Actor Log Probs"] = log_probs
+            eval_statistics["Dynamics Backprop Loss"] = log_keys[
+                "dynamics_backprop_loss"
+            ]
+            eval_statistics["Policy Gradient Loss"] = log_keys["policy_gradient_loss"]
+            eval_statistics["Actor Entropy Loss"] = log_keys["actor_entropy_loss"]
+            eval_statistics["Actor Entropy Loss Scale"] = log_keys[
+                "actor_entropy_loss_scale"
+            ]
+            eval_statistics["Actor Log Probs"] = log_keys["log_probs"]
             eval_statistics["Value Loss"] = vf_loss
 
             if self.num_imagination_iterations > 0:
                 eval_statistics["Imagined Returns"] = imagined_returns.mean().item()
                 eval_statistics["Imagined Rewards"] = imagined_reward.mean().item()
-            eval_statistics["Imagined Values"] = imagined_values_mean
+                eval_statistics["Imagined Values"] = log_keys["imagined_values_mean"]
             eval_statistics["Predicted Rewards"] = reward_dist.mean.mean().item()
 
         loss = DreamerLosses(
@@ -714,16 +654,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         for k, v in post.items():
             post_[k] = v.reshape(50, 50, -1)
         post = post_
-        (
-            actor_loss,
-            dynamics_backprop_loss,
-            policy_gradient_loss,
-            actor_entropy_loss,
-            actor_entropy_loss_scale,
-            log_probs,
-            vf_loss,
-            imagined_values_mean,
-        ) = (0, 0, 0, 0, 0, 0, 0, 0)
+        log_keys = Counter()
         for _ in range(num_imagination_iterations):
 
             with FreezeParameters(world_model_params + pred_discount_params):
@@ -765,14 +696,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
                 ).detach()[:-1]
 
-                (
-                    actor_loss_,
-                    dynamics_backprop_loss_,
-                    policy_gradient_loss_,
-                    actor_entropy_loss_,
-                    actor_entropy_loss_scale_,
-                    log_probs_,
-                ) = self.actor_loss(
+                actor_loss = self.actor_loss(
                     imagined_returns,
                     imagined_value,
                     imagined_features,
@@ -787,7 +711,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     target = imagined_returns.detach()
                     weights = weights.detach()
 
-                vf_loss_, imagined_values_mean_ = self.value_loss(
+                vf_loss = self.value_loss(
                     imagined_features_v, weights, target, self.vf, old_imagined_value
                 )
 
@@ -795,7 +719,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.update_network(
                         [self.actor, self.vf],
                         self.actor_value_optimizer,
-                        actor_loss_ + vf_loss_,
+                        actor_loss + vf_loss,
                         1,
                         self.actor_gradient_clip,
                     )
@@ -803,7 +727,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.update_network(
                         self.actor,
                         self.actor_optimizer,
-                        actor_loss_,
+                        actor_loss,
                         1,
                         self.actor_gradient_clip,
                     )
@@ -811,38 +735,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.update_network(
                         self.vf,
                         self.vf_optimizer,
-                        vf_loss_,
+                        vf_loss,
                         2,
                         self.value_gradient_clip,
                     )
-                actor_loss += actor_loss_.item()
-                dynamics_backprop_loss += dynamics_backprop_loss_.item()
-                policy_gradient_loss += policy_gradient_loss_.item()
-                actor_entropy_loss += actor_entropy_loss_.item()
-                actor_entropy_loss_scale += actor_entropy_loss_scale_
-                log_probs += log_probs_.item()
-                vf_loss += vf_loss_.item()
-                imagined_values_mean += imagined_values_mean_.item()
-
-        if self.num_imagination_iterations > 0:
-            actor_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-            dynamics_backprop_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            policy_gradient_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            actor_entropy_loss /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            actor_entropy_loss_scale /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
-            log_probs /= self.num_actor_value_updates * self.num_imagination_iterations
-            vf_loss /= self.num_actor_value_updates * self.num_imagination_iterations
-            imagined_values_mean /= (
-                self.num_actor_value_updates * self.num_imagination_iterations
-            )
 
     def initialize_amp(self):
         if self.use_actor_value_optimizer:
