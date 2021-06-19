@@ -189,7 +189,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.eval_statistics = stats
             self._need_to_update_eval_statistics = False
 
-    def imagine_ahead(self, state):
+    def imagine_ahead(self, state, actor=None):
+        if actor is None:
+            actor = self.actor
         new_state = {}
         for k, v in state.items():
             with torch.no_grad():
@@ -203,9 +205,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
         imagined_features = []
         imagined_actions = []
+        states = dict(mean=[], std=[], stoch=[], deter=[])
         for _ in range(self.imagination_horizon):
             features = self.world_model.get_features(new_state)
-            action_dist = self.actor(features.detach())
+            for k in states.keys():
+                states[k].append(new_state[k].unsqueeze(0))
+            action_dist = actor(features.detach())
             action = action_dist.rsample()
             new_state = self.world_model.action_step(new_state, action)
 
@@ -213,7 +218,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             imagined_actions.append(action.unsqueeze(0))
         imagined_features = torch.cat(imagined_features)
         imagined_actions = torch.cat(imagined_actions)
-        return imagined_features, imagined_actions
+        for k in states.keys():
+            states[k] = torch.cat(states[k])
+        return imagined_features, imagined_actions, states
 
     def world_model_loss(
         self,
@@ -288,6 +295,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         old_imagined_log_probs,
         actor,
         log_keys,
+        prefix="",
     ):
         if self.use_baseline:
             advantages = imagined_returns - value[:-1]
@@ -340,11 +348,13 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 )
                 * weights
             ).mean()
-        log_keys["actor_loss"] += actor_loss.item()
-        log_keys["dynamics_backprop_loss"] += dynamics_backprop_loss.mean().item()
-        log_keys["actor_entropy_loss"] += actor_entropy_loss.mean().item()
-        log_keys["actor_entropy_loss_scale"] += actor_entropy_loss_scale
-        log_keys["imagined_log_probs"] += imagined_log_probs.mean().item()
+        log_keys[prefix + "actor_loss"] += actor_loss.item()
+        log_keys[
+            prefix + "dynamics_backprop_loss"
+        ] += dynamics_backprop_loss.mean().item()
+        log_keys[prefix + "actor_entropy_loss"] += actor_entropy_loss.mean().item()
+        log_keys[prefix + "actor_entropy_loss_scale"] += actor_entropy_loss_scale
+        log_keys[prefix + "imagined_log_probs"] += imagined_log_probs.mean().item()
         return actor_loss
 
     def value_loss(
@@ -355,6 +365,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         vf,
         log_keys,
         old_imagined_value=None,
+        prefix="",
     ):
         values = vf(imagined_features_v)[:-1]
         value_dist = self.world_model.get_dist(values, 1)
@@ -371,8 +382,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             log_probs = value_dist.log_prob(imagined_returns)
             weights = weights.squeeze(-1)
             vf_loss = -(weights * log_probs).mean()
-        log_keys["vf_loss"] += vf_loss.item()
-        log_keys["value_dist"] += value_dist.mean.mean().item()
+        log_keys[prefix + "vf_loss"] += vf_loss.item()
+        log_keys[prefix + "value_dist"] += value_dist.mean.mean().item()
         return vf_loss
 
     def update_network(self, network, optimizer, loss, loss_id, gradient_clip):
@@ -466,10 +477,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys = Counter()
         for _ in range(self.num_imagination_iterations):
             with FreezeParameters(world_model_params + pred_discount_params):
-                (
-                    imagined_features,
-                    imagined_actions,
-                ) = self.imagine_ahead(post)
+                (imagined_features, imagined_actions, _) = self.imagine_ahead(post)
                 imagined_reward = self.world_model.reward(imagined_features)
                 if self.use_pred_discount:
                     discount = self.world_model.get_dist(
@@ -650,18 +658,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         reset_obs = ptu.from_numpy(np.concatenate([self.env.reset()])).repeat((2500, 1))
         embed = self.world_model.encode(reset_obs)
         post, _ = self.world_model.obs_step(null_state, null_acts, embed)
-        post_ = {}
+        post = {}
         for k, v in post.items():
-            post_[k] = v.reshape(50, 50, -1)
-        post = post_
+            post[k] = v.reshape(50, 50, -1)
         log_keys = Counter()
         for _ in range(num_imagination_iterations):
 
             with FreezeParameters(world_model_params + pred_discount_params):
-                (
-                    imagined_features,
-                    imagined_actions,
-                ) = self.imagine_ahead(post)
+                (imagined_features, imagined_actions, _) = self.imagine_ahead(post)
                 imagined_reward = self.world_model.reward(imagined_features)
                 if self.use_pred_discount:
                     discount = self.world_model.get_dist(

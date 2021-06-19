@@ -26,16 +26,10 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._action_dim = get_dim(self._action_space)
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
-        if hasattr(self.env, "proprioception") and self.env.proprioception:
-            self._observations = np.zeros(
-                (max_replay_buffer_size, max_path_length, observation_dim),
-                dtype=np.float32,
-            )
-        else:
-            self._observations = np.zeros(
-                (max_replay_buffer_size, max_path_length, observation_dim),
-                dtype=np.uint8,
-            )
+        self._observations = np.zeros(
+            (max_replay_buffer_size, max_path_length, observation_dim),
+            dtype=np.uint8,
+        )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
         # Make everything a 2D np array to make it easier for other code to
         # reason about the shape of the data

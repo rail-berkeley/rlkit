@@ -5,7 +5,7 @@ def experiment(variant):
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
     )
-    from rlkit.torch.model_based.plan2explore.mcts_policy import (
+    from rlkit.torch.model_based.plan2explore.mcts.mcts_policy import (
         HybridAdvancedMCTSPolicy,
     )
 

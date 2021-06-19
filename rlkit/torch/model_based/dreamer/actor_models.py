@@ -183,7 +183,6 @@ class ConditionalActorModel(torch.nn.Module):
         mean_scale=5.0,
         use_tanh_normal=True,
         use_per_primitive_actor=False,
-        dist="tanh_normal_dreamer_v1",
         **kwargs,
     ):
         super().__init__()
@@ -262,7 +261,6 @@ class ConditionalActorModel(torch.nn.Module):
         indices = torch.distributions.Categorical(logits=0 * discrete).sample()
         rand_action = F.one_hot(indices, discrete.shape[-1])
         probs = ptu.rand(discrete.shape[:1])
-        # epsilon greedy
         discrete = torch.where(
             probs.reshape(-1, 1) < expl_amount,
             rand_action.int(),
