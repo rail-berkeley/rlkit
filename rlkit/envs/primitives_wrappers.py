@@ -682,7 +682,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         render_mode,
                         render_im_shape[0],
                         render_im_shape[1],
-                        original=True,
                     )
                 )
             else:
@@ -690,7 +689,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     render_mode,
                     render_im_shape[0],
                     render_im_shape[1],
-                    original=True,
                 )
 
     def close_gripper(
@@ -1283,7 +1281,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                         render_mode,
                         render_im_shape[0],
                         render_im_shape[1],
-                        original=True,
                     )
                 )
             else:
@@ -1291,7 +1288,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                     render_mode,
                     render_im_shape[0],
                     render_im_shape[1],
-                    original=True,
                 )
 
     def close_gripper(
