@@ -280,7 +280,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             gt.stamp("evaluation sampling")
             st = time.time()
             for train_loop in range(self.num_train_loops_per_epoch):
-                if epoch == 0 and train_loop == 0:  # absolute first iteration
+                if epoch == 0 and train_loop == 0:
                     num_train_steps = self.num_pretrain_steps
                 else:
                     num_train_steps = self.num_trains_per_train_loop

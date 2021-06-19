@@ -31,10 +31,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             dtype=np.uint8,
         )
         self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
-        # Make everything a 2D np array to make it easier for other code to
-        # reason about the shape of the data
         self._rewards = np.zeros((max_replay_buffer_size, max_path_length, 1))
-        # self._terminals[i] = a terminal was received at time i
         self._terminals = np.zeros(
             (max_replay_buffer_size, max_path_length, 1), dtype="uint8"
         )

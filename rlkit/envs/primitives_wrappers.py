@@ -535,16 +535,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
         self.curr_path_length += 1
 
-        # Running the simulator can sometimes mess up site positions, so
-        # re-position them here to make sure they're accurate
         for site in self._target_site_config:
             self._set_pos_site(*site)
 
         if self._did_see_sim_exception:
             return (
-                self._last_stable_obs,  # observation just before going unstable
-                0.0,  # reward (penalize for causing instability)
-                False,  # termination flag always False
+                self._last_stable_obs,
+                0.0,
+                False,
                 {  # info
                     "success": False,
                     "near_object": 0.0,
@@ -558,10 +556,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
         self._last_stable_obs = self._get_obs()
         if not self.isV2:
-            # v1 environments expect this superclass step() to return only the
-            # most recent observation. they override the rest of the
-            # functionality and end up returning the same sort of tuple that
-            # this does
             return self._last_stable_obs
 
         reward, info = self.evaluate_state(self._last_stable_obs, action)
@@ -573,7 +567,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def _get_site_pos(self, siteName):
         return self.data.site_xpos[self.model.site_name2id(siteName)]
 
-    # primitives:
     def get_idx_from_primitive_name(self, primitive_name):
         for idx, pn in self.primitive_idx_to_name.items():
             if pn == primitive_name:

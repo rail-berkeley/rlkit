@@ -3,7 +3,6 @@ import os.path as osp
 import cv2
 import numpy as np
 import torch
-from moviepy.editor import ImageSequenceClip
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger

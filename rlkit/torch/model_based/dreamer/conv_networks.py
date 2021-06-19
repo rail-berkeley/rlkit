@@ -61,7 +61,6 @@ class CNN(nn.Module):
         conv_input = input.narrow(
             start=0, length=self.conv_input_length, dim=1
         ).contiguous()
-        # need to reshape from batch of flattened images into (channels, h, w)
         h = conv_input.view(
             conv_input.shape[0],
             self.input_channels,
