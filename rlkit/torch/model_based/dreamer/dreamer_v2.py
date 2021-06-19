@@ -433,6 +433,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 rewards,
                 terminals,
             )
+
         self.update_network(
             self.world_model,
             self.world_model_optimizer,
@@ -633,71 +634,86 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         vf_params = list(self.vf.parameters())
         target_vf_params = list(self.target_vf.parameters())
         pred_discount_params = list(self.world_model.pred_discount.parameters())
-        null_state = self.world_model.initial(2500)
-        null_acts = ptu.zeros((2500, self.env.action_space.low.size))
-        reset_obs = ptu.from_numpy(np.concatenate([self.env.reset()])).repeat((2500, 1))
-        embed = self.world_model.encode(reset_obs)
-        post, _ = self.world_model.obs_step(null_state, null_acts, embed)
+
+        with torch.cuda.amp.autocast():
+            null_state = self.world_model.initial(2500)
+            null_acts = ptu.zeros((2500, self.env.action_space.low.size))
+            reset_obs = ptu.from_numpy(np.concatenate([self.env.reset()])).repeat(
+                (2500, 1)
+            )
+            embed = self.world_model.encode(reset_obs)
+            post, _ = self.world_model.obs_step(null_state, null_acts, embed)
         post = {}
         for k, v in post.items():
             post[k] = v.reshape(50, 50, -1)
         log_keys = Counter()
         for _ in range(num_imagination_iterations):
-
-            with FreezeParameters(world_model_params + pred_discount_params):
-                (imagined_features, imagined_actions, _) = self.imagine_ahead(post)
-                imagined_reward = self.world_model.reward(imagined_features)
-                if self.use_pred_discount:
-                    discount = self.world_model.get_dist(
-                        self.world_model.pred_discount(imagined_features),
-                        std=None,
-                        normal=False,
-                    ).mean
-                else:
-                    discount = self.discount * torch.ones_like(imagined_reward)
-            imagined_features_actions = (
-                imagined_features[:-1].reshape(-1, imagined_features.shape[-1]).detach()
-            )
-            imagined_actions = (
-                imagined_actions[:-1].reshape(-1, imagined_actions.shape[-1]).detach()
-            )
-            imagined_actor_dist = self.actor(imagined_features_actions)
-            imagined_log_probs = imagined_actor_dist.log_prob(imagined_actions).detach()
-            with FreezeParameters(vf_params):
-                old_imagined_value = self.vf(imagined_features).detach()
+            with torch.cuda.amp.autocast():
+                with FreezeParameters(world_model_params + pred_discount_params):
+                    (imagined_features, imagined_actions, _) = self.imagine_ahead(post)
+                    imagined_reward = self.world_model.reward(imagined_features)
+                    if self.use_pred_discount:
+                        discount = self.world_model.get_dist(
+                            self.world_model.pred_discount(imagined_features),
+                            std=None,
+                            normal=False,
+                        ).mean
+                    else:
+                        discount = self.discount * torch.ones_like(imagined_reward)
+                imagined_features_actions = (
+                    imagined_features[:-1]
+                    .reshape(-1, imagined_features.shape[-1])
+                    .detach()
+                )
+                imagined_actions = (
+                    imagined_actions[:-1]
+                    .reshape(-1, imagined_actions.shape[-1])
+                    .detach()
+                )
+                imagined_actor_dist = self.actor(imagined_features_actions)
+                imagined_log_probs = imagined_actor_dist.log_prob(
+                    imagined_actions
+                ).detach()
+                with FreezeParameters(vf_params):
+                    old_imagined_value = self.vf(imagined_features).detach()
             for _ in range(self.num_actor_value_updates):
-                with FreezeParameters(vf_params + target_vf_params):
-                    imagined_target_value = self.target_vf(imagined_features)
-                    imagined_value = self.vf(imagined_features)
-                imagined_returns = lambda_return(
-                    imagined_reward[:-1],
-                    imagined_target_value[:-1],
-                    discount[:-1],
-                    bootstrap=imagined_target_value[-1],
-                    lambda_=self.lam,
-                )
-                weights = torch.cumprod(
-                    torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
-                ).detach()[:-1]
+                with torch.cuda.amp.autocast():
+                    with FreezeParameters(vf_params + target_vf_params):
+                        imagined_target_value = self.target_vf(imagined_features)
+                        imagined_value = self.vf(imagined_features)
+                    imagined_returns = lambda_return(
+                        imagined_reward[:-1],
+                        imagined_target_value[:-1],
+                        discount[:-1],
+                        bootstrap=imagined_target_value[-1],
+                        lambda_=self.lam,
+                    )
+                    weights = torch.cumprod(
+                        torch.cat([torch.ones_like(discount[:1]), discount[:-1]], 0), 0
+                    ).detach()[:-1]
 
-                actor_loss = self.actor_loss(
-                    imagined_returns,
-                    imagined_value,
-                    imagined_features,
-                    imagined_actions,
-                    weights,
-                    imagined_log_probs,
-                    self.actor,
-                )
+                    actor_loss = self.actor_loss(
+                        imagined_returns,
+                        imagined_value,
+                        imagined_features,
+                        imagined_actions,
+                        weights,
+                        imagined_log_probs,
+                        self.actor,
+                    )
 
-                with torch.no_grad():
-                    imagined_features_v = imagined_features.detach()
-                    target = imagined_returns.detach()
-                    weights = weights.detach()
+                    with torch.no_grad():
+                        imagined_features_v = imagined_features.detach()
+                        target = imagined_returns.detach()
+                        weights = weights.detach()
 
-                vf_loss = self.value_loss(
-                    imagined_features_v, weights, target, self.vf, old_imagined_value
-                )
+                    vf_loss = self.value_loss(
+                        imagined_features_v,
+                        weights,
+                        target,
+                        self.vf,
+                        old_imagined_value,
+                    )
 
                 if self.use_actor_value_optimizer:
                     self.update_network(
