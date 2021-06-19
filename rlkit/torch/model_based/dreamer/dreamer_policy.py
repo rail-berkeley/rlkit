@@ -38,21 +38,22 @@ class DreamerPolicy(Policy):
         :param observation:
         :return: action, debug_dictionary
         """
-        observation = ptu.from_numpy(np.array(observation))
-        if self.state:
-            prev_state, action = self.state
-        else:
-            prev_state = self.world_model.initial(observation.shape[0])
-            action = ptu.zeros((observation.shape[0], self.action_dim))
-        embed = self.world_model.encode(observation)
-        new_state, _ = self.world_model.obs_step(prev_state, action, embed)
-        feat = self.world_model.get_features(new_state)
-        dist = self.actor(feat)
-        action = dist.mode()
-        if self.exploration:
-            action = self.actor.compute_exploration_action(action, self.expl_amount)
-        self.state = (new_state, action)
-        return ptu.get_numpy(action), {}
+        with torch.cuda.amp.autocast():
+            observation = ptu.from_numpy(np.array(observation))
+            if self.state:
+                prev_state, action = self.state
+            else:
+                prev_state = self.world_model.initial(observation.shape[0])
+                action = ptu.zeros((observation.shape[0], self.action_dim))
+            embed = self.world_model.encode(observation)
+            new_state, _ = self.world_model.obs_step(prev_state, action, embed)
+            feat = self.world_model.get_features(new_state)
+            dist = self.actor(feat)
+            action = dist.mode()
+            if self.exploration:
+                action = self.actor.compute_exploration_action(action, self.expl_amount)
+            self.state = (new_state, action)
+            return ptu.get_numpy(action), {}
 
     def reset(self, o):
         self.state = None

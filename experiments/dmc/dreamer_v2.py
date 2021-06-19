@@ -1,5 +1,6 @@
 import argparse
 import random
+import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
@@ -29,7 +30,7 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=50,
             num_eval_steps_per_epoch=2500,
-            min_num_steps_before_training=2500,
+            min_num_steps_before_training=5000,
             num_pretrain_steps=100,
             max_path_length=500,
             num_expl_steps_per_train_loop=500,
@@ -54,19 +55,21 @@ if __name__ == "__main__":
         ),
         model_kwargs=dict(
             model_hidden_size=400,
-            stochastic_state_size=50,
+            stochastic_state_size=32,
             deterministic_state_size=200,
-            embedding_size=1024,
+            embedding_size=32 * 48,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            depth=48,
         ),
         trainer_kwargs=dict(
-            use_amp=True,
+            use_amp=False,
+            use_torch_amp=True,
             opt_level="O1",
-            optimizer_class="apex_adam",
+            optimizer_class="torch_adam",
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
@@ -77,7 +80,7 @@ if __name__ == "__main__":
             actor_lr=8e-5,
             vf_lr=8e-5,
             world_model_lr=3e-4,
-            reward_loss_scale=2.0,
+            reward_loss_scale=1.0,
             imagination_horizon=15,
             use_pred_discount=False,
             policy_gradient_loss_scale=0.0,
@@ -90,15 +93,15 @@ if __name__ == "__main__":
 
     search_space = {
         "env_id": [
-            "walker_walk",
-            "pendulum_swingup",
-            "cartpole_swingup_sparse",
+            # "walker_walk",
+            # "pendulum_swingup",
+            # "cartpole_swingup_sparse",
             # "cartpole_swingup",
             # "cartpole_balance",
-            "cartpole_balance_sparse",
-            "hopper_stand",
-            "walker_run",
-            "quadruped_walk",
+            # "cartpole_balance_sparse",
+            # "hopper_stand",
+            # "walker_run",
+            # "quadruped_walk",
             "acrobot_swingup",
             # "hopper_hop",
             # "cheetah_run",

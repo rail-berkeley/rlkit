@@ -5,7 +5,7 @@ import numpy as np
 class DeepMindControl:
     def __init__(self, name, size=(64, 64), camera=None):
         domain, task = name.split("_", 1)
-        if domain == "cup":  # Only domain with multiple words.
+        if domain == "cup":
             domain = "ball_in_cup"
         if isinstance(domain, str):
             from dm_control import suite
@@ -133,10 +133,6 @@ class NormalizeActions:
 
 def experiment(variant):
     import os
-
-    from rlkit.torch.model_based.plan2explore.mcts_policy import (
-        HybridAdvancedMCTSPolicy,
-    )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
@@ -278,7 +274,5 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    # algorithm.post_epoch_funcs.append(video_post_epoch_func)
     algorithm.to(ptu.device)
     algorithm.train()
-    # video_post_epoch_func(algorithm, -1)
