@@ -2,12 +2,8 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     import gym
     import numpy as np
 
-    from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
-
     gym.logger.setLevel(40)
     import robosuite as suite
-    from robosuite.environments.base import REGISTERED_ENVS, MujocoEnv
-    from robosuite.wrappers.gym_wrapper import GymWrapper
 
     from rlkit.envs.primitives_wrappers import (
         NormalizeBoxEnvFixed,
@@ -46,7 +42,6 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     gym.logger.setLevel(40)
     if env_kwargs is None:
         env_kwargs = {}
-    import metaworld
     from metaworld.envs.mujoco.env_dict import (
         ALL_V1_ENVIRONMENTS,
         ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE,
@@ -61,6 +56,7 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     )
 
     env_clses = list(MT50_V2.values())
+    # hack from https://stackoverflow.com/questions/38397610/how-to-change-the-base-class-in-python
     for env_cls in env_clses:
         parent = env_cls
         while SawyerXYZEnv != parent.__bases__[0]:
@@ -77,9 +73,6 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
         env_cls = ALL_V2_ENVIRONMENTS_GOAL_OBSERVABLE[env_name + "-goal-observable"]
-
-    # hack from https://stackoverflow.com/questions/38397610/how-to-change-the-base-class-in-python
-    # assume linear hierarchy for now
 
     if env_name in ALL_V1_ENVIRONMENTS:
         env = env_cls()
@@ -157,7 +150,6 @@ def make_env(env_suite, env_name, env_kwargs):
             action_scale=1,
         )
 
-    # need to comment out for running robosuite viewer:
     if use_raw_action_wrappers:
         env = ActionRepeat(env, 2)
         env = NormalizeActions(env)

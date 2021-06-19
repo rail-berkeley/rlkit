@@ -86,7 +86,6 @@ if __name__ == "__main__":
                 max_path_length=5,
                 workspace_low=(-0.3, -0.4, 0.8),
                 workspace_high=(0.0, 0.2, 1.3),
-                remove_rotation_primitives=True,
                 go_to_pose_iterations=40,
                 camera_settings={
                     "distance": 0.9532481338137215,

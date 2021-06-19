@@ -45,7 +45,6 @@ if __name__ == "__main__":
         ),
         env_kwargs=dict(
             control_mode="end-effector",
-            use_combined_action_space=True,
             action_scale=1 / 100,
             max_path_length=500,
             reward_type="dense",

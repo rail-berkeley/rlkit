@@ -46,7 +46,6 @@ if __name__ == "__main__":
         ),
         env_kwargs=dict(
             control_mode="primitives",
-            use_combined_action_space=True,
             action_scale=1,
             max_path_length=5,
             reward_type="sparse",

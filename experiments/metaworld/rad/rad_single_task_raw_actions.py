@@ -43,7 +43,6 @@ if __name__ == "__main__":
         log_interval=1000,
         env_kwargs=dict(
             control_mode="end_effector",
-            use_combined_action_space=True,
             action_scale=1 / 100,
             max_path_length=500,
             reward_type="sparse",

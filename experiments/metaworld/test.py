@@ -124,7 +124,7 @@ if __name__ == "__main__":
         #         env_name,
         #         dict(
         #             control_mode="primitives",
-        #             use_combined_action_space=True,
+        #
         #             action_scale=0.5,
         #             max_path_length=5,
         #         ),
