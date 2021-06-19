@@ -531,12 +531,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             stats = [0, 0]
         else:
             self.img_array = []
-            stats = self.act(
-                a,
-                render_every_step=self.render_every_step,
-                render_mode=self.render_mode,
-                render_im_shape=self.render_im_shape,
-            )
+            stats = self.act(a)
 
         self.curr_path_length += 1
 
@@ -669,72 +664,48 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             sim.data.mocap_pos[mocap_id][:] = sim.data.body_xpos[body_idx]
             sim.data.mocap_quat[mocap_id][:] = sim.data.body_xquat[body_idx]
 
-    def call_render_every_step(
-        self,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        if render_every_step:
-            if render_mode == "rgb_array":
+    def call_render_every_step(self):
+        if self.render_every_step:
+            if self.render_mode == "rgb_array":
                 self.img_array.append(
                     self.render(
-                        render_mode,
-                        render_im_shape[0],
-                        render_im_shape[1],
+                        self.render_mode,
+                        self.render_im_shape[0],
+                        self.render_im_shape[1],
                     )
                 )
             else:
                 self.render(
-                    render_mode,
-                    render_im_shape[0],
-                    render_im_shape[1],
+                    self.render_mode,
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
                 )
 
-    def close_gripper(
-        self,
-        unused=None,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def close_gripper(self, unused=None):
         total_reward, total_success = 0, 0
         for _ in range(300):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, -1]))
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
-            self.call_render_every_step(render_every_step, render_mode, render_im_shape)
+            self.call_render_every_step()
             r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -1])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
 
-    def open_gripper(
-        self,
-        unused=None,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def open_gripper(self, unused=None):
         total_reward, total_success = 0, 0
         for _ in range(200):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 1]))
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
-            self.call_render_every_step(render_every_step, render_mode, render_im_shape)
+            self.call_render_every_step()
             r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, 1])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
 
-    def goto_pose(
-        self,
-        pose,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-        grasp=False,
-    ):
+    def goto_pose(self, pose, grasp=True):
         total_reward, total_success = 0, 0
         for _ in range(300):
             delta = pose - self.get_endeff_pos()
@@ -746,164 +717,64 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             )
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
-            self.call_render_every_step(render_every_step, render_mode, render_im_shape)
+            self.call_render_every_step()
             r, info = self.evaluate_state(self._get_obs(), [*delta, 0])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
 
-    def top_x_y_grasp(
-        self,
-        xyz,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def top_x_y_grasp(self, xyz):
         x_dist, y_dist, z_dist = xyz
-        stats = self.open_gripper(
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, y_dist, 0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self.get_endeff_pos() + np.array([x_dist, 0.0, 0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, 0, z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        stats += self.close_gripper(
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
+        stats = self.open_gripper()
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, 0, z_dist]))
+        stats += self.close_gripper()
         return stats
 
-    def move_delta_ee_pose(
-        self,
-        pose,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        stats = self.goto_pose(
-            self.get_endeff_pos() + pose,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
+    def move_delta_ee_pose(self, pose):
+        stats = self.goto_pose(self.get_endeff_pos() + pose)
         return stats
 
-    def lift(
-        self,
-        z_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def lift(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]), grasp=True
         )
         return stats
 
-    def drop(
-        self,
-        z_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def drop(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]), grasp=True
         )
         return stats
 
-    def move_left(
-        self,
-        x_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_left(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]), grasp=True
         )
         return stats
 
-    def move_right(
-        self,
-        x_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_right(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]), grasp=True
         )
         return stats
 
-    def move_forward(
-        self,
-        y_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_forward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]), grasp=True
         )
         return stats
 
-    def move_backward(
-        self,
-        y_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_backward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]), grasp=True
         )
         return stats
 
@@ -913,13 +784,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             broken_a[k] = a[v]
         return broken_a
 
-    def act(
-        self,
-        a,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def act(self, a):
         a = np.clip(a, self.action_space.low, self.action_space.high)
         a = a * self.action_scale
         primitive_idx, primitive_args = (
@@ -932,9 +797,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         primitive = self.primitive_name_to_func[primitive_name]
         stats = primitive(
             primitive_action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
         )
         return stats
 
@@ -987,16 +849,12 @@ class RobosuiteWrapper(GymWrapper):
         render_mode="rgb_array",
         render_im_shape=(1000, 1000),
     ):
-        if hasattr(self.env, "set_render_every_step"):
-            self.env.set_render_every_step(
-                render_every_step, render_mode, render_im_shape
-            )
+        self.env.set_render_every_step(render_every_step, render_mode, render_im_shape)
         o, r, d, i = super().step(action)
         o = self.env.render(
             render_mode="rgb_array", imheight=self.imheight, imwidth=self.imwidth
         )
-        if hasattr(self.env, "unset_render_every_step"):
-            self.env.unset_render_every_step()
+        self.env.unset_render_every_step()
         new_i = {}
         for k, v in i.items():
             if v is not None:
@@ -1060,7 +918,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         workspace_high=(),
         imwidth=64,
         imheight=64,
-        remove_rotation_primitives=True,
         go_to_pose_iterations=100,
     ):
         self.imwidth = imwidth
@@ -1169,43 +1026,16 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             )
 
     def step(self, action):
-        """
-        Takes a step in simulation with control command @action.
-
-        Args:
-            action (np.array): Action to execute within the environment
-
-        Returns:
-            4-tuple:
-
-                - (OrderedDict) observations from the environment
-                - (float) reward from the environment
-                - (bool) whether the current episode is completed or not
-                - (dict) misc information
-
-        Raises:
-            ValueError: [Steps past episode termination]
-
-        """
         if self.done:
             raise ValueError("executing action in terminated episode")
 
         self.timestep += 1
         if self.control_mode == "robosuite":
-            # Since the env.step frequency is slower than the mjsim timestep frequency, the internal controller will output
-            # multiple torque commands in between new high level action commands. Therefore, we need to denote via
-            # 'policy_step' whether the current step we're taking is simply an internal update of the controller,
-            # or an actual policy update
             policy_step = True
-
-            # Loop through the simulation at the model timestep rate until we're ready to take the next policy step
-            # (as defined by the control frequency specified at the environment level)
             target_pos = action[:3] + self._eef_xpos
-            target_pos = np.clip(
-                target_pos, self.workspace_low, self.workspace_high
-            )  # apply work space limit
+            target_pos = np.clip(target_pos, self.workspace_low, self.workspace_high)
             action[:3] = target_pos - self._eef_xpos
-            action[3:6] = 0  # we want to just do position control
+            action[3:6] = 0
 
             for i in range(int(self.control_timestep / self.model_timestep)):
                 self.sim.forward()
@@ -1236,15 +1066,9 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             stats = [0, 0]
         else:
             self.img_array = []
-            stats = self.act(
-                action,
-                render_every_step=self.render_every_step,
-                render_mode=self.render_mode,
-                render_im_shape=self.render_im_shape,
-            )
+            stats = self.act(action)
             self._update_observables()
 
-        # Note: this is done all at once to avoid floating point inaccuracies
         self.cur_time += self.control_timestep
 
         reward, done, info = self._post_action(action)
@@ -1268,72 +1092,48 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         else:
             super().render()
 
-    def call_render_every_step(
-        self,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        if render_every_step:
-            if render_mode == "rgb_array":
+    def call_render_every_step(self):
+        if self.render_every_step:
+            if self.render_mode == "rgb_array":
                 self.img_array.append(
                     self.render(
-                        render_mode,
-                        render_im_shape[0],
-                        render_im_shape[1],
+                        self.render_mode,
+                        self.render_im_shape[0],
+                        self.render_im_shape[1],
                     )
                 )
             else:
                 self.render(
-                    render_mode,
-                    render_im_shape[0],
-                    render_im_shape[1],
+                    self.render_mode,
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
                 )
 
-    def close_gripper(
-        self,
-        unused=None,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def close_gripper(self, unused=None):
         total_reward, total_success = 0, 0
         for _ in range(150):
             action = [0, 0, 0, 0, 0, 0, 1]
             self.robots[0].control(action, policy_step=False)
             self.sim.step()
-            self.call_render_every_step(render_every_step, render_mode, render_im_shape)
+            self.call_render_every_step()
             r = self.reward(action)
             total_reward += r
             total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
-    def open_gripper(
-        self,
-        unused=None,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def open_gripper(self, unused=None):
         total_reward, total_success = 0, 0
         for _ in range(300):
             action = [0, 0, 0, 0, 0, 0, -1]
             self.robots[0].control(action, policy_step=False)
             self.sim.step()
-            self.call_render_every_step(render_every_step, render_mode, render_im_shape)
+            self.call_render_every_step()
             r = self.reward(action)
             total_reward += r
             total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
-    def goto_pose(
-        self,
-        pose,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-        grasp=False,
-    ):
+    def goto_pose(self, pose, grasp=False):
         total_reward, total_success = 0, 0
         prev_delta = np.zeros_like(pose)
         pose = np.clip(pose, self.workspace_low, self.workspace_high)
@@ -1353,152 +1153,56 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 self._pre_action(action, policy_step)
                 self.sim.step()
                 policy_step = False
-                self.call_render_every_step(
-                    render_every_step, render_mode, render_im_shape
-                )
+                self.call_render_every_step()
                 self.cur_time += self.control_timestep
                 r = self.reward(action)
                 total_reward += r
                 total_success += float(self._check_success())
         return np.array((total_reward, total_success))
 
-    def top_grasp(
-        self,
-        z_down,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def top_grasp(self, z_down):
         stats = self.goto_pose(
-            self._eef_xpos + np.array([0, 0, -np.abs(z_down)]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=False,
+            self._eef_xpos + np.array([0, 0, -np.abs(z_down)]), grasp=False
         )
-        stats += self.close_gripper(
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
+        stats += self.close_gripper()
         return stats
 
-    def move_delta_ee_pose(
-        self,
-        pose,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
-        stats = self.goto_pose(
-            self._eef_xpos + pose,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
-        )
+    def move_delta_ee_pose(self, pose):
+        stats = self.goto_pose(self._eef_xpos + pose, grasp=True)
         return stats
 
-    def lift(
-        self,
-        z_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def lift(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self._eef_xpos + np.array([0.0, 0.0, z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self._eef_xpos + np.array([0.0, 0.0, z_dist]), grasp=True
         )
         return stats
 
-    def drop(
-        self,
-        z_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def drop(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self._eef_xpos + np.array([0.0, 0.0, -z_dist]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
+            self._eef_xpos + np.array([0.0, 0.0, -z_dist]), grasp=True
         )
         return stats
 
-    def move_left(
-        self,
-        x_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_left(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(
-            self._eef_xpos + np.array([0, -x_dist, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
-        )
+        stats = self.goto_pose(self._eef_xpos + np.array([0, -x_dist, 0.0]), grasp=True)
         return stats
 
-    def move_right(
-        self,
-        x_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_right(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(
-            self._eef_xpos + np.array([0, x_dist, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
-        )
+        stats = self.goto_pose(self._eef_xpos + np.array([0, x_dist, 0.0]), grasp=True)
         return stats
 
-    def move_forward(
-        self,
-        y_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_forward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(
-            self._eef_xpos + np.array([y_dist, 0, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
-        )
+        stats = self.goto_pose(self._eef_xpos + np.array([y_dist, 0, 0.0]), grasp=True)
         return stats
 
-    def move_backward(
-        self,
-        y_dist,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def move_backward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(
-            self._eef_xpos + np.array([-y_dist, 0, 0.0]),
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-            grasp=True,
-        )
+        stats = self.goto_pose(self._eef_xpos + np.array([-y_dist, 0, 0.0]), grasp=True)
         return stats
 
     def break_apart_action(self, a):
@@ -1507,13 +1211,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             broken_a[k] = a[v]
         return broken_a
 
-    def act(
-        self,
-        a,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
-    ):
+    def act(self, a):
         a = np.clip(a, self.action_space.low, self.action_space.high)
         a = a * self.action_scale
         primitive_idx, primitive_args = (
@@ -1524,12 +1222,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)
         primitive_action = primitive_name_to_action_dict[primitive_name]
         primitive = self.primitive_name_to_func[primitive_name]
-        stats = primitive(
-            primitive_action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
+        stats = primitive(primitive_action)
         return stats
 
     def get_idx_from_primitive_name(self, primitive_name):
