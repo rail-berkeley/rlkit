@@ -56,6 +56,7 @@ class CNN(nn.Module):
             conv_layer = conv
             self.conv_layers.append(conv_layer)
             input_channels = out_channels
+        self.to(memory_format=torch.channels_last)
 
     def forward(self, input):
         conv_input = input.narrow(
@@ -66,12 +67,12 @@ class CNN(nn.Module):
             self.input_channels,
             self.input_height,
             self.input_width,
-        )
+        ).to(device="cuda", memory_format=torch.channels_last, dtype=torch.float16)
 
         for layer in self.conv_layers:
             h = layer(h)
             h = self.hidden_activation(h)
-        output = h.view(h.size(0), -1)
+        output = h.reshape(h.size(0), -1)
         return output
 
 
@@ -154,6 +155,7 @@ class DCNN(nn.Module):
                 output_size=vector_output_size,
                 hidden_sizes=[400] * 1,
             )
+        self.to(memory_format=torch.channels_last)
 
     def forward(self, input):
         h = self.hidden_activation(self.last_fc(input))
@@ -163,7 +165,7 @@ class DCNN(nn.Module):
             self.deconv_input_channels,
             self.deconv_input_width,
             self.deconv_input_height,
-        )
+        ).to(device="cuda", memory_format=torch.channels_last, dtype=torch.float16)
         h = self.apply_forward(h, self.deconv_layers)
         output = self.deconv_output(h)
         if self.include_vector_output:

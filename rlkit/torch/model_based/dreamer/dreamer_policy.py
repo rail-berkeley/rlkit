@@ -32,6 +32,7 @@ class DreamerPolicy(Policy):
         self.discrete_action_dim = discrete_action_dim
         self.continuous_action_dim = continuous_action_dim
 
+    @torch.no_grad()
     def get_action(self, observation):
         """
 
