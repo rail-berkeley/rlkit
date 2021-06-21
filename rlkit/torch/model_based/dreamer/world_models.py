@@ -1,10 +1,15 @@
-import numpy as np
+import math
+import numbers
+
 import torch
 import torch.nn.functional as F
-from torch import nn
+from torch import jit, nn
 from torch.distributions.bernoulli import Bernoulli
 from torch.distributions.independent import Independent
 from torch.distributions.normal import Normal
+from torch.nn import init
+from torch.nn.parameter import Parameter
+from torch.tensor import Tensor
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule
@@ -93,8 +98,11 @@ class WorldModel(PyTorchModule):
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         if gru_layer_norm:
-            self.rnn = GRUCell(
-                deterministic_state_size, deterministic_state_size, norm=True
+            # self.rnn = LayerNormGRUCell(
+            #     deterministic_state_size, deterministic_state_size
+            # )
+            self.rnn = LayerNormGRUCell(
+                deterministic_state_size, deterministic_state_size
             )
         else:
             self.rnn = torch.nn.GRUCell(
@@ -217,25 +225,6 @@ class WorldModel(PyTorchModule):
             prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
-    def forward_batch(
-        self,
-        embed,
-        action,
-        state=None,
-    ):
-        post_params, prior_params = self.obs_step(state, action, embed)
-        feat = self.get_features(post_params)
-        image_params = self.decode(feat)
-        reward_params = self.reward(feat)
-        pred_discount_params = self.pred_discount(feat)
-        return (
-            post_params,
-            prior_params,
-            image_params,
-            reward_params,
-            pred_discount_params,
-        )
-
     def forward(self, obs, action):
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
@@ -250,7 +239,6 @@ class WorldModel(PyTorchModule):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        images, rewards, pred_discounts = [], [], []
         obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
@@ -264,16 +252,11 @@ class WorldModel(PyTorchModule):
             dim=1,
         )
         for i in range(path_length):
-            (
-                post_params,
-                prior_params,
-                image_params,
-                reward_params,
-                pred_discount_params,
-            ) = self.forward_batch(embed[:, i], action[:, i], state)
-            images.append(image_params)
-            rewards.append(reward_params)
-            pred_discounts.append(pred_discount_params)
+            (post_params, prior_params,) = self.obs_step(
+                state,
+                action[:, i],
+                embed[:, i],
+            )
             for k in post.keys():
                 post[k].append(post_params[k].unsqueeze(1))
 
@@ -281,14 +264,20 @@ class WorldModel(PyTorchModule):
                 prior[k].append(prior_params[k].unsqueeze(1))
             state = post_params
 
-        images = torch.cat(images)
-        rewards = torch.cat(rewards)
-        pred_discounts = torch.cat(pred_discounts)
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
 
         for k in prior.keys():
             prior[k] = torch.cat(prior[k], dim=1)
+
+        feat = self.get_features(post)
+        images = self.decode(feat)
+        rewards = self.reward(feat)
+        rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
+        pred_discounts = self.pred_discount(feat)
+        pred_discounts = torch.cat(
+            [pred_discounts[:, i, :] for i in range(pred_discounts.shape[1])]
+        )
 
         if self.discrete_latents:
             post_dist = self.get_dist(post["logits"], None, latent=True)
@@ -368,33 +357,99 @@ class WorldModel(PyTorchModule):
         return state
 
 
-class GRUCell(nn.GRUCell):
-    def __init__(
-        self, input_size, output_size, norm=False, act=torch.tanh, update_bias=-1
-    ):
-        super(GRUCell, self).__init__(input_size, output_size)
-        self._size = output_size
-        self._act = act
-        self._norm = norm
-        self._update_bias = update_bias
-        self._layer = nn.Linear(input_size * 2, 3 * output_size, bias=norm is not None)
-        if norm:
-            self._norm = nn.LayerNorm((output_size * 3))
+class LayerNorm(jit.ScriptModule):
+    def __init__(self, normalized_shape):
+        super(LayerNorm, self).__init__()
+        if isinstance(normalized_shape, numbers.Integral):
+            normalized_shape = (normalized_shape,)
+        normalized_shape = torch.Size(normalized_shape)
 
-    def forward(self, inputs, hx=None):
-        if hx is None:
-            hx = torch.zeros(
-                inputs.size(0),
-                self.hidden_size,
-                dtype=inputs.dtype,
-                device=inputs.device,
-            )
+        self.weight = Parameter(torch.ones(normalized_shape))
+        self.bias = Parameter(torch.zeros(normalized_shape))
+        self.normalized_shape = normalized_shape
+
+    @jit.script_method
+    def compute_layernorm_stats(self, input):
+        mu = input.mean(-1, keepdim=True)
+        sigma = input.std(-1, keepdim=True, unbiased=False)
+        return mu, sigma
+
+    @jit.script_method
+    def forward(self, input):
+        mu, sigma = self.compute_layernorm_stats(input)
+        return (input - mu) / sigma * self.weight + self.bias
+
+
+class LayerNormGRUCell(jit.ScriptModule):
+    def __init__(self, input_size, output_size):
+        super(LayerNormGRUCell, self).__init__()
+        hidden_size = output_size
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        bias = True
+        num_chunks = 3
+        self.bias = bias
+        self.weight_ih = Parameter(torch.Tensor(num_chunks * hidden_size, input_size))
+        self.weight_hh = Parameter(torch.Tensor(num_chunks * hidden_size, hidden_size))
+        if bias:
+            self.bias_ih = Parameter(torch.Tensor(num_chunks * hidden_size))
+            self.bias_hh = Parameter(torch.Tensor(num_chunks * hidden_size))
+        else:
+            self.register_parameter("bias_ih", None)
+            self.register_parameter("bias_hh", None)
+        self.reset_parameters()
+
+        self._size = output_size
+        self._act = torch.tanh
+        self._update_bias = -1
+        self._layer = nn.Linear(input_size * 2, 3 * output_size, bias=True)
+        self._norm = nn.LayerNorm((output_size * 3))
+
+    @jit.script_method
+    def forward(self, inputs, hx):
         parts = self._layer(torch.cat([inputs, hx], -1))
-        if self._norm:
-            parts = self._norm(parts)
+        parts = self._norm(parts)
         reset, cand, update = torch.split(parts, self._size, -1)
         reset = torch.sigmoid(reset)
         cand = self._act(reset * cand)
         update = torch.sigmoid(update + self._update_bias)
         output = update * cand + (1 - update) * hx
         return output
+
+    def extra_repr(self) -> str:
+        s = "{input_size}, {hidden_size}"
+        if "bias" in self.__dict__ and self.bias is not True:
+            s += ", bias={bias}"
+        if "nonlinearity" in self.__dict__ and self.nonlinearity != "tanh":
+            s += ", nonlinearity={nonlinearity}"
+        return s.format(**self.__dict__)
+
+    def check_forward_input(self, input: Tensor) -> None:
+        if input.size(1) != self.input_size:
+            raise RuntimeError(
+                "input has inconsistent input_size: got {}, expected {}".format(
+                    input.size(1), self.input_size
+                )
+            )
+
+    def check_forward_hidden(
+        self, input: Tensor, hx: Tensor, hidden_label: str = ""
+    ) -> None:
+        if input.size(0) != hx.size(0):
+            raise RuntimeError(
+                "Input batch size {} doesn't match hidden{} batch size {}".format(
+                    input.size(0), hidden_label, hx.size(0)
+                )
+            )
+
+        if hx.size(1) != self.hidden_size:
+            raise RuntimeError(
+                "hidden{} has inconsistent hidden_size: got {}, expected {}".format(
+                    hidden_label, hx.size(1), self.hidden_size
+                )
+            )
+
+    def reset_parameters(self) -> None:
+        stdv = 1.0 / math.sqrt(self.hidden_size)
+        for weight in self.parameters():
+            init.uniform_(weight, -stdv, stdv)
