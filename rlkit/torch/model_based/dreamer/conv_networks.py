@@ -1,12 +1,13 @@
 import numpy as np
 import torch
+from torch import jit
 from torch import nn as nn
 
 from rlkit.pythonplusplus import identity
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
-class CNN(nn.Module):
+class CNN(jit.ScriptModule):
     def __init__(
         self,
         input_width,
@@ -20,7 +21,6 @@ class CNN(nn.Module):
         hidden_init=nn.init.xavier_uniform_,
         hidden_activation=nn.ReLU(),
         output_activation=identity,
-        use_depth_wise_separable_conv=False,
     ):
         if hidden_sizes is None:
             hidden_sizes = []
@@ -58,6 +58,7 @@ class CNN(nn.Module):
             input_channels = out_channels
         self.to(memory_format=torch.channels_last)
 
+    @jit.script_method
     def forward(self, input):
         conv_input = input.narrow(
             start=0, length=self.conv_input_length, dim=1
@@ -76,7 +77,7 @@ class CNN(nn.Module):
         return output
 
 
-class DCNN(nn.Module):
+class DCNN(jit.ScriptModule):
     def __init__(
         self,
         fc_input_size,
@@ -96,9 +97,6 @@ class DCNN(nn.Module):
         hidden_init=nn.init.xavier_uniform_,
         hidden_activation=nn.ReLU(),
         output_activation=identity,
-        use_depth_wise_separable_conv=False,
-        include_vector_output=False,
-        vector_output_size=0,
     ):
         assert len(kernel_sizes) == len(n_channels) == len(strides) == len(paddings)
         super().__init__()
@@ -148,33 +146,19 @@ class DCNN(nn.Module):
         )
         hidden_init(self.deconv_output.weight)
         self.deconv_output.bias.data.fill_(0)
-        self.include_vector_output = include_vector_output
-        if self.include_vector_output:
-            self.vector_output = Mlp(
-                input_size=deconv_input_size,
-                output_size=vector_output_size,
-                hidden_sizes=[400] * 1,
-            )
         self.to(memory_format=torch.channels_last)
 
+    @jit.script_method
     def forward(self, input):
         h = self.hidden_activation(self.last_fc(input))
-        fc_input = h
         h = h.view(
             -1,
             self.deconv_input_channels,
             self.deconv_input_width,
             self.deconv_input_height,
         ).to(device="cuda", memory_format=torch.channels_last, dtype=torch.float16)
-        h = self.apply_forward(h, self.deconv_layers)
-        output = self.deconv_output(h)
-        if self.include_vector_output:
-            return output, self.vector_output(fc_input)
-        return output
-
-    def apply_forward(self, input, hidden_layers):
-        h = input
-        for layer in hidden_layers:
+        for layer in self.deconv_layers:
             h = layer(h)
             h = self.hidden_activation(h)
-        return h
+        output = self.deconv_output(h)
+        return output

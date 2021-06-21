@@ -1,5 +1,6 @@
 import torch
 import torch.nn.functional as F
+from torch import jit
 from torch.distributions import Normal, Transform, TransformedDistribution
 from torch.distributions.one_hot_categorical import OneHotCategorical
 
@@ -141,29 +142,33 @@ class ActorModel(Mlp):
                 dist = Independent(dist, 1)
         return dist
 
-    def compute_exploration_action(self, action, expl_amount):
+    @jit.script_method
+    def compute_exploration_action(self, action, expl_amount: float):
         if self.discrete_continuous_dist:
             discrete, continuous = (
                 action[:, : self.discrete_action_dim],
                 action[:, self.discrete_action_dim :],
             )
-            indices = torch.distributions.Categorical(logits=0 * discrete).sample()
+            indices = torch.randint(
+                0, discrete.shape[-1], discrete.shape[0:-1], device=ptu.device
+            ).long()
             rand_action = F.one_hot(indices, discrete.shape[-1])
-            probs = ptu.rand(discrete.shape[:1])
+            probs = torch.rand(discrete.shape[:1], device=ptu.device)
             discrete = torch.where(
                 probs.reshape(-1, 1) < expl_amount,
                 rand_action.int(),
                 discrete.int(),
             )
-            continuous = Normal(continuous, expl_amount).rsample()
+            if expl_amount > 0:
+                continuous = torch.normal(continuous, expl_amount)
             if self.use_tanh_normal:
                 continuous = torch.clamp(continuous, -1, 1)
-            assert (discrete.sum(dim=1) == ptu.ones(discrete.shape[0])).all()
             action = torch.cat((discrete, continuous), -1)
         else:
-            action = Normal(action.float(), expl_amount).rsample()
-            if self.use_tanh_normal:
-                action = torch.clamp(action, -1, 1)
+            if expl_amount > 0:
+                action = torch.normal(action, expl_amount)
+                if self.use_tanh_normal:
+                    action = torch.clamp(action, -1, 1)
         return action
 
 

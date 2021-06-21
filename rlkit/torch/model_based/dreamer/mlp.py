@@ -1,12 +1,12 @@
 import torch
-from torch import nn
+from torch import jit, nn
 from torch.nn import functional as F
 
 from rlkit.pythonplusplus import identity
 from rlkit.torch.core import PyTorchModule
 
 
-class Mlp(PyTorchModule):
+class Mlp(jit.ScriptModule):
     def __init__(
         self,
         hidden_sizes,
@@ -23,7 +23,7 @@ class Mlp(PyTorchModule):
         self.output_size = output_size
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
-        self.fcs = []
+        self.fcs = torch.nn.ModuleList()
         self.layer_norms = []
         in_size = input_size
 
@@ -39,6 +39,7 @@ class Mlp(PyTorchModule):
         torch.nn.init.xavier_uniform_(self.last_fc.weight)
         self.last_fc.bias.data.fill_(0)
 
+    @jit.script_method
     def forward(self, input):
         h = input
         for i, fc in enumerate(self.fcs):

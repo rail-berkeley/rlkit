@@ -1,5 +1,6 @@
 import math
 import numbers
+from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
@@ -18,7 +19,7 @@ from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
-class WorldModel(PyTorchModule):
+class WorldModel(jit.ScriptModule):
     def __init__(
         self,
         action_dim,
@@ -84,6 +85,7 @@ class WorldModel(PyTorchModule):
                 torch.nn.init.xavier_uniform_(layer.weight)
                 layer.bias.data.fill_(0)
                 self.action_step_feature_extractor[k] = layer
+            self.num_primitives = self.env.num_primitives
         else:
             self.action_step_feature_extractor = torch.nn.Linear(
                 full_stochastic_state_size + action_dim, deterministic_state_size
@@ -98,9 +100,6 @@ class WorldModel(PyTorchModule):
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         if gru_layer_norm:
-            # self.rnn = LayerNormGRUCell(
-            #     deterministic_state_size, deterministic_state_size
-            # )
             self.rnn = LayerNormGRUCell(
                 deterministic_state_size, deterministic_state_size
             )
@@ -153,6 +152,7 @@ class WorldModel(PyTorchModule):
         )
         self.std_act = std_act
 
+    @jit.script_method
     def compute_std(self, std):
         if self.std_act == "softplus":
             std = F.softplus(std)
@@ -160,25 +160,29 @@ class WorldModel(PyTorchModule):
             std = 2 * torch.sigmoid(std / 2)
         return std + 0.1
 
-    def obs_step(self, prev_state, prev_action, embed):
+    @jit.script_method
+    def obs_step(
+        self, prev_state: Dict[str, Tensor], prev_action: Tensor, embed: Tensor
+    ):
         prior = self.action_step(prev_state, prev_action)
         x = torch.cat([prior["deter"], embed], -1)
         x = self.obs_step_mlp(x)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_dist(logits, logits, latent=True).rsample()
-            post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = self.compute_std(std)
-            stoch = self.get_dist(mean, std, latent=True).rsample()
-            post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
+        # if self.discrete_latents:
+        #     logits = x.reshape(
+        #         list(x.shape[:-1])
+        #         + [self.stochastic_state_size, self.discrete_latent_size]
+        #     )
+        #     stoch = self.get_dist(logits, logits, latent=True).rsample()
+        #     post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
+        # else:
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = self.compute_std(std)
+        stoch = torch.normal(mean, std)
+        post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
 
-    def action_step(self, prev_state, prev_action):
+    @jit.script_method
+    def action_step(self, prev_state: Dict[str, Tensor], prev_action: Tensor):
         prev_stoch = prev_state["stoch"]
         if self.discrete_latents:
             shape = list(prev_stoch.shape[:-2]) + [
@@ -186,44 +190,68 @@ class WorldModel(PyTorchModule):
             ]
             prev_stoch = prev_stoch.reshape(shape)
 
-        if self.use_per_primitive_feature_extractor:
-            primitive_indices, primitive_args = (
-                torch.argmax(prev_action[:, : self.env.num_primitives], dim=1),
-                prev_action[:, self.env.num_primitives :],
-            )
-            output = {}
-            for k, v in self.env.primitive_name_to_action_idx.items():
-                if type(v) is int:
-                    v = [v]
-                primitive_action = primitive_args[:, v]
-                x = torch.cat([prev_stoch, primitive_action], -1)
-                output[k] = self.model_act(self.action_step_feature_extractor[k](x))
-            primitive_names = [
-                self.env.primitive_idx_to_name[primitive_idx]
-                for primitive_idx in primitive_indices.cpu().detach().numpy().tolist()
-            ]
-            x = []
-            for i, primitive_name in enumerate(primitive_names):
-                x.append(output[primitive_name][i : i + 1])
-            x = torch.cat(x, dim=0)
-        else:
-            x = torch.cat([prev_stoch, prev_action], -1)
-            x = self.model_act(self.action_step_feature_extractor(x))
+        # if self.use_per_primitive_feature_extractor:
+        #     primitive_indices, primitive_args = (
+        #         torch.argmax(prev_action[:, : self.num_primitives], dim=1),
+        #         prev_action[:, self.num_primitives :],
+        #     )
+        #     output = {}
+        #     for k, v in self.env.primitive_name_to_action_idx.items():
+        #         if type(v) is int:
+        #             v = [v]
+        #         primitive_action = primitive_args[:, v]
+        #         x = torch.cat([prev_stoch, primitive_action], -1)
+        #         output[k] = self.model_act(self.action_step_feature_extractor[k](x))
+        #     primitive_names = [
+        #         self.env.primitive_idx_to_name[primitive_idx]
+        #         for primitive_idx in primitive_indices.cpu().detach().numpy().tolist()
+        #     ]
+        #     x = []
+        #     for i, primitive_name in enumerate(primitive_names):
+        #         x.append(output[primitive_name][i : i + 1])
+        #     x = torch.cat(x, dim=0)
+        # else:
+        x = torch.cat([prev_stoch, prev_action], -1)
+        x = self.model_act(self.action_step_feature_extractor(x))
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.action_step_mlp(deter_new)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_dist(logits, None, latent=True).rsample()
-            prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = F.softplus(std) + 0.1
-            stoch = self.get_dist(mean, std, latent=True).rsample()
-            prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
+        # if self.discrete_latents:
+        #     logits = x.reshape(
+        #         list(x.shape[:-1])
+        #         + [self.stochastic_state_size, self.discrete_latent_size]
+        #     )
+        #     stoch = self.get_dist(logits, None, latent=True).rsample()
+        #     prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
+        # else:
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = F.softplus(std) + 0.1
+        stoch = torch.normal(mean, std)
+        prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
+
+    @jit.script_method
+    def forward_batch(
+        self,
+        path_length: int,
+        action: Tensor,
+        embed: Tensor,
+        post: Dict[str, List[Tensor]],
+        prior: Dict[str, List[Tensor]],
+        state: Dict[str, Tensor],
+    ):
+        for i in range(path_length):
+            (post_params, prior_params,) = self.obs_step(
+                state,
+                action[:, i],
+                embed[:, i],
+            )
+            for k in post.keys():
+                post[k].append(post_params[k].unsqueeze(1))
+
+            for k in prior.keys():
+                prior[k].append(prior_params[k].unsqueeze(1))
+            state = post_params
+        return post, prior
 
     def forward(self, obs, action):
         original_batch_size = obs.shape[0]
@@ -251,18 +279,8 @@ class WorldModel(PyTorchModule):
             ],
             dim=1,
         )
-        for i in range(path_length):
-            (post_params, prior_params,) = self.obs_step(
-                state,
-                action[:, i],
-                embed[:, i],
-            )
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
 
-            for k in prior.keys():
-                prior[k].append(prior_params[k].unsqueeze(1))
-            state = post_params
+        post, prior = self.forward_batch(path_length, action, embed, post, prior, state)
 
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
@@ -299,7 +317,7 @@ class WorldModel(PyTorchModule):
             embed,
         )
 
-    def get_features(self, state):
+    def get_features(self, state: Dict[str, Tensor]):
         stoch = state["stoch"]
         if self.discrete_latents:
             shape = list(stoch.shape[:-2]) + [
@@ -326,12 +344,15 @@ class WorldModel(PyTorchModule):
             std = params["std"]
         return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)
 
+    @jit.script_method
     def encode(self, obs):
         return self.conv_encoder(self.preprocess(obs))
 
+    @jit.script_method
     def decode(self, feat):
         return self.conv_decoder(feat)
 
+    @jit.script_method
     def preprocess(self, obs):
         obs = obs / 255.0 - 0.5
         return obs
