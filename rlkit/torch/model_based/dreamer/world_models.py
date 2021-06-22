@@ -2,6 +2,7 @@ import math
 import numbers
 from typing import Dict, List
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import jit, nn
@@ -267,18 +268,12 @@ class WorldModel(jit.ScriptModule):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = torch.cat([obs[:, i, :] for i in range(obs.shape[1])])
+        obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = torch.cat(
-            [
-                embed[
-                    i * original_batch_size : (i + 1) * original_batch_size, :
-                ].reshape(original_batch_size, 1, embedding_size)
-                for i in range(path_length)
-            ],
-            dim=1,
-        )
+        embed = embed.reshape(
+            original_batch_size, path_length, embedding_size
+        ).transpose(1, 0)
 
         post, prior = self.forward_batch(path_length, action, embed, post, prior, state)
 
@@ -291,10 +286,10 @@ class WorldModel(jit.ScriptModule):
         feat = self.get_features(post)
         images = self.decode(feat)
         rewards = self.reward(feat)
-        rewards = torch.cat([rewards[:, i, :] for i in range(rewards.shape[1])])
+        rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
         pred_discounts = self.pred_discount(feat)
-        pred_discounts = torch.cat(
-            [pred_discounts[:, i, :] for i in range(pred_discounts.shape[1])]
+        pred_discounts = pred_discounts.transpose(1, 0).reshape(
+            -1, pred_discounts.shape[-1]
         )
 
         if self.discrete_latents:
