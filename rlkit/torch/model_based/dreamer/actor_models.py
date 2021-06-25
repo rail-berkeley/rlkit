@@ -49,12 +49,17 @@ class ActorModel(Mlp):
         self.use_tanh_normal = use_tanh_normal
         self._dist = dist
 
-    def forward(self, input):
-        raw_init_std = torch.log(torch.exp(self._init_std) - 1)
+    @jit.script_method
+    def forward_net(self, input):
         h = input
         for i, fc in enumerate(self.fcs):
             h = self.hidden_activation(fc(h))
         last = self.last_fc(h)
+        return last
+
+    def forward(self, input):
+        last = self.forward_net(input)
+        raw_init_std = torch.log(torch.exp(self._init_std) - 1)
         if self.discrete_continuous_dist:
             assert last.shape[1] == self.output_size
             mean, continuous_action_std = (

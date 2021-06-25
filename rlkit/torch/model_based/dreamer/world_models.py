@@ -2,7 +2,6 @@ import math
 import numbers
 from typing import Dict, List
 
-import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import jit, nn
@@ -39,7 +38,6 @@ class WorldModel(jit.ScriptModule):
         gru_layer_norm=False,
         discrete_latents=False,
         discrete_latent_size=32,
-        use_per_primitive_feature_extractor=False,
         std_act="softplus",
     ):
         super().__init__()
@@ -69,30 +67,11 @@ class WorldModel(jit.ScriptModule):
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
-        self.use_per_primitive_feature_extractor = use_per_primitive_feature_extractor
-        if self.use_per_primitive_feature_extractor:
-            self.action_step_feature_extractor = torch.nn.ModuleDict()
-            for (
-                k,
-                v,
-            ) in env.primitive_name_to_action_idx.items():
-                if type(v) == int:
-                    len_v = 1
-                else:
-                    len_v = len(v)
-                layer = torch.nn.Linear(
-                    full_stochastic_state_size + len_v, deterministic_state_size
-                )
-                torch.nn.init.xavier_uniform_(layer.weight)
-                layer.bias.data.fill_(0)
-                self.action_step_feature_extractor[k] = layer
-            self.num_primitives = self.env.num_primitives
-        else:
-            self.action_step_feature_extractor = torch.nn.Linear(
-                full_stochastic_state_size + action_dim, deterministic_state_size
-            )
-            torch.nn.init.xavier_uniform_(self.action_step_feature_extractor.weight)
-            self.action_step_feature_extractor.bias.data.fill_(0)
+        self.action_step_feature_extractor = torch.nn.Linear(
+            full_stochastic_state_size + action_dim, deterministic_state_size
+        )
+        torch.nn.init.xavier_uniform_(self.action_step_feature_extractor.weight)
+        self.action_step_feature_extractor.bias.data.fill_(0)
         self.action_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
             input_size=deterministic_state_size,
@@ -168,19 +147,27 @@ class WorldModel(jit.ScriptModule):
         prior = self.action_step(prev_state, prev_action)
         x = torch.cat([prior["deter"], embed], -1)
         x = self.obs_step_mlp(x)
-        # if self.discrete_latents:
-        #     logits = x.reshape(
-        #         list(x.shape[:-1])
-        #         + [self.stochastic_state_size, self.discrete_latent_size]
-        #     )
-        #     stoch = self.get_dist(logits, logits, latent=True).rsample()
-        #     post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
-        # else:
-        mean, std = x.split(self.stochastic_state_size, -1)
-        std = self.compute_std(std)
-        stoch = torch.normal(mean, std)
-        post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
+        if self.discrete_latents:
+            logits = x.reshape(
+                list(x.shape[:-1])
+                + [self.stochastic_state_size, self.discrete_latent_size]
+            )
+            stoch = self.get_discrete_stochastic_state(logits)
+            post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
+        else:
+            mean, std = x.split(self.stochastic_state_size, -1)
+            std = self.compute_std(std)
+            stoch = (
+                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
+                + mean
+            )
+            post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
+
+    @jit.ignore
+    def get_discrete_stochastic_state(self, logits):
+        stoch = self.get_dist(logits, logits, latent=True).rsample()
+        return stoch
 
     @jit.script_method
     def action_step(self, prev_state: Dict[str, Tensor], prev_action: Tensor):
@@ -191,43 +178,25 @@ class WorldModel(jit.ScriptModule):
             ]
             prev_stoch = prev_stoch.reshape(shape)
 
-        # if self.use_per_primitive_feature_extractor:
-        #     primitive_indices, primitive_args = (
-        #         torch.argmax(prev_action[:, : self.num_primitives], dim=1),
-        #         prev_action[:, self.num_primitives :],
-        #     )
-        #     output = {}
-        #     for k, v in self.env.primitive_name_to_action_idx.items():
-        #         if type(v) is int:
-        #             v = [v]
-        #         primitive_action = primitive_args[:, v]
-        #         x = torch.cat([prev_stoch, primitive_action], -1)
-        #         output[k] = self.model_act(self.action_step_feature_extractor[k](x))
-        #     primitive_names = [
-        #         self.env.primitive_idx_to_name[primitive_idx]
-        #         for primitive_idx in primitive_indices.cpu().detach().numpy().tolist()
-        #     ]
-        #     x = []
-        #     for i, primitive_name in enumerate(primitive_names):
-        #         x.append(output[primitive_name][i : i + 1])
-        #     x = torch.cat(x, dim=0)
-        # else:
         x = torch.cat([prev_stoch, prev_action], -1)
         x = self.model_act(self.action_step_feature_extractor(x))
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.action_step_mlp(deter_new)
-        # if self.discrete_latents:
-        #     logits = x.reshape(
-        #         list(x.shape[:-1])
-        #         + [self.stochastic_state_size, self.discrete_latent_size]
-        #     )
-        #     stoch = self.get_dist(logits, None, latent=True).rsample()
-        #     prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
-        # else:
-        mean, std = x.split(self.stochastic_state_size, -1)
-        std = F.softplus(std) + 0.1
-        stoch = torch.normal(mean, std)
-        prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
+        if self.discrete_latents:
+            logits = x.reshape(
+                list(x.shape[:-1])
+                + [self.stochastic_state_size, self.discrete_latent_size]
+            )
+            stoch = self.get_discrete_stochastic_state(logits)
+            prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
+        else:
+            mean, std = x.split(self.stochastic_state_size, -1)
+            std = F.softplus(std) + 0.1
+            stoch = (
+                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
+                + mean
+            )
+            prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
     @jit.script_method
@@ -284,13 +253,10 @@ class WorldModel(jit.ScriptModule):
             prior[k] = torch.cat(prior[k], dim=1)
 
         feat = self.get_features(post)
+        feat = feat.transpose(1, 0).reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(feat)
-        rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
         pred_discounts = self.pred_discount(feat)
-        pred_discounts = pred_discounts.transpose(1, 0).reshape(
-            -1, pred_discounts.shape[-1]
-        )
 
         if self.discrete_latents:
             post_dist = self.get_dist(post["logits"], None, latent=True)
