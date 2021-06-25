@@ -66,10 +66,6 @@ if __name__ == "__main__":
             depth=48,
         ),
         trainer_kwargs=dict(
-            use_amp=False,
-            use_torch_amp=True,
-            opt_level="O1",
-            optimizer_class="torch_adam",
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,

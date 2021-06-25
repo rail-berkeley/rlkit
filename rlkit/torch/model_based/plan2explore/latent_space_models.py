@@ -1,12 +1,12 @@
 import torch
 import torch.nn.functional as F
+from torch import jit
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.core import PyTorchModule
 from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 
-class OneStepEnsembleModel(PyTorchModule):
+class OneStepEnsembleModel(jit.ScriptModule):
     def __init__(
         self,
         action_dim,

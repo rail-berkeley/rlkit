@@ -1,5 +1,6 @@
 import argparse
 import random
+import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
@@ -71,9 +72,6 @@ if __name__ == "__main__":
             targets="stoch",
         ),
         trainer_kwargs=dict(
-            use_amp=True,
-            opt_level="O1",
-            optimizer_class="apex_adam",
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
@@ -91,7 +89,6 @@ if __name__ == "__main__":
             actor_entropy_loss_schedule="1e-4",
             target_update_period=100,
             log_disagreement=True,
-            train_decoder_on_second_output_only=False,
             detach_rewards=True,
             ensemble_training_states="post_to_next_post",
         ),
@@ -114,14 +111,14 @@ if __name__ == "__main__":
             # "hopper_hop",
             # "cheetah_run",
         ],
-        "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
-        "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
-        "trainer_kwargs.ensemble_training_states": [
-            "post_to_next_post",
-            "post_to_next_prior",
-            "prior_to_next_post",
-            "prior_to_next_prior",
-        ],
+        # "one_step_ensemble_kwargs.inputs": ["feats", "deter", "stoch"],
+        # "one_step_ensemble_kwargs.targets": ["feats", "deter", "stoch", "embed"],
+        # "trainer_kwargs.ensemble_training_states": [
+        #     "post_to_next_post",
+        #     "post_to_next_prior",
+        #     "prior_to_next_post",
+        #     "prior_to_next_prior",
+        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

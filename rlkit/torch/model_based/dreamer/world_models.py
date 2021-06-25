@@ -240,9 +240,7 @@ class WorldModel(jit.ScriptModule):
         obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(
-            original_batch_size, path_length, embedding_size
-        ).transpose(1, 0)
+        embed = embed.reshape(original_batch_size, path_length, embedding_size)
 
         post, prior = self.forward_batch(path_length, action, embed, post, prior, state)
 
