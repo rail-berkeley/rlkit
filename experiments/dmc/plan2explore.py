@@ -55,14 +55,15 @@ if __name__ == "__main__":
         ),
         model_kwargs=dict(
             model_hidden_size=400,
-            stochastic_state_size=50,
+            stochastic_state_size=32,
             deterministic_state_size=200,
-            embedding_size=1024,
+            embedding_size=32 * 48,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            depth=48,
         ),
         one_step_ensemble_kwargs=dict(
             num_models=10,
