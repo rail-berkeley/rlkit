@@ -88,9 +88,6 @@ if __name__ == "__main__":
             std_act="sigmoid2",
         ),
         trainer_kwargs=dict(
-            use_amp=True,
-            opt_level="O1",
-            optimizer_class="apex_adam",
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
@@ -115,12 +112,6 @@ if __name__ == "__main__":
             "microwave_kettle_light_top_left_burner",
             "hinge_slide_bottom_left_burner_light",
         ],
-        # "env_kwargs.control_mode": [
-        #     "joint_position",
-        #     "joint_velocity",
-        #     "torque",
-        #     "end_effector",
-        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

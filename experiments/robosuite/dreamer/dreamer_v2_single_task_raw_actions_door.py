@@ -124,9 +124,6 @@ if __name__ == "__main__":
             std_act="sigmoid2",
         ),
         trainer_kwargs=dict(
-            use_amp=True,
-            opt_level="O1",
-            optimizer_class="apex_adam",
             adam_eps=1e-5,
             discount=0.99,
             lam=0.95,
