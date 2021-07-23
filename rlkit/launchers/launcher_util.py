@@ -434,6 +434,7 @@ def run_experiment(
         snapshot_gap=1,
         base_log_dir=None,
         local_input_dir_to_mount_point_dict=None,  # TODO(vitchyr): test this
+        unpack_variant=False,
         # local settings
         skip_wait=False,
         # ec2 settings
@@ -467,6 +468,14 @@ def run_experiment(
     `base_log_dir/<date>-my-experiment/<date>-my-experiment-<unique-id>`
     By default, the base_log_dir is determined by
     `config.LOCAL_LOG_DIR/`
+    :param unpack_variant: If True, the function will be called with
+        ```
+        foo(**variant)
+        ```
+        rather than
+        ```
+        foo(variant)
+        ```
     :param method_call: a function that takes in a dictionary as argument
     :param mode: A string:
      - 'local'
