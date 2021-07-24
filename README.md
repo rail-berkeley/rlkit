@@ -257,7 +257,7 @@ Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. ICML, 2018.
 Scott Fujimoto, Herke van Hoof, David Meger. ICML, 2018.
 
 # Credits
-This repository was initially developed primarily by [Vitchyr Pong](https://github.com/vitchyr), until July 2021, at which point it was transferred to the RAIL Berkeley organization, where it is primarily maintained by [Ashvin Nair](https://github.com/anair13).
+This repository was initially developed primarily by [Vitchyr Pong](https://github.com/vitchyr), until July 2021, at which point it was transferred to the RAIL Berkeley organization and is primarily maintained by [Ashvin Nair](https://github.com/anair13).
 Other major collaborators and contributions:
  - [Murtaza Dalal](https://github.com/mdalal2020)
  - [Steven Lin](https://github.com/stevenlin1111)
