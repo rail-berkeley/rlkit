@@ -217,6 +217,10 @@ class Logger(object):
             joblib.dump(data, file_name, compress=3)
         elif mode == 'pickle':
             pickle.dump(data, open(file_name, "wb"))
+        elif mode == 'cloudpickle':
+            import cloudpickle
+            full_filename = file_name + ".cpkl"
+            cloudpickle.dump(data, open(full_filename, "wb"))
         else:
             raise ValueError("Invalid mode: {}".format(mode))
         return file_name

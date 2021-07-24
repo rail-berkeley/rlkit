@@ -1,3 +1,8 @@
+Requirements that differ from base requirements:
+ - python 3.6.5
+ - joblib==0.9.4
+ - numpy==1.18.5
+ 
 Running these examples requires first generating the data, updating the main launch script to point to that generated data, and then launching the SMAC experiments.
 
 This can be done by first running

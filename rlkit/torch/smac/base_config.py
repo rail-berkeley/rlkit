@@ -101,6 +101,9 @@ DEFAULT_PEARL_CONFIG = {
     "qf_kwargs": {
         "hidden_sizes": [300, 300, 300],
     },
+    "vf_kwargs": {
+        "hidden_sizes": [300, 300, 300],
+    },
     "policy_kwargs": {
         "hidden_sizes": [300, 300, 300],
     },

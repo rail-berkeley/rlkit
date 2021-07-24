@@ -100,6 +100,7 @@ def run_experiment_here(
         base_log_dir=None,
         force_randomize_seed=False,
         log_dir=None,
+        unpack_variant=False,
         **setup_logger_kwargs
 ):
     """
@@ -163,7 +164,16 @@ def run_experiment_here(
         ),
         actual_log_dir
     )
-    return experiment_function(variant)
+    if unpack_variant:
+        raw_variant = variant.copy()
+        raw_variant.pop('exp_id', None)
+        raw_variant.pop('seed', None)
+        raw_variant.pop('exp_prefix', None)
+        raw_variant.pop('logger_config', None)
+        raw_variant.pop('instance_type', None)
+        return experiment_function(**raw_variant)
+    else:
+        return experiment_function(variant)
 
 
 def create_exp_name(exp_prefix, exp_id=0, seed=0):
@@ -586,6 +596,7 @@ def run_experiment(
         snapshot_gap=snapshot_gap,
         git_infos=git_infos,
         script_name=main.__file__,
+        unpack_variant=unpack_variant,
     )
     if mode == 'here_no_doodad':
         run_experiment_kwargs['base_log_dir'] = base_log_dir

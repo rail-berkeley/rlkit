@@ -15,7 +15,8 @@ from rlkit.util.io import load_local_or_remote_file
 # @click.option('--dry', is_flag=True, default=False)
 # @click.option('--suffix', default=None)
 # @click.option('--nseeds', default=1)
-# @click.option('--mode', default='local')
+# @click.option('--mode', default='here_no_doodad')
+# def main(debug, dry, suffix, nseeds, mode):
 def main():
     debug = True
     dry = False
@@ -34,7 +35,7 @@ def main():
 
     if debug or dry:
         exp_name = 'dev--' + exp_name
-        mode = 'local'
+        mode = 'here_no_doodad'
         nseeds = 1
 
     if dry:
@@ -42,20 +43,13 @@ def main():
 
     print(exp_name)
 
-    task_data = load_local_or_remote_file(
-        "examples/smac/cheetah_tasks.joblib",  # TODO: update to point to correct file
-        file_type='joblib')
-    tasks = task_data['tasks']
     search_space = {
         'seed': list(range(nseeds)),
     }
     variant = DEFAULT_PEARL_CONFIG.copy()
     variant["env_name"] = "cheetah-vel"
-    variant['algo_kwargs']["encoder_buffer_matches_rl_buffer"] = False
     variant['trainer_kwargs']["train_context_decoder"] = True
-    variant["train_task_idxs"] = list(range(100))
-    variant["eval_task_idxs"] = list(range(100, 120))
-    variant["env_params"]["presampled_tasks"] = tasks
+    variant["saved_tasks_path"] = "examples/smac/cheetah_tasks.joblib"  # TODO: update to point to correct file
 
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,

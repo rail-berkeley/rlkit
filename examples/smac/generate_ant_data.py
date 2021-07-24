@@ -10,7 +10,8 @@ from rlkit.util.io import load_local_or_remote_file
 # @click.option('--dry', is_flag=True, default=False)
 # @click.option('--suffix', default=None)
 # @click.option('--nseeds', default=1)
-# @click.option('--mode', default='local')
+# @click.option('--mode', default='here_no_doodad')
+# def main(debug, dry, suffix, nseeds, mode):
 def main():
     debug = True
     dry = False
@@ -29,7 +30,7 @@ def main():
 
     if debug or dry:
         exp_name = 'dev--' + exp_name
-        mode = 'local'
+        mode = 'here_no_doodad'
         nseeds = 1
 
     if dry:
@@ -46,18 +47,19 @@ def main():
     }
     variant = DEFAULT_PEARL_CONFIG.copy()
     variant["env_name"] = "ant-dir"
-    variant["train_task_idxs"] = list(range(100))
-    variant["eval_task_idxs"] = list(range(100, 120))
+    # variant["train_task_idxs"] = list(range(100))
+    # variant["eval_task_idxs"] = list(range(100, 120))
     variant["env_params"]["fixed_tasks"] = [t['goal'] for t in tasks]
     variant["env_params"]["direction_in_degrees"] = True
     variant["trainer_kwargs"]["train_context_decoder"] = True
     variant["trainer_kwargs"]["backprop_q_loss_into_encoder"] = True
+    variant["saved_tasks_path"] = "examples/smac/ant_tasks.joblib"  # TODO: update to point to correct file
 
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space, default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        variant['expd_id'] = exp_id
+        variant['exp_id'] = exp_id
         run_experiment(
             pearl_experiment,
             unpack_variant=True,

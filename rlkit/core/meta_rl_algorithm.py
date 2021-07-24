@@ -13,11 +13,9 @@ from rlkit.data_management.meta_learning_replay_buffer import \
     MetaLearningReplayBuffer
 from rlkit.data_management.multitask_replay_buffer import MultiTaskReplayBuffer
 from rlkit.data_management.path_builder import PathBuilder
-from rlkit.misc import eval_util
-# from rlkit.samplers.in_place import InPlacePathSampler
+from rlkit.core import eval_util
 from rlkit.torch import pytorch_util as ptu
-from rlkit.torch.core import np_to_pytorch_batch
-from rlkit.torch.pearl.sampler import PEARLInPlacePathSampler
+from rlkit.torch.smac.sampler import SMACInPlacePathSampler
 import copy
 
 
@@ -185,7 +183,7 @@ class MetaRLAlgorithm(metaclass=abc.ABCMeta):
 
         self.exploration_resample_latent_period = exploration_resample_latent_period
         self.exploration_update_posterior_period = exploration_update_posterior_period
-        self.sampler = PEARLInPlacePathSampler(
+        self.sampler = SMACInPlacePathSampler(
             env=env,
             policy=agent,
             max_path_length=self.max_path_length,

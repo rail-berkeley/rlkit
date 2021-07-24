@@ -277,7 +277,7 @@ class SmacAgent(nn.Module):
             return [self.context_encoder, self.context_encoder_rp, self.policy]
 
 
-class MakePEARLAgentDeterministic(Wrapper, Policy):
+class MakeSMACAgentDeterministic(Wrapper, Policy):
     def __init__(self, stochastic_policy):
         super().__init__(stochastic_policy)
         self.stochastic_policy = stochastic_policy

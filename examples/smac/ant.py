@@ -8,7 +8,8 @@ import rlkit.util.hyperparameter as hyp
 # @click.option('--dry', is_flag=True, default=False)
 # @click.option('--suffix', default=None)
 # @click.option('--nseeds', default=1)
-# @click.option('--mode', default='local')
+# @click.option('--mode', default='here_no_doodad')
+# def main(debug, dry, suffix, nseeds, mode):
 def main():
     debug = True
     dry = False
@@ -27,7 +28,7 @@ def main():
 
     if debug or dry:
         exp_name = 'dev--' + exp_name
-        mode = 'local'
+        mode = 'here_no_doodad'
         nseeds = 1
 
     variant = DEFAULT_CONFIG.copy()

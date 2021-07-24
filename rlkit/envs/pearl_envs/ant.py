@@ -1,6 +1,5 @@
 import numpy as np
 
-from multiworld.envs.mujoco.cameras import create_camera_init
 from .mujoco_env import MujocoEnv
 
 
@@ -56,13 +55,16 @@ class AntEnv(MujocoEnv):
         return self._get_obs()
 
     def viewer_setup(self):
-        self.camera_init = create_camera_init(
-            lookat=(0, 0, 0),
-            distance=10,
-            elevation=-45,
-            azimuth=90,
-            trackbodyid=self.sim.model.body_name2id('torso'),
-        )
-        self.camera_init(self.viewer.cam)
-        # self.viewer.cam.distance = self.model.stat.extent * 0.5
+        try:
+            from multiworld.envs.mujoco.cameras import create_camera_init
+            self.camera_init = create_camera_init(
+                lookat=(0, 0, 0),
+                distance=10,
+                elevation=-45,
+                azimuth=90,
+                trackbodyid=self.sim.model.body_name2id('torso'),
+            )
+            self.camera_init(self.viewer.cam)
+        except ImportError as e:
+            pass
 #

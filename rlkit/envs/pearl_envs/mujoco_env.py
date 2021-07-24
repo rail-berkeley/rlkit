@@ -5,7 +5,7 @@ import mujoco_py
 import numpy as np
 from gym.envs.mujoco import mujoco_env
 
-from rlkit.core.serializeable import Serializable
+from rlkit.core.serializable import Serializable
 
 ENV_ASSET_DIR = os.path.join(os.path.dirname(__file__), 'assets')
 
