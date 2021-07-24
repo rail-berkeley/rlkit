@@ -1,17 +1,20 @@
-import click
-
 from rlkit.torch.smac.base_config import DEFAULT_CONFIG
 from rlkit.torch.smac.launcher import smac_experiment
+import rlkit.util.hyperparameter as hyp
 
 
-@click.command()
-@click.option('--debug', is_flag=True, default=False)
-@click.option('--dry', is_flag=True, default=False)
-@click.option('--suffix', default=None)
-@click.option('--nseeds', default=1)
-@click.option('--mode', default='azure')
-@click.option('--olddd', is_flag=True, default=False)
-def main(debug, dry, suffix, nseeds, mode, olddd):
+# @click.command()
+# @click.option('--debug', is_flag=True, default=False)
+# @click.option('--dry', is_flag=True, default=False)
+# @click.option('--suffix', default=None)
+# @click.option('--nseeds', default=1)
+# @click.option('--mode', default='local')
+def main():
+    debug = True
+    dry = False
+    mode = 'here_no_doodad'
+    suffix = ''
+    nseeds = 1
     gpu = True
 
     path_parts = __file__.split('/')
@@ -29,9 +32,7 @@ def main(debug, dry, suffix, nseeds, mode, olddd):
 
     variant = DEFAULT_CONFIG.copy()
     variant["env_name"] = "ant-dir"
-    variant["env_params"] = {
-        "direction_in_degrees": True,
-    }
+    variant["env_params"]["direction_in_degrees"] = True
     search_space = {
         'load_buffer_kwargs.pretrain_buffer_path': [
             "results/.../extra_snapshot_itr100.cpkl"  # TODO: update to point to correct file

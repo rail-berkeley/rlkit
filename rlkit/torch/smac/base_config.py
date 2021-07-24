@@ -47,10 +47,7 @@ DEFAULT_CONFIG = {
         "discount": 0.99, # RL discount factor
         "reward_scale": 5.0, # scale rewards before constructing Bellman update, effectively controls weight on the entropy of the policy
     },
-    "tags": {
-        "method": "AWAC",
-        "encoder_buffer_mode": "is_rl_buffer",
-    },
+    "tags": {},
     "latent_dim": 5,
     "algo_kwargs": {
         "use_rl_buffer_for_enc_buffer": True,
@@ -97,6 +94,7 @@ DEFAULT_CONFIG = {
     },
     "n_train_tasks": 100,
     "n_eval_tasks": 20,
+    "env_params": {},
 }
 
 DEFAULT_PEARL_CONFIG = {
@@ -119,39 +117,45 @@ DEFAULT_PEARL_CONFIG = {
         "recurrent": False, # recurrent or permutation-invariant encoder
         "discount": 0.99, # RL discount factor
         "reward_scale": 5.0, # scale rewards before constructing Bellman update, effectively controls weight on the entropy of the policy
+        "backprop_q_loss_into_encoder": True,
     },
     "algo_kwargs": {
-        "meta_batch": 16, # number of tasks to average the gradient across
         "num_iterations": 501, # number of data sampling / training iterates
-        "num_initial_steps": 2000, # number of transitions collected per task before training
         "num_tasks_sample": 5, # number of randomly sampled tasks to collect data for each iteration
-        "num_steps_prior": 400, # number of transitions to collect per task with z ~ prior
-        "num_steps_posterior": 0, # number of transitions to collect per task with z ~ posterior
-        "num_extra_rl_steps_posterior": 400, # number of additional transitions to collect per task with z ~ posterior that are only used to train the policy and NOT the encoder
-        "num_train_steps_per_itr": 2000, # number of meta-gradient steps taken per iteration
-        "num_evals": 2, # number of independent evals
-        "num_steps_per_eval": 600,  # nuumber of transitions to eval on
         "batch_size": 256, # number of transitions in the RL batch
-        "embedding_batch_size": 64, # number of transitions in the context batch
         "embedding_mini_batch_size": 64, # number of context transitions to backprop through (should equal the arg above except in the recurrent encoder case)
         "max_path_length": 200, # max path length for this environment
         "update_post_train": 1, # how often to resample the context when collecting data during training (in trajectories)
-        "num_exp_traj_eval": 1, # how many exploration trajs to collect before beginning posterior sampling at test time
         "dump_eval_paths": False, # whether to save evaluation trajectories
         "num_iterations_with_reward_supervision": None,
         "save_extra_manual_epoch_list": [0, 50, 100, 200, 300, 400, 500],
         "save_extra_manual_beginning_epoch_list": [0],
         "save_replay_buffer": False,
         "save_algorithm": True,
+        "exploration_resample_latent_period": 1,
+
+        "freeze_encoder_buffer_in_unsupervised_phase": False,
+        "clear_encoder_buffer_before_every_update": True,
+        "meta_batch": 4,
+        "embedding_batch_size": 256,
+        "num_initial_steps": 2000,
+        "num_steps_prior": 400,
+        "num_steps_posterior": 0,
+        "num_extra_rl_steps_posterior": 600,
+        "num_train_steps_per_itr": 4000,
+        "num_evals": 4,
+        "num_steps_per_eval": 600,
+        "num_exp_traj_eval": 2,
     },
     "latent_dim": 5,
     "logger_config": {
         "snapshot_mode": "gap_and_last",
         "snapshot_gap": 25,
-    }
+    },
     "context_decoder_kwargs": {
         "hidden_sizes": [64, 64],
     },
-    "save_video": False,
-    "save_video_period": 25,
+    "env_params": {},
+    "n_train_tasks": 100,
+    "n_eval_tasks": 20,
 }

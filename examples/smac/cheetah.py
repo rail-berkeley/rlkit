@@ -1,20 +1,22 @@
-import click
-
-import rlkit.misc.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.smac.launcher import smac_experiment
 from rlkit.torch.smac.base_config import DEFAULT_CONFIG
+import rlkit.util.hyperparameter as hyp
 
 
-@click.command()
-@click.option('--debug', is_flag=True, default=False)
-@click.option('--dry', is_flag=True, default=False)
-@click.option('--suffix', default=None)
-@click.option('--nseeds', default=1)
-@click.option('--mode', default='azure')
-@click.option('--olddd', is_flag=True, default=False)
-def main(debug, dry, suffix, nseeds, mode, olddd):
-    gpu = True
+# @click.command()
+# @click.option('--debug', is_flag=True, default=False)
+# @click.option('--dry', is_flag=True, default=False)
+# @click.option('--suffix', default=None)
+# @click.option('--nseeds', default=1)
+# @click.option('--mode', default='local')
+def main():
+    debug = True
+    dry = False
+    mode = 'here_no_doodad'
+    suffix = ''
+    nseeds = 1
+    gpu=True
 
     path_parts = __file__.split('/')
     suffix = '' if suffix is None else '--{}'.format(suffix)
@@ -80,7 +82,6 @@ def main(debug, dry, suffix, nseeds, mode, olddd):
             exp_prefix=exp_name,
             mode=mode,
             variant=variant,
-            time_in_mins=3 * 24 * 60 - 1,
             use_gpu=gpu,
         )
 

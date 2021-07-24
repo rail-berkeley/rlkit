@@ -22,7 +22,7 @@ from rlkit.torch.smac.launcher_util import (
     load_macaw_buffer_onto_algo,
     relabel_offline_data,
 )
-from rlkit.torch.smac.trainer import SmacTrainer
+from rlkit.torch.smac.smac import SmacTrainer
 
 
 def smac_experiment(
