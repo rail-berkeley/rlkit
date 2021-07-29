@@ -125,7 +125,7 @@ if __name__ == "__main__":
     plt.xlabel("Step")
     plt.ylabel("MSE")
     plt.savefig("data/" + args.logdir + "/plots/action.png")
-
+    plt.clf()
     state_errors = np.array(state_errors)
     state_errors = np.mean(state_errors, axis=0)
     plt.plot(state_errors)
