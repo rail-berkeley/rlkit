@@ -4,13 +4,12 @@ from typing import Dict, List
 
 import torch
 import torch.nn.functional as F
-from torch import jit, nn
+from torch import Tensor, jit, nn
 from torch.distributions.bernoulli import Bernoulli
 from torch.distributions.independent import Independent
 from torch.distributions.normal import Normal
 from torch.nn import init
 from torch.nn.parameter import Parameter
-from torch.tensor import Tensor
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.core import PyTorchModule

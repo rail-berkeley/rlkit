@@ -1,12 +1,16 @@
 import gym
 import mujoco_py
 import numpy as np
+import torch
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
 from gym import spaces
 from gym.spaces.box import Box
 from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 from robosuite.wrappers.gym_wrapper import GymWrapper
+
+import rlkit.torch.pytorch_util as ptu
+from rlkit.torch.model_based.dreamer.mlp import Mlp
 
 try:
     from robosuite_vices.controllers.arm_controller import PositionController
@@ -383,6 +387,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         action_scale=1 / 100,
         max_path_length=500,
         camera_settings=None,
+        use_learned_primitives=False,
+        learned_primitives=None,
+        collect_primitives_info=False,
     ):
         self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
@@ -401,6 +408,18 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             8: "open_gripper",
             9: "close_gripper",
         }
+        self.primitive_idx_to_num_low_level_steps = {
+            0: 300,
+            1: 1400,
+            2: 300,
+            3: 300,
+            4: 300,
+            5: 300,
+            6: 300,
+            7: 300,
+            8: 200,
+            9: 300,
+        }
         self.primitive_name_to_func = dict(
             move_delta_ee_pose=self.move_delta_ee_pose,
             top_x_y_grasp=self.top_x_y_grasp,
@@ -415,17 +434,17 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         )
         self.primitive_name_to_action_idx = dict(
             move_delta_ee_pose=[0, 1, 2],
-            top_x_y_grasp=[3, 4, 5],
-            lift=6,
-            drop=7,
-            move_left=8,
-            move_right=9,
-            move_forward=10,
-            move_backward=11,
-            open_gripper=[],  # doesn't matter
-            close_gripper=[],  # doesn't matter
+            top_x_y_grasp=[3, 4, 5, 6],
+            lift=7,
+            drop=8,
+            move_left=9,
+            move_right=10,
+            move_forward=11,
+            move_backward=12,
+            open_gripper=13,
+            close_gripper=14,
         )
-        self.max_arg_len = 12
+        self.max_arg_len = 15
         self.num_primitives = len(self.primitive_name_to_func)
         self.control_mode = control_mode
         if self.control_mode == "primitives":
@@ -479,6 +498,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                 self.sim, self.joint_index_vel, self.joint_index_vel
             )
         self.unset_render_every_step()
+        self.use_learned_primitives = use_learned_primitives
+        self.learned_primitives = learned_primitives
+        self.collect_primitives_info = collect_primitives_info
 
     def _reset_hand(self):
         if self.control_mode != "vices":
@@ -531,6 +553,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             stats = [0, 0]
         else:
             self.img_array = []
+            self.primitives_info = {}
+            self.primitives_info["actions"] = []
+            self.primitives_info["robot-states"] = []
             stats = self.act(a)
 
         self.curr_path_length += 1
@@ -562,6 +587,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         if self.control_mode == "primitives":
             reward = stats[0]
             info["success"] = float(stats[1] > 0)
+            if self.collect_primitives_info:
+                info.update(self.primitives_info)
         return self._last_stable_obs, reward, False, info
 
     def _get_site_pos(self, siteName):
@@ -674,26 +701,73 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     self.render_im_shape[1],
                 )
 
-    def close_gripper(self, unused=None):
+    def execute_learned_primitive(self, arguments, primitive_idx):
+        total_reward, total_success = 0, 0
+        primitive = self.learned_primitives[primitive_idx]
+        print("Executing learned primitive: {}".format(primitive_idx))
+        num_low_level_steps = self.primitive_idx_to_num_low_level_steps[primitive_idx]
+        if arguments.shape == ():
+            arguments = np.array([arguments])
+        with torch.no_grad():
+            for _ in range(num_low_level_steps):
+                state = self.get_robot_state()
+                inp = np.concatenate((state, arguments))
+                inp = torch.from_numpy(inp).float()
+                a = primitive(inp).numpy().squeeze()
+                self.primitives_info["robot-states"].append(state)
+                self.primitives_info["actions"].append(a)
+                self._set_action(a)
+                self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
+                self.sim.step()
+                self.call_render_every_step()
+                delta = a[:3]
+                grip = a[-1]
+                r, info = self.evaluate_state(self._get_obs(), [*delta, grip])
+                total_reward += r
+                total_success += info["success"]
+        return np.array((total_reward, total_success))
+
+    def get_robot_state(self):
+        pos_hand = self.get_endeff_pos()
+
+        finger_right, finger_left = (
+            self._get_site_pos("rightEndEffector"),
+            self._get_site_pos("leftEndEffector"),
+        )
+
+        gripper_distance_apart = np.linalg.norm(finger_right - finger_left)
+        gripper_distance_apart = np.clip(gripper_distance_apart / 0.1, 0.0, 1.0)
+
+        qpos = self.sim.data.qpos[:10]
+        qvel = self.sim.data.qvel[:10]
+        return np.concatenate([qpos, qvel, pos_hand, [gripper_distance_apart]])
+
+    def close_gripper(self, d):
         total_reward, total_success = 0, 0
         for _ in range(300):
-            self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, -1]))
+            a = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, d, -d])
+            self.primitives_info["actions"].append(a)
+            self.primitives_info["robot-states"].append(self.get_robot_state())
+            self._set_action(a)
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -1])
+            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -d])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
 
-    def open_gripper(self, unused=None):
+    def open_gripper(self, d):
         total_reward, total_success = 0, 0
         for _ in range(200):
-            self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -1, 1]))
+            a = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, -d, d])
+            self.primitives_info["actions"].append(a)
+            self.primitives_info["robot-states"].append(self.get_robot_state())
+            self._set_action(a)
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, 1])
+            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, d])
             total_reward += r
             total_success += info["success"]
         return np.array((total_reward, total_success))
@@ -705,24 +779,26 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             gripper = self.sim.data.qpos[8:10]
             if grasp:
                 gripper = [1, -1]
-            self._set_action(
-                np.array([delta[0], delta[1], delta[2], 0.0, 0.0, 0.0, 0.0, *gripper])
-            )
+            a = np.array([delta[0], delta[1], delta[2], 0.0, 0.0, 0.0, 0.0, *gripper])
+            self.primitives_info["actions"].append(a)
+            self.primitives_info["robot-states"].append(self.get_robot_state())
+            self._set_action(a)
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
             self.call_render_every_step()
             r, info = self.evaluate_state(self._get_obs(), [*delta, 0])
             total_reward += r
             total_success += info["success"]
+
         return np.array((total_reward, total_success))
 
-    def top_x_y_grasp(self, xyz):
-        x_dist, y_dist, z_dist = xyz
-        stats = self.open_gripper()
+    def top_x_y_grasp(self, xyzd):
+        x_dist, y_dist, z_dist, d = xyzd
+        stats = self.open_gripper(1)
         stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
         stats += self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
         stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, 0, z_dist]))
-        stats += self.close_gripper()
+        stats += self.close_gripper(d)
         return stats
 
     def move_delta_ee_pose(self, pose):
@@ -788,9 +864,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)
         primitive_action = primitive_name_to_action_dict[primitive_name]
         primitive = self.primitive_name_to_func[primitive_name]
-        stats = primitive(
-            primitive_action,
-        )
+        if self.use_learned_primitives:
+            stats = self.execute_learned_primitive(primitive_action, primitive_idx)
+        else:
+            stats = primitive(
+                primitive_action,
+            )
+        self.primitives_info["arguments"] = [
+            primitive_action for _ in range(len(self.primitives_info["robot-states"]))
+        ]
         return stats
 
     def __getstate__(self):
