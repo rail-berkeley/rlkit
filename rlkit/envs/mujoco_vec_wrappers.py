@@ -45,9 +45,15 @@ class DummyVecEnv(Env):
         for i in infos:
             for k, v in i.items():
                 if k in info_.keys():
-                    info_[k].append(np.array(v).reshape(1, 1))
+                    if np.array(v).shape[0] > 1:
+                        info_[k].append(np.array(v).reshape(1, *np.array(v).shape))
+                    else:
+                        info_[k].append(np.array(v).reshape(1, 1))
                 else:
-                    info_[k] = [np.array(v).reshape(1, 1)]
+                    if np.array(v).shape[0] > 1:
+                        info_[k] = [np.array(v).reshape(1, *np.array(v).shape)]
+                    else:
+                        info_[k] = [np.array(v).reshape(1, 1)]
         for k, v in info_.items():
             info_[k] = np.concatenate(v)
         return obs, rewards, done, info_
@@ -140,9 +146,18 @@ class StableBaselinesVecEnv(SubprocVecEnv):
         for i in infos:
             for k, v in i.items():
                 if k in info_.keys():
-                    info_[k].append(np.array(v).reshape(1, 1))
+                    if np.array(v).shape == ():
+                        info_[k].append(np.array(v).reshape(1, 1))
+                    else:
+                        info_[k].append(v)
                 else:
-                    info_[k] = [np.array(v).reshape(1, 1)]
+                    if np.array(v).shape == ():
+                        info_[k] = [np.array(v).reshape(1, 1)]
+                    else:
+                        info_[k] = [v]
         for k, v in info_.items():
-            info_[k] = np.concatenate(v)
+            if np.array(v).shape == (1, 1):
+                info_[k] = np.concatenate(v)
+            else:
+                info_[k] = v
         return obs, rewards, dones, info_

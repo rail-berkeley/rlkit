@@ -80,11 +80,11 @@ def get_dataloaders(filename, num_primitives, train_test_split=0.8):
     ]
 
     test_inputs = [
-        data["inputs"][i][int(num_datapoints[i] * (1 - train_test_split)) :]
+        data["inputs"][i][int(num_datapoints[i] * train_test_split) :]
         for i in range(num_primitives)
     ]
     test_outputs = [
-        data["actions"][i][int(num_datapoints[i] * (1 - train_test_split)) :]
+        data["actions"][i][int(num_datapoints[i] * train_test_split) :]
         for i in range(num_primitives)
     ]
 
@@ -152,8 +152,8 @@ if __name__ == "__main__":
                 hidden_sizes=args.hidden_sizes,
                 output_size=data["actions"][i].shape[1],
                 input_size=input_size,
-                hidden_activation=torch.nn.functional.elu,
-            )
+                hidden_activation=torch.nn.functional.relu,
+            ).cuda()
         )
 
     for i in range(num_primitives):
@@ -173,6 +173,8 @@ if __name__ == "__main__":
                 total_train_steps = 0
                 for data in train_dataloader:
                     inputs, outputs = data
+                    inputs = inputs.cuda()
+                    outputs = outputs.cuda()
                     optimizer.zero_grad()
                     predicted_outputs = p(inputs)
                     loss = criterion(outputs, predicted_outputs)
@@ -190,6 +192,8 @@ if __name__ == "__main__":
                     total_test_steps = 0
                     for data in test_dataloader:
                         inputs, outputs = data
+                        inputs = inputs.cuda()
+                        outputs = outputs.cuda()
                         predicted_outputs = p(inputs)
                         loss = criterion(outputs, predicted_outputs)
                         total_loss += loss.item()

@@ -4,10 +4,11 @@ import numpy as np
 from arguments import get_args
 from tqdm import tqdm
 
+from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
-def collect_data(env, num_primitives, num_actions):
+def collect_data(env, num_primitives, num_actions, num_envs):
     """
     Collect data from the environment.
 
@@ -23,20 +24,24 @@ def collect_data(env, num_primitives, num_actions):
     data["inputs"] = [[] for i in range(num_primitives)]
     env.reset()
 
-    for j in tqdm(range(num_actions)):
-        a = env.action_space.sample()
-        primitive = np.argmax(a[:num_primitives])
-        arguments = a[num_primitives:]
-        o, r, d, i = env.step(a)
-        data["actions"][primitive].append(i["actions"])
-        arguments = np.array(i["arguments"])
-        robot_states = np.array(i["robot-states"])
-        if len(arguments.shape) == 1:
-            arguments = arguments.reshape(-1, 1)
-        data["inputs"][primitive].append(
-            np.concatenate((robot_states, arguments), axis=1)
-        )
-        if d:
+    for j in tqdm(range(num_actions // num_envs)):
+        actions = [env.action_space.sample() for i in range(num_envs)]
+        primitives = [np.argmax(a[:num_primitives]) for a in actions]
+        o, r, d, i = env.step(actions)
+        for j in range(num_envs):
+            primitive = primitives[j]
+            actions = i["actions"][j]
+            robot_states = i["robot-states"][j]
+            arguments = i["arguments"][j]
+            data["actions"][primitive].append(actions)
+            arguments = np.array(arguments)
+            robot_states = np.array(robot_states)
+            if len(arguments.shape) == 1:
+                arguments = arguments.reshape(-1, 1)
+            data["inputs"][primitive].append(
+                np.concatenate((robot_states, arguments), axis=1)
+            )
+        if all(d):
             env.reset()
 
     return data
@@ -66,8 +71,12 @@ if __name__ == "__main__":
     )
     env_suite = "metaworld"
     env_name = "reach-v2"
-    env = make_env(env_suite, env_name, env_kwargs)
-    num_primitives = env.num_primitives
+    num_expl_envs = 25
+    env_fns = [
+        lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(num_expl_envs)
+    ]
+    env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+    num_primitives = 10
     args = get_args()
-    data = collect_data(env, num_primitives, args.num_actions)
+    data = collect_data(env, num_primitives, args.num_actions, num_expl_envs)
     np.save("data/primitive_data/" + args.datafile + ".npy", data)

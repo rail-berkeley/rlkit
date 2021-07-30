@@ -36,7 +36,7 @@ def load_primitives_and_dataloaders(datapath):
         primitives[i].load_state_dict(
             torch.load("data/" + args.logdir + "/models/primitive_{}.pt".format(i))
         )
-        primitives[i].eval()
+        primitives[i].eval().cpu()
 
     return primitives, train_dataloaders, test_dataloaders
 

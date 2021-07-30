@@ -62,7 +62,7 @@ def load_primitives(logdir, datafile, num_primitives, input_subselect, hidden_si
                 + "/models/primitive_{}.pt".format(i)
             )
         )
-        primitives[i].eval()
+        primitives[i].eval().cpu()
 
     return primitives
 
