@@ -24,15 +24,15 @@ def collect_data(env, num_primitives, num_actions, num_envs):
     data["inputs"] = [[] for i in range(num_primitives)]
     env.reset()
 
-    for j in tqdm(range(num_actions // num_envs)):
+    for k in tqdm(range(num_actions // num_envs)):
         actions = [env.action_space.sample() for i in range(num_envs)]
         primitives = [np.argmax(a[:num_primitives]) for a in actions]
         o, r, d, i = env.step(actions)
         for j in range(num_envs):
             primitive = primitives[j]
-            actions = i["actions"][j]
-            robot_states = i["robot-states"][j]
-            arguments = i["arguments"][j]
+            actions = np.array(i["actions"][j])
+            robot_states = np.array(i["robot-states"][j])
+            arguments = np.array(i["arguments"][j])
             data["actions"][primitive].append(actions)
             arguments = np.array(arguments)
             robot_states = np.array(robot_states)
@@ -68,6 +68,7 @@ if __name__ == "__main__":
         ),
         image_kwargs=dict(imwidth=64, imheight=64),
         collect_primitives_info=True,
+        include_phase_variable=True,
     )
     env_suite = "metaworld"
     env_name = "reach-v2"

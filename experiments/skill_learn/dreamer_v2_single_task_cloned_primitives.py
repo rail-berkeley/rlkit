@@ -70,6 +70,7 @@ if __name__ == "__main__":
             ),
             image_kwargs=dict(imwidth=64, imheight=64),
             use_learned_primitives=True,
+            include_phase_variable=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -113,8 +114,8 @@ if __name__ == "__main__":
             imagination_horizon=5,
         ),
         load_primitives_kwargs=dict(
-            logdir="clone_primitives",
-            datafile="initial_data",
+            logdir="100_100_data_large_phase_no_order_small_1024bs",
+            datafile="data_large_phase_no_order_small",
             num_primitives=10,
             input_subselect="all",
             hidden_sizes=(100, 100),

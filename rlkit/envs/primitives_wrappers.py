@@ -390,6 +390,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         use_learned_primitives=False,
         learned_primitives=None,
         collect_primitives_info=False,
+        include_phase_variable=False,
     ):
         self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
@@ -501,6 +502,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.use_learned_primitives = use_learned_primitives
         self.learned_primitives = learned_primitives
         self.collect_primitives_info = collect_primitives_info
+        self.include_phase_variable = include_phase_variable
 
     def _reset_hand(self):
         if self.control_mode != "vices":
@@ -705,18 +707,22 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def execute_learned_primitive(self, arguments, primitive_idx):
         total_reward, total_success = 0, 0
         primitive = self.learned_primitives[primitive_idx]
-        print("Executing learned primitive: {}".format(primitive_idx))
         num_low_level_steps = self.primitive_idx_to_num_low_level_steps[primitive_idx]
         if arguments.shape == ():
             arguments = np.array([arguments])
         with torch.no_grad():
             for _ in range(num_low_level_steps):
-                state = np.concatenate(
-                    (
-                        self.get_robot_state(),
-                        [self.primitive_step_counter / self.num_low_level_steps],
+                state = self.get_robot_state()
+                if self.include_phase_variable:
+                    state = np.concatenate(
+                        (
+                            state,
+                            [
+                                (self.primitive_step_counter + 1)
+                                / self.num_low_level_steps
+                            ],
+                        )
                     )
-                )
                 inp = np.concatenate((state, arguments))
                 inp = torch.from_numpy(inp).float()
                 a = primitive(inp).numpy().squeeze()
@@ -755,14 +761,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         for _ in range(300):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
             self.primitives_info["actions"].append(a)
-            self.primitives_info["robot-states"].append(
-                np.concatenate(
+            state = self.get_robot_state()
+            if self.include_phase_variable:
+                state = np.concatenate(
                     (
-                        self.get_robot_state(),
-                        [self.primitive_step_counter / self.num_low_level_steps],
+                        state,
+                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            )
+            self.primitives_info["robot-states"].append(state)
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
@@ -777,14 +784,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         for _ in range(200):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
             self.primitives_info["actions"].append(a)
-            self.primitives_info["robot-states"].append(
-                np.concatenate(
+            state = self.get_robot_state()
+            if self.include_phase_variable:
+                state = np.concatenate(
                     (
-                        self.get_robot_state(),
-                        [self.primitive_step_counter / self.num_low_level_steps],
+                        state,
+                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            )
+            self.primitives_info["robot-states"].append(state)
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
@@ -803,14 +811,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                 gripper = [1, -1]
             a = np.array([delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper])
             self.primitives_info["actions"].append(a)
-            self.primitives_info["robot-states"].append(
-                np.concatenate(
+            state = self.get_robot_state()
+            if self.include_phase_variable:
+                state = np.concatenate(
                     (
-                        self.get_robot_state(),
-                        [self.primitive_step_counter / self.num_low_level_steps],
+                        state,
+                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            )
+            self.primitives_info["robot-states"].append(state)
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()

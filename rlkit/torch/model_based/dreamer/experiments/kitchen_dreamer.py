@@ -50,7 +50,7 @@ def load_primitives(logdir, datafile, num_primitives, input_subselect, hidden_si
                 hidden_sizes=hidden_sizes,
                 output_size=data["actions"][i].shape[1],
                 input_size=input_size,
-                hidden_activation=torch.nn.functional.elu,
+                hidden_activation=torch.nn.functional.relu,
             )
         )
 

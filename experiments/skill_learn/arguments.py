@@ -11,6 +11,7 @@ def get_args():
     parser.add_argument("--num_actions", type=int, default=int(1e5))
     parser.add_argument("--num_epochs", type=int, default=int(1e1))
     parser.add_argument("--batch_size", type=int, default=int(256))
+    parser.add_argument("--lr", type=float, default=float(1e-3))
     parser.add_argument("--hidden_sizes", type=int, nargs="+", default=[64, 64])
 
     # parse arguments

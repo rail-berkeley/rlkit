@@ -69,23 +69,21 @@ def get_dataloaders(filename, num_primitives, train_test_split=0.8):
         for i in range(num_primitives)
     ]
 
-    num_datapoints = [len(data["actions"][i]) for i in range(num_primitives)]
+    num_train_datapoints = [
+        int(len(data["actions"][i]) * train_test_split) for i in range(num_primitives)
+    ]
     train_inputs = [
-        data["inputs"][i][: int(num_datapoints[i] * train_test_split)]
-        for i in range(num_primitives)
+        data["inputs"][i][: num_train_datapoints[i]] for i in range(num_primitives)
     ]
     train_outputs = [
-        data["actions"][i][: int(num_datapoints[i] * train_test_split)]
-        for i in range(num_primitives)
+        data["actions"][i][: num_train_datapoints[i]] for i in range(num_primitives)
     ]
 
     test_inputs = [
-        data["inputs"][i][int(num_datapoints[i] * train_test_split) :]
-        for i in range(num_primitives)
+        data["inputs"][i][num_train_datapoints[i] :] for i in range(num_primitives)
     ]
     test_outputs = [
-        data["actions"][i][int(num_datapoints[i] * train_test_split) :]
-        for i in range(num_primitives)
+        data["actions"][i][num_train_datapoints[i] :] for i in range(num_primitives)
     ]
 
     train_dataloaders = [
@@ -158,64 +156,81 @@ if __name__ == "__main__":
 
     for i in range(num_primitives):
         print(data["actions"][i].shape)
+        print(
+            data["actions"][i].mean().item(),
+            data["actions"][i].std().item(),
+            data["actions"][i].min().item(),
+            data["actions"][i].max().item(),
+        )
+        print(
+            data["inputs"][i].mean().item(),
+            data["inputs"][i].std().item(),
+            data["inputs"][i].min().item(),
+            data["inputs"][i].max().item(),
+        )
+
     criterion = nn.MSELoss()
-    optimizers = [optim.Adam(p.parameters(), lr=1e-3) for p in primitives]
+    optimizers = [optim.Adam(p.parameters(), lr=args.lr) for p in primitives]
     train_losses = [[] for i in range(num_primitives)]
     test_losses = [[] for i in range(num_primitives)]
     num_epochs = args.num_epochs
+
+    os.makedirs("data/" + args.logdir + "/plots/", exist_ok=True)
+    os.makedirs("data/" + args.logdir + "/models/", exist_ok=True)
+    best_test_losses = 100 * np.ones(num_primitives)
     for i in tqdm(range(num_epochs)):
         print(i)
         for primitive, (train_dataloader, test_dataloader, p, optimizer) in enumerate(
             zip(train_dataloaders, test_dataloaders, primitives, optimizers)
         ):
-            if primitive == 1:
+            total_loss = 0
+            total_train_steps = 0
+            for data in train_dataloader:
+                optimizer.zero_grad()
+                inputs, outputs = data
+                inputs = inputs.cuda()
+                outputs = outputs.cuda()
+                predicted_outputs = p(inputs)
+                loss = criterion(outputs, predicted_outputs)
+                total_loss += loss.item()
+                total_train_steps += 1
+                loss.backward()
+                optimizer.step()
+            print("Train Loss {}: ".format(primitive), total_loss / total_train_steps)
+            train_losses[primitive].append(total_loss / total_train_steps)
+
+            with torch.no_grad():
                 total_loss = 0
-                total_train_steps = 0
-                for data in train_dataloader:
+                total_test_steps = 0
+                for data in test_dataloader:
                     inputs, outputs = data
                     inputs = inputs.cuda()
                     outputs = outputs.cuda()
-                    optimizer.zero_grad()
                     predicted_outputs = p(inputs)
                     loss = criterion(outputs, predicted_outputs)
                     total_loss += loss.item()
-                    total_train_steps += 1
-                    loss.backward()
-                    optimizer.step()
-                print(
-                    "Train Loss {}: ".format(primitive), total_loss / total_train_steps
+                    total_test_steps += 1
+
+                test_loss = total_loss / total_test_steps
+                best_test_losses[primitive] = min(
+                    test_loss, best_test_losses[primitive]
                 )
-                train_losses[primitive].append(total_loss / total_train_steps)
-
-                with torch.no_grad():
-                    total_loss = 0
-                    total_test_steps = 0
-                    for data in test_dataloader:
-                        inputs, outputs = data
-                        inputs = inputs.cuda()
-                        outputs = outputs.cuda()
-                        predicted_outputs = p(inputs)
-                        loss = criterion(outputs, predicted_outputs)
-                        total_loss += loss.item()
-                        total_test_steps += 1
-                    print(
-                        "Test MSE {}: ".format(primitive), total_loss / total_test_steps
+                if test_loss <= best_test_losses[primitive]:
+                    print(test_loss)
+                    torch.save(
+                        p.state_dict(),
+                        "data/"
+                        + args.logdir
+                        + "/models/primitive_{}.pt".format(primitive),
                     )
-                    test_losses[primitive].append(total_loss / total_test_steps)
-                    print()
-
-    os.makedirs("data/" + args.logdir + "/plots/", exist_ok=True)
-    os.makedirs("data/" + args.logdir + "/models/", exist_ok=True)
-    for i in range(num_primitives):
-        plt.plot(train_losses[i], label="Train Loss {}".format(i))
-        plt.plot(test_losses[i], label="Test Loss {}".format(i))
-        plt.title("Losses for primitive {}".format(i))
-        plt.legend()
-        plt.savefig("data/" + args.logdir + "/plots/losses_{}.png".format(i))
-        plt.clf()
-
-    for i in range(num_primitives):
-        torch.save(
-            primitives[i].state_dict(),
-            "data/" + args.logdir + "/models/primitive_{}.pt".format(i),
-        )
+                print("Test MSE {}: ".format(primitive), test_loss)
+                test_losses[primitive].append(test_loss)
+                print()
+        if i % 10 == 0:
+            for k in range(num_primitives):
+                plt.plot(train_losses[k], label="Train Loss {}".format(k))
+                plt.plot(test_losses[k], label="Test Loss {}".format(k))
+                plt.title("Losses for primitive {}".format(k))
+                plt.legend()
+                plt.savefig("data/" + args.logdir + "/plots/losses_{}.png".format(k))
+                plt.clf()
