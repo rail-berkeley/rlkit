@@ -89,7 +89,6 @@ if __name__ == "__main__":
             std_act="sigmoid2",
         ),
         trainer_kwargs=dict(
-            use_torch_amp=True,
             adam_eps=1e-5,
             discount=0.8,
             lam=0.95,
@@ -116,12 +115,12 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # "microwave",
-            # "kettle",
+            "microwave",
+            "kettle",
             "slide_cabinet",
-            # "top_left_burner",
-            # "hinge_cabinet",
-            # "light_switch",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
