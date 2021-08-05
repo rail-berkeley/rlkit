@@ -152,7 +152,15 @@ if __name__ == "__main__":
         save_video=True,
     )
 
-    search_space = {}
+    search_space = {
+        "env_kwargs.robots": [
+            "Panda",
+            "Sawyer",
+            "UR5e",
+            "IIWA",
+            "Kinova3",
+        ]
+    }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
@@ -169,7 +177,8 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="none",
+                snapshot_mode="gap",
+                snapshot_gap=1,
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],
