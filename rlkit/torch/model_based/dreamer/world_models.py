@@ -24,7 +24,6 @@ class WorldModel(jit.ScriptModule):
         self,
         action_dim,
         image_shape,
-        env,
         stochastic_state_size=60,
         deterministic_state_size=400,
         embedding_size=1024,
@@ -47,7 +46,6 @@ class WorldModel(jit.ScriptModule):
         self.deterministic_state_size = deterministic_state_size
         self.discrete_latents = discrete_latents
         self.discrete_latent_size = discrete_latent_size
-        self.env = env
         self.depth = depth
         self.conv_act = conv_act
         if discrete_latents:

@@ -96,7 +96,6 @@ def experiment(variant):
             action_dim,
             image_shape=eval_envs[0].image_shape,
             **variant["model_kwargs"],
-            env=eval_envs[0],
         )
     if variant.get("retrain_actor_and_vf", True):
         actor = actor_model_class(
@@ -105,7 +104,6 @@ def experiment(variant):
             hidden_activation=torch.nn.functional.elu,
             discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
-            env=eval_envs[0],
             **variant["actor_kwargs"],
         )
         vf = Mlp(

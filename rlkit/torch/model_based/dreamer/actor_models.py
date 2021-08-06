@@ -14,7 +14,6 @@ class ActorModel(Mlp):
         self,
         hidden_size,
         obs_dim,
-        env,
         num_layers=4,
         use_per_primitive_actor=False,
         discrete_continuous_dist=False,
