@@ -54,7 +54,6 @@ if __name__ == "__main__":
         env_suite="robosuite",
         env_kwargs=dict(
             robots="Panda",
-            gripper_types="PandaGripper",
             has_renderer=False,
             has_offscreen_renderer=False,
             use_camera_obs=False,
@@ -151,14 +150,21 @@ if __name__ == "__main__":
         expl_amount=0.3,
         pass_render_kwargs=True,
         save_video=True,
+        load_from_path=True,
+        models_path="",
+        pkl_file_name="",
+        retrain_actor_and_vf=False,
     )
 
     search_space = {
         "env_kwargs.robots": [
-            # "Panda",
-            # "Xarm7",
-            "Xarm6",
-        ]
+            # "Xarm6",
+            "UR5e",
+        ],
+        "models_path": [
+            "/home/mdalal/research/primitives/rlkit/data/08-05-test-save-policy/08-05-test_save_policy_2021_08_05_19_08_58_0000--s-38959/"
+        ],
+        "pkl_file_name": ["itr_0.pkl"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -176,8 +182,6 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="gap",
-                snapshot_gap=10,
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],
