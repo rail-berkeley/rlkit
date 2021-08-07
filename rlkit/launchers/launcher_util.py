@@ -100,6 +100,7 @@ def run_experiment_here(
         base_log_dir=None,
         force_randomize_seed=False,
         log_dir=None,
+        unpack_variant=False,
         **setup_logger_kwargs
 ):
     """
@@ -163,7 +164,16 @@ def run_experiment_here(
         ),
         actual_log_dir
     )
-    return experiment_function(variant)
+    if unpack_variant:
+        raw_variant = variant.copy()
+        raw_variant.pop('exp_id', None)
+        raw_variant.pop('seed', None)
+        raw_variant.pop('exp_prefix', None)
+        raw_variant.pop('logger_config', None)
+        raw_variant.pop('instance_type', None)
+        return experiment_function(**raw_variant)
+    else:
+        return experiment_function(variant)
 
 
 def create_exp_name(exp_prefix, exp_id=0, seed=0):
@@ -434,6 +444,7 @@ def run_experiment(
         snapshot_gap=1,
         base_log_dir=None,
         local_input_dir_to_mount_point_dict=None,  # TODO(vitchyr): test this
+        unpack_variant=False,
         # local settings
         skip_wait=False,
         # ec2 settings
@@ -467,6 +478,14 @@ def run_experiment(
     `base_log_dir/<date>-my-experiment/<date>-my-experiment-<unique-id>`
     By default, the base_log_dir is determined by
     `config.LOCAL_LOG_DIR/`
+    :param unpack_variant: If True, the function will be called with
+        ```
+        foo(**variant)
+        ```
+        rather than
+        ```
+        foo(variant)
+        ```
     :param method_call: a function that takes in a dictionary as argument
     :param mode: A string:
      - 'local'
@@ -577,6 +596,7 @@ def run_experiment(
         snapshot_gap=snapshot_gap,
         git_infos=git_infos,
         script_name=main.__file__,
+        unpack_variant=unpack_variant,
     )
     if mode == 'here_no_doodad':
         run_experiment_kwargs['base_log_dir'] = base_log_dir

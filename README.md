@@ -2,6 +2,10 @@
 Reinforcement learning framework and algorithms implemented in PyTorch.
 
 Implemented algorithms:
+ - Semi-supervised Meta Actor Critic
+    - [example script](examples/smac/ant.py)
+    - [paper](https://arxiv.org/abs/2107.03974)
+    - [Documentation](docs/SMAC.md)
  - Skew-Fit
     - [example script](examples/skewfit/sawyer_door.py)
     - [paper](https://arxiv.org/abs/1903.03698)
@@ -222,8 +226,11 @@ Reinforcement Learning with Imagined Goals (RIG), run
 # References
 The algorithms are based on the following papers
 
+[Offline Meta-Reinforcement Learning with Online Self-Supervision](https://arxiv.org/abs/2107.03974)
+Vitchyr H. Pong, Ashvin Nair, Laura Smith, Catherine Huang, Sergey Levine. arXiv preprint, 2021.
+
 [Skew-Fit: State-Covering Self-Supervised Reinforcement Learning](https://arxiv.org/abs/1903.03698).
-Vitchyr H. Pong*, Murtaza Dalal*, Steven Lin*, Ashvin Nair, Shikhar Bahl, Sergey Levine. arXiv preprint, 2019.
+Vitchyr H. Pong*, Murtaza Dalal*, Steven Lin*, Ashvin Nair, Shikhar Bahl, Sergey Levine. ICML, 2020.
 
 [Visual Reinforcement Learning with Imagined Goals](https://arxiv.org/abs/1807.04742).
 Ashvin Nair*, Vitchyr Pong*, Murtaza Dalal, Shikhar Bahl, Steven Lin, Sergey Levine. NeurIPS 2018.
@@ -250,12 +257,14 @@ Tuomas Haarnoja, Aurick Zhou, Pieter Abbeel, and Sergey Levine. ICML, 2018.
 Scott Fujimoto, Herke van Hoof, David Meger. ICML, 2018.
 
 # Credits
+This repository was initially developed primarily by [Vitchyr Pong](https://github.com/vitchyr), until July 2021, at which point it was transferred to the RAIL Berkeley organization and is primarily maintained by [Ashvin Nair](https://github.com/anair13).
+Other major collaborators and contributions:
+ - [Murtaza Dalal](https://github.com/mdalal2020)
+ - [Steven Lin](https://github.com/stevenlin1111)
+
 A lot of the coding infrastructure is based on [rllab](https://github.com/rll/rllab).
 The serialization and logger code are basically a carbon copy of the rllab versions.
 
 The Dockerfile is based on the [OpenAI mujoco-py Dockerfile](https://github.com/openai/mujoco-py/blob/master/Dockerfile).
 
-Other major collaborators and contributions:
- - [Murtaza Dalal](https://github.com/mdalal2020)
- - [Steven Lin](https://github.com/stevenlin1111)
- - [Ashvin Nair](https://github.com/anair13)
+The SMAC code builds off of the [PEARL code](https://github.com/katerakelly/oyster), which built off of an older RLKit version.

@@ -101,10 +101,12 @@ def load_local_or_remote_file(filepath, file_type=None):
         extension = local_path.split('.')[-1]
         if extension == 'npy':
             file_type = NUMPY
-        else:
+        elif extension == 'pkl':
             file_type = PICKLE
-    else:
-        file_type = PICKLE
+        elif extension == 'joblib':
+            file_type = JOBLIB
+        else:
+            raise ValueError("Could not infer file type.")
     if file_type == NUMPY:
         object = np.load(open(local_path, "rb"), allow_pickle=True)
     elif file_type == JOBLIB:

@@ -35,7 +35,7 @@ class SimpleReplayBuffer(ReplayBuffer):
         self._env_infos = {}
         for key, size in env_info_sizes.items():
             self._env_infos[key] = np.zeros((max_replay_buffer_size, size))
-        self._env_info_keys = env_info_sizes.keys()
+        self._env_info_keys = list(env_info_sizes.keys())
 
         self._replace = replace
 
