@@ -1,0 +1,224 @@
+{
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algo_kwargs": {
+    "batch_size": 5,
+    "min_num_steps_before_training": 50,
+    "num_epochs": 5,
+    "num_eval_steps_per_epoch": 50,
+    "num_expl_steps_per_train_loop": 50,
+    "num_trains_per_train_loop": 10
+  },
+  "debug": true,
+  "demo_replay_buffer_kwargs": {
+    "fraction_distribution_context": 0.1,
+    "fraction_future_context": 0.6
+  },
+  "desired_goal_key": "latent_desired_goal",
+  "env_class": {
+    "$class": "roboverse.envs.sawyer_rig_affordances_v0.SawyerRigAffordancesV0"
+  },
+  "env_kwargs": {
+    "env_type": "top_drawer",
+    "test_env": true
+  },
+  "env_type": "top_drawer",
+  "evaluation_goal_sampling_mode": "presampled_images",
+  "exp_id": 0,
+  "exp_name": "references/val/mini_pretrained1",
+  "exploration_goal_sampling_mode": "presample_latents",
+  "imsize": 48,
+  "load_demos": true,
+  "logger_config": {
+    "run_id": 0,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 5,
+  "num_presample": 50,
+  "observation_key": "latent_observation",
+  "path_loader_class": {
+    "$class": "rlkit.demos.source.encoder_dict_to_mdp_path_loader.EncoderDictToMDPPathLoader"
+  },
+  "path_loader_kwargs": {
+    "delete_after_loading": true,
+    "demo_paths": [
+      {
+        "is_demo": true,
+        "obs_dict": true,
+        "path": "sasha/affordances/combined/drawer_demos_0.pkl"
+      }
+    ],
+    "recompute_reward": true
+  },
+  "policy_class": {
+    "$class": "rlkit.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std_architecture": "values"
+  },
+  "presampled_goal_kwargs": {
+    "eval_goals": "sasha/presampled_goals/affordances/combined/top_drawer_goals.pkl",
+    "expl_goals": ""
+  },
+  "pretrain_policy": true,
+  "pretrain_rl": true,
+  "pretrained_vae_path": "ashvin/valreproduce/combined1/run5/id0/best_vqvae.pt",
+  "qf_kwargs": {
+    "hidden_sizes": [
+      256,
+      256
+    ],
+    "output_activation": {
+      "$function": "rlkit.torch.networks.basic.Clamp"
+    }
+  },
+  "renderer_kwargs": {
+    "create_image_format": "HWC",
+    "flatten_image": true,
+    "height": 48,
+    "output_image_format": "CWH",
+    "width": 48
+  },
+  "replay_buffer_kwargs": {
+    "fraction_distribution_context": 0.1,
+    "fraction_future_context": 0.6,
+    "max_size": 500000
+  },
+  "reset_keys_map": {
+    "image_observation": "initial_latent_state"
+  },
+  "reward_kwargs": {
+    "epsilon": 3.5,
+    "reward_type": "sparse"
+  },
+  "run_id": 0,
+  "save_video": false,
+  "save_video_kwargs": {
+    "pad_color": 0,
+    "save_video_period": 25
+  },
+  "seed": "0",
+  "train_model_func": {
+    "$function": "rlkit.torch.grill.common.train_vqvae"
+  },
+  "train_vae_kwargs": {
+    "algo_kwargs": {
+      "batch_size": 128,
+      "is_auto_encoder": false,
+      "key_to_reconstruct": "x_t",
+      "lr": 0.001,
+      "priority_function_kwargs": {
+        "decoder_distribution": "gaussian_identity_variance",
+        "num_latents_to_sample": 10,
+        "sampling_method": "importance_sampling"
+      },
+      "skew_config": {
+        "method": "vae_prob",
+        "power": 0
+      },
+      "skew_dataset": false,
+      "start_skew_epoch": 5000,
+      "use_parallel_dataloading": false,
+      "weight_decay": 0.0
+    },
+    "beta": 1,
+    "beta_schedule_kwargs": {
+      "x_values": [
+        0,
+        250
+      ],
+      "y_values": [
+        0,
+        100
+      ]
+    },
+    "decoder_activation": "sigmoid",
+    "dump_skew_debug_plots": false,
+    "embedding_dim": 5,
+    "generate_vae_dataset_kwargs": {
+      "N": 1000,
+      "augment_data": false,
+      "conditional_vae_dataset": true,
+      "dataset_path": {
+        "test": "sasha/affordances/combined/combined_test_images.npy",
+        "train": "sasha/affordances/combined/combined_images.npy"
+      },
+      "delete_after_loading": true,
+      "enviorment_dataset": false,
+      "n_random_steps": 2,
+      "non_presampled_goal_img_is_garbage": false,
+      "oracle_dataset": false,
+      "oracle_dataset_using_set_to_goal": false,
+      "random_rollout_data": true,
+      "random_rollout_data_set_to_goal": true,
+      "save_trajectories": false,
+      "show": false,
+      "tag": "ccrig_tuning_orig_network",
+      "test_p": 0.9,
+      "use_cached": false
+    },
+    "imsize": 48,
+    "num_epochs": 1,
+    "save_period": 50,
+    "train_pixelcnn_kwargs": {
+      "data_size": 10,
+      "num_epochs": 1,
+      "num_test_batches_per_epoch": 2,
+      "num_train_batches_per_epoch": 2
+    },
+    "use_linear_dynamics": false,
+    "vae_class": {
+      "$class": "rlkit.torch.vae.vq_vae.VQ_VAE"
+    },
+    "vae_kwargs": {
+      "imsize": 48,
+      "input_channels": 3
+    },
+    "vae_trainer_class": {
+      "$class": "rlkit.torch.vae.vq_vae_trainer.VQ_VAETrainer"
+    }
+  },
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_min_q": true,
+    "awr_sample_actions": false,
+    "awr_use_mle_for_vf": true,
+    "awr_weight": 1.0,
+    "bc_num_pretrain_steps": 0,
+    "bc_weight": 0.0,
+    "beta": 0.3,
+    "clip_score": 2,
+    "compute_bc": true,
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 10,
+    "q_weight_decay": 0,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "reward_transform_kwargs": null,
+    "rl_weight": 1.0,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "terminal_transform_kwargs": {
+      "b": 0,
+      "m": 0
+    },
+    "use_automatic_entropy_tuning": false,
+    "use_awr_update": true,
+    "use_reparam_update": false
+  },
+  "trial_name": "id0",
+  "unique_id": "f12c3d2a-3732-4ef7-8e70-074e7229df11"
+}

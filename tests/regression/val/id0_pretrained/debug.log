@@ -1,0 +1,859 @@
+[id0] ------------------------------  ---------------
+[id0] trainer/QF1 Loss                    0.939426
+[id0] trainer/QF2 Loss                    0.945538
+[id0] trainer/Policy Loss                 6.26504
+[id0] trainer/Q1 Predictions Mean        -0.00325443
+[id0] trainer/Q1 Predictions Std          0.00273276
+[id0] trainer/Q1 Predictions Max          0
+[id0] trainer/Q1 Predictions Min         -0.0109171
+[id0] trainer/Q2 Predictions Mean         0
+[id0] trainer/Q2 Predictions Std          0
+[id0] trainer/Q2 Predictions Max          0
+[id0] trainer/Q2 Predictions Min          0
+[id0] trainer/Q Targets Mean             -0.941777
+[id0] trainer/Q Targets Std               0.242061
+[id0] trainer/Q Targets Max               0
+[id0] trainer/Q Targets Min              -1.00923
+[id0] trainer/Log Pis Mean                6.26176
+[id0] trainer/Log Pis Std                 1.31253
+[id0] trainer/Log Pis Max                 8.1433
+[id0] trainer/Log Pis Min                 1.71972
+[id0] trainer/rewards Mean               -0.9375
+[id0] trainer/rewards Std                 0.242061
+[id0] trainer/rewards Max                 0
+[id0] trainer/rewards Min                -1
+[id0] trainer/terminals Mean              0
+[id0] trainer/terminals Std               0
+[id0] trainer/terminals Max               0
+[id0] trainer/terminals Min               0
+[id0] trainer/replay_buffer_len       33750
+[id0] trainer/policy/mean Mean            0.000100476
+[id0] trainer/policy/mean Std             0.000243718
+[id0] trainer/policy/mean Max             0.000663182
+[id0] trainer/policy/mean Min            -0.000627661
+[id0] trainer/policy/std Mean             0.0497871
+[id0] trainer/policy/std Std              3.72529e-09
+[id0] trainer/policy/std Max              0.0497871
+[id0] trainer/policy/std Min              0.0497871
+[id0] trainer/Advantage Weights Mean      0.0078125
+[id0] trainer/Advantage Weights Std       6.98942e-06
+[id0] trainer/Advantage Weights Max       0.0078305
+[id0] trainer/Advantage Weights Min       0.00779636
+[id0] trainer/Advantage Score Mean        1.82689e-05
+[id0] trainer/Advantage Score Std         0.00026838
+[id0] trainer/Advantage Score Max         0.000708973
+[id0] trainer/Advantage Score Min        -0.000601906
+[id0] trainer/bc/Train Logprob Loss     317.956
+[id0] trainer/bc/Test Logprob Loss      324.101
+[id0] trainer/bc/Train MSE                0.406389
+[id0] trainer/bc/Test MSE                 0.408417
+[id0] trainer/bc/train_policy_loss      317.956
+[id0] trainer/bc/test_policy_loss       324.101
+[id0] trainer/batch                       0
+[id0] trainer/epoch_time                  0.0366786
+[id0] ------------------------------  ---------------
+[id0] --------------------------------------------------------  ---------------
+[id0] trainer/num train calls                                      10
+[id0] trainer/QF1 Loss                                              0.364395
+[id0] trainer/QF2 Loss                                              0.562476
+[id0] trainer/Policy Loss                                           7.03254
+[id0] trainer/Q1 Predictions Mean                                  -0.374115
+[id0] trainer/Q1 Predictions Std                                    0.0384526
+[id0] trainer/Q1 Predictions Max                                   -0.304235
+[id0] trainer/Q1 Predictions Min                                   -0.422204
+[id0] trainer/Q2 Predictions Mean                                  -0.180645
+[id0] trainer/Q2 Predictions Std                                    0.0266047
+[id0] trainer/Q2 Predictions Max                                   -0.138359
+[id0] trainer/Q2 Predictions Min                                   -0.217303
+[id0] trainer/Q Targets Mean                                       -0.802997
+[id0] trainer/Q Targets Std                                         0.399735
+[id0] trainer/Q Targets Max                                        -0.00353649
+[id0] trainer/Q Targets Min                                        -1.00565
+[id0] trainer/Log Pis Mean                                          6.65889
+[id0] trainer/Log Pis Std                                           1.50859
+[id0] trainer/Log Pis Max                                           7.91856
+[id0] trainer/Log Pis Min                                           3.96676
+[id0] trainer/rewards Mean                                         -0.8
+[id0] trainer/rewards Std                                           0.4
+[id0] trainer/rewards Max                                           0
+[id0] trainer/rewards Min                                          -1
+[id0] trainer/terminals Mean                                        0
+[id0] trainer/terminals Std                                         0
+[id0] trainer/terminals Max                                         0
+[id0] trainer/terminals Min                                         0
+[id0] trainer/replay_buffer_len                                 33850
+[id0] trainer/policy/mean Mean                                      0.0209286
+[id0] trainer/policy/mean Std                                       0.103515
+[id0] trainer/policy/mean Max                                       0.123062
+[id0] trainer/policy/mean Min                                      -0.156075
+[id0] trainer/policy/std Mean                                       0.0500092
+[id0] trainer/policy/std Std                                        3.15302e-06
+[id0] trainer/policy/std Max                                        0.050012
+[id0] trainer/policy/std Min                                        0.0500039
+[id0] trainer/Advantage Weights Mean                                0.2
+[id0] trainer/Advantage Weights Std                                 0.000534998
+[id0] trainer/Advantage Weights Max                                 0.200358
+[id0] trainer/Advantage Weights Min                                 0.198956
+[id0] trainer/Advantage Score Mean                                 -0.000412667
+[id0] trainer/Advantage Score Std                                   0.000803934
+[id0] trainer/Advantage Score Max                                   0.000125259
+[id0] trainer/Advantage Score Min                                  -0.00198153
+[id0] trainer/bc/Train Logprob Loss                               265.902
+[id0] trainer/bc/Test Logprob Loss                                247.049
+[id0] trainer/bc/Train MSE                                          0.347713
+[id0] trainer/bc/Test MSE                                           0.321166
+[id0] trainer/bc/train_policy_loss                                265.902
+[id0] trainer/bc/test_policy_loss                                 247.049
+[id0] expl/num steps total                                        100
+[id0] expl/num paths total                                         20
+[id0] expl/path length Mean                                         5
+[id0] expl/path length Std                                          0
+[id0] expl/path length Max                                          5
+[id0] expl/path length Min                                          5
+[id0] expl/Rewards Mean                                            -1
+[id0] expl/Rewards Std                                              0
+[id0] expl/Rewards Max                                             -1
+[id0] expl/Rewards Min                                             -1
+[id0] expl/Returns Mean                                            -5
+[id0] expl/Returns Std                                              0
+[id0] expl/Returns Max                                             -5
+[id0] expl/Returns Min                                             -5
+[id0] expl/Actions Mean                                             0.0206775
+[id0] expl/Actions Std                                              0.119138
+[id0] expl/Actions Max                                              0.253132
+[id0] expl/Actions Min                                             -0.311443
+[id0] expl/Num Paths                                               10
+[id0] expl/Average Returns                                         -5
+[id0] eval/num steps total                                         50
+[id0] eval/num paths total                                         10
+[id0] eval/path length Mean                                         5
+[id0] eval/path length Std                                          0
+[id0] eval/path length Max                                          5
+[id0] eval/path length Min                                          5
+[id0] eval/Rewards Mean                                            -1
+[id0] eval/Rewards Std                                              0
+[id0] eval/Rewards Max                                             -1
+[id0] eval/Rewards Min                                             -1
+[id0] eval/Returns Mean                                            -5
+[id0] eval/Returns Std                                              0
+[id0] eval/Returns Max                                             -5
+[id0] eval/Returns Min                                             -5
+[id0] eval/Actions Mean                                             0.0228704
+[id0] eval/Actions Std                                              0.111474
+[id0] eval/Actions Max                                              0.126542
+[id0] eval/Actions Min                                             -0.161232
+[id0] eval/Num Paths                                               10
+[id0] eval/Average Returns                                         -5
+[id0] eval/state_desired_goal/final/hand_success Mean               0
+[id0] eval/state_desired_goal/final/hand_success Std                0
+[id0] eval/state_desired_goal/final/hand_success Max                0
+[id0] eval/state_desired_goal/final/hand_success Min                0
+[id0] eval/state_desired_goal/final/rand_obj_success Mean           0
+[id0] eval/state_desired_goal/final/rand_obj_success Std            0
+[id0] eval/state_desired_goal/final/rand_obj_success Max            0
+[id0] eval/state_desired_goal/final/rand_obj_success Min            0
+[id0] eval/state_desired_goal/final/lego_success Mean               0
+[id0] eval/state_desired_goal/final/lego_success Std                0
+[id0] eval/state_desired_goal/final/lego_success Max                0
+[id0] eval/state_desired_goal/final/lego_success Min                0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Mean      0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Std       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Max       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Min       0
+[id0] eval/state_desired_goal/final/top_drawer_success Mean         0.1
+[id0] eval/state_desired_goal/final/top_drawer_success Std          0.3
+[id0] eval/state_desired_goal/final/top_drawer_success Max          1
+[id0] eval/state_desired_goal/final/top_drawer_success Min          0
+[id0] eval/state_desired_goal/final/button_success Mean             0
+[id0] eval/state_desired_goal/final/button_success Std              0
+[id0] eval/state_desired_goal/final/button_success Max              0
+[id0] eval/state_desired_goal/final/button_success Min              0
+[id0] eval/state_desired_goal/final/success Mean                    0.05
+[id0] eval/state_desired_goal/final/success Std                     0.15
+[id0] eval/state_desired_goal/final/success Max                     0.5
+[id0] eval/state_desired_goal/final/success Min                     0
+[id0] eval/state_desired_goal/hand_present Mean                     1
+[id0] eval/state_desired_goal/hand_present Std                      0
+[id0] eval/state_desired_goal/hand_present Max                      1
+[id0] eval/state_desired_goal/hand_present Min                      1
+[id0] eval/state_desired_goal/rand_obj_success Mean                 0
+[id0] eval/state_desired_goal/rand_obj_success Std                  0
+[id0] eval/state_desired_goal/rand_obj_success Max                  0
+[id0] eval/state_desired_goal/rand_obj_success Min                  0
+[id0] eval/state_desired_goal/lego_success Mean                     0
+[id0] eval/state_desired_goal/lego_success Std                      0
+[id0] eval/state_desired_goal/lego_success Max                      0
+[id0] eval/state_desired_goal/lego_success Min                      0
+[id0] eval/state_desired_goal/bottom_drawer_success Mean            0
+[id0] eval/state_desired_goal/bottom_drawer_success Std             0
+[id0] eval/state_desired_goal/bottom_drawer_success Max             0
+[id0] eval/state_desired_goal/bottom_drawer_success Min             0
+[id0] eval/state_desired_goal/top_drawer_success Mean               0.1
+[id0] eval/state_desired_goal/top_drawer_success Std                0.3
+[id0] eval/state_desired_goal/top_drawer_success Max                1
+[id0] eval/state_desired_goal/top_drawer_success Min                0
+[id0] eval/state_desired_goal/button_success Mean                   0
+[id0] eval/state_desired_goal/button_success Std                    0
+[id0] eval/state_desired_goal/button_success Max                    0
+[id0] eval/state_desired_goal/button_success Min                    0
+[id0] eval/state_desired_goal/hand_success Mean                     0
+[id0] eval/state_desired_goal/hand_success Std                      0
+[id0] eval/state_desired_goal/hand_success Max                      0
+[id0] eval/state_desired_goal/hand_success Min                      0
+[id0] eval/state_desired_goal/success Mean                          0.05
+[id0] eval/state_desired_goal/success Std                           0.15
+[id0] eval/state_desired_goal/success Max                           0.5
+[id0] eval/state_desired_goal/success Min                           0
+[id0] time/epoch_time (s)                                          15.2991
+[id0] time/evaluation sampling (s)                                  3.55732
+[id0] time/exploration sampling (s)                                 3.54911
+[id0] time/global_time (s)                                         77.3623
+[id0] time/replay buffer data storing (s)                           0.00089407
+[id0] time/saving (s)                                               4.35808
+[id0] time/training (s)                                             0.229314
+[id0] epoch                                                         0
+[id0] --------------------------------------------------------  ---------------
+[id0] --------------------------------------------------------  ---------------
+[id0] trainer/num train calls                                      20
+[id0] trainer/QF1 Loss                                              0.0300063
+[id0] trainer/QF2 Loss                                              0.0334224
+[id0] trainer/Policy Loss                                           8.10303
+[id0] trainer/Q1 Predictions Mean                                  -1.15254
+[id0] trainer/Q1 Predictions Std                                    0.0969068
+[id0] trainer/Q1 Predictions Max                                   -1.04389
+[id0] trainer/Q1 Predictions Min                                   -1.31117
+[id0] trainer/Q2 Predictions Mean                                  -1.17904
+[id0] trainer/Q2 Predictions Std                                    0.0672676
+[id0] trainer/Q2 Predictions Max                                   -1.06558
+[id0] trainer/Q2 Predictions Min                                   -1.25855
+[id0] trainer/Q Targets Mean                                       -1.00903
+[id0] trainer/Q Targets Std                                         0.0015897
+[id0] trainer/Q Targets Max                                        -1.00716
+[id0] trainer/Q Targets Min                                        -1.01152
+[id0] trainer/Log Pis Mean                                          6.91409
+[id0] trainer/Log Pis Std                                           0.845557
+[id0] trainer/Log Pis Max                                           8.11418
+[id0] trainer/Log Pis Min                                           5.53576
+[id0] trainer/rewards Mean                                         -1
+[id0] trainer/rewards Std                                           0
+[id0] trainer/rewards Max                                          -1
+[id0] trainer/rewards Min                                          -1
+[id0] trainer/terminals Mean                                        0
+[id0] trainer/terminals Std                                         0
+[id0] trainer/terminals Max                                         0
+[id0] trainer/terminals Min                                         0
+[id0] trainer/replay_buffer_len                                 33900
+[id0] trainer/policy/mean Mean                                     -0.0750371
+[id0] trainer/policy/mean Std                                       0.506228
+[id0] trainer/policy/mean Max                                       0.482432
+[id0] trainer/policy/mean Min                                      -0.913008
+[id0] trainer/policy/std Mean                                       0.0502168
+[id0] trainer/policy/std Std                                        1.30479e-05
+[id0] trainer/policy/std Max                                        0.0502284
+[id0] trainer/policy/std Min                                        0.0501947
+[id0] trainer/Advantage Weights Mean                                0.2
+[id0] trainer/Advantage Weights Std                                 0.00108911
+[id0] trainer/Advantage Weights Max                                 0.201361
+[id0] trainer/Advantage Weights Min                                 0.198618
+[id0] trainer/Advantage Score Mean                                 -0.000552702
+[id0] trainer/Advantage Score Std                                   0.00163352
+[id0] trainer/Advantage Score Max                                   0.00148666
+[id0] trainer/Advantage Score Min                                  -0.00262773
+[id0] trainer/bc/Train Logprob Loss                               171.772
+[id0] trainer/bc/Test Logprob Loss                                200.584
+[id0] trainer/bc/Train MSE                                          0.230855
+[id0] trainer/bc/Test MSE                                           0.265182
+[id0] trainer/bc/train_policy_loss                                171.772
+[id0] trainer/bc/test_policy_loss                                 200.584
+[id0] expl/num steps total                                        150
+[id0] expl/num paths total                                         30
+[id0] expl/path length Mean                                         5
+[id0] expl/path length Std                                          0
+[id0] expl/path length Max                                          5
+[id0] expl/path length Min                                          5
+[id0] expl/Rewards Mean                                            -1
+[id0] expl/Rewards Std                                              0
+[id0] expl/Rewards Max                                             -1
+[id0] expl/Rewards Min                                             -1
+[id0] expl/Returns Mean                                            -5
+[id0] expl/Returns Std                                              0
+[id0] expl/Returns Max                                             -5
+[id0] expl/Returns Min                                             -5
+[id0] expl/Actions Mean                                            -0.0714981
+[id0] expl/Actions Std                                              0.482925
+[id0] expl/Actions Max                                              0.545665
+[id0] expl/Actions Min                                             -0.956568
+[id0] expl/Num Paths                                               10
+[id0] expl/Average Returns                                         -5
+[id0] eval/num steps total                                        100
+[id0] eval/num paths total                                         20
+[id0] eval/path length Mean                                         5
+[id0] eval/path length Std                                          0
+[id0] eval/path length Max                                          5
+[id0] eval/path length Min                                          5
+[id0] eval/Rewards Mean                                            -1
+[id0] eval/Rewards Std                                              0
+[id0] eval/Rewards Max                                             -1
+[id0] eval/Rewards Min                                             -1
+[id0] eval/Returns Mean                                            -5
+[id0] eval/Returns Std                                              0
+[id0] eval/Returns Max                                             -5
+[id0] eval/Returns Min                                             -5
+[id0] eval/Actions Mean                                            -0.0782554
+[id0] eval/Actions Std                                              0.492311
+[id0] eval/Actions Max                                              0.464773
+[id0] eval/Actions Min                                             -0.900674
+[id0] eval/Num Paths                                               10
+[id0] eval/Average Returns                                         -5
+[id0] eval/state_desired_goal/final/hand_success Mean               0.1
+[id0] eval/state_desired_goal/final/hand_success Std                0.3
+[id0] eval/state_desired_goal/final/hand_success Max                1
+[id0] eval/state_desired_goal/final/hand_success Min                0
+[id0] eval/state_desired_goal/final/rand_obj_success Mean           0
+[id0] eval/state_desired_goal/final/rand_obj_success Std            0
+[id0] eval/state_desired_goal/final/rand_obj_success Max            0
+[id0] eval/state_desired_goal/final/rand_obj_success Min            0
+[id0] eval/state_desired_goal/final/lego_success Mean               0
+[id0] eval/state_desired_goal/final/lego_success Std                0
+[id0] eval/state_desired_goal/final/lego_success Max                0
+[id0] eval/state_desired_goal/final/lego_success Min                0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Mean      0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Std       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Max       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Min       0
+[id0] eval/state_desired_goal/final/top_drawer_success Mean         0.1
+[id0] eval/state_desired_goal/final/top_drawer_success Std          0.3
+[id0] eval/state_desired_goal/final/top_drawer_success Max          1
+[id0] eval/state_desired_goal/final/top_drawer_success Min          0
+[id0] eval/state_desired_goal/final/button_success Mean             0
+[id0] eval/state_desired_goal/final/button_success Std              0
+[id0] eval/state_desired_goal/final/button_success Max              0
+[id0] eval/state_desired_goal/final/button_success Min              0
+[id0] eval/state_desired_goal/final/success Mean                    0.1
+[id0] eval/state_desired_goal/final/success Std                     0.2
+[id0] eval/state_desired_goal/final/success Max                     0.5
+[id0] eval/state_desired_goal/final/success Min                     0
+[id0] eval/state_desired_goal/hand_present Mean                     1
+[id0] eval/state_desired_goal/hand_present Std                      0
+[id0] eval/state_desired_goal/hand_present Max                      1
+[id0] eval/state_desired_goal/hand_present Min                      1
+[id0] eval/state_desired_goal/rand_obj_success Mean                 0
+[id0] eval/state_desired_goal/rand_obj_success Std                  0
+[id0] eval/state_desired_goal/rand_obj_success Max                  0
+[id0] eval/state_desired_goal/rand_obj_success Min                  0
+[id0] eval/state_desired_goal/lego_success Mean                     0
+[id0] eval/state_desired_goal/lego_success Std                      0
+[id0] eval/state_desired_goal/lego_success Max                      0
+[id0] eval/state_desired_goal/lego_success Min                      0
+[id0] eval/state_desired_goal/bottom_drawer_success Mean            0
+[id0] eval/state_desired_goal/bottom_drawer_success Std             0
+[id0] eval/state_desired_goal/bottom_drawer_success Max             0
+[id0] eval/state_desired_goal/bottom_drawer_success Min             0
+[id0] eval/state_desired_goal/top_drawer_success Mean               0.1
+[id0] eval/state_desired_goal/top_drawer_success Std                0.3
+[id0] eval/state_desired_goal/top_drawer_success Max                1
+[id0] eval/state_desired_goal/top_drawer_success Min                0
+[id0] eval/state_desired_goal/button_success Mean                   0
+[id0] eval/state_desired_goal/button_success Std                    0
+[id0] eval/state_desired_goal/button_success Max                    0
+[id0] eval/state_desired_goal/button_success Min                    0
+[id0] eval/state_desired_goal/hand_success Mean                     0.02
+[id0] eval/state_desired_goal/hand_success Std                      0.14
+[id0] eval/state_desired_goal/hand_success Max                      1
+[id0] eval/state_desired_goal/hand_success Min                      0
+[id0] eval/state_desired_goal/success Mean                          0.06
+[id0] eval/state_desired_goal/success Std                           0.162481
+[id0] eval/state_desired_goal/success Max                           0.5
+[id0] eval/state_desired_goal/success Min                           0
+[id0] time/epoch_time (s)                                           7.3704
+[id0] time/evaluation sampling (s)                                  3.568
+[id0] time/exploration sampling (s)                                 3.5551
+[id0] time/global_time (s)                                         84.7807
+[id0] time/replay buffer data storing (s)                           0.000882864
+[id0] time/saving (s)                                               3.8147e-05
+[id0] time/training (s)                                             0.24037
+[id0] epoch                                                         1
+[id0] --------------------------------------------------------  ---------------
+[id0] --------------------------------------------------------  ---------------
+[id0] trainer/num train calls                                      30
+[id0] trainer/QF1 Loss                                              0.102549
+[id0] trainer/QF2 Loss                                              0.103052
+[id0] trainer/Policy Loss                                           6.73266
+[id0] trainer/Q1 Predictions Mean                                  -0.705496
+[id0] trainer/Q1 Predictions Std                                    0.0903667
+[id0] trainer/Q1 Predictions Max                                   -0.579507
+[id0] trainer/Q1 Predictions Min                                   -0.796062
+[id0] trainer/Q2 Predictions Mean                                  -0.73091
+[id0] trainer/Q2 Predictions Std                                    0.15324
+[id0] trainer/Q2 Predictions Max                                   -0.482762
+[id0] trainer/Q2 Predictions Min                                   -0.914367
+[id0] trainer/Q Targets Mean                                       -1.01263
+[id0] trainer/Q Targets Std                                         0.00110245
+[id0] trainer/Q Targets Max                                        -1.01131
+[id0] trainer/Q Targets Min                                        -1.01429
+[id0] trainer/Log Pis Mean                                          5.97763
+[id0] trainer/Log Pis Std                                           1.96627
+[id0] trainer/Log Pis Max                                           7.89115
+[id0] trainer/Log Pis Min                                           2.36639
+[id0] trainer/rewards Mean                                         -1
+[id0] trainer/rewards Std                                           0
+[id0] trainer/rewards Max                                          -1
+[id0] trainer/rewards Min                                          -1
+[id0] trainer/terminals Mean                                        0
+[id0] trainer/terminals Std                                         0
+[id0] trainer/terminals Max                                         0
+[id0] trainer/terminals Min                                         0
+[id0] trainer/replay_buffer_len                                 33950
+[id0] trainer/policy/mean Mean                                     -0.157858
+[id0] trainer/policy/mean Std                                       0.320868
+[id0] trainer/policy/mean Max                                       0.127253
+[id0] trainer/policy/mean Min                                      -0.806939
+[id0] trainer/policy/std Mean                                       0.0503998
+[id0] trainer/policy/std Std                                        5.07211e-05
+[id0] trainer/policy/std Max                                        0.0504441
+[id0] trainer/policy/std Min                                        0.0503137
+[id0] trainer/Advantage Weights Mean                                0.2
+[id0] trainer/Advantage Weights Std                                 0.000290618
+[id0] trainer/Advantage Weights Max                                 0.200442
+[id0] trainer/Advantage Weights Min                                 0.19968
+[id0] trainer/Advantage Score Mean                                 -0.000900257
+[id0] trainer/Advantage Score Std                                   0.000435782
+[id0] trainer/Advantage Score Max                                  -0.000237823
+[id0] trainer/Advantage Score Min                                  -0.0013805
+[id0] trainer/bc/Train Logprob Loss                               175.69
+[id0] trainer/bc/Test Logprob Loss                                199.677
+[id0] trainer/bc/Train MSE                                          0.237348
+[id0] trainer/bc/Test MSE                                           0.26701
+[id0] trainer/bc/train_policy_loss                                175.69
+[id0] trainer/bc/test_policy_loss                                 199.677
+[id0] expl/num steps total                                        200
+[id0] expl/num paths total                                         40
+[id0] expl/path length Mean                                         5
+[id0] expl/path length Std                                          0
+[id0] expl/path length Max                                          5
+[id0] expl/path length Min                                          5
+[id0] expl/Rewards Mean                                            -1
+[id0] expl/Rewards Std                                              0
+[id0] expl/Rewards Max                                             -1
+[id0] expl/Rewards Min                                             -1
+[id0] expl/Returns Mean                                            -5
+[id0] expl/Returns Std                                              0
+[id0] expl/Returns Max                                             -5
+[id0] expl/Returns Min                                             -5
+[id0] expl/Actions Mean                                            -0.165104
+[id0] expl/Actions Std                                              0.340849
+[id0] expl/Actions Max                                              0.211475
+[id0] expl/Actions Min                                             -0.800453
+[id0] expl/Num Paths                                               10
+[id0] expl/Average Returns                                         -5
+[id0] eval/num steps total                                        150
+[id0] eval/num paths total                                         30
+[id0] eval/path length Mean                                         5
+[id0] eval/path length Std                                          0
+[id0] eval/path length Max                                          5
+[id0] eval/path length Min                                          5
+[id0] eval/Rewards Mean                                            -1
+[id0] eval/Rewards Std                                              0
+[id0] eval/Rewards Max                                             -1
+[id0] eval/Rewards Min                                             -1
+[id0] eval/Returns Mean                                            -5
+[id0] eval/Returns Std                                              0
+[id0] eval/Returns Max                                             -5
+[id0] eval/Returns Min                                             -5
+[id0] eval/Actions Mean                                            -0.177353
+[id0] eval/Actions Std                                              0.350606
+[id0] eval/Actions Max                                              0.120073
+[id0] eval/Actions Min                                             -0.784795
+[id0] eval/Num Paths                                               10
+[id0] eval/Average Returns                                         -5
+[id0] eval/state_desired_goal/final/hand_success Mean               0
+[id0] eval/state_desired_goal/final/hand_success Std                0
+[id0] eval/state_desired_goal/final/hand_success Max                0
+[id0] eval/state_desired_goal/final/hand_success Min                0
+[id0] eval/state_desired_goal/final/rand_obj_success Mean           0
+[id0] eval/state_desired_goal/final/rand_obj_success Std            0
+[id0] eval/state_desired_goal/final/rand_obj_success Max            0
+[id0] eval/state_desired_goal/final/rand_obj_success Min            0
+[id0] eval/state_desired_goal/final/lego_success Mean               0
+[id0] eval/state_desired_goal/final/lego_success Std                0
+[id0] eval/state_desired_goal/final/lego_success Max                0
+[id0] eval/state_desired_goal/final/lego_success Min                0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Mean      0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Std       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Max       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Min       0
+[id0] eval/state_desired_goal/final/top_drawer_success Mean         0.3
+[id0] eval/state_desired_goal/final/top_drawer_success Std          0.458258
+[id0] eval/state_desired_goal/final/top_drawer_success Max          1
+[id0] eval/state_desired_goal/final/top_drawer_success Min          0
+[id0] eval/state_desired_goal/final/button_success Mean             0
+[id0] eval/state_desired_goal/final/button_success Std              0
+[id0] eval/state_desired_goal/final/button_success Max              0
+[id0] eval/state_desired_goal/final/button_success Min              0
+[id0] eval/state_desired_goal/final/success Mean                    0.15
+[id0] eval/state_desired_goal/final/success Std                     0.229129
+[id0] eval/state_desired_goal/final/success Max                     0.5
+[id0] eval/state_desired_goal/final/success Min                     0
+[id0] eval/state_desired_goal/hand_present Mean                     1
+[id0] eval/state_desired_goal/hand_present Std                      0
+[id0] eval/state_desired_goal/hand_present Max                      1
+[id0] eval/state_desired_goal/hand_present Min                      1
+[id0] eval/state_desired_goal/rand_obj_success Mean                 0
+[id0] eval/state_desired_goal/rand_obj_success Std                  0
+[id0] eval/state_desired_goal/rand_obj_success Max                  0
+[id0] eval/state_desired_goal/rand_obj_success Min                  0
+[id0] eval/state_desired_goal/lego_success Mean                     0
+[id0] eval/state_desired_goal/lego_success Std                      0
+[id0] eval/state_desired_goal/lego_success Max                      0
+[id0] eval/state_desired_goal/lego_success Min                      0
+[id0] eval/state_desired_goal/bottom_drawer_success Mean            0
+[id0] eval/state_desired_goal/bottom_drawer_success Std             0
+[id0] eval/state_desired_goal/bottom_drawer_success Max             0
+[id0] eval/state_desired_goal/bottom_drawer_success Min             0
+[id0] eval/state_desired_goal/top_drawer_success Mean               0.3
+[id0] eval/state_desired_goal/top_drawer_success Std                0.458258
+[id0] eval/state_desired_goal/top_drawer_success Max                1
+[id0] eval/state_desired_goal/top_drawer_success Min                0
+[id0] eval/state_desired_goal/button_success Mean                   0
+[id0] eval/state_desired_goal/button_success Std                    0
+[id0] eval/state_desired_goal/button_success Max                    0
+[id0] eval/state_desired_goal/button_success Min                    0
+[id0] eval/state_desired_goal/hand_success Mean                     0
+[id0] eval/state_desired_goal/hand_success Std                      0
+[id0] eval/state_desired_goal/hand_success Max                      0
+[id0] eval/state_desired_goal/hand_success Min                      0
+[id0] eval/state_desired_goal/success Mean                          0.15
+[id0] eval/state_desired_goal/success Std                           0.229129
+[id0] eval/state_desired_goal/success Max                           0.5
+[id0] eval/state_desired_goal/success Min                           0
+[id0] time/epoch_time (s)                                           7.47744
+[id0] time/evaluation sampling (s)                                  3.63027
+[id0] time/exploration sampling (s)                                 3.64643
+[id0] time/global_time (s)                                         92.2639
+[id0] time/replay buffer data storing (s)                           0.000862598
+[id0] time/saving (s)                                               2.52724e-05
+[id0] time/training (s)                                             0.194253
+[id0] epoch                                                         2
+[id0] --------------------------------------------------------  ---------------
+[id0] --------------------------------------------------------  ---------------
+[id0] trainer/num train calls                                      40
+[id0] trainer/QF1 Loss                                              0.0358431
+[id0] trainer/QF2 Loss                                              0.0925828
+[id0] trainer/Policy Loss                                           7.61559
+[id0] trainer/Q1 Predictions Mean                                  -0.845384
+[id0] trainer/Q1 Predictions Std                                    0.074182
+[id0] trainer/Q1 Predictions Max                                   -0.705728
+[id0] trainer/Q1 Predictions Min                                   -0.926979
+[id0] trainer/Q2 Predictions Mean                                  -0.726001
+[id0] trainer/Q2 Predictions Std                                    0.0795166
+[id0] trainer/Q2 Predictions Max                                   -0.573781
+[id0] trainer/Q2 Predictions Min                                   -0.807261
+[id0] trainer/Q Targets Mean                                       -1.0194
+[id0] trainer/Q Targets Std                                         0.00252223
+[id0] trainer/Q Targets Max                                        -1.01552
+[id0] trainer/Q Targets Min                                        -1.02257
+[id0] trainer/Log Pis Mean                                          6.77014
+[id0] trainer/Log Pis Std                                           0.432468
+[id0] trainer/Log Pis Max                                           7.51487
+[id0] trainer/Log Pis Min                                           6.28972
+[id0] trainer/rewards Mean                                         -1
+[id0] trainer/rewards Std                                           0
+[id0] trainer/rewards Max                                          -1
+[id0] trainer/rewards Min                                          -1
+[id0] trainer/terminals Mean                                        0
+[id0] trainer/terminals Std                                         0
+[id0] trainer/terminals Max                                         0
+[id0] trainer/terminals Min                                         0
+[id0] trainer/replay_buffer_len                                 34000
+[id0] trainer/policy/mean Mean                                     -0.149944
+[id0] trainer/policy/mean Std                                       0.373315
+[id0] trainer/policy/mean Max                                       0.141534
+[id0] trainer/policy/mean Min                                      -0.854261
+[id0] trainer/policy/std Mean                                       0.0505597
+[id0] trainer/policy/std Std                                        8.90469e-05
+[id0] trainer/policy/std Max                                        0.0506503
+[id0] trainer/policy/std Min                                        0.0504119
+[id0] trainer/Advantage Weights Mean                                0.2
+[id0] trainer/Advantage Weights Std                                 0.00345727
+[id0] trainer/Advantage Weights Max                                 0.204805
+[id0] trainer/Advantage Weights Min                                 0.19597
+[id0] trainer/Advantage Score Mean                                 -0.000155902
+[id0] trainer/Advantage Score Std                                   0.0051776
+[id0] trainer/Advantage Score Max                                   0.00701106
+[id0] trainer/Advantage Score Min                                  -0.00621796
+[id0] trainer/bc/Train Logprob Loss                               162.512
+[id0] trainer/bc/Test Logprob Loss                                158.027
+[id0] trainer/bc/Train MSE                                          0.219944
+[id0] trainer/bc/Test MSE                                           0.214377
+[id0] trainer/bc/train_policy_loss                                162.512
+[id0] trainer/bc/test_policy_loss                                 158.027
+[id0] expl/num steps total                                        250
+[id0] expl/num paths total                                         50
+[id0] expl/path length Mean                                         5
+[id0] expl/path length Std                                          0
+[id0] expl/path length Max                                          5
+[id0] expl/path length Min                                          5
+[id0] expl/Rewards Mean                                            -1
+[id0] expl/Rewards Std                                              0
+[id0] expl/Rewards Max                                             -1
+[id0] expl/Rewards Min                                             -1
+[id0] expl/Returns Mean                                            -5
+[id0] expl/Returns Std                                              0
+[id0] expl/Returns Max                                             -5
+[id0] expl/Returns Min                                             -5
+[id0] expl/Actions Mean                                            -0.148957
+[id0] expl/Actions Std                                              0.375456
+[id0] expl/Actions Max                                              0.226476
+[id0] expl/Actions Min                                             -0.928688
+[id0] expl/Num Paths                                               10
+[id0] expl/Average Returns                                         -5
+[id0] eval/num steps total                                        200
+[id0] eval/num paths total                                         40
+[id0] eval/path length Mean                                         5
+[id0] eval/path length Std                                          0
+[id0] eval/path length Max                                          5
+[id0] eval/path length Min                                          5
+[id0] eval/Rewards Mean                                            -1
+[id0] eval/Rewards Std                                              0
+[id0] eval/Rewards Max                                             -1
+[id0] eval/Rewards Min                                             -1
+[id0] eval/Returns Mean                                            -5
+[id0] eval/Returns Std                                              0
+[id0] eval/Returns Max                                             -5
+[id0] eval/Returns Min                                             -5
+[id0] eval/Actions Mean                                            -0.153842
+[id0] eval/Actions Std                                              0.386443
+[id0] eval/Actions Max                                              0.132267
+[id0] eval/Actions Min                                             -0.83456
+[id0] eval/Num Paths                                               10
+[id0] eval/Average Returns                                         -5
+[id0] eval/state_desired_goal/final/hand_success Mean               0
+[id0] eval/state_desired_goal/final/hand_success Std                0
+[id0] eval/state_desired_goal/final/hand_success Max                0
+[id0] eval/state_desired_goal/final/hand_success Min                0
+[id0] eval/state_desired_goal/final/rand_obj_success Mean           0
+[id0] eval/state_desired_goal/final/rand_obj_success Std            0
+[id0] eval/state_desired_goal/final/rand_obj_success Max            0
+[id0] eval/state_desired_goal/final/rand_obj_success Min            0
+[id0] eval/state_desired_goal/final/lego_success Mean               0
+[id0] eval/state_desired_goal/final/lego_success Std                0
+[id0] eval/state_desired_goal/final/lego_success Max                0
+[id0] eval/state_desired_goal/final/lego_success Min                0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Mean      0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Std       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Max       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Min       0
+[id0] eval/state_desired_goal/final/top_drawer_success Mean         0.3
+[id0] eval/state_desired_goal/final/top_drawer_success Std          0.458258
+[id0] eval/state_desired_goal/final/top_drawer_success Max          1
+[id0] eval/state_desired_goal/final/top_drawer_success Min          0
+[id0] eval/state_desired_goal/final/button_success Mean             0
+[id0] eval/state_desired_goal/final/button_success Std              0
+[id0] eval/state_desired_goal/final/button_success Max              0
+[id0] eval/state_desired_goal/final/button_success Min              0
+[id0] eval/state_desired_goal/final/success Mean                    0.15
+[id0] eval/state_desired_goal/final/success Std                     0.229129
+[id0] eval/state_desired_goal/final/success Max                     0.5
+[id0] eval/state_desired_goal/final/success Min                     0
+[id0] eval/state_desired_goal/hand_present Mean                     1
+[id0] eval/state_desired_goal/hand_present Std                      0
+[id0] eval/state_desired_goal/hand_present Max                      1
+[id0] eval/state_desired_goal/hand_present Min                      1
+[id0] eval/state_desired_goal/rand_obj_success Mean                 0
+[id0] eval/state_desired_goal/rand_obj_success Std                  0
+[id0] eval/state_desired_goal/rand_obj_success Max                  0
+[id0] eval/state_desired_goal/rand_obj_success Min                  0
+[id0] eval/state_desired_goal/lego_success Mean                     0
+[id0] eval/state_desired_goal/lego_success Std                      0
+[id0] eval/state_desired_goal/lego_success Max                      0
+[id0] eval/state_desired_goal/lego_success Min                      0
+[id0] eval/state_desired_goal/bottom_drawer_success Mean            0
+[id0] eval/state_desired_goal/bottom_drawer_success Std             0
+[id0] eval/state_desired_goal/bottom_drawer_success Max             0
+[id0] eval/state_desired_goal/bottom_drawer_success Min             0
+[id0] eval/state_desired_goal/top_drawer_success Mean               0.3
+[id0] eval/state_desired_goal/top_drawer_success Std                0.458258
+[id0] eval/state_desired_goal/top_drawer_success Max                1
+[id0] eval/state_desired_goal/top_drawer_success Min                0
+[id0] eval/state_desired_goal/button_success Mean                   0
+[id0] eval/state_desired_goal/button_success Std                    0
+[id0] eval/state_desired_goal/button_success Max                    0
+[id0] eval/state_desired_goal/button_success Min                    0
+[id0] eval/state_desired_goal/hand_success Mean                     0
+[id0] eval/state_desired_goal/hand_success Std                      0
+[id0] eval/state_desired_goal/hand_success Max                      0
+[id0] eval/state_desired_goal/hand_success Min                      0
+[id0] eval/state_desired_goal/success Mean                          0.15
+[id0] eval/state_desired_goal/success Std                           0.229129
+[id0] eval/state_desired_goal/success Max                           0.5
+[id0] eval/state_desired_goal/success Min                           0
+[id0] time/epoch_time (s)                                           7.42364
+[id0] time/evaluation sampling (s)                                  3.6369
+[id0] time/exploration sampling (s)                                 3.60377
+[id0] time/global_time (s)                                         99.6925
+[id0] time/replay buffer data storing (s)                           0.000855684
+[id0] time/saving (s)                                               2.26498e-05
+[id0] time/training (s)                                             0.176442
+[id0] epoch                                                         3
+[id0] --------------------------------------------------------  ---------------
+[id0] --------------------------------------------------------  ---------------
+[id0] trainer/num train calls                                      50
+[id0] trainer/QF1 Loss                                              0.30483
+[id0] trainer/QF2 Loss                                              0.392821
+[id0] trainer/Policy Loss                                           7.98026
+[id0] trainer/Q1 Predictions Mean                                  -0.932884
+[id0] trainer/Q1 Predictions Std                                    0.0532213
+[id0] trainer/Q1 Predictions Max                                   -0.883544
+[id0] trainer/Q1 Predictions Min                                   -1.0334
+[id0] trainer/Q2 Predictions Mean                                  -1.02756
+[id0] trainer/Q2 Predictions Std                                    0.0493558
+[id0] trainer/Q2 Predictions Max                                   -0.96516
+[id0] trainer/Q2 Predictions Min                                   -1.10582
+[id0] trainer/Q Targets Mean                                       -0.625778
+[id0] trainer/Q Targets Std                                         0.489795
+[id0] trainer/Q Targets Max                                        -0.0249348
+[id0] trainer/Q Targets Min                                        -1.02786
+[id0] trainer/Log Pis Mean                                          6.95469
+[id0] trainer/Log Pis Std                                           1.0211
+[id0] trainer/Log Pis Max                                           7.96842
+[id0] trainer/Log Pis Min                                           5.21949
+[id0] trainer/rewards Mean                                         -0.6
+[id0] trainer/rewards Std                                           0.489898
+[id0] trainer/rewards Max                                           0
+[id0] trainer/rewards Min                                          -1
+[id0] trainer/terminals Mean                                        0
+[id0] trainer/terminals Std                                         0
+[id0] trainer/terminals Max                                         0
+[id0] trainer/terminals Min                                         0
+[id0] trainer/replay_buffer_len                                 34050
+[id0] trainer/policy/mean Mean                                     -0.115318
+[id0] trainer/policy/mean Std                                       0.391106
+[id0] trainer/policy/mean Max                                       0.251381
+[id0] trainer/policy/mean Min                                      -0.818254
+[id0] trainer/policy/std Mean                                       0.0507261
+[id0] trainer/policy/std Std                                        0.000116869
+[id0] trainer/policy/std Max                                        0.0508585
+[id0] trainer/policy/std Min                                        0.0505376
+[id0] trainer/Advantage Weights Mean                                0.2
+[id0] trainer/Advantage Weights Std                                 0.000981297
+[id0] trainer/Advantage Weights Max                                 0.201246
+[id0] trainer/Advantage Weights Min                                 0.19906
+[id0] trainer/Advantage Score Mean                                 -0.00191791
+[id0] trainer/Advantage Score Std                                   0.00147057
+[id0] trainer/Advantage Score Max                                  -5.16772e-05
+[id0] trainer/Advantage Score Min                                  -0.00332791
+[id0] trainer/bc/Train Logprob Loss                               183.907
+[id0] trainer/bc/Test Logprob Loss                                158.564
+[id0] trainer/bc/Train MSE                                          0.245793
+[id0] trainer/bc/Test MSE                                           0.217443
+[id0] trainer/bc/train_policy_loss                                183.907
+[id0] trainer/bc/test_policy_loss                                 158.564
+[id0] expl/num steps total                                        300
+[id0] expl/num paths total                                         60
+[id0] expl/path length Mean                                         5
+[id0] expl/path length Std                                          0
+[id0] expl/path length Max                                          5
+[id0] expl/path length Min                                          5
+[id0] expl/Rewards Mean                                            -1
+[id0] expl/Rewards Std                                              0
+[id0] expl/Rewards Max                                             -1
+[id0] expl/Rewards Min                                             -1
+[id0] expl/Returns Mean                                            -5
+[id0] expl/Returns Std                                              0
+[id0] expl/Returns Max                                             -5
+[id0] expl/Returns Min                                             -5
+[id0] expl/Actions Mean                                            -0.119295
+[id0] expl/Actions Std                                              0.374212
+[id0] expl/Actions Max                                              0.312852
+[id0] expl/Actions Min                                             -0.836221
+[id0] expl/Num Paths                                               10
+[id0] expl/Average Returns                                         -5
+[id0] eval/num steps total                                        250
+[id0] eval/num paths total                                         50
+[id0] eval/path length Mean                                         5
+[id0] eval/path length Std                                          0
+[id0] eval/path length Max                                          5
+[id0] eval/path length Min                                          5
+[id0] eval/Rewards Mean                                            -1
+[id0] eval/Rewards Std                                              0
+[id0] eval/Rewards Max                                             -1
+[id0] eval/Rewards Min                                             -1
+[id0] eval/Returns Mean                                            -5
+[id0] eval/Returns Std                                              0
+[id0] eval/Returns Max                                             -5
+[id0] eval/Returns Min                                             -5
+[id0] eval/Actions Mean                                            -0.115419
+[id0] eval/Actions Std                                              0.383862
+[id0] eval/Actions Max                                              0.23467
+[id0] eval/Actions Min                                             -0.792413
+[id0] eval/Num Paths                                               10
+[id0] eval/Average Returns                                         -5
+[id0] eval/state_desired_goal/final/hand_success Mean               0.3
+[id0] eval/state_desired_goal/final/hand_success Std                0.458258
+[id0] eval/state_desired_goal/final/hand_success Max                1
+[id0] eval/state_desired_goal/final/hand_success Min                0
+[id0] eval/state_desired_goal/final/rand_obj_success Mean           0
+[id0] eval/state_desired_goal/final/rand_obj_success Std            0
+[id0] eval/state_desired_goal/final/rand_obj_success Max            0
+[id0] eval/state_desired_goal/final/rand_obj_success Min            0
+[id0] eval/state_desired_goal/final/lego_success Mean               0
+[id0] eval/state_desired_goal/final/lego_success Std                0
+[id0] eval/state_desired_goal/final/lego_success Max                0
+[id0] eval/state_desired_goal/final/lego_success Min                0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Mean      0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Std       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Max       0
+[id0] eval/state_desired_goal/final/bottom_drawer_success Min       0
+[id0] eval/state_desired_goal/final/top_drawer_success Mean         0.5
+[id0] eval/state_desired_goal/final/top_drawer_success Std          0.5
+[id0] eval/state_desired_goal/final/top_drawer_success Max          1
+[id0] eval/state_desired_goal/final/top_drawer_success Min          0
+[id0] eval/state_desired_goal/final/button_success Mean             0
+[id0] eval/state_desired_goal/final/button_success Std              0
+[id0] eval/state_desired_goal/final/button_success Max              0
+[id0] eval/state_desired_goal/final/button_success Min              0
+[id0] eval/state_desired_goal/final/success Mean                    0.4
+[id0] eval/state_desired_goal/final/success Std                     0.374166
+[id0] eval/state_desired_goal/final/success Max                     1
+[id0] eval/state_desired_goal/final/success Min                     0
+[id0] eval/state_desired_goal/hand_present Mean                     1
+[id0] eval/state_desired_goal/hand_present Std                      0
+[id0] eval/state_desired_goal/hand_present Max                      1
+[id0] eval/state_desired_goal/hand_present Min                      1
+[id0] eval/state_desired_goal/rand_obj_success Mean                 0
+[id0] eval/state_desired_goal/rand_obj_success Std                  0
+[id0] eval/state_desired_goal/rand_obj_success Max                  0
+[id0] eval/state_desired_goal/rand_obj_success Min                  0
+[id0] eval/state_desired_goal/lego_success Mean                     0
+[id0] eval/state_desired_goal/lego_success Std                      0
+[id0] eval/state_desired_goal/lego_success Max                      0
+[id0] eval/state_desired_goal/lego_success Min                      0
+[id0] eval/state_desired_goal/bottom_drawer_success Mean            0
+[id0] eval/state_desired_goal/bottom_drawer_success Std             0
+[id0] eval/state_desired_goal/bottom_drawer_success Max             0
+[id0] eval/state_desired_goal/bottom_drawer_success Min             0
+[id0] eval/state_desired_goal/top_drawer_success Mean               0.5
+[id0] eval/state_desired_goal/top_drawer_success Std                0.5
+[id0] eval/state_desired_goal/top_drawer_success Max                1
+[id0] eval/state_desired_goal/top_drawer_success Min                0
+[id0] eval/state_desired_goal/button_success Mean                   0
+[id0] eval/state_desired_goal/button_success Std                    0
+[id0] eval/state_desired_goal/button_success Max                    0
+[id0] eval/state_desired_goal/button_success Min                    0
+[id0] eval/state_desired_goal/hand_success Mean                     0.08
+[id0] eval/state_desired_goal/hand_success Std                      0.271293
+[id0] eval/state_desired_goal/hand_success Max                      1
+[id0] eval/state_desired_goal/hand_success Min                      0
+[id0] eval/state_desired_goal/success Mean                          0.29
+[id0] eval/state_desired_goal/success Std                           0.301496
+[id0] eval/state_desired_goal/success Max                           1
+[id0] eval/state_desired_goal/success Min                           0
+[id0] time/epoch_time (s)                                           7.29669
+[id0] time/evaluation sampling (s)                                  3.55621
+[id0] time/exploration sampling (s)                                 3.55597
+[id0] time/global_time (s)                                        106.996
+[id0] time/replay buffer data storing (s)                           0.000847101
+[id0] time/saving (s)                                               3.14713e-05
+[id0] time/training (s)                                             0.178004
+[id0] epoch                                                         4
+[id0] --------------------------------------------------------  ---------------

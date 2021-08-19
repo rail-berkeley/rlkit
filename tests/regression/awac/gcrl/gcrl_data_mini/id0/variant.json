@@ -1,0 +1,156 @@
+{
+  "achieved_goal_key": "state_achieved_goal",
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algorithm": "SAC",
+  "batch_size": 1024,
+  "collection_mode": "batch",
+  "desired_goal_key": "state_desired_goal",
+  "doodad_info": {
+    "EC2_instance_id": "i-0aabeb951e5af9b88",
+    "aws_ami_id": null,
+    "base_exp_name": "ashvin/icml2020/pusher/state2/random2",
+    "docker_image": "anair17/railrl-hand-tf-v1",
+    "instance_type": "g3.4xlarge"
+  },
+  "env_class": {
+    "$class": "multiworld.envs.mujoco.sawyer_xyz.sawyer_push_leap.SawyerPushAndReachXYEnv"
+  },
+  "env_kwargs": {
+    "fix_reset": false,
+    "goal_high": [
+      0.2,
+      0.7,
+      0.2,
+      0.7
+    ],
+    "goal_low": [
+      -0.2,
+      0.5,
+      -0.2,
+      0.5
+    ],
+    "hand_high": [
+      0.2,
+      0.7
+    ],
+    "hand_low": [
+      -0.2,
+      0.5
+    ],
+    "invisible_boundary_wall": true,
+    "puck_high": [
+      0.2,
+      0.7
+    ],
+    "puck_low": [
+      -0.2,
+      0.5
+    ],
+    "reward_type": "hand_and_puck_distance",
+    "sample_realistic_goals": false
+  },
+  "exp_id": 0,
+  "exp_name": "ashvin/icml2020/pusher/state2/random2",
+  "exploration_kwargs": {
+    "noise": 0.8,
+    "strategy": "ou"
+  },
+  "layer_size": 256,
+  "load_demos": true,
+  "logger_config": {
+    "run_id": 12,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 200,
+  "min_num_steps_before_training": 1000,
+  "num_epochs": 100,
+  "num_eval_steps_per_epoch": 1000,
+  "num_expl_steps_per_train_loop": 1000,
+  "num_exps_per_instance": 1,
+  "num_trains_per_train_loop": 1000,
+  "observation_key": "state_observation",
+  "path_loader_class": {
+    "$class": "railrl.demos.source.dict_to_mdp_path_loader.DictToMDPPathLoader"
+  },
+  "path_loader_kwargs": {
+    "demo_paths": [
+      {
+        "is_demo": true,
+        "obs_dict": false,
+        "path": "demos/icml2020/pusher/demos100.npy"
+      }
+    ]
+  },
+  "policy_class": {
+    "$class": "railrl.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std_architecture": "shared"
+  },
+  "pretrain_policy": true,
+  "pretrain_rl": false,
+  "region": "us-west-2",
+  "renderer_kwargs": {
+    "create_image_format": "HWC",
+    "flatten_image": true,
+    "init_camera": {
+      "$function": "multiworld.envs.mujoco.cameras.sawyer_init_camera_zoomed_in"
+    },
+    "output_image_format": "CWH"
+  },
+  "replay_buffer_kwargs": {
+    "fraction_goals_env_goals": 0.0,
+    "fraction_goals_rollout_goals": 0.5,
+    "max_size": 1000000
+  },
+  "run_id": 12,
+  "save_paths": true,
+  "save_video": false,
+  "save_video_kwargs": {
+    "columns": 2,
+    "num_columns_per_rollout": 2,
+    "pad_color": 0,
+    "pad_length": 1,
+    "save_video_period": 50,
+    "subpad_length": 1
+  },
+  "seedid": 0,
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_weight": 0.0,
+    "bc_num_pretrain_steps": 10000,
+    "bc_weight": 0.0,
+    "beta": 1,
+    "compute_bc": true,
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 0,
+    "q_weight_decay": 0,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "reward_transform_kwargs": null,
+    "rl_weight": 0.0,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "terminal_transform_kwargs": null,
+    "use_automatic_entropy_tuning": false,
+    "use_awr_update": false,
+    "use_reparam_update": false
+  },
+  "trial_name": "id0",
+  "unique_id": "b48b22a5-ce55-4cb9-82eb-e61264502a83",
+  "version": "normal"
+}

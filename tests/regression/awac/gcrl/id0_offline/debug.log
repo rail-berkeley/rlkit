@@ -1,0 +1,216 @@
+[id0] ------------------------------  ---------------
+[id0] trainer/QF1 Loss                    0.0748937
+[id0] trainer/QF2 Loss                    0.0749237
+[id0] trainer/Policy Loss                 3.15011
+[id0] trainer/Q1 Predictions Mean        -0.000478875
+[id0] trainer/Q1 Predictions Std          0.000262846
+[id0] trainer/Q1 Predictions Max         -2.49429e-05
+[id0] trainer/Q1 Predictions Min         -0.00117311
+[id0] trainer/Q2 Predictions Mean        -0.000427356
+[id0] trainer/Q2 Predictions Std          0.000198267
+[id0] trainer/Q2 Predictions Max         -1.32689e-05
+[id0] trainer/Q2 Predictions Min         -0.000832052
+[id0] trainer/Q Targets Mean             -0.239385
+[id0] trainer/Q Targets Std               0.133515
+[id0] trainer/Q Targets Max              -0.0131337
+[id0] trainer/Q Targets Min              -0.785907
+[id0] trainer/Log Pis Mean                3.14974
+[id0] trainer/Log Pis Std                 1.1
+[id0] trainer/Log Pis Max                 4.15624
+[id0] trainer/Log Pis Min                -1.85166
+[id0] trainer/rewards Mean               -0.23942
+[id0] trainer/rewards Std                 0.133509
+[id0] trainer/rewards Max                -0.0131541
+[id0] trainer/rewards Min                -0.785815
+[id0] trainer/terminals Mean              0
+[id0] trainer/terminals Std               0
+[id0] trainer/terminals Max               0
+[id0] trainer/terminals Min               0
+[id0] trainer/replay_buffer_len       90000
+[id0] trainer/policy/mean Mean           -3.98415e-05
+[id0] trainer/policy/mean Std             5.6916e-06
+[id0] trainer/policy/mean Max            -2.81854e-05
+[id0] trainer/policy/mean Min            -5.31963e-05
+[id0] trainer/policy/std Mean             0.0497948
+[id0] trainer/policy/std Std              7.05656e-06
+[id0] trainer/policy/std Max              0.0498029
+[id0] trainer/policy/std Min              0.0497867
+[id0] trainer/Advantage Weights Mean      0.0078125
+[id0] trainer/Advantage Weights Std       0.00201075
+[id0] trainer/Advantage Weights Max       0.0127273
+[id0] trainer/Advantage Weights Min       0.00437466
+[id0] trainer/Advantage Score Mean       -0.000112617
+[id0] trainer/Advantage Score Std         0.000267464
+[id0] trainer/Advantage Score Max         0.000410068
+[id0] trainer/Advantage Score Min        -0.000657853
+[id0] trainer/bc/Train Logprob Loss     248.323
+[id0] trainer/bc/Test Logprob Loss      275.348
+[id0] trainer/bc/Train MSE                0.630988
+[id0] trainer/bc/Test MSE                 0.704104
+[id0] trainer/bc/train_policy_loss      248.323
+[id0] trainer/bc/test_policy_loss       275.348
+[id0] trainer/batch                       0
+[id0] trainer/epoch_time                  0.0306644
+[id0] ------------------------------  ---------------
+[id0] ------------------------------  ---------------
+[id0] trainer/QF1 Loss                    0.0748937
+[id0] trainer/QF2 Loss                    0.0749237
+[id0] trainer/Policy Loss                 3.15011
+[id0] trainer/Q1 Predictions Mean        -0.000478875
+[id0] trainer/Q1 Predictions Std          0.000262846
+[id0] trainer/Q1 Predictions Max         -2.49429e-05
+[id0] trainer/Q1 Predictions Min         -0.00117311
+[id0] trainer/Q2 Predictions Mean        -0.000427356
+[id0] trainer/Q2 Predictions Std          0.000198267
+[id0] trainer/Q2 Predictions Max         -1.32689e-05
+[id0] trainer/Q2 Predictions Min         -0.000832052
+[id0] trainer/Q Targets Mean             -0.239385
+[id0] trainer/Q Targets Std               0.133515
+[id0] trainer/Q Targets Max              -0.0131337
+[id0] trainer/Q Targets Min              -0.785907
+[id0] trainer/Log Pis Mean                3.14974
+[id0] trainer/Log Pis Std                 1.1
+[id0] trainer/Log Pis Max                 4.15624
+[id0] trainer/Log Pis Min                -1.85166
+[id0] trainer/rewards Mean               -0.23942
+[id0] trainer/rewards Std                 0.133509
+[id0] trainer/rewards Max                -0.0131541
+[id0] trainer/rewards Min                -0.785815
+[id0] trainer/terminals Mean              0
+[id0] trainer/terminals Std               0
+[id0] trainer/terminals Max               0
+[id0] trainer/terminals Min               0
+[id0] trainer/replay_buffer_len       90000
+[id0] trainer/policy/mean Mean           -3.98415e-05
+[id0] trainer/policy/mean Std             5.6916e-06
+[id0] trainer/policy/mean Max            -2.81854e-05
+[id0] trainer/policy/mean Min            -5.31963e-05
+[id0] trainer/policy/std Mean             0.0497948
+[id0] trainer/policy/std Std              7.05656e-06
+[id0] trainer/policy/std Max              0.0498029
+[id0] trainer/policy/std Min              0.0497867
+[id0] trainer/Advantage Weights Mean      0.0078125
+[id0] trainer/Advantage Weights Std       0.00201075
+[id0] trainer/Advantage Weights Max       0.0127273
+[id0] trainer/Advantage Weights Min       0.00437466
+[id0] trainer/Advantage Score Mean       -0.000112617
+[id0] trainer/Advantage Score Std         0.000267464
+[id0] trainer/Advantage Score Max         0.000410068
+[id0] trainer/Advantage Score Min        -0.000657853
+[id0] trainer/bc/Train Logprob Loss     248.323
+[id0] trainer/bc/Test Logprob Loss      275.348
+[id0] trainer/bc/Train MSE                0.630988
+[id0] trainer/bc/Test MSE                 0.704104
+[id0] trainer/bc/train_policy_loss      248.323
+[id0] trainer/bc/test_policy_loss       275.348
+[id0] trainer/batch                       0
+[id0] trainer/epoch_time                  0.0313759
+[id0] ------------------------------  ---------------
+[id0] ------------------------------  ---------------
+[id0] trainer/QF1 Loss                    0.0748937
+[id0] trainer/QF2 Loss                    0.0749237
+[id0] trainer/Policy Loss                 3.15011
+[id0] trainer/Q1 Predictions Mean        -0.000478875
+[id0] trainer/Q1 Predictions Std          0.000262846
+[id0] trainer/Q1 Predictions Max         -2.49429e-05
+[id0] trainer/Q1 Predictions Min         -0.00117311
+[id0] trainer/Q2 Predictions Mean        -0.000427356
+[id0] trainer/Q2 Predictions Std          0.000198267
+[id0] trainer/Q2 Predictions Max         -1.32689e-05
+[id0] trainer/Q2 Predictions Min         -0.000832052
+[id0] trainer/Q Targets Mean             -0.239385
+[id0] trainer/Q Targets Std               0.133515
+[id0] trainer/Q Targets Max              -0.0131337
+[id0] trainer/Q Targets Min              -0.785907
+[id0] trainer/Log Pis Mean                3.14974
+[id0] trainer/Log Pis Std                 1.1
+[id0] trainer/Log Pis Max                 4.15624
+[id0] trainer/Log Pis Min                -1.85166
+[id0] trainer/rewards Mean               -0.23942
+[id0] trainer/rewards Std                 0.133509
+[id0] trainer/rewards Max                -0.0131541
+[id0] trainer/rewards Min                -0.785815
+[id0] trainer/terminals Mean              0
+[id0] trainer/terminals Std               0
+[id0] trainer/terminals Max               0
+[id0] trainer/terminals Min               0
+[id0] trainer/replay_buffer_len       90000
+[id0] trainer/policy/mean Mean           -3.98415e-05
+[id0] trainer/policy/mean Std             5.6916e-06
+[id0] trainer/policy/mean Max            -2.81854e-05
+[id0] trainer/policy/mean Min            -5.31963e-05
+[id0] trainer/policy/std Mean             0.0497948
+[id0] trainer/policy/std Std              7.05656e-06
+[id0] trainer/policy/std Max              0.0498029
+[id0] trainer/policy/std Min              0.0497867
+[id0] trainer/Advantage Weights Mean      0.0078125
+[id0] trainer/Advantage Weights Std       0.00201075
+[id0] trainer/Advantage Weights Max       0.0127273
+[id0] trainer/Advantage Weights Min       0.00437466
+[id0] trainer/Advantage Score Mean       -0.000112617
+[id0] trainer/Advantage Score Std         0.000267464
+[id0] trainer/Advantage Score Max         0.000410068
+[id0] trainer/Advantage Score Min        -0.000657853
+[id0] trainer/bc/Train Logprob Loss     248.323
+[id0] trainer/bc/Test Logprob Loss      275.348
+[id0] trainer/bc/Train MSE                0.630988
+[id0] trainer/bc/Test MSE                 0.704104
+[id0] trainer/bc/train_policy_loss      248.323
+[id0] trainer/bc/test_policy_loss       275.348
+[id0] trainer/batch                       0
+[id0] trainer/epoch_time                  0.0301757
+[id0] ------------------------------  ---------------
+[id0] ------------------------------  -------------
+[id0] trainer/QF1 Loss                  0.0203978
+[id0] trainer/QF2 Loss                  0.0204072
+[id0] trainer/Policy Loss               3.15014
+[id0] trainer/Q1 Predictions Mean      -0.000542383
+[id0] trainer/Q1 Predictions Std        0.000286348
+[id0] trainer/Q1 Predictions Max       -6.9918e-06
+[id0] trainer/Q1 Predictions Min       -0.00105672
+[id0] trainer/Q2 Predictions Mean      -0.000475419
+[id0] trainer/Q2 Predictions Std        0.000186046
+[id0] trainer/Q2 Predictions Max       -3.32233e-06
+[id0] trainer/Q2 Predictions Min       -0.0007877
+[id0] trainer/Q Targets Mean           -0.102385
+[id0] trainer/Q Targets Std             0.100034
+[id0] trainer/Q Targets Max            -0.011974
+[id0] trainer/Q Targets Min            -0.390872
+[id0] trainer/Log Pis Mean              3.14975
+[id0] trainer/Log Pis Std               1.09999
+[id0] trainer/Log Pis Max               4.15621
+[id0] trainer/Log Pis Min              -1.85166
+[id0] trainer/rewards Mean             -0.102438
+[id0] trainer/rewards Std               0.0999715
+[id0] trainer/rewards Max              -0.0121226
+[id0] trainer/rewards Min              -0.390888
+[id0] trainer/terminals Mean            0
+[id0] trainer/terminals Std             0
+[id0] trainer/terminals Max             0
+[id0] trainer/terminals Min             0
+[id0] trainer/replay_buffer_len       800
+[id0] trainer/policy/mean Mean         -4.06395e-05
+[id0] trainer/policy/mean Std           4.91479e-06
+[id0] trainer/policy/mean Max          -3.09673e-05
+[id0] trainer/policy/mean Min          -5.27388e-05
+[id0] trainer/policy/std Mean           0.0497947
+[id0] trainer/policy/std Std            7.03957e-06
+[id0] trainer/policy/std Max            0.0498026
+[id0] trainer/policy/std Min            0.0497867
+[id0] trainer/Advantage Weights Mean    0.0078125
+[id0] trainer/Advantage Weights Std     0.00209986
+[id0] trainer/Advantage Weights Max     0.0124919
+[id0] trainer/Advantage Weights Min     0.00437983
+[id0] trainer/Advantage Score Mean     -0.000156396
+[id0] trainer/Advantage Score Std       0.000280636
+[id0] trainer/Advantage Score Max       0.000351017
+[id0] trainer/Advantage Score Min      -0.000697052
+[id0] trainer/bc/Train Logprob Loss   276.137
+[id0] trainer/bc/Test Logprob Loss    260.3
+[id0] trainer/bc/Train MSE              0.695686
+[id0] trainer/bc/Test MSE               0.663575
+[id0] trainer/bc/train_policy_loss    276.137
+[id0] trainer/bc/test_policy_loss     260.3
+[id0] trainer/batch                     0
+[id0] trainer/epoch_time                0.0298414
+[id0] ------------------------------  -------------

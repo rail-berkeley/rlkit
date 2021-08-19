@@ -1,0 +1,28 @@
+{
+  "algorithm": "SAC",
+  "algorithm_kwargs": {
+    "batch_size": 2,
+    "max_path_length": 1000,
+    "min_num_steps_before_training": 1000,
+    "num_epochs": 2,
+    "num_eval_steps_per_epoch": 1000,
+    "num_expl_steps_per_train_loop": 1000,
+    "num_trains_per_train_loop": 1000
+  },
+  "exp_name": "21-08-18-default",
+  "layer_size": 5,
+  "replay_buffer_size": 1000000,
+  "seed": 977983,
+  "trainer_kwargs": {
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "qf_lr": 0.0003,
+    "reward_scale": 1,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "use_automatic_entropy_tuning": true
+  },
+  "trial_name": "21-08-18-default_2021_08_18_14_36_11_id478649--s977983",
+  "unique_id": "f1aea952-7b36-4ea2-91ee-1205992a917d",
+  "version": "normal"
+}

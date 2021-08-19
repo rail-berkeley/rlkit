@@ -1,0 +1,110 @@
+{
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algo_kwargs": {
+    "batch_size": 5,
+    "min_num_steps_before_training": 10,
+    "num_epochs": 5,
+    "num_eval_steps_per_epoch": 100,
+    "num_expl_steps_per_train_loop": 100,
+    "num_trains_per_train_loop": 10
+  },
+  "algorithm": "AWAC",
+  "batch_size": 5,
+  "collection_mode": "batch",
+  "debug": true,
+  "env_class": {
+    "$class": "rlkit.testing.stub_classes.StubEnv"
+  },
+  "env_kwargs": {
+    "action_dim": 24,
+    "obs_dim": 45
+  },
+  "exp_id": 0,
+  "exp_name": "references/awac/hand/awac_offline1",
+  "load_demos": true,
+  "logger_config": {
+    "run_id": 0,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 50,
+  "normalize_env": false,
+  "num_epochs": 0,
+  "path_loader_class": {
+    "$class": "rlkit.demos.source.dict_to_mdp_path_loader.DictToMDPPathLoader"
+  },
+  "path_loader_kwargs": {
+    "demo_paths": [
+      {
+        "data_split": 1,
+        "is_demo": true,
+        "obs_dict": true,
+        "path": "/home/ashvin/code/railrl-private/tests/regression/awac/hand/pen2_sparse.npy"
+      }
+    ],
+    "obs_key": "state_observation"
+  },
+  "policy_class": {
+    "$class": "rlkit.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std_architecture": "values"
+  },
+  "pretrain_policy": true,
+  "pretrain_rl": true,
+  "pretraining_logging_period": 1,
+  "qf_kwargs": {
+    "hidden_sizes": [
+      256,
+      256
+    ],
+    "output_activation": {
+      "$function": "rlkit.torch.networks.basic.Clamp"
+    }
+  },
+  "replay_buffer_size": 1000000,
+  "run_id": 0,
+  "seed": "0",
+  "seedid": 0,
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_min_q": true,
+    "awr_use_mle_for_vf": true,
+    "awr_weight": 1.0,
+    "bc_num_pretrain_steps": 0,
+    "bc_weight": 0.0,
+    "beta": 0.5,
+    "clip_score": 0.5,
+    "compute_bc": false,
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 10,
+    "q_weight_decay": 0,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "reward_transform_kwargs": null,
+    "rl_weight": 1.0,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "terminal_transform_kwargs": {
+      "b": 0,
+      "m": 0
+    },
+    "use_automatic_entropy_tuning": false,
+    "use_awr_update": true,
+    "use_reparam_update": false
+  },
+  "trial_name": "id0",
+  "unique_id": "78d5532f-cbe6-4907-9ae1-2cc8ac332a5d",
+  "version": "normal"
+}

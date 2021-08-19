@@ -1,0 +1,2 @@
+epoch,num_train_batches,test/epoch_duration,test/loss,test/sample_duration,train/epoch_duration,train/loss,train/sample_duration
+0.0,1.75,0.6538577079772949,2.47592031955719,106.139000415802,4.891296625137329,5.089681148529053,106.22693347930908

@@ -28,6 +28,9 @@ class ProxyEnv(Env):
         if hasattr(self.wrapped_env, "terminate"):
             self.wrapped_env.terminate()
 
+    def seed(self, _seed):
+        return self.wrapped_env.seed(_seed)
+
     def __getattr__(self, attr):
         if attr == '_wrapped_env':
             raise AttributeError()

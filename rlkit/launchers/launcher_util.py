@@ -16,6 +16,7 @@ from rlkit.core import logger
 from rlkit.launchers import conf
 from rlkit.torch.pytorch_util import set_gpu_mode
 import rlkit.pythonplusplus as ppp
+import torch
 
 GitInfo = namedtuple(
     'GitInfo',
@@ -353,6 +354,7 @@ def set_seed(seed):
     seed = int(seed)
     random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 def reset_execution_environment():

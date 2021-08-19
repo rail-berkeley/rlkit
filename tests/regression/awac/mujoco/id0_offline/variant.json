@@ -1,0 +1,104 @@
+{
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algo_kwargs": {
+    "batch_size": 5,
+    "min_num_steps_before_training": 10,
+    "num_epochs": 5,
+    "num_eval_steps_per_epoch": 100,
+    "num_expl_steps_per_train_loop": 100,
+    "num_trains_per_train_loop": 10
+  },
+  "algorithm": "AWAC",
+  "batch_size": 5,
+  "collection_mode": "batch",
+  "debug": true,
+  "env_class": {
+    "$class": "rlkit.testing.stub_classes.StubEnv"
+  },
+  "env_kwargs": {
+    "action_dim": 6,
+    "obs_dim": 17
+  },
+  "exp_id": 0,
+  "exp_name": "references/awac/mujoco/awac_offline1",
+  "layer_size": 256,
+  "load_demos": true,
+  "logger_config": {
+    "run_id": 0,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 50,
+  "num_epochs": 0,
+  "num_layers": 2,
+  "path_loader_class": {
+    "$class": "rlkit.demos.source.dict_to_mdp_path_loader.DictToMDPPathLoader"
+  },
+  "path_loader_kwargs": {
+    "demo_paths": [
+      {
+        "data_split": 1,
+        "is_demo": true,
+        "obs_dict": false,
+        "path": "/home/ashvin/code/railrl-private/tests/regression/awac/mujoco/hc_action_noise_15.npy"
+      }
+    ]
+  },
+  "policy_class": {
+    "$class": "rlkit.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std_architecture": "values"
+  },
+  "pretrain_policy": false,
+  "pretrain_rl": true,
+  "pretraining_logging_period": 1,
+  "qf_kwargs": {
+    "hidden_sizes": [
+      256,
+      256
+    ]
+  },
+  "replay_buffer_size": 1000000,
+  "run_id": 0,
+  "seed": "0",
+  "seedid": 0,
+  "train_rl": true,
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_min_q": true,
+    "awr_sample_actions": false,
+    "awr_use_mle_for_vf": false,
+    "awr_weight": 1.0,
+    "bc_num_pretrain_steps": 0,
+    "bc_weight": 0.0,
+    "beta": 2,
+    "buffer_policy_sample_actions": false,
+    "compute_bc": false,
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 10,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "train_bc_on_rl_buffer": false,
+    "use_automatic_entropy_tuning": false
+  },
+  "trial_name": "id0",
+  "unique_id": "23a68c9c-d7b0-451a-a876-3a7bbeaf0266",
+  "use_validation_buffer": true,
+  "version": "normal"
+}

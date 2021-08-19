@@ -1,0 +1,1 @@
+tests/regression/awac/hand/test_awac_hand_offline.py

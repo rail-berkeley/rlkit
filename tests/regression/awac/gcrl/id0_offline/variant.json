@@ -1,0 +1,111 @@
+{
+  "achieved_goal_key": "state_achieved_goal",
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algorithm": "SAC",
+  "batch_size": 5,
+  "collection_mode": "batch",
+  "demo_replay_buffer_kwargs": {
+    "fraction_goals_env_goals": 0.0,
+    "fraction_goals_rollout_goals": 1.0,
+    "recompute_rewards": false
+  },
+  "desired_goal_key": "state_desired_goal",
+  "env_class": {
+    "$class": "rlkit.testing.stub_classes.StubMultiEnv"
+  },
+  "env_kwargs": {
+    "action_dim": 2,
+    "obs_dims": {
+      "state_achieved_goal": 4,
+      "state_desired_goal": 4,
+      "state_observation": 4
+    },
+    "reward_type": "puck_distance"
+  },
+  "exp_id": 0,
+  "exp_name": "references/awac/gcrl/pusher_offline1",
+  "layer_size": 256,
+  "load_demos": true,
+  "logger_config": {
+    "run_id": 0,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 200,
+  "min_num_steps_before_training": 1000,
+  "num_epochs": 0,
+  "num_eval_steps_per_epoch": 1000,
+  "num_expl_steps_per_train_loop": 1000,
+  "num_exps_per_instance": 1,
+  "num_trains_per_train_loop": 4000,
+  "observation_key": "state_observation",
+  "path_loader_class": {
+    "$class": "rlkit.demos.source.dict_to_mdp_path_loader.DictToMDPPathLoader"
+  },
+  "path_loader_kwargs": {
+    "demo_paths": [
+      {
+        "data_split": 1,
+        "is_demo": true,
+        "obs_dict": false,
+        "path": "gcrl_data_mini/id0/video_0_vae.p"
+      }
+    ]
+  },
+  "policy_class": {
+    "$class": "rlkit.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std_architecture": "shared"
+  },
+  "pretrain_policy": true,
+  "pretrain_rl": true,
+  "pretraining_logging_period": 1,
+  "region": "us-west-2",
+  "replay_buffer_kwargs": {
+    "fraction_goals_env_goals": 0.0,
+    "fraction_goals_rollout_goals": 0.2,
+    "max_size": 1000000,
+    "recompute_rewards": false
+  },
+  "run_id": 0,
+  "seed": "0",
+  "seedid": 0,
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_weight": 1.0,
+    "bc_num_pretrain_steps": 0,
+    "bc_weight": 0.0,
+    "beta": 0.001,
+    "compute_bc": true,
+    "discount": 0.99,
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 10,
+    "q_weight_decay": 0,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "reward_transform_kwargs": null,
+    "rl_weight": 1.0,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "terminal_transform_kwargs": null,
+    "use_automatic_entropy_tuning": false,
+    "use_awr_update": true,
+    "use_reparam_update": false
+  },
+  "trial_name": "id0",
+  "unique_id": "35082356-e289-43de-9f37-ca068cfb8be5",
+  "version": "normal"
+}

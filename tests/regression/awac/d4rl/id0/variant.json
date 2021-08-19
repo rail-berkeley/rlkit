@@ -1,0 +1,96 @@
+{
+  "add_env_demos": false,
+  "add_env_offpolicy_data": false,
+  "algo_kwargs": {
+    "batch_size": 5,
+    "min_num_steps_before_training": 10,
+    "num_epochs": 5,
+    "num_eval_steps_per_epoch": 100,
+    "num_expl_steps_per_train_loop": 100,
+    "num_trains_per_train_loop": 10,
+    "offline_rl": true
+  },
+  "algorithm": "SAC",
+  "collection_mode": "batch",
+  "debug": true,
+  "env_id": "halfcheetah-expert-v0",
+  "exp_id": 0,
+  "exp_name": "references/awac/d4rl/d4rl_offline",
+  "layer_size": 256,
+  "load_demos": false,
+  "load_env_dataset_demos": true,
+  "logger_config": {
+    "run_id": 0,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "max_path_length": 50,
+  "normalize_env": false,
+  "path_loader_class": {
+    "$class": "rlkit.demos.source.hdf5_path_loader.HDF5PathLoader"
+  },
+  "path_loader_kwargs": {},
+  "policy_class": {
+    "$class": "rlkit.torch.sac.policies.gaussian_policy.GaussianPolicy"
+  },
+  "policy_kwargs": {
+    "hidden_sizes": [
+      256,
+      256,
+      256,
+      256
+    ],
+    "max_log_std": 0,
+    "min_log_std": -6,
+    "std": null,
+    "std_architecture": "values"
+  },
+  "pretrain_policy": true,
+  "pretrain_rl": true,
+  "qf_kwargs": {
+    "hidden_sizes": [
+      256,
+      256
+    ]
+  },
+  "replay_buffer_size": 2000000,
+  "run_id": 0,
+  "seed": "0",
+  "seedid": 0,
+  "trainer_kwargs": {
+    "alpha": 0,
+    "awr_min_q": true,
+    "awr_sample_actions": false,
+    "awr_use_mle_for_vf": true,
+    "bc_num_pretrain_steps": 0,
+    "beta": 0.1,
+    "compute_bc": false,
+    "discount": 0.99,
+    "normalize_over_state": "advantage",
+    "policy_lr": 0.0003,
+    "policy_weight_decay": 0.0001,
+    "post_bc_pretrain_hyperparams": {
+      "bc_weight": 0.0,
+      "compute_bc": false
+    },
+    "q_num_pretrain1_steps": 0,
+    "q_num_pretrain2_steps": 0,
+    "q_weight_decay": 0,
+    "qf_lr": 0.0003,
+    "reparam_weight": 0.0,
+    "reward_scale": 1,
+    "reward_transform_kwargs": null,
+    "rl_weight": 1.0,
+    "soft_target_tau": 0.005,
+    "target_update_period": 1,
+    "terminal_transform_kwargs": null,
+    "use_automatic_entropy_tuning": false,
+    "use_awr_update": true,
+    "use_reparam_update": false,
+    "validation_qlearning": false
+  },
+  "trial_name": "id0",
+  "unique_id": "a27a7428-54c4-4a35-b16f-20fff27a8c9d",
+  "use_validation_buffer": false,
+  "version": "normal"
+}

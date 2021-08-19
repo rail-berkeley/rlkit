@@ -1,0 +1,74 @@
+{
+  "algo_kwargs": {
+    "batch_size": 2,
+    "key_to_reconstruct": "x_t"
+  },
+  "beta": 1,
+  "beta_schedule_kwargs": {
+    "x_values": [
+      0,
+      250
+    ],
+    "y_values": [
+      0,
+      100
+    ]
+  },
+  "debug": true,
+  "decoder_activation": "sigmoid",
+  "dump_skew_debug_plots": false,
+  "embedding_dim": 5,
+  "exp_id": 0,
+  "exp_name": "references/val/train_vqvae",
+  "generate_vae_dataset_kwargs": {
+    "N": 1000,
+    "augment_data": false,
+    "conditional_vae_dataset": true,
+    "dataset_path": {
+      "test": "sasha/affordances/combined/combined_test_images.npy",
+      "train": "sasha/affordances/combined/combined_images.npy"
+    },
+    "delete_after_loading": true,
+    "enviorment_dataset": false,
+    "n_random_steps": 2,
+    "non_presampled_goal_img_is_garbage": false,
+    "oracle_dataset": false,
+    "oracle_dataset_using_set_to_goal": false,
+    "random_rollout_data": true,
+    "random_rollout_data_set_to_goal": true,
+    "save_trajectories": false,
+    "show": false,
+    "tag": "ccrig_tuning_orig_network",
+    "test_p": 0.9,
+    "use_cached": false
+  },
+  "imsize": 48,
+  "logger_config": {
+    "run_id": 2,
+    "snapshot_gap": 100,
+    "snapshot_mode": "gap"
+  },
+  "num_epochs": 1,
+  "run_id": 2,
+  "save_period": 50,
+  "seed": "0",
+  "train_pixelcnn_kwargs": {
+    "data_size": 10,
+    "num_epochs": 1,
+    "num_test_batches_per_epoch": 2,
+    "num_train_batches_per_epoch": 2
+  },
+  "trial_name": "id0",
+  "unique_id": "5a51fb9a-5614-4070-be38-a1708754a46a",
+  "use_linear_dynamics": false,
+  "vae_class": {
+    "$class": "rlkit.torch.vae.vq_vae.VQ_VAE"
+  },
+  "vae_kwargs": {
+    "imsize": 48,
+    "input_channels": 3
+  },
+  "vae_trainer_class": {
+    "$class": "rlkit.torch.vae.vq_vae_trainer.VQ_VAETrainer"
+  }
+}
