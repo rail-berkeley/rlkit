@@ -1,7 +1,7 @@
 """
 General purpose Python functions.
 
-TODO(vitchyr): I should probably move this to its own module
+TODO(vitchyr): probably move this to its own module, not under railrl
 """
 import math
 import sys
@@ -96,7 +96,7 @@ def nested_dict_to_dot_map_dict(d, parent_key=''):
 
 
 def merge_recursive_dicts(a, b, path=None,
-                          ignore_duplicate_keys_in_second_dict=False):
+                          ignore_duplicate_keys_in_second_dict=False, print_info=True):
     """
     Merge two dicts that may have nested dicts.
     """
@@ -105,13 +105,16 @@ def merge_recursive_dicts(a, b, path=None,
         if key in a:
             if isinstance(a[key], dict) and isinstance(b[key], dict):
                 merge_recursive_dicts(a[key], b[key], path + [str(key)],
-                                      ignore_duplicate_keys_in_second_dict=ignore_duplicate_keys_in_second_dict)
+                                      ignore_duplicate_keys_in_second_dict=ignore_duplicate_keys_in_second_dict,
+                                      print_info=print_info)
             elif a[key] == b[key]:
-                print("Same value for key: {}".format(key))
+                if print_info:
+                    print("Same value for key: {}".format(key))
             else:
                 duplicate_key = '.'.join(path + [str(key)])
                 if ignore_duplicate_keys_in_second_dict:
-                    print("duplicate key ignored: {}".format(duplicate_key))
+                    if print_info:
+                        print("duplicate key ignored: {}".format(duplicate_key))
                 else:
                     raise Exception(
                         'Duplicate keys at {}'.format(duplicate_key)
@@ -144,7 +147,7 @@ def dict_of_list__to__list_of_dicts(dict, n_items):
     return new_dicts
 
 
-def list_of_dicts__to__dict_of_lists(lst):
+def list_of_dicts__to__dict_of_lists(lst, enforce_consistent_keys=True):
     """
     ```
     x = [
@@ -162,7 +165,10 @@ def list_of_dicts__to__dict_of_lists(lst):
     keys = lst[0].keys()
     output_dict = collections.defaultdict(list)
     for d in lst:
-        assert set(d.keys()) == set(keys), (d.keys(), keys)
+        if set(d.keys()) != set(keys):
+            print("dropping some keys", d.keys())
+        if enforce_consistent_keys:
+            assert set(d.keys()) == set(keys)
         for k in keys:
             output_dict[k].append(d[k])
     return output_dict
@@ -232,6 +238,38 @@ def recursive_items(dictionary):
             yield from recursive_items(value)
 
 
+def recursive_string_replace(x, original, new):
+    if isinstance(x, dict):
+        return {k: recursive_string_replace(v, original, new)
+                for k, v in x.items()}
+    elif isinstance(x, str):
+        return x.replace(original, new)
+    elif isinstance(x, list):
+        return [recursive_string_replace(i, original, new) for i in x]
+    elif isinstance(x, tuple):
+        return tuple(recursive_string_replace(i, original, new) for i in x)
+    else:
+        return x
+
+
+def recursive_to_dict(maybe_dictable):
+    """Try to convert something into a recursive dictionary.
+
+    The main use case is to have some generic config/loading module (e.g.
+    pyhocon) but to convert everything to a dictionary right before you use it.
+
+    :param maybe_dictable: Something that may be a dictionary.
+    :return:
+    """
+    try:
+        dict_version = dict(maybe_dictable)
+        return {
+            k: recursive_to_dict(v)
+            for k, v in dict_version.items()
+        }
+    except (TypeError, ValueError):
+        return maybe_dictable
+
 # TODO(vitchyr): test methods/classes below
 
 
@@ -240,25 +278,61 @@ Itertools++
 """
 
 
-def map_recursive(fctn, x_or_iterable):
+def treemap(f, *args, atomic_type=None, **kwargs):
     """
-    Apply `fctn` to each element in x_or_iterable.
+    Recursively apply a function to a data structure.
 
-    This is a generalization of the map function since this will work
-    recursively for iterables.
+    Usage:
+    ```
+    def add(x, y, constant=0):
+        return x + y + constant
 
-    :param fctn: Function from element of iterable to something.
-    :param x_or_iterable: An element or an Iterable of an element.
-    :return: The same (potentially recursive) iterable but with
-    all the elements transformed by fctn.
+    tree1 = (
+        [1, 2],
+        {'foo': 3, 'bar': 4},
+        5
+    )
+    tree2 = (
+        [6, 7],
+        {'foo': 8, 'bar': 9},
+        10
+    )
+
+    treemap(add, tree1, tree2, constant=100)
+    ```
+    will return
+    ```
+    (
+        [107, 109],
+        {'foo': 111, 'bar': 113},
+        115
+    )
+    ```
+
+    Currently only supports Mapping and Iterable data structures.
+    :param f: Function to apply.
+    :param args: Data structures over which to apply the function.
+    :param kwargs: key-word arguments that are passed to the base function
+        directly.
+    :return:
     """
-    # if isinstance(x_or_iterable, Iterable):
-    if isinstance(x_or_iterable, list) or isinstance(x_or_iterable, tuple):
-        return type(x_or_iterable)(
-            map_recursive(fctn, item) for item in x_or_iterable
-        )
+    if len(args) == 0:
+        return f(**kwargs)
+    if atomic_type and isinstance(args[0], atomic_type):
+        return f(*args, **kwargs)
+    if isinstance(args[0], collections.Mapping):
+        keys0 = args[0].keys()
+        assert all(keys0 == arg.keys() for arg in args) # same keys in all args
+        return type(args[0])({
+            k: treemap(f, *tuple(d[k] for d in args),
+                       atomic_type=atomic_type, **kwargs)
+            for k in args[0]
+        })
+    elif isinstance(args[0], collections.Iterable):
+        return type(args[0])(treemap(f, *a, atomic_type=atomic_type, **kwargs)
+                             for a in zip(*args))
     else:
-        return fctn(x_or_iterable)
+        return f(*args, **kwargs)
 
 
 def filter_recursive(x_or_iterable):
