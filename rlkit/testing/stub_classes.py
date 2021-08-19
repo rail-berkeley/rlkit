@@ -15,6 +15,8 @@ class StubEnv(object):
         action_high = np.ones(action_dim)
         self._action_space = Box(action_low, action_high)
 
+        self.env = self # for env wrappers
+
         print("stub env unused kwargs", kwargs)
 
     def reset(self):
@@ -51,6 +53,8 @@ class StubMultiEnv(object):
         action_low = np.ones(action_dim) * -1
         action_high = np.ones(action_dim)
         self._action_space = Box(action_low, action_high)
+
+        self.env = self # for env wrappers
 
         print("stub env unused kwargs", kwargs)
 
