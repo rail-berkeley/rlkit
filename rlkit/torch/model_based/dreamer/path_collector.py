@@ -34,6 +34,8 @@ class VecMdpPathCollector(PathCollector):
         self._save_env_in_snapshot = save_env_in_snapshot
         self.env_params = env_params
         self.env_class = env_class
+        self._num_low_level_steps_total = 0
+        self._num_low_level_steps_total_true = 0
 
     def collect_new_paths(
         self,
@@ -56,6 +58,14 @@ class VecMdpPathCollector(PathCollector):
             path_len = len(path["actions"])
             num_steps_collected += path_len * self._env.n_envs
             paths.append(path)
+            if "num low level steps" in path["env_infos"]:
+                self._num_low_level_steps_total += path["env_infos"][
+                    "num low level steps"
+                ].sum()
+            if "num low level steps true" in path["env_infos"]:
+                self._num_low_level_steps_total_true += path["env_infos"][
+                    "num low level steps true"
+                ].sum()
         self._num_paths_total += len(paths) * self._env.n_envs
         self._num_steps_total += num_steps_collected
         log_paths = [{} for i in range(len(paths) * self._env.n_envs)]
@@ -92,6 +102,11 @@ class VecMdpPathCollector(PathCollector):
             [
                 ("num steps total", self._num_steps_total),
                 ("num paths total", self._num_paths_total),
+                ("num low level steps total", self._num_low_level_steps_total),
+                (
+                    "num low level steps total true",
+                    self._num_low_level_steps_total_true,
+                ),
             ]
         )
         stats.update(

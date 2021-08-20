@@ -625,7 +625,7 @@ def run_experiment(
             spot_price = conf.SPOT_PRICE
     if mode == "sss":
         singularity_image = conf.SSS_IMAGE
-    elif mode in ["local_singularity", "slurm_singularity", "slurm_singularity_matrix"]:
+    elif mode in ["local_singularity", "slurm_singularity", "ssm"]:
         singularity_image = conf.SINGULARITY_IMAGE
     else:
         singularity_image = None
@@ -680,16 +680,12 @@ def run_experiment(
         dmode = doodad.mode.LocalSingularity(
             image=singularity_image, gpu=use_gpu, pre_cmd=conf.SINGULARITY_PRE_CMDS
         )
-    elif (
-        mode == "slurm_singularity"
-        or mode == "sss"
-        or mode == "slurm_singularity_matrix"
-    ):
+    elif mode == "slurm_singularity" or mode == "sss" or mode == "ssm":
         if use_gpu:
             slurm_config = conf.SLURM_GPU_CONFIG
         else:
             slurm_config = conf.SLURM_CPU_CONFIG
-        if mode == "slurm_singularity_matrix":
+        if mode == "ssm":
             logdir = create_log_dir(
                 variant=variant,
                 exp_prefix=exp_prefix,
@@ -798,10 +794,10 @@ def run_experiment(
     elif mode in [
         "local_singularity",
         "slurm_singularity",
-        "slurm_singularity_matrix",
+        "ssm",
         "sss",
     ]:
-        if mode == "slurm_singularity_matrix":
+        if mode == "ssm":
             snapshot_dir_for_script = logdir
         else:
             snapshot_dir_for_script = None
@@ -923,7 +919,7 @@ def create_mounts(
         "local",
         "local_singularity",
         "slurm_singularity",
-        "slurm_singularity_matrix",
+        "ssm",
         "sss",
     ]:
         # To save directly to local files (singularity does this), skip mounting

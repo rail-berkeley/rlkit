@@ -531,6 +531,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             stats = [0, 0]
         else:
             self.img_array = []
+            self._num_low_level_steps_total = 0
             stats = self.act(a)
 
         self.curr_path_length += 1
@@ -562,6 +563,11 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         if self.control_mode == "primitives":
             reward = stats[0]
             info["success"] = float(stats[1] > 0)
+            info["num low level steps"] = (
+                self._num_low_level_steps_total // self.frame_skip
+            )
+            info["num low level steps true"] = self._num_low_level_steps_total
+            self._num_low_level_steps_total = 0
         return self._last_stable_obs, reward, False, info
 
     def _get_site_pos(self, siteName):
@@ -676,7 +682,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
     def close_gripper(self, unused=None):
         total_reward, total_success = 0, 0
-        for _ in range(300):
+        for _ in range(200):
             self._set_action(np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1, -1]))
             self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
             self.sim.step()
@@ -684,6 +690,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -1])
             total_reward += r
             total_success += info["success"]
+            self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def open_gripper(self, unused=None):
@@ -696,6 +703,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, 1])
             total_reward += r
             total_success += info["success"]
+            self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def goto_pose(self, pose, grasp=True):
@@ -714,6 +722,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             r, info = self.evaluate_state(self._get_obs(), [*delta, 0])
             total_reward += r
             total_success += info["success"]
+            self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def top_x_y_grasp(self, xyz):
@@ -1059,6 +1068,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             stats = [0, 0]
         else:
             self.img_array = []
+            self._num_low_level_steps_total = 0
             stats = self.act(action)
             self._update_observables()
 
@@ -1068,8 +1078,14 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         if self.control_mode == "primitives":
             reward = float(stats[1] > 0)
             info["success"] = float(stats[1] > 0)
+            info["num low level steps"] = self._num_low_level_steps_total // (
+                int(self.control_timestep / self.model_timestep)
+            )
+            info["num low level steps true"] = self._num_low_level_steps_total
+            self._num_low_level_steps_total = 0
         else:
             info["success"] = float(self._check_success())
+
         return self._get_observations(force_update=True), reward, done, info
 
     def render(self, render_mode="human", imwidth=64, imheight=64):
@@ -1112,6 +1128,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             r = self.reward(action)
             total_reward += r
             total_success += float(self._check_success())
+            self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def open_gripper(self, unused=None):
@@ -1124,6 +1141,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             r = self.reward(action)
             total_reward += r
             total_success += float(self._check_success())
+            self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def goto_pose(self, pose, grasp=False):
@@ -1151,6 +1169,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 r = self.reward(action)
                 total_reward += r
                 total_success += float(self._check_success())
+                self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
     def top_grasp(self, z_down):
