@@ -54,7 +54,7 @@ if __name__ == "__main__":
             dense=False,
             image_obs=True,
             action_scale=1,
-            control_mode="joint_velocity",
+            control_mode="end_effector",
             frame_skip=40,
             usage_kwargs=dict(
                 use_dm_backend=True,
