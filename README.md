@@ -219,6 +219,7 @@ A set of basic regression tests can be run with:
 ```
 nose2 -v -B -s tests/regression/basic
 ```
+Other directories in `tests/regression` have project-specific tests.
 
 # Requests for pull-requests
  - Implement policy-gradient algorithms.
