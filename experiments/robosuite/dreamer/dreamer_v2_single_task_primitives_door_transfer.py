@@ -1,4 +1,5 @@
 import argparse
+import json
 import random
 import subprocess
 
@@ -151,14 +152,23 @@ if __name__ == "__main__":
         expl_amount=0.3,
         pass_render_kwargs=True,
         save_video=True,
+        load_from_path=True,
+        models_path="",
+        pkl_file_name="",
+        retrain_actor_and_vf=False,
     )
 
     search_space = {
+        "algorithm_kwargs.use_pretrain_policy_for_initial_data": [True],
         "env_kwargs.robots": [
-            # "Panda",
-            # "Xarm7",
             "Xarm6",
-        ]
+            "UR5e",
+        ],
+        "models_path": [
+            "/home/mdalal/research/primitives/rlkit/data/08-05-rs-dreamerv2-door-panda-xarm-v1/08-05-rs_dreamerv2_door_panda_xarm_v1_2021_08_05_20_45_14_0000--s-4183/",
+            "/home/mdalal/research/primitives/rlkit/data/08-05-rs-dreamerv2-door-panda-xarm-v1/08-05-rs_dreamerv2_door_panda_xarm_v1_2021_08_05_20_45_14_0000--s-68986/",
+        ],
+        "pkl_file_name": ["itr_280.pkl"],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -166,9 +176,12 @@ if __name__ == "__main__":
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         variant = preprocess_variant(variant, args.debug)
-        for _ in range(args.num_seeds):
+        for s in range(2):
+            models_path = variant["models_path"]
             seed = random.randint(0, 100000)
-            variant["seed"] = seed
+            variant["seed"] = int(
+                json.load(open(models_path + "variant.json", "r"))["seed"]
+            )
             variant["exp_id"] = exp_id
             run_experiment(
                 experiment,
@@ -176,8 +189,6 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="gap",
-                snapshot_gap=10,
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],
