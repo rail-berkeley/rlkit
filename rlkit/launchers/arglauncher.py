@@ -95,10 +95,6 @@ def process_run_args(variant):
     if "--debug" in sys.argv:
         variant["debug"] = True
 
-    if "--seed" in sys.argv:
-        i = sys.argv.index("--seed")
-        variant["seed"] = sys.argv[i+1]
-
     if "--parallel" in sys.argv:
         i = sys.argv.index("--parallel")
         parallel = int(sys.argv[i+1])
@@ -134,14 +130,18 @@ def process_logger_args(variant, run_id=None):
 def process_launcher_args(variant):
     launcher_config = variant.setdefault("launcher_config", dict())
 
-    launcher_config.setdefault("gpu_id", 0)
-    launcher_config.setdefault("prepend_date_to_exp_name", False)
+    # launcher_config.setdefault("gpu_id", 0)
+    launcher_config.setdefault("prepend_date_to_exp_prefix", False)
     launcher_config.setdefault("region", "us-west-2")
     launcher_config.setdefault("time_in_mins", None)
     launcher_config.setdefault("ssh_host", None)
-    launcher_config.setdefault("slurm_config_name", None)
+    # launcher_config.setdefault("slurm_config_name", None)
     launcher_config.setdefault("unpack_variant", False)
-    launcher_config.setdefault("s3_log_prefix", "")
+    # launcher_config.setdefault("s3_log_prefix", "")
+
+    if "--seed" in sys.argv:
+        i = sys.argv.index("--seed")
+        launcher_config["seed"] = int(sys.argv[i+1])
 
     if "--ec2" in sys.argv:
         launcher_config["mode"] = "ec2"
@@ -198,6 +198,6 @@ def process_launcher_args(variant):
     if "--mac" in sys.argv:
         launcher_config["base_log_dir"] = "/Users/ashvin/data/s3doodad/"
 
-    if "exp_name" not in launcher_config:
-        launcher_config["exp_name"] = sys.argv[0][:-3]
+    if "exp_prefix" not in launcher_config:
+        launcher_config["exp_prefix"] = sys.argv[0][:-3]
 
