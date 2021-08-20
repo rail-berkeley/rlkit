@@ -7,6 +7,8 @@ from rlkit.core import logger
 from rlkit.testing import csv_util
 
 def test_ddpg_online():
+    logger.reset()
+
     # make tests small by mutating variant
     ddpg.variant["algorithm_kwargs"]["num_epochs"] = 2
     ddpg.variant["algorithm_kwargs"]["batch_size"] = 2

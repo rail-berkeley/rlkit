@@ -7,6 +7,8 @@ from rlkit.core import logger
 from rlkit.testing import csv_util
 
 def test_dqn_online():
+    logger.reset()
+
     # make tests small by mutating variant
     dqn.variant["algorithm_kwargs"]["num_epochs"] = 2
     dqn.variant["algorithm_kwargs"]["batch_size"] = 2
