@@ -380,7 +380,7 @@ class Logger(object):
                 raise NotImplementedError
 
 
-def setup_logger(
+def setup_logger_custom(
         logger,
         exp_name,
         base_log_dir,
@@ -402,7 +402,7 @@ def setup_logger(
         **create_log_dir_kwargs
 ):
     """
-    Set up logger to have some reasonable default settings.
+    A more custom logger setup function with more options.
     Will save log output to
         based_log_dir/exp_name/exp_name.
     exp_name will be auto-generated to be unique.
