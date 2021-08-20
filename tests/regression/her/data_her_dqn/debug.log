@@ -1,0 +1,110 @@
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] -----------------------------------  -------------
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/QF Loss                        5.38033
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Mean             0.000245351
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Std              0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Max              0.000245351
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Min              0.000245351
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/num steps total                  20
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/num paths total                   4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Mean                  5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Std                   0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Max                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Min                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Mean                     -2.44
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Std                       0.04
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Max                      -2.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Min                      -2.48
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Mean                    -12.2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Std                       0.2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Max                     -12
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Min                     -12.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Mean                      2.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Std                       0.916515
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Max                       3
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Min                       1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Num Paths                         2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Average Returns                 -12.2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/num steps total                  10
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/num paths total                   2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Mean                  5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Std                   0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Max                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Min                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Mean                     -2.176
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Std                       0.285769
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Max                      -1.68
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Min                      -2.48
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Mean                    -10.88
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Std                       0.72
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Max                     -10.16
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Min                     -11.6
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Mean                      1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Std                       0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Max                       1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Min                       1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Num Paths                         2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Average Returns                 -10.88
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/epoch_time (s)                    0.124921
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/evaluation sampling (s)           0.00424433
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/exploration sampling (s)          0.00542784
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/global_time (s)                   0.560171
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/replay buffer data storing (s)    0.000172138
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/saving (s)                        0.00541902
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/training (s)                      0.103057
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] epoch                                  0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] -----------------------------------  -------------
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] -----------------------------------  -------------
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/QF Loss                        5.06572
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Mean            -0.0289561
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Std              0.0104967
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Max             -0.0184594
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] trainer/Y Predictions Min             -0.0394528
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/num steps total                  30
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/num paths total                   6
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Mean                  5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Std                   0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Max                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/path length Min                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Mean                     -2.292
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Std                       0.227719
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Max                      -1.72
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Rewards Min                      -2.48
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Mean                    -11.46
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Std                       0.86
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Max                     -10.6
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Returns Min                     -12.32
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Mean                      2.1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Std                       0.3
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Max                       3
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Actions Min                       2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Num Paths                         2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] expl/Average Returns                 -11.46
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/num steps total                  20
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/num paths total                   4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Mean                  5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Std                   0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Max                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/path length Min                   5
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Mean                     -2.28
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Std                       0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Max                      -2.28
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Rewards Min                      -2.28
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Mean                    -11.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Std                       0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Max                     -11.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Returns Min                     -11.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Mean                      2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Std                       0
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Max                       2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Actions Min                       2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Num Paths                         2
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] eval/Average Returns                 -11.4
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/epoch_time (s)                    0.0643942
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/evaluation sampling (s)           0.00411153
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/exploration sampling (s)          0.00386906
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/global_time (s)                   0.626971
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/replay buffer data storing (s)    0.000205755
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/saving (s)                        0.00550675
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] time/training (s)                      0.0496237
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] epoch                                  1
+[her-dqn-gridworld-experiment_2021_08_20_08_55_45_0000--s-0] -----------------------------------  -------------

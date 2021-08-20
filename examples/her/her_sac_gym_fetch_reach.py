@@ -10,11 +10,21 @@ from rlkit.torch.sac.policies import MakeDeterministic, TanhGaussianPolicy
 from rlkit.torch.sac.sac import SACTrainer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     # unwrap the TimeLimitEnv wrapper since we manually termiante after 50 steps
     eval_env = gym.make('FetchReach-v1').env
     expl_env = gym.make('FetchReach-v1').env
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
 
     observation_key = 'observation'
     desired_goal_key = 'desired_goal'
@@ -90,40 +100,44 @@ def experiment(variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
+variant = dict(
+    algorithm='HER-SAC',
+    version='normal',
+    algo_kwargs=dict(
+        batch_size=128,
+        num_epochs=100,
+        num_eval_steps_per_epoch=5000,
+        num_expl_steps_per_train_loop=1000,
+        num_trains_per_train_loop=1000,
+        min_num_steps_before_training=1000,
+        max_path_length=50,
+    ),
+    sac_trainer_kwargs=dict(
+        discount=0.99,
+        soft_target_tau=5e-3,
+        target_update_period=1,
+        policy_lr=3E-4,
+        qf_lr=3E-4,
+        reward_scale=1,
+        use_automatic_entropy_tuning=True,
+    ),
+    replay_buffer_kwargs=dict(
+        max_size=int(1E6),
+        fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
+        fraction_goals_env_goals=0,
+    ),
+    qf_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    policy_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    seed=random.randint(0, 100000),
+)
 
-if __name__ == "__main__":
-    variant = dict(
-        algorithm='HER-SAC',
-        version='normal',
-        algo_kwargs=dict(
-            batch_size=128,
-            num_epochs=100,
-            num_eval_steps_per_epoch=5000,
-            num_expl_steps_per_train_loop=1000,
-            num_trains_per_train_loop=1000,
-            min_num_steps_before_training=1000,
-            max_path_length=50,
-        ),
-        sac_trainer_kwargs=dict(
-            discount=0.99,
-            soft_target_tau=5e-3,
-            target_update_period=1,
-            policy_lr=3E-4,
-            qf_lr=3E-4,
-            reward_scale=1,
-            use_automatic_entropy_tuning=True,
-        ),
-        replay_buffer_kwargs=dict(
-            max_size=int(1E6),
-            fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
-            fraction_goals_env_goals=0,
-        ),
-        qf_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        policy_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-    )
+def main():
     setup_logger('her-sac-fetch-experiment', variant=variant)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()

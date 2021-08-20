@@ -22,12 +22,23 @@ from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.td3.td3 import TD3Trainer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     import multiworld
     multiworld.register_all_envs()
     eval_env = gym.make('SawyerReachXYZEnv-v0')
     expl_env = gym.make('SawyerReachXYZEnv-v0')
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
+
     observation_key = 'state_observation'
     desired_goal_key = 'state_desired_goal'
     achieved_goal_key = desired_goal_key.replace("desired", "achieved")
@@ -116,30 +127,35 @@ def experiment(variant):
     algorithm.train()
 
 
-if __name__ == "__main__":
-    variant = dict(
-        algo_kwargs=dict(
-            num_epochs=100,
-            max_path_length=50,
-            batch_size=128,
-            num_eval_steps_per_epoch=1000,
-            num_expl_steps_per_train_loop=1000,
-            num_trains_per_train_loop=1000,
-        ),
-        trainer_kwargs=dict(
-            discount=0.99,
-        ),
-        replay_buffer_kwargs=dict(
-            max_size=100000,
-            fraction_goals_rollout_goals=0.2,
-            fraction_goals_env_goals=0.0,
-        ),
-        qf_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        policy_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-    )
+variant = dict(
+    algo_kwargs=dict(
+        num_epochs=100,
+        max_path_length=50,
+        batch_size=128,
+        num_eval_steps_per_epoch=1000,
+        num_expl_steps_per_train_loop=1000,
+        num_trains_per_train_loop=1000,
+    ),
+    trainer_kwargs=dict(
+        discount=0.99,
+    ),
+    replay_buffer_kwargs=dict(
+        max_size=100000,
+        fraction_goals_rollout_goals=0.2,
+        fraction_goals_env_goals=0.0,
+    ),
+    qf_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    policy_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    seed=random.randint(0, 100000),
+)
+
+def main():
     setup_logger('her-td3-sawyer-experiment', variant=variant)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()
