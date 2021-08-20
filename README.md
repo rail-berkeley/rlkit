@@ -214,6 +214,12 @@ This requires some knowledge of AWS and/or GCP, which is beyond the scope of
 this README.
 To learn more, more about `doodad`, [go to the repository](https://github.com/vitchyr/doodad/), which is based on [this original repository](https://github.com/justinjfu/doodad/).
 
+### Testing
+A set of basic regression tests can be run with:
+```
+nose2 -v -B -s tests/regression/basic
+```
+
 # Requests for pull-requests
  - Implement policy-gradient algorithms.
  - Implement model-based algorithms.
