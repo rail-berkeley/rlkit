@@ -115,9 +115,8 @@ def test_sac_online():
             reward_scale=1,
             use_automatic_entropy_tuning=True,
         ),
-        seed=977983,
     )
-    run_experiment(experiment, variant=variant, unpack_variant=False, mode="here_no_doodad", )
+    run_experiment(experiment, variant=variant, unpack_variant=False, mode="here_no_doodad", seed=977983, )
 
     # check if online training results matches
     reference_csv = "tests/regression/sac/21-08-18-default_2021_08_18_14_36_11_id478649--s977983/progress.csv"

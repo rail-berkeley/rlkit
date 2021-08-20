@@ -1,0 +1,170 @@
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] -----------------------------------  --------------
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] replay_buffer/size                   2000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/num train calls              1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/QF1 Loss                       13.5868
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/QF2 Loss                       13.6571
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Policy Loss                    -3.69907
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Mean             0.00934327
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Std              0.00314975
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Max              0.012493
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Min              0.00619352
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Mean            -0.00216014
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Std              0.0042975
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Max              0.00213736
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Min             -0.00645764
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Mean                  3.59894
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Std                   0.834459
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Max                   4.43339
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Min                   2.76448
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Mean                   -3.70052
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Std                     0.28082
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Max                    -3.4197
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Min                    -3.98134
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Mean               -0.000228407
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Std                 0.00185078
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Max                 0.0028966
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Min                -0.00292742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Mean          1
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Std           0.00110054
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Max           1.00152
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Min           0.998095
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Mean     -3.97151e-07
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Std       0.00110076
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Max       0.00152293
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Min      -0.00190684
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Alpha                           1
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Alpha Loss                     -0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/num steps total                 2000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/num paths total                    2
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Mean                1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Std                    0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Max                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Min                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Mean                      -0.186742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Std                        0.653587
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Max                        1.89113
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Min                       -2.12768
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Mean                    -186.742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Std                        0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Max                     -186.742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Min                     -186.742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Mean                       0.000695572
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Std                        0.628869
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Max                        0.998728
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Min                       -0.998485
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Num Paths                          1
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Average Returns                 -186.742
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/num steps total                 5000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/num paths total                    5
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Mean                1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Std                    0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Max                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Min                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Mean                      -0.000277411
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Std                        0.0140067
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Max                        0.241348
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Min                       -0.289714
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Mean                      -0.277411
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Std                        0.547906
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Max                        0.679503
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Min                       -0.839934
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Mean                      -1.35809e-05
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Std                        3.58651e-05
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Max                        0.000581184
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Min                       -0.00086283
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Num Paths                          5
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Average Returns                   -0.277411
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/epoch_time (s)                    12.7593
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/evaluation sampling (s)            2.09937
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/exploration sampling (s)           0.49046
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/global_time (s)                   12.837
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/replay buffer data storing (s)     0.0068388
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/saving (s)                         0.0087781
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/training (s)                       9.64209
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] epoch                                   0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] -----------------------------------  --------------
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] -----------------------------------  ---------------
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] replay_buffer/size                    3000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/num train calls               2000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/QF1 Loss                         0.835819
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/QF2 Loss                         0.850335
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Policy Loss                    -14.3326
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Mean             11.4556
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Std               0.749654
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Max              12.2053
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q1 Predictions Min              10.706
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Mean             11.4674
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Std               0.713215
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Max              12.1806
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q2 Predictions Min              10.7542
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Mean                  10.5484
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Std                    0.636489
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Max                   11.1849
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Q Targets Min                    9.91194
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Mean                    -4.12219
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Std                      0.378276
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Max                     -3.74392
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Log Pis Min                     -4.50047
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Mean                -0.0206859
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Std                  0.0564667
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Max                  0.0648408
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/mean Min                 -0.133037
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Mean           0.892203
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Std            0.0442898
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Max            0.98269
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/std Min            0.818071
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Mean      -0.115284
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Std        0.0493709
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Max       -0.0174612
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/policy/normal/log_std Min       -0.200806
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Alpha                            0.740733
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] trainer/Alpha Loss                      -3.03782
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/num steps total                  3000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/num paths total                     3
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Mean                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Std                     0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Max                  1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/path length Min                  1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Mean                       -0.403968
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Std                         0.73118
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Max                         2.37418
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Rewards Min                        -2.7083
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Mean                     -403.968
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Std                         0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Max                      -403.968
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Returns Min                      -403.968
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Mean                       -0.0203944
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Std                         0.596303
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Max                         0.998637
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Actions Min                        -0.996339
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Num Paths                           1
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] expl/Average Returns                  -403.968
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/num steps total                 10000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/num paths total                    10
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Mean                 1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Std                     0
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Max                  1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/path length Min                  1000
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Mean                       -8.18254e-05
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Std                         0.0150251
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Max                         0.24441
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Rewards Min                        -0.322935
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Mean                       -0.0818254
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Std                         0.515369
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Max                         0.581243
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Returns Min                        -0.878872
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Mean                       -0.00158871
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Std                         0.0078556
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Max                         0.0200246
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Actions Min                        -0.0494994
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Num Paths                           5
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] eval/Average Returns                    -0.0818254
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/epoch_time (s)                     12.8613
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/evaluation sampling (s)             2.13829
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/exploration sampling (s)            0.487076
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/global_time (s)                    25.7049
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/replay buffer data storing (s)      0.00657558
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/saving (s)                          0.00871992
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] time/training (s)                       10.2043
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] epoch                                    1
+[name-of-experiment_2021_08_20_00_32_20_0000--s-0] -----------------------------------  ---------------
