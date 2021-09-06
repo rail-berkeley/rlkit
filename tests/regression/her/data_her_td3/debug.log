@@ -1,0 +1,282 @@
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] -----------------------------------  ------------
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/QF1 Loss                      0.000127872
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/QF2 Loss                      0.000131456
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Loss                   0.00134107
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Mean          -0.000226959
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Std            6.23965e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Max           -0.000164563
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Min           -0.000289356
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Mean           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Std            0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Max            0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Min            0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Mean               -0.0096989
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Std                 0.00611456
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Max                -0.00358434
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Min                -0.0158135
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Mean         0.000127872
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Std          0.000117016
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Max          0.000244888
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Min          1.08569e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Mean         0.000131456
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Std          0.000118609
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Max          0.000250065
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Min          1.28475e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Mean           -2.30222e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Std             0.000172028
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Max             0.000222309
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Min            -0.000179257
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/num steps total                 20
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/num paths total                  4
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Mean                 5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Std                  0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Max                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Min                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Mean                    -0.173503
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Std                      0.0669977
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Max                     -0.103657
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Min                     -0.245565
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Mean                    -0.867514
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Std                      0.334262
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Max                     -0.533252
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Min                     -1.20178
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Mean                     0.0573666
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Std                      0.23091
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Max                      0.640042
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Min                     -0.427158
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Num Paths                        2
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Average Returns                 -0.867514
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Mean               0.173503
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Std                0.0669977
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Max                0.245565
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Min                0.103657
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Mean         0.168724
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Std          0.0650669
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Max          0.233791
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Min          0.103657
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Mean            0.291814
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Std             0.115831
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Max             0.416994
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Min             0.170934
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Mean      0.283126
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Std       0.111779
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Max       0.394905
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Min       0.171347
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Mean            0.173503
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Std             0.0669977
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Max             0.245565
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Min             0.103657
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Mean      0.168724
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Std       0.0650669
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Max       0.233791
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Min       0.103657
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Mean                0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Std                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Max                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Min                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Mean          0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Std           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Max           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Min           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/num steps total                 10
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/num paths total                  2
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Mean                 5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Std                  0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Max                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Min                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Mean                    -0.219461
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Std                      0.00853623
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Max                     -0.21053
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Min                     -0.229518
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Mean                    -1.09731
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Std                      0.0425397
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Max                     -1.05477
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Min                     -1.13985
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Mean                    -2.15041e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Std                      0.000293242
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Max                      0.000405435
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Min                     -0.000286149
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Num Paths                        2
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Average Returns                 -1.09731
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Mean               0.219461
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Std                0.00853623
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Max                0.229518
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Min                0.21053
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Mean         0.218957
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Std          0.00842709
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Max          0.227384
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Min          0.21053
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Mean            0.36472
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Std             0.0266812
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Max             0.393655
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Min             0.337015
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Mean      0.363758
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Std       0.0267429
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Max       0.3905
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Min       0.337015
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Mean            0.219461
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Std             0.00853623
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Max             0.229518
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Min             0.21053
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Mean      0.218957
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Std       0.00842709
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Max       0.227384
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Min       0.21053
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Mean                0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Std                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Max                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Min                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Mean          0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Std           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Max           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Min           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/epoch_time (s)                   0.309838
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/evaluation sampling (s)          0.0594292
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/exploration sampling (s)         0.0602119
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/global_time (s)                  1.20551
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/replay buffer data storing (s)   0.00013113
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/saving (s)                       0.00461841
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/training (s)                     0.0952432
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] epoch                                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] -----------------------------------  ------------
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] -----------------------------------  ------------
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/QF1 Loss                      5.29412e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/QF2 Loss                      4.674e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Loss                   0.00756379
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Mean          -0.00748128
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Std            0.000159119
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Max           -0.00732216
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q1 Predictions Min           -0.0076404
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Mean          -0.00704535
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Std            0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Max           -0.00704535
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q2 Predictions Min           -0.00704535
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Mean               -0.000209156
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Std                 8.05506e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Max                -0.000128606
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Q Targets Min                -0.000289707
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Mean         5.29412e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Std          3.48581e-06
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Max          5.6427e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 1 Min          4.94554e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Mean         4.674e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Std          1.10132e-06
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Max          4.78414e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Bellman Errors 2 Min          4.56387e-05
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Mean            0.0019138
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Std             0.00542599
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Max             0.00597471
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] trainer/Policy Action Min            -0.0058046
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/num steps total                 30
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/num paths total                  6
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Mean                 5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Std                  0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Max                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/path length Min                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Mean                    -0.186881
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Std                      0.058378
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Max                     -0.122179
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Rewards Min                     -0.249904
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Mean                    -0.934404
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Std                      0.290372
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Max                     -0.644033
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Returns Min                     -1.22478
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Mean                     0.0698069
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Std                      0.348039
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Max                      0.71338
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Actions Min                     -0.935515
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Num Paths                        2
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Average Returns                 -0.934404
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Mean               0.186881
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Std                0.058378
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Max                0.249904
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance Min                0.122179
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Mean         0.179782
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Std          0.0557268
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Max          0.235509
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance Min          0.124056
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Mean            0.272028
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Std             0.0819001
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Max             0.365866
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l1 Min             0.181539
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Mean      0.260928
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Std       0.0771957
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Max       0.338124
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l1 Min       0.183732
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Mean            0.186881
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Std             0.058378
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Max             0.249904
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_distance_l2 Min             0.122179
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Mean      0.179782
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Std       0.0557268
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Max       0.235509
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_distance_l2 Min       0.124056
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Mean                0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Std                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Max                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/hand_success Min                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Mean          0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Std           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Max           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] expl/Final hand_success Min           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/num steps total                 20
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/num paths total                  4
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Mean                 5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Std                  0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Max                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/path length Min                  5
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Mean                    -0.184288
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Std                      0.0253106
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Max                     -0.157971
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Rewards Min                     -0.211177
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Mean                    -0.921442
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Std                      0.12645
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Max                     -0.794991
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Returns Min                     -1.04789
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Mean                     0.00198059
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Std                      0.00566782
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Max                      0.00631524
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Actions Min                     -0.00604316
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Num Paths                        2
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Average Returns                 -0.921442
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Mean               0.184288
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Std                0.0253106
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Max                0.211177
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance Min                0.157971
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Mean         0.18344
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Std          0.0254691
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Max          0.208909
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance Min          0.157971
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Mean            0.296706
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Std             0.0404009
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Max             0.33993
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l1 Min             0.255005
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Mean      0.295487
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Std       0.0404823
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Max       0.33597
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l1 Min       0.255005
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Mean            0.184288
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Std             0.0253106
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Max             0.211177
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_distance_l2 Min             0.157971
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Mean      0.18344
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Std       0.0254691
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Max       0.208909
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_distance_l2 Min       0.157971
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Mean                0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Std                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Max                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/hand_success Min                 0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Mean          0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Std           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Max           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] eval/Final hand_success Min           0
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/epoch_time (s)                   0.174882
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/evaluation sampling (s)          0.0611782
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/exploration sampling (s)         0.0609596
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/global_time (s)                  1.38531
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/replay buffer data storing (s)   0.000152826
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/saving (s)                       0.00482249
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] time/training (s)                     0.0451498
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] epoch                                 1
+[her-td3-sawyer-experiment_2021_08_20_09_02_57_0000--s-0] -----------------------------------  ------------

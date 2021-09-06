@@ -27,10 +27,20 @@ except ImportError as e:
           "https://github.com/vitchyr/multiworld.")
     raise e
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     expl_env = gym.make('GoalGridworld-v0')
     eval_env = gym.make('GoalGridworld-v0')
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
 
     obs_dim = expl_env.observation_space.spaces['observation'].low.size
     goal_dim = expl_env.observation_space.spaces['desired_goal'].low.size
@@ -91,25 +101,30 @@ def experiment(variant):
     algorithm.train()
 
 
-if __name__ == "__main__":
-    variant = dict(
-        algo_kwargs=dict(
-            num_epochs=100,
-            max_path_length=50,
-            num_eval_steps_per_epoch=1000,
-            num_expl_steps_per_train_loop=1000,
-            num_trains_per_train_loop=1000,
-            min_num_steps_before_training=1000,
-            batch_size=128,
-        ),
-        trainer_kwargs=dict(
-            discount=0.99,
-        ),
-        replay_buffer_kwargs=dict(
-            max_size=100000,
-            fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
-            fraction_goals_env_goals=0.0,
-        ),
-    )
+variant = dict(
+    algo_kwargs=dict(
+        num_epochs=100,
+        max_path_length=50,
+        num_eval_steps_per_epoch=1000,
+        num_expl_steps_per_train_loop=1000,
+        num_trains_per_train_loop=1000,
+        min_num_steps_before_training=1000,
+        batch_size=128,
+    ),
+    trainer_kwargs=dict(
+        discount=0.99,
+    ),
+    replay_buffer_kwargs=dict(
+        max_size=100000,
+        fraction_goals_rollout_goals=0.2,  # equal to k = 4 in HER paper
+        fraction_goals_env_goals=0.0,
+    ),
+    seed=random.randint(0, 100000),
+)
+
+def main():
     setup_logger('her-dqn-gridworld-experiment', variant=variant)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()

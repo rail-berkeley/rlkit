@@ -10,12 +10,22 @@ from rlkit.torch.sac.sac import SACTrainer
 from rlkit.torch.networks import ConcatMlp
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     expl_env = NormalizedBoxEnv(HalfCheetahEnv())
     eval_env = NormalizedBoxEnv(HalfCheetahEnv())
     obs_dim = expl_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
 
     M = variant['layer_size']
     qf1 = ConcatMlp(
@@ -77,35 +87,36 @@ def experiment(variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
+variant = dict(
+    algorithm="SAC",
+    version="normal",
+    layer_size=256,
+    replay_buffer_size=int(1E6),
+    algorithm_kwargs=dict(
+        num_epochs=3000,
+        num_eval_steps_per_epoch=5000,
+        num_trains_per_train_loop=1000,
+        num_expl_steps_per_train_loop=1000,
+        min_num_steps_before_training=1000,
+        max_path_length=1000,
+        batch_size=256,
+    ),
+    trainer_kwargs=dict(
+        discount=0.99,
+        soft_target_tau=5e-3,
+        target_update_period=1,
+        policy_lr=3E-4,
+        qf_lr=3E-4,
+        reward_scale=1,
+        use_automatic_entropy_tuning=True,
+    ),
+    seed=random.randint(0, 100000),
+)
 
-
-
-if __name__ == "__main__":
-    # noinspection PyTypeChecker
-    variant = dict(
-        algorithm="SAC",
-        version="normal",
-        layer_size=256,
-        replay_buffer_size=int(1E6),
-        algorithm_kwargs=dict(
-            num_epochs=3000,
-            num_eval_steps_per_epoch=5000,
-            num_trains_per_train_loop=1000,
-            num_expl_steps_per_train_loop=1000,
-            min_num_steps_before_training=1000,
-            max_path_length=1000,
-            batch_size=256,
-        ),
-        trainer_kwargs=dict(
-            discount=0.99,
-            soft_target_tau=5e-3,
-            target_update_period=1,
-            policy_lr=3E-4,
-            qf_lr=3E-4,
-            reward_scale=1,
-            use_automatic_entropy_tuning=True,
-        ),
-    )
+def main():
     setup_logger('name-of-experiment', variant=variant)
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()

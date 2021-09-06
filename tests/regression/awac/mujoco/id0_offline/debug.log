@@ -1,0 +1,523 @@
+[id0] ------------------------------  ---------------
+[id0] trainer/QF1 Loss                  105.663
+[id0] trainer/QF2 Loss                  105.656
+[id0] trainer/Policy Loss                 9.2854
+[id0] trainer/Q1 Predictions Mean        -0.00176684
+[id0] trainer/Q1 Predictions Std          0.00436927
+[id0] trainer/Q1 Predictions Max          0.0140987
+[id0] trainer/Q1 Predictions Min         -0.00976394
+[id0] trainer/Q2 Predictions Mean        -0.00156584
+[id0] trainer/Q2 Predictions Std          0.00312412
+[id0] trainer/Q2 Predictions Max          0.00693969
+[id0] trainer/Q2 Predictions Min         -0.0108211
+[id0] trainer/Q Targets Mean             10.0992
+[id0] trainer/Q Targets Std               1.90509
+[id0] trainer/Q Targets Max              12.3087
+[id0] trainer/Q Targets Min               0.460343
+[id0] trainer/Log Pis Mean                9.2814
+[id0] trainer/Log Pis Std                 1.9335
+[id0] trainer/Log Pis Max                12.1028
+[id0] trainer/Log Pis Min                 1.67644
+[id0] trainer/rewards Mean               10.108
+[id0] trainer/rewards Std                 1.90519
+[id0] trainer/rewards Max                12.316
+[id0] trainer/rewards Min                 0.46292
+[id0] trainer/terminals Mean              0
+[id0] trainer/terminals Std               0
+[id0] trainer/terminals Max               0
+[id0] trainer/terminals Min               0
+[id0] trainer/replay_buffer_len       12000
+[id0] trainer/policy/mean Mean           -0.00011057
+[id0] trainer/policy/mean Std             0.000409417
+[id0] trainer/policy/mean Max             0.000723418
+[id0] trainer/policy/mean Min            -0.0014804
+[id0] trainer/policy/std Mean             0.0497871
+[id0] trainer/policy/std Std              3.72529e-09
+[id0] trainer/policy/std Max              0.0497871
+[id0] trainer/policy/std Min              0.0497871
+[id0] trainer/Advantage Weights Mean      0.0078125
+[id0] trainer/Advantage Weights Std       1.65823e-06
+[id0] trainer/Advantage Weights Max       0.00781602
+[id0] trainer/Advantage Weights Min       0.00780831
+[id0] trainer/Advantage Score Mean        4.32669e-05
+[id0] trainer/Advantage Score Std         0.000424512
+[id0] trainer/Advantage Score Max         0.000945322
+[id0] trainer/Advantage Score Min        -0.00103077
+[id0] trainer/batch                       0
+[id0] trainer/epoch_time                  0.0220866
+[id0] ------------------------------  ---------------
+[id0] -----------------------------------  ---------------
+[id0] trainer/num train calls                 10
+[id0] trainer/QF1 Loss                       110.416
+[id0] trainer/QF2 Loss                       110.426
+[id0] trainer/Policy Loss                      8.75761
+[id0] trainer/Q1 Predictions Mean              0.188749
+[id0] trainer/Q1 Predictions Std               0.0604501
+[id0] trainer/Q1 Predictions Max               0.301579
+[id0] trainer/Q1 Predictions Min               0.135304
+[id0] trainer/Q2 Predictions Mean              0.18873
+[id0] trainer/Q2 Predictions Std               0.0538581
+[id0] trainer/Q2 Predictions Max               0.256944
+[id0] trainer/Q2 Predictions Min               0.124673
+[id0] trainer/Q Targets Mean                  10.6619
+[id0] trainer/Q Targets Std                    0.877905
+[id0] trainer/Q Targets Max                   11.7227
+[id0] trainer/Q Targets Min                    9.18379
+[id0] trainer/Log Pis Mean                     8.93408
+[id0] trainer/Log Pis Std                      1.90035
+[id0] trainer/Log Pis Max                     10.6361
+[id0] trainer/Log Pis Min                      5.43162
+[id0] trainer/rewards Mean                    10.6676
+[id0] trainer/rewards Std                      0.875117
+[id0] trainer/rewards Max                     11.7213
+[id0] trainer/rewards Min                      9.19344
+[id0] trainer/terminals Mean                   0
+[id0] trainer/terminals Std                    0
+[id0] trainer/terminals Max                    0
+[id0] trainer/terminals Min                    0
+[id0] trainer/replay_buffer_len            12110
+[id0] trainer/policy/mean Mean                 0.0154436
+[id0] trainer/policy/mean Std                  0.0484534
+[id0] trainer/policy/mean Max                  0.0994135
+[id0] trainer/policy/mean Min                 -0.0910146
+[id0] trainer/policy/std Mean                  0.0500113
+[id0] trainer/policy/std Std                   7.11701e-07
+[id0] trainer/policy/std Max                   0.0500118
+[id0] trainer/policy/std Min                   0.0500098
+[id0] trainer/Advantage Weights Mean           0.2
+[id0] trainer/Advantage Weights Std            0.000118501
+[id0] trainer/Advantage Weights Max            0.200219
+[id0] trainer/Advantage Weights Min            0.199888
+[id0] trainer/Advantage Score Mean             0.00122384
+[id0] trainer/Advantage Score Std              0.00118466
+[id0] trainer/Advantage Score Max              0.00341064
+[id0] trainer/Advantage Score Min              0.000105202
+[id0] expl/num steps total                   110
+[id0] expl/num paths total                     3
+[id0] expl/path length Mean                   50
+[id0] expl/path length Std                     0
+[id0] expl/path length Max                    50
+[id0] expl/path length Min                    50
+[id0] expl/Rewards Mean                        0
+[id0] expl/Rewards Std                         0
+[id0] expl/Rewards Max                         0
+[id0] expl/Rewards Min                         0
+[id0] expl/Returns Mean                        0
+[id0] expl/Returns Std                         0
+[id0] expl/Returns Max                         0
+[id0] expl/Returns Min                         0
+[id0] expl/Actions Mean                        0.0015648
+[id0] expl/Actions Std                         0.0488781
+[id0] expl/Actions Max                         0.148999
+[id0] expl/Actions Min                        -0.171592
+[id0] expl/Num Paths                           2
+[id0] expl/Average Returns                     0
+[id0] eval/num steps total                   100
+[id0] eval/num paths total                     2
+[id0] eval/path length Mean                   50
+[id0] eval/path length Std                     0
+[id0] eval/path length Max                    50
+[id0] eval/path length Min                    50
+[id0] eval/Rewards Mean                        0
+[id0] eval/Rewards Std                         0
+[id0] eval/Rewards Max                         0
+[id0] eval/Rewards Min                         0
+[id0] eval/Returns Mean                        0
+[id0] eval/Returns Std                         0
+[id0] eval/Returns Max                         0
+[id0] eval/Returns Min                         0
+[id0] eval/Actions Mean                        0.00198674
+[id0] eval/Actions Std                         0.00245479
+[id0] eval/Actions Max                         0.00403596
+[id0] eval/Actions Min                        -0.00245622
+[id0] eval/Num Paths                           2
+[id0] eval/Average Returns                     0
+[id0] time/epoch_time (s)                      0.309243
+[id0] time/evaluation sampling (s)             0.070143
+[id0] time/exploration sampling (s)            0.0686193
+[id0] time/global_time (s)                     4.41927
+[id0] time/replay buffer data storing (s)      0.000622034
+[id0] time/saving (s)                          0.0115674
+[id0] time/training (s)                        0.14824
+[id0] epoch                                    0
+[id0] -----------------------------------  ---------------
+[id0] -----------------------------------  --------------
+[id0] trainer/num train calls                20
+[id0] trainer/QF1 Loss                       52.1679
+[id0] trainer/QF2 Loss                       52.0353
+[id0] trainer/Policy Loss                     9.01049
+[id0] trainer/Q1 Predictions Mean             0.631065
+[id0] trainer/Q1 Predictions Std              0.191857
+[id0] trainer/Q1 Predictions Max              0.861882
+[id0] trainer/Q1 Predictions Min              0.391539
+[id0] trainer/Q2 Predictions Mean             0.615324
+[id0] trainer/Q2 Predictions Std              0.211701
+[id0] trainer/Q2 Predictions Max              0.894524
+[id0] trainer/Q2 Predictions Min              0.34987
+[id0] trainer/Q Targets Mean                  6.81921
+[id0] trainer/Q Targets Std                   3.80028
+[id0] trainer/Q Targets Max                  11.248
+[id0] trainer/Q Targets Min                   0.120901
+[id0] trainer/Log Pis Mean                    9.61044
+[id0] trainer/Log Pis Std                     0.939455
+[id0] trainer/Log Pis Max                    11.24
+[id0] trainer/Log Pis Min                     8.45321
+[id0] trainer/rewards Mean                    6.81824
+[id0] trainer/rewards Std                     3.8021
+[id0] trainer/rewards Max                    11.2481
+[id0] trainer/rewards Min                     0.115804
+[id0] trainer/terminals Mean                  0
+[id0] trainer/terminals Std                   0
+[id0] trainer/terminals Max                   0
+[id0] trainer/terminals Min                   0
+[id0] trainer/replay_buffer_len            1050
+[id0] trainer/policy/mean Mean               -0.0018095
+[id0] trainer/policy/mean Std                 0.255604
+[id0] trainer/policy/mean Max                 0.435848
+[id0] trainer/policy/mean Min                -0.446678
+[id0] trainer/policy/std Mean                 0.0502213
+[id0] trainer/policy/std Std                  5.39185e-06
+[id0] trainer/policy/std Max                  0.0502296
+[id0] trainer/policy/std Min                  0.0502124
+[id0] trainer/Advantage Weights Mean          0.2
+[id0] trainer/Advantage Weights Std           0.000395878
+[id0] trainer/Advantage Weights Max           0.200611
+[id0] trainer/Advantage Weights Min           0.199596
+[id0] trainer/Advantage Score Mean            0.00307283
+[id0] trainer/Advantage Score Std             0.00395706
+[id0] trainer/Advantage Score Max             0.00917578
+[id0] trainer/Advantage Score Min            -0.00097096
+[id0] expl/num steps total                  210
+[id0] expl/num paths total                    5
+[id0] expl/path length Mean                  50
+[id0] expl/path length Std                    0
+[id0] expl/path length Max                   50
+[id0] expl/path length Min                   50
+[id0] expl/Rewards Mean                       0
+[id0] expl/Rewards Std                        0
+[id0] expl/Rewards Max                        0
+[id0] expl/Rewards Min                        0
+[id0] expl/Returns Mean                       0
+[id0] expl/Returns Std                        0
+[id0] expl/Returns Max                        0
+[id0] expl/Returns Min                        0
+[id0] expl/Actions Mean                       0.0067328
+[id0] expl/Actions Std                        0.0502179
+[id0] expl/Actions Max                        0.156779
+[id0] expl/Actions Min                       -0.1635
+[id0] expl/Num Paths                          2
+[id0] expl/Average Returns                    0
+[id0] eval/num steps total                  200
+[id0] eval/num paths total                    4
+[id0] eval/path length Mean                  50
+[id0] eval/path length Std                    0
+[id0] eval/path length Max                   50
+[id0] eval/path length Min                   50
+[id0] eval/Rewards Mean                       0
+[id0] eval/Rewards Std                        0
+[id0] eval/Rewards Max                        0
+[id0] eval/Rewards Min                        0
+[id0] eval/Returns Mean                       0
+[id0] eval/Returns Std                        0
+[id0] eval/Returns Max                        0
+[id0] eval/Returns Min                        0
+[id0] eval/Actions Mean                       0.00624839
+[id0] eval/Actions Std                        0.0053632
+[id0] eval/Actions Max                        0.0126386
+[id0] eval/Actions Min                       -0.00239006
+[id0] eval/Num Paths                          2
+[id0] eval/Average Returns                    0
+[id0] time/epoch_time (s)                     0.293301
+[id0] time/evaluation sampling (s)            0.0710528
+[id0] time/exploration sampling (s)           0.0693829
+[id0] time/global_time (s)                    4.71605
+[id0] time/replay buffer data storing (s)     0.000627518
+[id0] time/saving (s)                         1.57356e-05
+[id0] time/training (s)                       0.150614
+[id0] epoch                                   1
+[id0] -----------------------------------  --------------
+[id0] -----------------------------------  --------------
+[id0] trainer/num train calls                30
+[id0] trainer/QF1 Loss                       81.512
+[id0] trainer/QF2 Loss                       79.3319
+[id0] trainer/Policy Loss                     8.60279
+[id0] trainer/Q1 Predictions Mean             1.76
+[id0] trainer/Q1 Predictions Std              0.412954
+[id0] trainer/Q1 Predictions Max              2.3335
+[id0] trainer/Q1 Predictions Min              1.24309
+[id0] trainer/Q2 Predictions Mean             1.87768
+[id0] trainer/Q2 Predictions Std              0.432051
+[id0] trainer/Q2 Predictions Max              2.43641
+[id0] trainer/Q2 Predictions Min              1.24154
+[id0] trainer/Q Targets Mean                 10.7561
+[id0] trainer/Q Targets Std                   0.672906
+[id0] trainer/Q Targets Max                  11.9525
+[id0] trainer/Q Targets Min                  10.1027
+[id0] trainer/Log Pis Mean                   10.3654
+[id0] trainer/Log Pis Std                     0.543725
+[id0] trainer/Log Pis Max                    11.2909
+[id0] trainer/Log Pis Min                     9.69192
+[id0] trainer/rewards Mean                   10.7414
+[id0] trainer/rewards Std                     0.673268
+[id0] trainer/rewards Max                    11.9371
+[id0] trainer/rewards Min                    10.0875
+[id0] trainer/terminals Mean                  0
+[id0] trainer/terminals Std                   0
+[id0] trainer/terminals Max                   0
+[id0] trainer/terminals Min                   0
+[id0] trainer/replay_buffer_len            1100
+[id0] trainer/policy/mean Mean                0.211427
+[id0] trainer/policy/mean Std                 0.57911
+[id0] trainer/policy/mean Max                 0.943453
+[id0] trainer/policy/mean Min                -0.734058
+[id0] trainer/policy/std Mean                 0.0504079
+[id0] trainer/policy/std Std                  1.08582e-05
+[id0] trainer/policy/std Max                  0.0504208
+[id0] trainer/policy/std Min                  0.0503883
+[id0] trainer/Advantage Weights Mean          0.2
+[id0] trainer/Advantage Weights Std           0.00135166
+[id0] trainer/Advantage Weights Max           0.201368
+[id0] trainer/Advantage Weights Min           0.197556
+[id0] trainer/Advantage Score Mean           -0.00288568
+[id0] trainer/Advantage Score Std             0.0135574
+[id0] trainer/Advantage Score Max             0.0107968
+[id0] trainer/Advantage Score Min            -0.0274303
+[id0] expl/num steps total                  310
+[id0] expl/num paths total                    7
+[id0] expl/path length Mean                  50
+[id0] expl/path length Std                    0
+[id0] expl/path length Max                   50
+[id0] expl/path length Min                   50
+[id0] expl/Rewards Mean                       0
+[id0] expl/Rewards Std                        0
+[id0] expl/Rewards Max                        0
+[id0] expl/Rewards Min                        0
+[id0] expl/Returns Mean                       0
+[id0] expl/Returns Std                        0
+[id0] expl/Returns Max                        0
+[id0] expl/Returns Min                        0
+[id0] expl/Actions Mean                       0.00999501
+[id0] expl/Actions Std                        0.0552161
+[id0] expl/Actions Max                        0.17964
+[id0] expl/Actions Min                       -0.141274
+[id0] expl/Num Paths                          2
+[id0] expl/Average Returns                    0
+[id0] eval/num steps total                  300
+[id0] eval/num paths total                    6
+[id0] eval/path length Mean                  50
+[id0] eval/path length Std                    0
+[id0] eval/path length Max                   50
+[id0] eval/path length Min                   50
+[id0] eval/Rewards Mean                       0
+[id0] eval/Rewards Std                        0
+[id0] eval/Rewards Max                        0
+[id0] eval/Rewards Min                        0
+[id0] eval/Returns Mean                       0
+[id0] eval/Returns Std                        0
+[id0] eval/Returns Max                        0
+[id0] eval/Returns Min                        0
+[id0] eval/Actions Mean                       0.0064345
+[id0] eval/Actions Std                        0.0146827
+[id0] eval/Actions Max                        0.0218623
+[id0] eval/Actions Min                       -0.0166687
+[id0] eval/Num Paths                          2
+[id0] eval/Average Returns                    0
+[id0] time/epoch_time (s)                     0.29058
+[id0] time/evaluation sampling (s)            0.0714369
+[id0] time/exploration sampling (s)           0.0691419
+[id0] time/global_time (s)                    5.00972
+[id0] time/replay buffer data storing (s)     0.000591278
+[id0] time/saving (s)                         1.43051e-05
+[id0] time/training (s)                       0.147866
+[id0] epoch                                   2
+[id0] -----------------------------------  --------------
+[id0] -----------------------------------  ---------------
+[id0] trainer/num train calls                 40
+[id0] trainer/QF1 Loss                        42.8198
+[id0] trainer/QF2 Loss                        38.7256
+[id0] trainer/Policy Loss                      6.74625
+[id0] trainer/Q1 Predictions Mean              2.52629
+[id0] trainer/Q1 Predictions Std               1.49044
+[id0] trainer/Q1 Predictions Max               4.63162
+[id0] trainer/Q1 Predictions Min               0.122619
+[id0] trainer/Q2 Predictions Mean              2.82724
+[id0] trainer/Q2 Predictions Std               1.72747
+[id0] trainer/Q2 Predictions Max               5.27479
+[id0] trainer/Q2 Predictions Min               0.118848
+[id0] trainer/Q Targets Mean                   8.34129
+[id0] trainer/Q Targets Std                    4.20369
+[id0] trainer/Q Targets Max                   11.0752
+[id0] trainer/Q Targets Min                    0.00151104
+[id0] trainer/Log Pis Mean                     9.26061
+[id0] trainer/Log Pis Std                      0.578658
+[id0] trainer/Log Pis Max                     10.1671
+[id0] trainer/Log Pis Min                      8.54536
+[id0] trainer/rewards Mean                     8.3179
+[id0] trainer/rewards Std                      4.19312
+[id0] trainer/rewards Max                     11.0475
+[id0] trainer/rewards Min                      0
+[id0] trainer/terminals Mean                   0
+[id0] trainer/terminals Std                    0
+[id0] trainer/terminals Max                    0
+[id0] trainer/terminals Min                    0
+[id0] trainer/replay_buffer_len            12260
+[id0] trainer/policy/mean Mean                 0.140981
+[id0] trainer/policy/mean Std                  0.518752
+[id0] trainer/policy/mean Max                  0.983747
+[id0] trainer/policy/mean Min                 -0.636301
+[id0] trainer/policy/std Mean                  0.0505717
+[id0] trainer/policy/std Std                   3.4236e-05
+[id0] trainer/policy/std Max                   0.0506245
+[id0] trainer/policy/std Min                   0.0505321
+[id0] trainer/Advantage Weights Mean           0.2
+[id0] trainer/Advantage Weights Std            0.00302391
+[id0] trainer/Advantage Weights Max            0.204801
+[id0] trainer/Advantage Weights Min            0.195571
+[id0] trainer/Advantage Score Mean            -0.00526473
+[id0] trainer/Advantage Score Std              0.0302046
+[id0] trainer/Advantage Score Max              0.042403
+[id0] trainer/Advantage Score Min             -0.0498209
+[id0] expl/num steps total                   410
+[id0] expl/num paths total                     9
+[id0] expl/path length Mean                   50
+[id0] expl/path length Std                     0
+[id0] expl/path length Max                    50
+[id0] expl/path length Min                    50
+[id0] expl/Rewards Mean                        0
+[id0] expl/Rewards Std                         0
+[id0] expl/Rewards Max                         0
+[id0] expl/Rewards Min                         0
+[id0] expl/Returns Mean                        0
+[id0] expl/Returns Std                         0
+[id0] expl/Returns Max                         0
+[id0] expl/Returns Min                         0
+[id0] expl/Actions Mean                        0.00970836
+[id0] expl/Actions Std                         0.0531246
+[id0] expl/Actions Max                         0.160464
+[id0] expl/Actions Min                        -0.167047
+[id0] expl/Num Paths                           2
+[id0] expl/Average Returns                     0
+[id0] eval/num steps total                   400
+[id0] eval/num paths total                     8
+[id0] eval/path length Mean                   50
+[id0] eval/path length Std                     0
+[id0] eval/path length Max                    50
+[id0] eval/path length Min                    50
+[id0] eval/Rewards Mean                        0
+[id0] eval/Rewards Std                         0
+[id0] eval/Rewards Max                         0
+[id0] eval/Rewards Min                         0
+[id0] eval/Returns Mean                        0
+[id0] eval/Returns Std                         0
+[id0] eval/Returns Max                         0
+[id0] eval/Returns Min                         0
+[id0] eval/Actions Mean                        0.0062658
+[id0] eval/Actions Std                         0.0147267
+[id0] eval/Actions Max                         0.0217953
+[id0] eval/Actions Min                        -0.0196141
+[id0] eval/Num Paths                           2
+[id0] eval/Average Returns                     0
+[id0] time/epoch_time (s)                      0.248886
+[id0] time/evaluation sampling (s)             0.0705061
+[id0] time/exploration sampling (s)            0.0690467
+[id0] time/global_time (s)                     5.26157
+[id0] time/replay buffer data storing (s)      0.000605345
+[id0] time/saving (s)                          1.38283e-05
+[id0] time/training (s)                        0.107416
+[id0] epoch                                    3
+[id0] -----------------------------------  ---------------
+[id0] -----------------------------------  ---------------
+[id0] trainer/num train calls                 50
+[id0] trainer/QF1 Loss                        25.877
+[id0] trainer/QF2 Loss                        21.9453
+[id0] trainer/Policy Loss                      3.76137
+[id0] trainer/Q1 Predictions Mean              4.63133
+[id0] trainer/Q1 Predictions Std               0.454815
+[id0] trainer/Q1 Predictions Max               5.41268
+[id0] trainer/Q1 Predictions Min               4.19083
+[id0] trainer/Q2 Predictions Mean              5.01998
+[id0] trainer/Q2 Predictions Std               0.561715
+[id0] trainer/Q2 Predictions Max               5.83242
+[id0] trainer/Q2 Predictions Min               4.26122
+[id0] trainer/Q Targets Mean                   9.6649
+[id0] trainer/Q Targets Std                    0.783043
+[id0] trainer/Q Targets Max                   10.3778
+[id0] trainer/Q Targets Min                    8.15492
+[id0] trainer/Log Pis Mean                     8.33577
+[id0] trainer/Log Pis Std                      1.02499
+[id0] trainer/Log Pis Max                      9.8239
+[id0] trainer/Log Pis Min                      7.11964
+[id0] trainer/rewards Mean                     9.58611
+[id0] trainer/rewards Std                      0.786294
+[id0] trainer/rewards Max                     10.3004
+[id0] trainer/rewards Min                      8.06987
+[id0] trainer/terminals Mean                   0
+[id0] trainer/terminals Std                    0
+[id0] trainer/terminals Max                    0
+[id0] trainer/terminals Min                    0
+[id0] trainer/replay_buffer_len            12360
+[id0] trainer/policy/mean Mean                -0.0360792
+[id0] trainer/policy/mean Std                  0.363043
+[id0] trainer/policy/mean Max                  0.602992
+[id0] trainer/policy/mean Min                 -0.687834
+[id0] trainer/policy/std Mean                  0.0507201
+[id0] trainer/policy/std Std                   6.73447e-05
+[id0] trainer/policy/std Max                   0.0508204
+[id0] trainer/policy/std Min                   0.0506453
+[id0] trainer/Advantage Weights Mean           0.2
+[id0] trainer/Advantage Weights Std            0.0078605
+[id0] trainer/Advantage Weights Max            0.206832
+[id0] trainer/Advantage Weights Min            0.184856
+[id0] trainer/Advantage Score Mean             0.0569316
+[id0] trainer/Advantage Score Std              0.0806522
+[id0] trainer/Advantage Score Max              0.125707
+[id0] trainer/Advantage Score Min             -0.0989513
+[id0] expl/num steps total                   510
+[id0] expl/num paths total                    11
+[id0] expl/path length Mean                   50
+[id0] expl/path length Std                     0
+[id0] expl/path length Max                    50
+[id0] expl/path length Min                    50
+[id0] expl/Rewards Mean                        0
+[id0] expl/Rewards Std                         0
+[id0] expl/Rewards Max                         0
+[id0] expl/Rewards Min                         0
+[id0] expl/Returns Mean                        0
+[id0] expl/Returns Std                         0
+[id0] expl/Returns Max                         0
+[id0] expl/Returns Min                         0
+[id0] expl/Actions Mean                        0.00277007
+[id0] expl/Actions Std                         0.0533851
+[id0] expl/Actions Max                         0.173962
+[id0] expl/Actions Min                        -0.161638
+[id0] expl/Num Paths                           2
+[id0] expl/Average Returns                     0
+[id0] eval/num steps total                   500
+[id0] eval/num paths total                    10
+[id0] eval/path length Mean                   50
+[id0] eval/path length Std                     0
+[id0] eval/path length Max                    50
+[id0] eval/path length Min                    50
+[id0] eval/Rewards Mean                        0
+[id0] eval/Rewards Std                         0
+[id0] eval/Rewards Max                         0
+[id0] eval/Rewards Min                         0
+[id0] eval/Returns Mean                        0
+[id0] eval/Returns Std                         0
+[id0] eval/Returns Max                         0
+[id0] eval/Returns Min                         0
+[id0] eval/Actions Mean                        0.00495222
+[id0] eval/Actions Std                         0.0137168
+[id0] eval/Actions Max                         0.0171238
+[id0] eval/Actions Min                        -0.0204181
+[id0] eval/Num Paths                           2
+[id0] eval/Average Returns                     0
+[id0] time/epoch_time (s)                      0.241812
+[id0] time/evaluation sampling (s)             0.0640893
+[id0] time/exploration sampling (s)            0.0679815
+[id0] time/global_time (s)                     5.50601
+[id0] time/replay buffer data storing (s)      0.000584364
+[id0] time/saving (s)                          1.16825e-05
+[id0] time/training (s)                        0.107869
+[id0] epoch                                    4
+[id0] -----------------------------------  ---------------

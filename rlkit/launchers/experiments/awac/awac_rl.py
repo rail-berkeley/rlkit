@@ -157,12 +157,14 @@ def resume(variant):
 def process_args(variant):
     if variant.get("debug", False):
         variant['max_path_length'] = 50
-        variant['batch_size'] = 5
-        variant['num_epochs'] = 5
-        # variant['num_eval_steps_per_epoch'] = 100
-        # variant['num_expl_steps_per_train_loop'] = 100
-        variant['num_trains_per_train_loop'] = 10
-        # variant['min_num_steps_before_training'] = 100
+        variant.get('algo_kwargs', {}).update(dict(
+            batch_size=5,
+            num_epochs=5,
+            num_eval_steps_per_epoch=100,
+            num_expl_steps_per_train_loop=100,
+            num_trains_per_train_loop=10,
+            min_num_steps_before_training=10,
+        ))
         variant['trainer_kwargs']['bc_num_pretrain_steps'] = min(10, variant['trainer_kwargs'].get('bc_num_pretrain_steps', 0))
         variant['trainer_kwargs']['q_num_pretrain1_steps'] = min(10, variant['trainer_kwargs'].get('q_num_pretrain1_steps', 0))
         variant['trainer_kwargs']['q_num_pretrain2_steps'] = min(10, variant['trainer_kwargs'].get('q_num_pretrain2_steps', 0))
@@ -328,12 +330,7 @@ def experiment(variant):
             evaluation_data_collector=eval_path_collector,
             replay_buffer=replay_buffer,
             max_path_length=variant['max_path_length'],
-            batch_size=variant['batch_size'],
-            num_epochs=variant['num_epochs'],
-            num_eval_steps_per_epoch=variant['num_eval_steps_per_epoch'],
-            num_expl_steps_per_train_loop=variant['num_expl_steps_per_train_loop'],
-            num_trains_per_train_loop=variant['num_trains_per_train_loop'],
-            min_num_steps_before_training=variant['min_num_steps_before_training'],
+            **variant['algo_kwargs']
         )
     else:
         expl_path_collector = MdpPathCollector(
@@ -348,12 +345,7 @@ def experiment(variant):
             evaluation_data_collector=eval_path_collector,
             replay_buffer=replay_buffer,
             max_path_length=variant['max_path_length'],
-            batch_size=variant['batch_size'],
-            num_epochs=variant['num_epochs'],
-            num_eval_steps_per_epoch=variant['num_eval_steps_per_epoch'],
-            num_expl_steps_per_train_loop=variant['num_expl_steps_per_train_loop'],
-            num_trains_per_train_loop=variant['num_trains_per_train_loop'],
-            min_num_steps_before_training=variant['min_num_steps_before_training'],
+            **variant['algo_kwargs']
         )
     algorithm.to(ptu.device)
 

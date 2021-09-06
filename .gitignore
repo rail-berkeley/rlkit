@@ -7,3 +7,5 @@ rlkit/launchers/conf_private.py
 MANIFEST
 *.egg-info
 \.idea/
+.pytest_cache
+.coverage

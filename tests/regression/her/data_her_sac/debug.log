@@ -1,0 +1,168 @@
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] -----------------------------------  ------------
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/num train calls               0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/QF1 Loss                      7.49643
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/QF2 Loss                      7.50385
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Policy Loss                  -2.47502
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Mean           0.000904009
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Std            3.76896e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Max            0.000941699
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Min            0.00086632
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Mean          -0.000476467
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Std            0.000228151
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Max           -0.000248316
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Min           -0.000704618
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Mean                2.72973
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Std                 0.22346
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Max                 2.95319
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Min                 2.50627
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Mean                 -2.47566
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Std                   0.105101
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Max                  -2.37056
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Min                  -2.58076
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Mean              3.23676e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Std               0.000592543
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Max               0.000728342
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Min              -0.000566301
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Mean        1.00019
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Std         0.00112417
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Max         1.00163
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Min         0.99896
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Mean    0.000192268
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Std     0.00112389
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Max     0.00162707
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Min    -0.00104076
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Alpha                         1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Alpha Loss                   -0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/num steps total                 20
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/num paths total                  4
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Mean                 5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Std                  0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Max                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Min                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Mean                    -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Max                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Min                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Mean                    -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Max                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Min                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Mean                    -0.00821653
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Std                      0.569609
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Max                      0.977579
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Min                     -0.998943
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Num Paths                        2
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Average Returns                 -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/num steps total                 10
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/num paths total                  2
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Mean                 5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Std                  0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Max                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Min                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Mean                    -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Max                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Min                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Mean                    -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Max                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Min                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Mean                     3.2829e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Std                      0.000601366
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Max                      0.000757367
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Min                     -0.000588868
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Num Paths                        2
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Average Returns                 -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/epoch_time (s)                   0.212232
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/evaluation sampling (s)          0.0179353
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/exploration sampling (s)         0.0185997
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/global_time (s)                  1.12265
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/replay buffer data storing (s)   0.000101566
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/saving (s)                       0.0099926
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/training (s)                     0.119463
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] epoch                                 0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] -----------------------------------  ------------
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] -----------------------------------  ------------
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/num train calls               0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/QF1 Loss                      7.31758
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/QF2 Loss                      7.3401
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Policy Loss                  -2.46695
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Mean           0.00733391
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Std            5.56116e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Max            0.00738953
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q1 Predictions Min            0.0072783
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Mean           0.00317477
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Std            0.000185155
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Max            0.00335993
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q2 Predictions Min            0.00298962
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Mean                2.71244
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Std                 0.00232387
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Max                 2.71476
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Q Targets Min                 2.71011
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Mean                 -2.47074
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Std                   0.29424
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Max                  -2.1765
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Log Pis Min                  -2.76498
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Mean              7.67683e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Std               0.00122954
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Max               0.00147136
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/mean Min              -0.00189778
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Mean        1.00001
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Std         0.00151354
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Max         1.0015
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/std Min         0.997472
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Mean    1.07968e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Std     0.00151457
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Max     0.00149543
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/policy/normal/log_std Min    -0.00253097
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Alpha                         0.997008
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] trainer/Alpha Loss                   -0.0193924
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/num steps total                 30
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/num paths total                  6
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Mean                 5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Std                  0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Max                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/path length Min                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Mean                    -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Max                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Rewards Min                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Mean                    -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Max                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Returns Min                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Mean                     0.0746636
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Std                      0.629169
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Max                      0.948969
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Actions Min                     -0.896441
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Num Paths                        2
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] expl/Average Returns                 -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/num steps total                 20
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/num paths total                  4
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Mean                 5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Std                  0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Max                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/path length Min                  5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Mean                    -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Max                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Rewards Min                     -1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Mean                    -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Std                      0
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Max                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Returns Min                     -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Mean                     7.57047e-05
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Std                      0.00121639
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Max                      0.0014672
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Actions Min                     -0.0018842
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Num Paths                        2
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] eval/Average Returns                 -5
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/epoch_time (s)                   0.11834
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/evaluation sampling (s)          0.0179975
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/exploration sampling (s)         0.0193708
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/global_time (s)                  1.24424
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/replay buffer data storing (s)   0.00014782
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/saving (s)                       0.00665903
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] time/training (s)                     0.0728889
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] epoch                                 1
+[her-sac-fetch-experiment_2021_08_20_09_00_40_0000--s-0] -----------------------------------  ------------

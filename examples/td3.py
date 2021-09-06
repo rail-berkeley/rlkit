@@ -20,10 +20,21 @@ from rlkit.torch.networks import ConcatMlp, TanhMlpPolicy
 from rlkit.torch.td3.td3 import TD3Trainer
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     expl_env = NormalizedBoxEnv(HalfCheetahEnv())
     eval_env = NormalizedBoxEnv(HalfCheetahEnv())
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
+
     obs_dim = expl_env.observation_space.low.size
     action_dim = expl_env.action_space.low.size
     qf1 = ConcatMlp(
@@ -98,29 +109,33 @@ def experiment(variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
+variant = dict(
+    algorithm_kwargs=dict(
+        num_epochs=3000,
+        num_eval_steps_per_epoch=5000,
+        num_trains_per_train_loop=1000,
+        num_expl_steps_per_train_loop=1000,
+        min_num_steps_before_training=1000,
+        max_path_length=1000,
+        batch_size=256,
+    ),
+    trainer_kwargs=dict(
+        discount=0.99,
+    ),
+    qf_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    policy_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    replay_buffer_size=int(1E6),
+    seed=random.randint(0, 100000),
+)
 
-if __name__ == "__main__":
-    variant = dict(
-        algorithm_kwargs=dict(
-            num_epochs=3000,
-            num_eval_steps_per_epoch=5000,
-            num_trains_per_train_loop=1000,
-            num_expl_steps_per_train_loop=1000,
-            min_num_steps_before_training=1000,
-            max_path_length=1000,
-            batch_size=256,
-        ),
-        trainer_kwargs=dict(
-            discount=0.99,
-        ),
-        qf_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        policy_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        replay_buffer_size=int(1E6),
-    )
+def main():
     # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
     setup_logger('rlkit-post-refactor-td3-half-cheetah', variant=variant)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()

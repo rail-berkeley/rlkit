@@ -3,19 +3,22 @@ from rlkit.launchers.experiments.awac.awac_rl import experiment, process_args
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.launchers.arglauncher import run_variants
 
 from rlkit.torch.sac.policies import GaussianPolicy
 from rlkit.torch.networks import Clamp
 
-if __name__ == "__main__":
+def main():
     variant = dict(
-        num_epochs=501,
-        num_eval_steps_per_epoch=1000,
-        num_trains_per_train_loop=1000,
-        num_expl_steps_per_train_loop=1000,
-        min_num_steps_before_training=1000,
+        algo_kwargs=dict(
+            num_epochs=501,
+            num_eval_steps_per_epoch=1000,
+            num_trains_per_train_loop=1000,
+            num_expl_steps_per_train_loop=1000,
+            min_num_steps_before_training=1000,
+            batch_size=1024,
+        ),
         max_path_length=1000,
-        batch_size=1024,
         replay_buffer_size=int(1E6),
         layer_size=256,
         num_layers=2,
@@ -87,35 +90,11 @@ if __name__ == "__main__":
         search_space, default_parameters=variant,
     )
 
-    n_seeds = 1
-    mode = 'local'
-    exp_prefix = 'dev-{}'.format(
-        __file__.replace('/', '-').replace('_', '-').split('.')[0]
-    )
+    variants = []
+    for variant in sweeper.iterate_hyperparameters():
+        variants.append(variant)
 
-    # n_seeds = 3
-    # mode = 'gcp'
-    # exp_prefix = 'skew-fit-pickup-reference-post-refactor'
+    run_variants(experiment, variants, process_args)
 
-    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        for _ in range(n_seeds):
-            run_experiment(
-                experiment,
-                exp_prefix=exp_prefix,
-                mode=mode,
-                variant=variant,
-                use_gpu=use_gpu,
-                snapshot_gap=200,
-                snapshot_mode='gap_and_last',
-                num_exps_per_instance=3,
-                gcp_kwargs=dict(
-                    zone='us-west1-b',
-                ),
-
-            )
-
-    # variants = []
-    # for variant in sweeper.iterate_hyperparameters():
-    #     variants.append(variant)
-
-    # run_variants(experiment, variants, process_args)
+if __name__ == "__main__":
+    main()

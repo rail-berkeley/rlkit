@@ -1,0 +1,112 @@
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] -----------------------------------  --------------
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] replay_buffer/size                   2000
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/QF Loss                         1.0002
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Mean              2.7425e-05
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Std               4.64033e-05
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Max               7.38283e-05
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Min              -1.89784e-05
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/num steps total                 2000
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/num paths total                   30
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Mean                  55.5556
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Std                   23.1114
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Max                  100
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Min                   22
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Mean                       1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Std                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Min                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Mean                      55.5556
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Std                       23.1114
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Max                      100
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Min                       22
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Mean                       0.51
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Std                        0.4999
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Min                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Num Paths                         18
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Average Returns                   55.5556
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/num steps total                 4980
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/num paths total                   80
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Mean                  62.25
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Std                   26.7748
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Max                  166
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Min                   22
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Mean                       1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Std                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Min                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Mean                      62.25
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Std                       26.7748
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Max                      166
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Min                       22
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Mean                       0.511044
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Std                        0.499878
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Min                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Num Paths                         80
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Average Returns                   62.25
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/epoch_time (s)                     2.58453
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/evaluation sampling (s)            0.818132
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/exploration sampling (s)           0.162215
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/global_time (s)                    2.75982
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/replay buffer data storing (s)     0.00668001
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/saving (s)                         0.00590634
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/training (s)                       1.38845
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] epoch                                   0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] -----------------------------------  --------------
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] -----------------------------------  -------------
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] replay_buffer/size                   3000
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/QF Loss                         0.0011098
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Mean              1.26111
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Std               0.042638
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Max               1.30375
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] trainer/Y Predictions Min               1.21848
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/num steps total                 3000
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/num paths total                  132
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Mean                   9.80392
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Std                    1.54691
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Max                   15
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/path length Min                    2
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Mean                       1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Std                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Rewards Min                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Mean                       9.80392
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Std                        1.54691
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Max                       15
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Returns Min                        2
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Mean                       0.947
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Std                        0.224033
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Actions Min                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Num Paths                        102
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] expl/Average Returns                    9.80392
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/num steps total                 9975
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/num paths total                  617
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Mean                   9.30168
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Std                    0.773308
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Max                   11
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/path length Min                    8
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Mean                       1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Std                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Rewards Min                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Mean                       9.30168
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Std                        0.773308
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Max                       11
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Returns Min                        8
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Mean                       1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Std                        0
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Max                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Actions Min                        1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Num Paths                        537
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] eval/Average Returns                    9.30168
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/epoch_time (s)                     2.31997
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/evaluation sampling (s)            0.810525
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/exploration sampling (s)           0.168954
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/global_time (s)                    5.08436
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/replay buffer data storing (s)     0.0068624
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/saving (s)                         0.00544405
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] time/training (s)                       1.31033
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] epoch                                   1
+[dqn-CartPole_2021_08_20_00_26_35_0000--s-0] -----------------------------------  -------------

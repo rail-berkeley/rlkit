@@ -1,0 +1,190 @@
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] -----------------------------------  --------------
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] replay_buffer/size                   2000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/num train calls              1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/QF1 Loss                        7.51889
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/QF2 Loss                        7.54049
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Policy Loss                    -4.39813
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Mean             0.00458353
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Std              0.00458353
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Max              0.00916706
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Min              0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Mean             0.000466318
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Std              0.000881484
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Max              0.0013478
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Min             -0.000415165
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Mean                  2.74508
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Std                   0.0878264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Max                   2.83291
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Min                   2.65726
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Mean                   -4.39827
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Std                     0.229529
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Max                    -4.16875
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Min                    -4.6278
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Mean                   -0.680844
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Std                     0.054372
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Max                    -0.626472
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Min                    -0.735216
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Mean                  0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Std                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Max                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Min                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/reward scale                    1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Mean                0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Std                 0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Max                 0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Min                 0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Mean          1.00039
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Std           0.000467339
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Max           1.00084
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Min           0.999512
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Mean      0.00038531
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Std       0.000467251
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Max       0.000842574
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Min      -0.000488102
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Alpha                           1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Alpha Loss                     -0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/num steps total                 2000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/num paths total                    2
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Mean                1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Std                    0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Max                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Min                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Mean                      -0.278543
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Std                        0.68186
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Max                        1.97229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Min                       -2.44078
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Mean                    -278.543
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Std                        0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Max                     -278.543
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Min                     -278.543
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Mean                       0.008082
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Std                        0.631892
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Max                        0.997034
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Min                       -0.998462
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Num Paths                          1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Average Returns                 -278.543
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/num steps total                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/num paths total                    1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Mean                1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Std                    0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Max                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Min                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Mean                      -0.000895229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Std                        0.019424
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Max                        0.127781
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Min                       -0.351519
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Mean                      -0.895229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Std                        0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Max                       -0.895229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Min                       -0.895229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Mean                       1.1957e-07
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Std                        3.77022e-06
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Max                        9.07126e-05
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Min                       -0.000104064
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Num Paths                          1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Average Returns                   -0.895229
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/epoch_time (s)                     8.01915
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/evaluation sampling (s)            0.377766
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/exploration sampling (s)           0.450897
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/global_time (s)                    8.06562
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/replay buffer data storing (s)     0.00562119
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/sac training (s)                   6.46483
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/saving (s)                         0.0071342
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/training (s)                       6.71693
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] epoch                                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] -----------------------------------  --------------
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] -----------------------------------  --------------
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] replay_buffer/size                   3000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/num train calls              2000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/QF1 Loss                        1.11979
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/QF2 Loss                        2.32574
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Policy Loss                    -7.3159
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Mean             4.97316
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Std              0.0135632
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Max              4.98672
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q1 Predictions Min              4.9596
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Mean             4.70634
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Std              0.451723
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Max              5.15807
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q2 Predictions Min              4.25462
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Mean                  4.85932
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Std                   1.06562
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Max                   5.92495
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Q Targets Min                   3.7937
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Mean                   -4.23955
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Std                     0.247615
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Max                    -3.99193
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Log Pis Min                    -4.48716
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Mean                   -0.458908
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Std                     0.273369
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Max                    -0.185539
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/rewards Min                    -0.732277
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Mean                  0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Std                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Max                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/terminals Min                   0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/reward scale                    1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Mean                4.17832e-05
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Std                 0.0185309
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Max                 0.0296929
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/mean Min                -0.031448
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Mean          0.900724
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Std           0.0274135
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Max           0.944814
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/std Min           0.843748
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Mean     -0.105023
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Std       0.03058
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Max      -0.0567676
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/policy/normal/log_std Min      -0.169902
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Alpha                           0.740502
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] trainer/Alpha Loss                     -3.07624
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/num steps total                 3000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/num paths total                    3
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Mean                1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Std                    0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Max                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/path length Min                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Mean                      -0.179153
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Std                        0.673567
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Max                        1.78125
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Rewards Min                       -2.40707
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Mean                    -179.153
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Std                        0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Max                     -179.153
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Returns Min                     -179.153
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Mean                       0.00706013
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Std                        0.609613
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Max                        0.997411
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Actions Min                       -0.997045
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Num Paths                          1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] expl/Average Returns                 -179.153
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/num steps total                 2000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/num paths total                    2
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Mean                1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Std                    0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Max                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/path length Min                 1000
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Mean                      -0.000701264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Std                        0.0153608
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Max                        0.0909554
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Rewards Min                       -0.271044
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Mean                      -0.701264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Std                        0
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Max                       -0.701264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Returns Min                       -0.701264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Mean                      -0.00134304
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Std                        0.00609567
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Max                        0.0110001
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Actions Min                       -0.00952567
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Num Paths                          1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] eval/Average Returns                   -0.701264
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/epoch_time (s)                     7.77494
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/evaluation sampling (s)            0.40692
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/exploration sampling (s)           0.448364
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/global_time (s)                   15.8451
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/replay buffer data storing (s)     0.00544906
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/sac training (s)                   6.645
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/saving (s)                         0.00674033
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] time/training (s)                       6.90003
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] epoch                                   1
+[21-08-18-default_2021_08_18_14_36_11_id478649--s977983] -----------------------------------  --------------

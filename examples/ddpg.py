@@ -18,6 +18,9 @@ from rlkit.torch.ddpg.ddpg import DDPGTrainer
 import rlkit.torch.pytorch_util as ptu
 from rlkit.torch.torch_rl_algorithm import TorchBatchRLAlgorithm
 
+import random
+import torch
+import numpy as np
 
 def experiment(variant):
     eval_env = NormalizedBoxEnv(HalfCheetahEnv())
@@ -25,6 +28,14 @@ def experiment(variant):
     # Or for a specific version:
     # import gym
     # env = NormalizedBoxEnv(gym.make('HalfCheetah-v1'))
+
+    seed = variant["seed"]
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
+
     obs_dim = eval_env.observation_space.low.size
     action_dim = eval_env.action_space.low.size
     qf = ConcatMlp(
@@ -65,34 +76,36 @@ def experiment(variant):
     algorithm.to(ptu.device)
     algorithm.train()
 
+variant = dict(
+    algorithm_kwargs=dict(
+        num_epochs=1000,
+        num_eval_steps_per_epoch=1000,
+        num_trains_per_train_loop=1000,
+        num_expl_steps_per_train_loop=1000,
+        min_num_steps_before_training=10000,
+        max_path_length=1000,
+        batch_size=128,
+    ),
+    trainer_kwargs=dict(
+        use_soft_update=True,
+        tau=1e-2,
+        discount=0.99,
+        qf_learning_rate=1e-3,
+        policy_learning_rate=1e-4,
+    ),
+    qf_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    policy_kwargs=dict(
+        hidden_sizes=[400, 300],
+    ),
+    replay_buffer_size=int(1E6),
+    seed=random.randint(0, 100000),
+)
 
-if __name__ == "__main__":
-    # noinspection PyTypeChecker
-    variant = dict(
-        algorithm_kwargs=dict(
-            num_epochs=1000,
-            num_eval_steps_per_epoch=1000,
-            num_trains_per_train_loop=1000,
-            num_expl_steps_per_train_loop=1000,
-            min_num_steps_before_training=10000,
-            max_path_length=1000,
-            batch_size=128,
-        ),
-        trainer_kwargs=dict(
-            use_soft_update=True,
-            tau=1e-2,
-            discount=0.99,
-            qf_learning_rate=1e-3,
-            policy_learning_rate=1e-4,
-        ),
-        qf_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        policy_kwargs=dict(
-            hidden_sizes=[400, 300],
-        ),
-        replay_buffer_size=int(1E6),
-    )
-    # ptu.set_gpu_mode(True)  # optionally set the GPU (default=False)
+def main():
     setup_logger('name-of-experiment', variant=variant)
     experiment(variant)
+
+if __name__ == "__main__":
+    main()

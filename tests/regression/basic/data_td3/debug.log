@@ -1,0 +1,156 @@
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] -----------------------------------  --------------
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] replay_buffer/size                   2000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/QF1 Loss                        0.0198549
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/QF2 Loss                        0.0197657
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Loss                    -0.000842675
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Mean            -0.000233052
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Std              0.000233052
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Max              0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Min             -0.000466104
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Mean            -2.02651e-05
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Std              2.02651e-05
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Max              0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Min             -4.05302e-05
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Mean                  0.0557477
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Std                   0.129077
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Max                   0.184825
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Min                  -0.0733291
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Mean           0.0198549
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Std            0.0144777
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Max            0.0343327
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Min            0.00537716
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Mean           0.0197657
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Std            0.0143945
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Max            0.0341602
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Min            0.00537122
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Mean              0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Std               0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Max               0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Min               0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/num steps total                 2000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/num paths total                    2
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Mean                1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Std                    0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Max                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Min                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Mean                      -0.00826605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Std                        0.120397
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Max                        0.349028
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Min                       -0.408541
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Mean                      -8.26605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Std                        0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Max                       -8.26605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Min                       -8.26605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Mean                       0.00147068
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Std                        0.0995527
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Max                        0.382974
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Min                       -0.355687
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Num Paths                          1
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Average Returns                   -8.26605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/num steps total                 5000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/num paths total                    5
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Mean                1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Std                    0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Max                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Min                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Mean                      -0.000278785
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Std                        0.0140093
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Max                        0.241317
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Min                       -0.289879
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Mean                      -0.278785
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Std                        0.548003
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Max                        0.6795
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Min                       -0.84064
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Mean                       0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Std                        0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Max                        0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Min                        0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Num Paths                          5
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Average Returns                   -0.278785
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/epoch_time (s)                     6.25102
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/evaluation sampling (s)            1.51935
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/exploration sampling (s)           0.335109
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/global_time (s)                    6.29512
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/replay buffer data storing (s)     0.00528622
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/saving (s)                         0.0049026
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/training (s)                       4.02953
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] epoch                                   0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] -----------------------------------  --------------
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] -----------------------------------  ---------------
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] replay_buffer/size                    3000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/QF1 Loss                         0.0425722
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/QF2 Loss                         0.0551591
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Loss                     -0.0736262
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Mean              0.0102167
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Std               0.0652914
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Max               0.075508
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q1 Predictions Min              -0.0550747
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Mean              0.000761375
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Std               0.0348157
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Max               0.035577
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q2 Predictions Min              -0.0340543
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Mean                   0.158049
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Std                    0.209228
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Max                    0.367277
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Q Targets Min                   -0.0511789
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Mean            0.0425722
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Std             0.042557
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Max             0.0851292
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 1 Min             1.5177e-05
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Mean            0.0551591
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Std             0.0548659
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Max             0.110025
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Bellman Errors 2 Min             0.000293254
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Mean               0.00576749
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Std                0.510843
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Max                0.645545
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] trainer/Policy Action Min               -0.653989
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/num steps total                  3000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/num paths total                     3
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Mean                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Std                     0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Max                  1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/path length Min                  1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Mean                       -0.166073
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Std                         0.130721
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Max                         0.234898
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Rewards Min                        -0.670388
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Mean                     -166.073
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Std                         0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Max                      -166.073
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Returns Min                      -166.073
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Mean                        0.00600685
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Std                         0.52099
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Max                         0.963568
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Actions Min                        -1
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Num Paths                           1
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] expl/Average Returns                  -166.073
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/num steps total                 10000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/num paths total                    10
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Mean                 1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Std                     0
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Max                  1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/path length Min                  1000
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Mean                       -0.157461
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Std                         0.0225605
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Max                         0.0405168
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Rewards Min                        -0.645774
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Mean                     -157.461
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Std                         0.433748
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Max                      -156.947
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Returns Min                      -158.211
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Mean                        0.0057675
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Std                         0.510843
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Max                         0.645545
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Actions Min                        -0.653989
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Num Paths                           5
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] eval/Average Returns                  -157.461
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/epoch_time (s)                      6.82463
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/evaluation sampling (s)             1.58153
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/exploration sampling (s)            0.33517
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/global_time (s)                    13.1261
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/replay buffer data storing (s)      0.00542688
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/saving (s)                          0.00517988
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] time/training (s)                        4.88098
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] epoch                                    1
+[rlkit-post-refactor-td3-half-cheetah_2021_08_20_00_21_31_0000--s-0] -----------------------------------  ---------------
