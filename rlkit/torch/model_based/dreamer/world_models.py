@@ -2,6 +2,7 @@ import math
 import numbers
 from typing import Dict, List
 
+import numpy as np
 import torch
 import torch.nn.functional as F
 from torch import Tensor, jit, nn
@@ -333,6 +334,38 @@ class WorldModel(jit.ScriptModule):
                 deter=ptu.zeros([batch_size, self.deterministic_state_size]),
             )
         return state
+
+    def flatten_obs(self, obs, shape):
+        obs.reshape(-1, *shape)
+        return obs
+
+
+class StateConcatObsWorldModel(WorldModel):
+    def __init__(self, *args, vec_obs_size=0, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.vec_obs_size = vec_obs_size
+
+    @jit.script_method
+    def encode(self, obs):
+        obs_im = obs[:, : -self.vec_obs_size]
+        obs_state = obs[:, -self.vec_obs_size :]
+        encoded_im = self.conv_encoder(self.preprocess(obs_im))
+        return torch.cat((encoded_im, obs_state), dim=1)
+
+    def flatten_obs(self, obs, shape):
+        if (
+            len(obs.shape) == 2
+            and obs.shape[-1] == np.prod(self.image_shape) + self.vec_obs_size
+        ):
+            obs = obs[:, : -self.vec_obs_size].reshape(-1, *shape)
+        elif (
+            len(obs.shape) == 2
+            and obs.shape[-1] != np.prod(self.image_shape) + self.vec_obs_size
+        ):
+            obs = obs.reshape(-1, *shape)
+        else:
+            obs = obs[:, :, : -self.vec_obs_size].reshape(-1, *shape)
+        return obs
 
 
 class LayerNorm(jit.ScriptModule):
