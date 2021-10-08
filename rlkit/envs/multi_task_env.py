@@ -36,10 +36,11 @@ class MultiTaskEnv(gym.Env):
             render_im_shape=render_im_shape,
         )
         obs = np.concatenate((obs, self.get_one_hot(self.idx)))
-        # new_info = {}
-        # for k, v in info.items():
-        #     new_info[self.env_names[self.idx] + "/" + k] = v
-        return obs, reward, done, info
+        new_info = {}
+        for k, v in info.items():
+            new_info[self.env_names[self.idx] + "/" + k] = v
+            new_info[k] = v
+        return obs, reward, done, new_info
 
     def reset(self):
         if hasattr(self, "env"):

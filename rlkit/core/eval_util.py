@@ -40,10 +40,21 @@ def get_generic_path_information(paths, stat_prefix=""):
             all_env_infos = [
                 ppp.list_of_dicts__to__dict_of_lists(p[info_key]) for p in paths
             ]
-            for k in all_env_infos[0].keys():
-                final_ks = np.array([info[k][-1] for info in all_env_infos])
-                first_ks = np.array([info[k][0] for info in all_env_infos])
-                all_ks = np.concatenate([info[k] for info in all_env_infos])
+            running_keys = []
+            for i in range(len(all_env_infos)):
+                for key in all_env_infos[i].keys():
+                    if key not in running_keys:
+                        running_keys.append(key)
+            for k in running_keys:
+                final_ks = np.array(
+                    [info[k][-1] for info in all_env_infos if k in info.keys()]
+                )
+                first_ks = np.array(
+                    [info[k][0] for info in all_env_infos if k in info.keys()]
+                )
+                all_ks = np.concatenate(
+                    [info[k] for info in all_env_infos if k in info.keys()]
+                )
                 statistics.update(
                     create_stats_ordered_dict(
                         stat_prefix + k,
