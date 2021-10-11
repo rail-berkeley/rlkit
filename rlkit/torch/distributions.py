@@ -408,9 +408,18 @@ class TanhNormal(Distribution):
         log_p = self.log_prob(value, pre_tanh_value)
         return value, log_p
 
+    def rsample_logprob_and_pretanh(self):
+        value, pre_tanh_value = self.rsample_with_pretanh()
+        log_p = self.log_prob(value, pre_tanh_value)
+        return value, log_p, pre_tanh_value
+
     @property
     def mean(self):
         return torch.tanh(self.normal_mean)
+
+    @property
+    def stddev(self):
+        return self.normal_std
 
     def get_diagnostics(self):
         stats = OrderedDict()

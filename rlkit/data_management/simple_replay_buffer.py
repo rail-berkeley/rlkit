@@ -57,6 +57,12 @@ class SimpleReplayBuffer(ReplayBuffer):
     def terminate_episode(self):
         pass
 
+    def clear(self):
+        self._top = 0
+        self._size = 0
+        self._episode_starts = []
+        self._cur_episode_start = 0
+
     def _advance(self):
         self._top = (self._top + 1) % self._max_replay_buffer_size
         if self._size < self._max_replay_buffer_size:
