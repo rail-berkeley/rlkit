@@ -185,7 +185,7 @@ class PEARLSoftActorCriticTrainer(TorchTrainer):
         )
         log_pi = log_pi.unsqueeze(1)
         policy_mean = action_distrib.mean
-        policy_log_std = action_distrib.log_std
+        policy_log_std = torch.log(action_distrib.stddev)
 
         # flattens out the task dimension
         t, b, _ = obs.size()
