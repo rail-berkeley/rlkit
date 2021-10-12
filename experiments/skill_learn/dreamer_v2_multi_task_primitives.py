@@ -19,8 +19,8 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=10,
-            num_expl_steps_per_train_loop=50,
+            num_eval_steps_per_epoch=36 * 3,
+            num_expl_steps_per_train_loop=60,
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
@@ -32,7 +32,7 @@ if __name__ == "__main__":
     else:
         algorithm_kwargs = dict(
             num_epochs=1000,
-            num_eval_steps_per_epoch=30,
+            num_eval_steps_per_epoch=36 * 3,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
