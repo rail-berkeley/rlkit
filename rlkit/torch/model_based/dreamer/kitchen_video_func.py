@@ -18,27 +18,28 @@ def video_post_epoch_func(algorithm, epoch):
         video_post_epoch_func_(
             algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
         )
+        imagination_post_epoch_func(
+            algorithm,
+            algorithm.eval_env,
+            epoch,
+            algorithm.eval_data_collector._policy,
+            mode="eval",
+        )
+
+        imagination_post_epoch_func(
+            algorithm,
+            algorithm.eval_env,
+            epoch,
+            algorithm.expl_data_collector._policy,
+            mode="expl",
+        )
     except Exception:
         pass
-    # imagination_post_epoch_func(
-    #     algorithm,
-    #     algorithm.eval_env,
-    #     epoch,
-    #     algorithm.eval_data_collector._policy,
-    #     mode="eval",
-    # )
-
-    # imagination_post_epoch_func(
-    #     algorithm,
-    #     algorithm.eval_env,
-    #     epoch,
-    #     algorithm.expl_data_collector._policy,
-    #     mode="expl",
-    # )
 
 
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):
+    print("Generating Imagination Reconstructions: ", mode)
     if epoch == -1 or epoch % 100 == 0:
         null_state = algorithm.trainer.world_model.initial(4)
         null_acts = ptu.zeros((4, env.action_space.low.size))
