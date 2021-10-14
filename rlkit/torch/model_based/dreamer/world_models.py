@@ -336,7 +336,7 @@ class WorldModel(jit.ScriptModule):
         return state
 
     def flatten_obs(self, obs, shape):
-        obs.reshape(-1, *shape)
+        obs = obs.reshape(-1, *shape)
         return obs
 
 
