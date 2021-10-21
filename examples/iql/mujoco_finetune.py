@@ -116,8 +116,6 @@ def main():
     for variant in sweeper.iterate_hyperparameters():
         variants.append(variant)
 
-    variants = variants[:1]
-
     use_gpu = True
 
     n_seeds = 1
