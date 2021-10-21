@@ -110,19 +110,24 @@ def rollout(
         if full_o_postprocess_func:
             full_o_postprocess_func(env, agent, o)
 
-        next_o, r, d, env_info = env.step(copy.deepcopy(a))
+        next_o, r, done, env_info = env.step(copy.deepcopy(a))
         if render:
             env.render(**render_kwargs)
         observations.append(o)
         rewards.append(r)
-        terminals.append(d)
+        terminal = False
+        if done:
+            # terminal=False if TimeLimit caused termination
+            if not env_info.get('TimeLimit.truncated'):
+                terminal = True
+        terminals.append(terminal)
         actions.append(a)
         next_observations.append(next_o)
         raw_next_obs.append(next_o)
         agent_infos.append(agent_info)
         env_infos.append(env_info)
         path_length += 1
-        if d:
+        if done:
             break
         o = next_o
     actions = np.array(actions)

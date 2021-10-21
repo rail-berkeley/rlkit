@@ -25,12 +25,12 @@ from rlkit.core import logger
 import glob
 
 def load_hdf5(dataset, replay_buffer):
-    all_obs = dataset['observations']
-    all_act = dataset['actions']
-    N = min(all_obs.shape[0], 1000000)
-    _obs = all_obs[:N]
-    _actions = all_act[:N]
-    _next_obs = np.concatenate([all_obs[1:N,:], np.zeros_like(_obs[0])[np.newaxis,:]], axis=0)
+    _obs = dataset['observations']
+    N = _obs.shape[0]
+    assert replay_buffer._max_replay_buffer_size >= N, "dataset does not fit in replay buffer"
+
+    _actions = dataset['actions']
+    _next_obs = dataset['next_observations']
     _rew = dataset['rewards'][:N]
     _done = dataset['terminals'][:N]
 
