@@ -57,7 +57,7 @@ class MdpPathCollector(PathCollector):
             path_len = len(path['actions'])
             if (
                     path_len != max_path_length
-                    and not path['terminals'][-1]
+                    and not path['dones'][-1]
                     and discard_incomplete_paths
             ):
                 break
