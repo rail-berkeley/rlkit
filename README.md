@@ -39,6 +39,9 @@ Implemented algorithms:
  - Advantage Weighted Actor Critic (AWAC)
     - [example scripts](examples/awac)
     - [paper](https://arxiv.org/abs/2006.09359)
+ - Implicit Q-Learning (IQL)
+    - [example scripts](examples/iql)
+    - [paper](https://arxiv.org/abs/2110.06169)
 
 To get started, checkout the example scripts, linked above.
 
