@@ -84,7 +84,9 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
                 self.replay_buffer.add_paths(new_expl_paths)
             gt.stamp('data storing', unique=False)
 
+            self.training_mode(True)
             for _ in range(self.num_trains_per_train_loop):
                 train_data = self.replay_buffer.random_batch(self.batch_size)
                 self.trainer.train(train_data)
             gt.stamp('training', unique=False)
+            self.training_mode(False)
