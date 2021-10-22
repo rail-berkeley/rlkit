@@ -92,6 +92,7 @@ def rollout(
     actions = []
     rewards = []
     terminals = []
+    dones = []
     agent_infos = []
     env_infos = []
     next_observations = []
@@ -121,6 +122,7 @@ def rollout(
             if not env_info.get('TimeLimit.truncated'):
                 terminal = True
         terminals.append(terminal)
+        dones.append(done)
         actions.append(a)
         next_observations.append(next_o)
         raw_next_obs.append(next_o)
@@ -147,6 +149,7 @@ def rollout(
         rewards=rewards,
         next_observations=next_observations,
         terminals=np.array(terminals).reshape(-1, 1),
+        dones=np.array(dones).reshape(-1, 1),
         agent_infos=agent_infos,
         env_infos=env_infos,
         full_observations=raw_obs,

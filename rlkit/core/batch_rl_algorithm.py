@@ -45,7 +45,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
 
     def train(self):
         """Negative epochs are offline, positive epochs are online"""
-        self.offline_rl = True
         for self.epoch in gt.timed_for(
                 range(self._start_epoch, self.num_epochs),
                 save_itrs=True,

@@ -17,6 +17,8 @@ from rlkit.launchers import conf
 from rlkit.torch.pytorch_util import set_gpu_mode
 import rlkit.pythonplusplus as ppp
 
+import torch
+
 GitInfo = namedtuple(
     'GitInfo',
     [
@@ -353,6 +355,7 @@ def set_seed(seed):
     seed = int(seed)
     random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 def reset_execution_environment():
@@ -532,7 +535,11 @@ def run_experiment(
     Sanitize inputs as needed
     """
     if seed is None:
-        seed = random.randint(0, 100000)
+        variant_seed = variant.get('seed')
+        if variant_seed is None:
+            seed = random.randint(0, 100000)
+        else:
+            seed = variant_seed
     if variant is None:
         variant = {}
     if mode == 'ssh' and base_log_dir is None:

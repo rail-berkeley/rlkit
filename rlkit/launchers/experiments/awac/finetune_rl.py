@@ -43,6 +43,8 @@ from rlkit.envs.make_env import make
 
 from rlkit.torch.networks import LinearTransform
 
+import random
+
 ENV_PARAMS = {
     'HalfCheetah-v2': {
         'num_expl_steps_per_train_loop': 1000,
@@ -246,6 +248,13 @@ def experiment(variant):
 
     expl_env = make(env_id, env_class, env_kwargs, normalize_env)
     eval_env = make(env_id, env_class, env_kwargs, normalize_env)
+
+    seed = int(variant["seed"])
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    eval_env.seed(seed)
+    expl_env.seed(seed)
 
     if variant.get('add_env_demos', False):
         variant["path_loader_kwargs"]["demo_paths"].append(variant["env_demo_path"])
