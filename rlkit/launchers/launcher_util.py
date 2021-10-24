@@ -169,7 +169,6 @@ def run_experiment_here(
     if unpack_variant:
         raw_variant = variant.copy()
         raw_variant.pop('exp_id', None)
-        raw_variant.pop('seed', None)
         raw_variant.pop('exp_prefix', None)
         raw_variant.pop('logger_config', None)
         raw_variant.pop('instance_type', None)
