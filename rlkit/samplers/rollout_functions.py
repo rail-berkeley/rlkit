@@ -119,7 +119,7 @@ def rollout(
         terminal = False
         if done:
             # terminal=False if TimeLimit caused termination
-            if not env_info.get('TimeLimit.truncated'):
+            if not env_info.pop('TimeLimit.truncated', False):
                 terminal = True
         terminals.append(terminal)
         dones.append(done)
