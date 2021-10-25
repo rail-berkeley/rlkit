@@ -84,7 +84,8 @@ def main():
         variant=variant,
         exp_prefix='iql-halfcheetah-medium-v2',
         mode="here_no_doodad",
-        unpack_variant=False
+        unpack_variant=False,
+        use_gpu=False,
     )
 
 if __name__ == "__main__":

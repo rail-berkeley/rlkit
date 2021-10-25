@@ -15,7 +15,7 @@ def test_iql():
     iql.variant["algo_kwargs"]["batch_size"] = 2
     iql.variant["algo_kwargs"]["num_eval_steps_per_epoch"] = 2
     iql.variant["algo_kwargs"]["num_expl_steps_per_train_loop"] = 2
-    iql.variant["algo_kwargs"]["num_trains_per_train_loop"] = 2
+    iql.variant["algo_kwargs"]["num_trains_per_train_loop"] = 100
     iql.variant["algo_kwargs"]["min_num_steps_before_training"] = 2
     iql.variant["qf_kwargs"] = dict(hidden_sizes=[2, 2])
 
