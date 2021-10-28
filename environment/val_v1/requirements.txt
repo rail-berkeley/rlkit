@@ -195,7 +195,7 @@ tensorboard==2.4.0
 tensorboard-logger==0.1.0
 tensorboard-plugin-wit==1.7.0
 tensorboardX==2.2
-tensorflow==2.2.0
+tensorflow==2.5.1
 tensorflow-estimator==2.2.0
 tensorflow-probability==0.10.0
 termcolor==1.1.0
