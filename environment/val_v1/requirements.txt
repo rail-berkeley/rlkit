@@ -138,7 +138,7 @@ path.py==12.4.0
 patsy==0.5.1
 pexpect==4.7.0
 pickleshare==0.7.5
-Pillow==6.2.1
+Pillow==8.3.2
 pkginfo==1.6.1
 plotnine==0.8.0
 pluggy==0.13.1
