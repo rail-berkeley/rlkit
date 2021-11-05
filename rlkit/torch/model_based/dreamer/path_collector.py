@@ -77,7 +77,6 @@ class VecMdpPathCollector(PathCollector):
                     "actions",
                     "terminals",
                     "rewards",
-                    "next_observations",
                 ]:
                     log_paths[ctr][k] = path[k][1:, j]
                 log_paths[ctr]["agent_infos"] = [{}] * path["rewards"][1:, j].shape[0]

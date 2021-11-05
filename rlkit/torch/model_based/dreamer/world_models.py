@@ -138,6 +138,11 @@ class WorldModel(jit.ScriptModule):
             std = 2 * torch.sigmoid(std / 2)
         return std + 0.1
 
+    @jit.ignore
+    def get_discrete_stochastic_state(self, logits):
+        stoch = self.get_dist(logits, logits, latent=True).rsample()
+        return stoch
+
     @jit.script_method
     def obs_step(
         self, prev_state: Dict[str, Tensor], prev_action: Tensor, embed: Tensor
@@ -161,11 +166,6 @@ class WorldModel(jit.ScriptModule):
             )
             post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
-
-    @jit.ignore
-    def get_discrete_stochastic_state(self, logits):
-        stoch = self.get_dist(logits, logits, latent=True).rsample()
-        return stoch
 
     @jit.script_method
     def action_step(self, prev_state: Dict[str, Tensor], prev_action: Tensor):
@@ -222,6 +222,12 @@ class WorldModel(jit.ScriptModule):
         return post, prior
 
     def forward(self, obs, action):
+        """
+        :param: obs (Bx(H+1)xO) : Batch of full trajectories of observations (dim O)
+        :param: action (Bx(H+1)xA) : Batch of full trajectories of actions (dim A)
+        +1 for the initial observation (reset observation) and corresponding dummy action (all zeros)
+        """
+        assert action[:, 0].sum() == 0, "First action should be dummy action"
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]

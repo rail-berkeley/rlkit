@@ -15,10 +15,8 @@ def vec_rollout(
     render_kwargs=None,
     preprocess_obs_for_policy_fn=None,
     get_action_kwargs=None,
-    return_dict_obs=False,
     full_o_postprocess_func=None,
     reset_callback=None,
-    save_video=True,
 ):
     if render_kwargs is None:
         render_kwargs = {}
@@ -26,15 +24,12 @@ def vec_rollout(
         get_action_kwargs = {}
     if preprocess_obs_for_policy_fn is None:
         preprocess_obs_for_policy_fn = lambda x: x
-    raw_obs = []
-    raw_next_obs = []
     observations = []
     actions = []
     rewards = []
     terminals = []
     agent_infos = []
     env_infos = []
-    next_observations = []
     path_length = 0
 
     o = env.reset()
@@ -46,8 +41,6 @@ def vec_rollout(
     rewards.append(r)
     terminals.append([False] * env.n_envs)
     actions.append(a)
-    next_observations.append(o)
-    raw_next_obs.append(o)
     agent_infos.append({})
     env_infos.append({})
 
@@ -58,7 +51,6 @@ def vec_rollout(
         cv2.imshow("img", img)
         cv2.waitKey(1)
     while path_length < max_path_length:
-        raw_obs.append(o)
         o_for_agent = preprocess_obs_for_policy_fn(o)
         a, agent_info = agent.get_action(o_for_agent, **get_action_kwargs)
 
@@ -74,8 +66,6 @@ def vec_rollout(
         rewards.append(r)
         terminals.append(d)
         actions.append(a)
-        next_observations.append(next_o)
-        raw_next_obs.append(next_o)
         agent_infos.append(agent_info)
         env_infos.append(env_info)
         path_length += 1
@@ -86,10 +76,6 @@ def vec_rollout(
     if len(actions.shape) == 1:
         actions = np.expand_dims(actions, 1)
     observations = np.array(observations)
-    next_observations = np.array(next_observations)
-    if return_dict_obs:
-        observations = raw_obs
-        next_observations = raw_next_obs
     rewards = np.array(rewards)
     if len(rewards.shape) == 1:
         rewards = rewards.reshape(-1, 1)
@@ -107,7 +93,6 @@ def vec_rollout(
         observations=observations,
         actions=actions,
         rewards=rewards,
-        next_observations=next_observations,
         terminals=np.array(terminals),
         agent_infos=agent_infos,
         env_infos=env_infos,
