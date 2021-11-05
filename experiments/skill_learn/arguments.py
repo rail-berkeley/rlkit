@@ -13,6 +13,9 @@ def get_args():
     parser.add_argument("--batch_size", type=int, default=int(256))
     parser.add_argument("--lr", type=float, default=float(1e-3))
     parser.add_argument("--hidden_sizes", type=int, nargs="+", default=[64, 64])
+    parser.add_argument("--max_path_length", type=int, default=5)
+    parser.add_argument("--num_envs", type=int, default=5)
+    parser.add_argument("--control_mode", type=str, default="end_effector")
 
     # parse arguments
     args = parser.parse_args()

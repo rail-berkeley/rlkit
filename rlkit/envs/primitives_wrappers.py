@@ -37,7 +37,7 @@ class TimeLimit(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         assert self._step is not None, "Must reset environment."
         obs, reward, done, info = self.env.step(
@@ -72,7 +72,7 @@ class ActionRepeat(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         done = False
         total_reward = 0
@@ -110,7 +110,7 @@ class NormalizeActions(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         original = (action + 1) / 2 * (self._high - self._low) + self._low
         original = np.where(self._mask, original, action)
@@ -145,7 +145,7 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         obs, reward, done, info = self.env.step(
             action,
@@ -216,7 +216,7 @@ class MetaworldWrapper(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         self.set_render_every_step(render_every_step, render_mode, render_im_shape)
         o, r, d, i = self.env.step(
@@ -275,7 +275,7 @@ class ImageEnvMetaworld(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         o, r, d, i = self.env.step(
             action,
@@ -313,7 +313,7 @@ class DictObsWrapper(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         o, r, d, i = self.env.step(
             action,
@@ -343,7 +343,7 @@ class IgnoreLastAction(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         return self.env.step(
             action[:-1],
@@ -365,7 +365,7 @@ class GetObservationWrapper(gym.Wrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         return self.env.step(
             action,
@@ -391,10 +391,12 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         learned_primitives=None,
         collect_primitives_info=False,
         include_phase_variable=False,
+        render_intermediate_obs_to_info=False,
     ):
         self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
         self.action_scale = action_scale
+        self.render_intermediate_obs_to_info = render_intermediate_obs_to_info
 
         # primitives
         self.primitive_idx_to_name = {
@@ -516,7 +518,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         self.render_every_step = render_every_step
         self.render_mode = render_mode
@@ -558,6 +560,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.primitives_info = {}
             self.primitives_info["actions"] = []
             self.primitives_info["robot-states"] = []
+            self.primitives_info["observations"] = []
             self.primitive_step_counter = 0
             self._num_low_level_steps_total = 0
             stats = self.act(a)
@@ -664,6 +667,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         pos_ctrl *= 0.05
         assert gripper_ctrl.shape == (2,)
         action = np.concatenate([pos_ctrl, rot_ctrl])
+        self.primitives_info["actions"].append(
+            np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
+        )
 
         # Apply action to simulation.
         self.mocap_set_action(self.sim, action)
@@ -766,7 +772,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         total_reward, total_success = 0, 0
         for _ in range(300):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
-            self.primitives_info["actions"].append(a)
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -776,6 +781,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
+            if self.render_intermediate_obs_to_info:
+                obs = self.render(
+                    "rgb_array",
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
+                )
+                self.primitives_info["observations"].append(obs.astype(np.uint8))
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
@@ -790,7 +802,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         total_reward, total_success = 0, 0
         for _ in range(200):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
-            self.primitives_info["actions"].append(a)
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -800,6 +811,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
+            if self.render_intermediate_obs_to_info:
+                obs = self.render(
+                    "rgb_array",
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
+                )
+                self.primitives_info["observations"].append(obs.astype(np.uint8))
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
@@ -818,7 +836,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             if grasp:
                 gripper = [1, -1]
             a = np.array([delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper])
-            self.primitives_info["actions"].append(a)
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -828,6 +845,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
+            if self.render_intermediate_obs_to_info:
+                obs = self.render(
+                    "rgb_array",
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
+                )
+                self.primitives_info["observations"].append(obs.astype(np.uint8))
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
@@ -973,7 +997,7 @@ class RobosuiteWrapper(GymWrapper):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         self.env.set_render_every_step(render_every_step, render_mode, render_im_shape)
         o, r, d, i = super().step(action)
@@ -1002,7 +1026,7 @@ class NormalizeBoxEnvFixed(NormalizedBoxEnv):
         action,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         lb = self._wrapped_env.action_space.low
         ub = self._wrapped_env.action_space.high
@@ -1025,7 +1049,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         self,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         self.render_every_step = render_every_step
         self.render_mode = render_mode

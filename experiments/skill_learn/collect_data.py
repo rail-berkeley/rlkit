@@ -8,7 +8,7 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
-def collect_data(env, num_primitives, num_actions, num_envs):
+def collect_primitive_cloning_data(env, num_primitives, num_actions, num_envs):
     """
     Collect data from the environment.
 
@@ -47,11 +47,91 @@ def collect_data(env, num_primitives, num_actions, num_envs):
     return data
 
 
+def collect_world_model_data_low_level_primitives(
+    env, num_actions, num_envs, max_path_length
+):
+    """
+    Collect world model data from the environment.
+
+    Args:
+        env (Environment): the environment to collect data from
+        num_actions (int): the number of actions to collect
+        max_path_length (int): the length of each path
+    Returns:
+        dict: the data collected from the environment
+            actions: list of H lists of H_t actions
+            observations: list of H lists of H_t+1 observations
+
+    """
+    data = {}
+    data["actions"] = [[] for i in range(num_actions // max_path_length)]
+    data["observations"] = [[] for i in range(num_actions // max_path_length)]
+    env.reset()
+    reset_ctr = 0
+    ctr = 0
+    for k in tqdm(range(num_actions // num_envs)):
+        actions = [env.action_space.sample() for i in range(num_envs)]
+        o, r, d, i = env.step(actions)
+        low_level_actions = i["actions"]
+        obs = i["observations"]
+        for e in range(num_envs):
+            obs[e].append(o[e : e + 1].reshape(3, 64, 64).transpose(1, 2, 0))
+        for env_num, l in enumerate(data["actions"][reset_ctr : reset_ctr + num_envs]):
+            l.append(low_level_actions[env_num])
+        for env_num, l in enumerate(
+            data["observations"][reset_ctr : reset_ctr + num_envs]
+        ):
+            l.append(obs[env_num])
+        ctr += 1
+        if ctr % max_path_length == 0:
+            env.reset()
+            reset_ctr += num_envs
+    return data
+
+
+def collect_world_model_data(env, num_trajs, num_envs, max_path_length):
+    """
+    Collect world model data from the environment.
+
+    Args:
+        env (Environment): the environment to collect data from
+        num_trajs (int): the number of trajectories to collect
+        max_path_length (int): the length of each path
+    Returns:
+        dict: the data collected from the environment
+            actions: (num_trajs, max_path_length+1, )
+            observations: list of H lists of H_t+1 observations
+
+    """
+    data = {}
+    data["actions"] = np.zeros(
+        (num_trajs, max_path_length + 1, env.action_space.low.shape[0]),
+        dtype=np.float32,
+    )
+    data["observations"] = np.zeros(
+        (num_trajs, max_path_length + 1, env.observation_space.low.shape[0]),
+        dtype=np.uint8,
+    )
+    for k in tqdm(range(num_trajs // num_envs)):
+        o = env.reset()
+        data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
+            (num_envs, env.action_space.low.shape[0])
+        )
+        data["observations"][k : k + num_envs, 0] = o
+        for p in range(1, max_path_length + 1):
+            actions = [env.action_space.sample() for i in range(num_envs)]
+            o, r, d, i = env.step(actions)
+            data["actions"][k : k + num_envs, p] = np.array(actions)
+            data["observations"][k : k + num_envs, p] = o
+    return data
+
+
 if __name__ == "__main__":
+    args = get_args()
     env_kwargs = dict(
-        control_mode="primitives",
+        control_mode=args.control_mode,
         action_scale=1,
-        max_path_length=5,
+        max_path_length=args.max_path_length,
         reward_type="sparse",
         camera_settings={
             "distance": 0.38227044687537043,
@@ -62,22 +142,31 @@ if __name__ == "__main__":
         usage_kwargs=dict(
             use_dm_backend=True,
             use_raw_action_wrappers=False,
-            use_image_obs=False,
-            max_path_length=5,
+            use_image_obs=True,
+            max_path_length=args.max_path_length,
             unflatten_images=False,
         ),
         image_kwargs=dict(imwidth=64, imheight=64),
-        collect_primitives_info=True,
-        include_phase_variable=True,
+        collect_primitives_info=False,
+        include_phase_variable=False,
+        render_intermediate_obs_to_info=False,
     )
     env_suite = "metaworld"
     env_name = "reach-v2"
-    num_expl_envs = 25
     env_fns = [
-        lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(num_expl_envs)
+        lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
     ]
     env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-    num_primitives = 10
-    args = get_args()
-    data = collect_data(env, num_primitives, args.num_actions, num_expl_envs)
-    np.save("data/primitive_data/" + args.datafile + ".npy", data)
+    # data = collect_world_model_data(env, args.num_actions*args.num_envs, args.num_envs, args.max_path_length)
+    # os.makedirs('data/world_model_data', exist_ok=True)
+    # np.save("data/world_model_data/" + args.datafile + ".npy", data)
+
+    data = collect_world_model_data(
+        env, args.num_actions * args.num_envs, args.num_envs, args.max_path_length
+    )
+    os.makedirs("data/world_model_data", exist_ok=True)
+    import h5py
+
+    f = h5py.File("data/world_model_data/" + args.datafile + ".hdf5", "w")
+    f.create_dataset("observations", data=data["observations"])
+    f.create_dataset("actions", data=data["actions"])
