@@ -223,11 +223,9 @@ class WorldModel(jit.ScriptModule):
 
     def forward(self, obs, action):
         """
-        :param: obs (Bx(H+1)xO) : Batch of full trajectories of observations (dim O)
-        :param: action (Bx(H+1)xA) : Batch of full trajectories of actions (dim A)
-        +1 for the initial observation (reset observation) and corresponding dummy action (all zeros)
+        :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
+        :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
         """
-        assert action[:, 0].sum() == 0, "First action should be dummy action"
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]

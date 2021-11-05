@@ -9,6 +9,7 @@ import torch.optim as optim
 from arguments import get_args
 from torch.distributions import kl_divergence as kld
 from torch.utils.data import DataLoader, Dataset
+from torch.utils.data.sampler import Sampler
 from tqdm import tqdm
 
 import rlkit.torch.pytorch_util as ptu
@@ -17,6 +18,68 @@ from rlkit.torch.model_based.dreamer.world_models import WorldModel
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt
+
+
+class BatchLenRandomSampler(Sampler):
+    r"""Samples elements randomly. If without replacement, then sample from a shuffled dataset.
+    If with replacement, then user can specify :attr:`num_samples` to draw.
+
+    Arguments:
+        data_source (Dataset): dataset to sample from
+        replacement (bool): samples are drawn on-demand with replacement if ``True``, default=``False``
+        num_samples (int): number of samples to draw, default=`len(dataset)`. This argument
+            is supposed to be specified only when `replacement` is ``True``.
+        generator (Generator): Generator used in sampling.
+    """
+
+    def __init__(self, data_source, num_samples=None, generator=None):
+        self.data_source = data_source
+        self._num_samples = num_samples
+        self.generator = generator
+        self.max_path_length = data_source.max_path_length
+        self.batch_len = data_source.batch_len
+
+        if not isinstance(self.num_samples, int) or self.num_samples <= 0:
+            raise ValueError(
+                "num_samples should be a positive integer "
+                "value, but got num_samples={}".format(self.num_samples)
+            )
+
+    @property
+    def num_samples(self) -> int:
+        # dataset size might change at runtime
+        if self._num_samples is None:
+            return len(self.data_source)
+        return self._num_samples
+
+    def __iter__(self):
+        n = len(self.data_source)
+        if self.generator is None:
+            generator = torch.Generator()
+            generator.manual_seed(
+                int(torch.empty((), dtype=torch.int64).random_().item())
+            )
+        else:
+            generator = self.generator
+        possible_batch_indices = [
+            np.linspace(
+                batch_start,
+                batch_start + self.batch_len,
+                self.batch_len,
+                endpoint=False,
+            ).astype(int)
+            for batch_start in range(0, self.max_path_length - self.batch_len)
+        ]
+        possible_batch_indices = np.random.permutation(possible_batch_indices)
+        random_batches = torch.randperm(n, generator=generator).tolist()
+        total_list = []
+        for batch_idx in possible_batch_indices:
+            for random_batch in random_batches:
+                total_list.append([random_batch, batch_idx])
+        yield from total_list
+
+    def __len__(self):
+        return self.num_samples
 
 
 @torch.no_grad()
@@ -169,13 +232,15 @@ def preprocess_data(observations, actions, max_path_length):
 
 
 class NumpyDataset(Dataset):
-    def __init__(self, observations, actions):
+    def __init__(self, observations, actions, batch_len, max_path_length):
         """
         :param observations: (np.ndarray)
         :param actions: (np.ndarray)
         :param max_path_length: (int)
         """
         self.observations, self.actions = observations, actions
+        self.batch_len = batch_len
+        self.max_path_length = max_path_length + 1
 
     def __len__(self):
         """
@@ -192,7 +257,7 @@ class NumpyDataset(Dataset):
         return obs, actions
 
 
-def get_dataloader(filename, train_test_split=0.8, max_path_length=1):
+def get_dataloader(filename, args):
     """
     :param filename: (str)
     :param train_test_split: (float)
@@ -200,33 +265,37 @@ def get_dataloader(filename, train_test_split=0.8, max_path_length=1):
     :return: (tuple)
     """
     args = get_args()
-    # data = np.load(filename, allow_pickle=True).item()
     with h5py.File(filename, "r") as f:
         observations = np.array(f["observations"][:])
         actions = np.array(f["actions"][:])
-    # observations, actions = preprocess_data(observations, actions, max_path_length=max_path_length)
     observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
 
-    num_train_datapoints = int(observations.shape[0] * train_test_split)
+    num_train_datapoints = int(observations.shape[0] * args.train_test_split)
     train_dataset = NumpyDataset(
-        observations[:num_train_datapoints], actions[:num_train_datapoints]
+        observations[:num_train_datapoints],
+        actions[:num_train_datapoints],
+        args.batch_len,
+        args.max_path_length,
     )
     test_dataset = NumpyDataset(
-        observations[num_train_datapoints:], actions[num_train_datapoints:]
+        observations[num_train_datapoints:],
+        actions[num_train_datapoints:],
+        args.batch_len,
+        args.max_path_length,
     )
 
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=args.batch_size,
-        shuffle=True,
         pin_memory=True,
+        sampler=BatchLenRandomSampler(train_dataset),
     )
 
     test_dataloader = DataLoader(
         test_dataset,
         batch_size=args.batch_size,
-        shuffle=True,
         pin_memory=True,
+        sampler=BatchLenRandomSampler(test_dataset),
     )
     return train_dataloader, test_dataloader
 
@@ -235,41 +304,9 @@ if __name__ == "__main__":
     args = get_args()
     ptu.device = torch.device("cuda")
     scaler = torch.cuda.amp.GradScaler()
-    world_model = WorldModel(
-        model_hidden_size=400,
-        stochastic_state_size=50,
-        deterministic_state_size=200,
-        embedding_size=1024,
-        rssm_hidden_size=200,
-        reward_num_layers=2,
-        pred_discount_num_layers=3,
-        gru_layer_norm=True,
-        std_act="sigmoid2",
-        action_dim=4,
-        image_shape=(3, 64, 64),
-    ).to(ptu.device)
-    gradient_clip = 100
-    image_shape = (3, 64, 64)
-
-    num_epochs = args.num_epochs
-    optimizer = optim.Adam(
-        world_model.parameters(),
-        lr=3e-4,
-        eps=1e-5,
-        weight_decay=0.0,
-    )
-    train_losses = []
-    test_losses = []
-    os.makedirs("data/" + args.logdir + "/plots/", exist_ok=True)
-
-    train_dataloader, test_dataloader = get_dataloader(
-        "data/world_model_data/" + args.datafile + ".hdf5",
-        train_test_split=0.8,
-        max_path_length=args.max_path_length,
-    )
 
     env_kwargs = dict(
-        control_mode="end_effector",
+        control_mode=args.control_mode,
         action_scale=1,
         max_path_length=args.max_path_length,
         reward_type="sparse",
@@ -287,21 +324,64 @@ if __name__ == "__main__":
             unflatten_images=False,
         ),
         image_kwargs=dict(imwidth=64, imheight=64),
-        collect_primitives_info=True,
-        include_phase_variable=True,
-        render_intermediate_obs_to_info=True,
     )
+
     env_suite = "metaworld"
     env_name = "reach-v2"
     env = make_env(env_suite, env_name, env_kwargs)
 
+    world_model_loss_kwargs = dict(
+        forward_kl=False,
+        free_nats=1.0,
+        transition_loss_scale=0.8,
+        kl_loss_scale=0.0,
+        image_loss_scale=1.0,
+    )
+    world_model_kwargs = dict(
+        model_hidden_size=400,
+        stochastic_state_size=50,
+        deterministic_state_size=200,
+        embedding_size=1024,
+        rssm_hidden_size=200,
+        reward_num_layers=2,
+        pred_discount_num_layers=3,
+        gru_layer_norm=True,
+        std_act="sigmoid2",
+        action_dim=4,
+        image_shape=env.image_shape,
+    )
+
+    optimizer_kwargs = dict(
+        lr=3e-4,
+        eps=1e-5,
+        weight_decay=0.0,
+    )
+    gradient_clip = 100
+
+    world_model = WorldModel(
+        **world_model_kwargs,
+    ).to(ptu.device)
+
+    image_shape = env.image_shape
+
+    num_epochs = args.num_epochs
+    optimizer = optim.Adam(
+        world_model.parameters(),
+        **optimizer_kwargs,
+    )
+    train_losses = []
+    test_losses = []
+    os.makedirs("data/" + args.logdir + "/plots/", exist_ok=True)
+
+    train_dataloader, test_dataloader = get_dataloader(
+        "data/world_model_data/" + args.datafile + ".hdf5",
+        args,
+    )
+
     for i in tqdm(range(num_epochs)):
-        imagination_post_epoch_func(
-            env, world_model, args, args.max_path_length, epoch=i
-        )
+        print("Epoch: ", i)
         total_loss = 0
         total_train_steps = 0
-        print("Epoch: ", i)
         for data in train_dataloader:
             with torch.cuda.amp.autocast():
                 obs, actions = data
@@ -335,11 +415,7 @@ if __name__ == "__main__":
                     prior_dist,
                     post_dist,
                     obs,
-                    forward_kl=False,
-                    free_nats=1.0,
-                    transition_loss_scale=0.8,
-                    kl_loss_scale=0.0,
-                    image_loss_scale=1.0,
+                    **world_model_loss_kwargs,
                 )
                 total_loss += world_model_loss.item()
                 total_train_steps += 1
@@ -388,19 +464,13 @@ if __name__ == "__main__":
                         prior_dist,
                         post_dist,
                         obs,
-                        forward_kl=False,
-                        free_nats=1.0,
-                        transition_loss_scale=0.8,
-                        kl_loss_scale=0.0,
-                        image_loss_scale=1.0,
+                        **world_model_loss_kwargs,
                     )
                     total_loss += world_model_loss.item()
                     total_test_steps += 1
-                    if total_loss <= best_test_loss:
-                        best_test_loss = total_loss
-
             test_loss = total_loss / total_test_steps
             if test_loss <= best_test_loss:
+                best_test_loss = test_loss
                 os.makedirs("data/" + args.logdir + "/models/", exist_ok=True)
                 torch.save(
                     world_model.state_dict(),
@@ -409,12 +479,16 @@ if __name__ == "__main__":
             print("Test Loss: ", test_loss)
             print()
             test_losses.append(test_loss)
-        plt.plot(train_losses, label="Train Loss")
-        plt.plot(test_losses, label="Test Loss")
-        plt.title("Losses for World Model")
-        plt.legend()
-        plt.savefig("data/" + args.logdir + "/plots/losses.png")
-        plt.clf()
+        if i % 10 == 0:
+            plt.plot(train_losses, label="Train Loss")
+            plt.plot(test_losses, label="Test Loss")
+            plt.title("Losses for World Model")
+            plt.legend()
+            plt.savefig("data/" + args.logdir + "/plots/losses.png")
+            plt.clf()
+            imagination_post_epoch_func(
+                env, world_model, args, args.max_path_length, epoch=i
+            )
     world_model.load_state_dict(
         torch.load("data/" + args.logdir + "/models/world_model.pt")
     )
