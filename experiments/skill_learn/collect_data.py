@@ -117,7 +117,7 @@ def collect_world_model_data(env, num_trajs, num_envs, max_path_length):
         data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
             (num_envs, env.action_space.low.shape[0])
         )
-        data["observations"][k : k + num_envs, 0] = o
+        data["observations"][k * num_envs : k * num_envs + num_envs, 0] = o
         for p in range(1, max_path_length + 1):
             actions = [env.action_space.sample() for i in range(num_envs)]
             o, r, d, i = env.step(actions)
