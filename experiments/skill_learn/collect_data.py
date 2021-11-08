@@ -8,14 +8,14 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
-def collect_primitive_cloning_data(env, num_primitives, num_actions, num_envs):
+def collect_primitive_cloning_data(env, num_primitives, num_trajs, num_envs):
     """
     Collect data from the environment.
 
     Args:
         env (Environment): the environment to collect data from
         num_primitives (int): the number of primitive actions to collect data for
-        num_actions (int): the number of actions to collect
+        num_trajs (int): the number of actions to collect
     Returns:
         dict: the data collected from the environment
     """
@@ -24,7 +24,7 @@ def collect_primitive_cloning_data(env, num_primitives, num_actions, num_envs):
     data["inputs"] = [[] for i in range(num_primitives)]
     env.reset()
 
-    for k in tqdm(range(num_actions // num_envs)):
+    for k in tqdm(range(num_trajs // num_envs)):
         actions = [env.action_space.sample() for i in range(num_envs)]
         primitives = [np.argmax(a[:num_primitives]) for a in actions]
         o, r, d, i = env.step(actions)
@@ -48,14 +48,14 @@ def collect_primitive_cloning_data(env, num_primitives, num_actions, num_envs):
 
 
 def collect_world_model_data_low_level_primitives(
-    env, num_actions, num_envs, max_path_length
+    env, num_trajs, num_envs, max_path_length
 ):
     """
     Collect world model data from the environment.
 
     Args:
         env (Environment): the environment to collect data from
-        num_actions (int): the number of actions to collect
+        num_trajs (int): the number of actions to collect
         max_path_length (int): the length of each path
     Returns:
         dict: the data collected from the environment
@@ -64,12 +64,12 @@ def collect_world_model_data_low_level_primitives(
 
     """
     data = {}
-    data["actions"] = [[] for i in range(num_actions // max_path_length)]
-    data["observations"] = [[] for i in range(num_actions // max_path_length)]
+    data["actions"] = [[] for i in range(num_trajs // max_path_length)]
+    data["observations"] = [[] for i in range(num_trajs // max_path_length)]
     env.reset()
     reset_ctr = 0
     ctr = 0
-    for k in tqdm(range(num_actions // num_envs)):
+    for k in tqdm(range(num_trajs // num_envs)):
         actions = [env.action_space.sample() for i in range(num_envs)]
         o, r, d, i = env.step(actions)
         low_level_actions = i["actions"]
@@ -121,8 +121,10 @@ def collect_world_model_data(env, num_trajs, num_envs, max_path_length):
         for p in range(1, max_path_length + 1):
             actions = [env.action_space.sample() for i in range(num_envs)]
             o, r, d, i = env.step(actions)
-            data["actions"][k : k + num_envs, p] = np.array(actions)
-            data["observations"][k : k + num_envs, p] = o
+            data["actions"][k * num_envs : k * num_envs + num_envs, p] = np.array(
+                actions
+            )
+            data["observations"][k * num_envs : k * num_envs + num_envs, p] = o
     return data
 
 
@@ -157,12 +159,8 @@ if __name__ == "__main__":
         lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
     ]
     env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-    # data = collect_world_model_data(env, args.num_actions*args.num_envs, args.num_envs, args.max_path_length)
-    # os.makedirs('data/world_model_data', exist_ok=True)
-    # np.save("data/world_model_data/" + args.datafile + ".npy", data)
-
     data = collect_world_model_data(
-        env, args.num_actions * args.num_envs, args.num_envs, args.max_path_length
+        env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
     )
     os.makedirs("data/world_model_data", exist_ok=True)
     import h5py

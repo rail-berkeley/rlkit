@@ -8,7 +8,7 @@ def get_args():
     parser.add_argument("--logdir", type=str, default="clone_primitives")
     parser.add_argument("--datafile", type=str, default="data")
     parser.add_argument("--input_subselect", type=str, default="all")
-    parser.add_argument("--num_actions", type=int, default=int(500))
+    parser.add_argument("--num_trajs", type=int, default=int(500))
     parser.add_argument("--num_epochs", type=int, default=int(1e1))
     parser.add_argument("--batch_size", type=int, default=int(50))
     parser.add_argument("--batch_len", type=int, default=int(50))

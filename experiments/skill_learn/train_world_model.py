@@ -87,7 +87,7 @@ def imagination_post_epoch_func(env, world_model, args, max_path_length, epoch):
     print("Generating Imagination Reconstructions: ")
     with torch.cuda.amp.autocast():
         null_state = world_model.initial(4)
-        null_acts = ptu.zeros((4, 4))
+        null_acts = ptu.zeros((4, env.action_space.low.shape[0]))
         reset_obs = []
         for i in range(4):
             reset_obs.append(env.reset().reshape(1, -1))
@@ -146,6 +146,57 @@ def imagination_post_epoch_func(env, world_model, args, max_path_length, epoch):
                 i, j
             ]
     cv2.imwrite(file_path, im)
+
+
+def visualize_dataset_trajectory(
+    env, dataset, world_model, args, max_path_length, epoch, tag
+):
+    print("Generating {} Reconstructions: ", tag)
+    with torch.cuda.amp.autocast():
+        obs = dataset.observations[:4].to(ptu.device)
+        actions = dataset.actions[:4].to(ptu.device)
+        null_state = world_model.initial(4)
+        acts = actions[:, 0]
+        init_obs = obs[:, 0]
+        embed = world_model.encode(init_obs)
+        new_state, _ = world_model.obs_step(null_state, acts, embed)
+        new_img = world_model.decode(world_model.get_features(new_state))
+        reconstructions = ptu.zeros(
+            (4, max_path_length + 1, *world_model.image_shape),
+        )
+        reconstructions[:, 0:1] = new_img.unsqueeze(1)
+        for k in range(1, max_path_length + 1):
+            action = actions[:, k]
+            new_state = world_model.action_step(new_state, action)
+            new_img = world_model.decode(world_model.get_features(new_state))
+            reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
+    reconstructions = (
+        torch.clamp(
+            reconstructions.permute(0, 1, 3, 4, 2) + 0.5,
+            0,
+            1,
+        )
+        * 255.0
+    )
+    reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
+    obs_np = ptu.get_numpy(
+        obs.reshape(4, max_path_length + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
+    ).astype(np.uint8)
+    file_path = (
+        "data/" + args.logdir + "/plots/{}_reconstructions_{}.png".format(tag, epoch)
+    )
+    im = np.zeros((128 * 4, max_path_length * 64, 3), dtype=np.uint8)
+    for i in range(4):
+        for j in range(max_path_length):
+            im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+            im[128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)] = reconstructions[
+                i, j
+            ]
+    cv2.imwrite(file_path, im)
+    if tag == "test":
+        import ipdb
+
+        ipdb.set_trace()
 
 
 def compute_world_model_loss(
@@ -269,7 +320,9 @@ def get_dataloader(filename, args):
         observations = np.array(f["observations"][:])
         actions = np.array(f["actions"][:])
     observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
+    import ipdb
 
+    ipdb.set_trace()
     num_train_datapoints = int(observations.shape[0] * args.train_test_split)
     train_dataset = NumpyDataset(
         observations[:num_train_datapoints],
@@ -297,7 +350,7 @@ def get_dataloader(filename, args):
         pin_memory=True,
         sampler=BatchLenRandomSampler(test_dataset),
     )
-    return train_dataloader, test_dataloader
+    return train_dataloader, test_dataloader, train_dataset, test_dataset
 
 
 if __name__ == "__main__":
@@ -347,7 +400,7 @@ if __name__ == "__main__":
         pred_discount_num_layers=3,
         gru_layer_norm=True,
         std_act="sigmoid2",
-        action_dim=4,
+        action_dim=env.action_space.low.shape[0],
         image_shape=env.image_shape,
     )
 
@@ -373,7 +426,7 @@ if __name__ == "__main__":
     test_losses = []
     os.makedirs("data/" + args.logdir + "/plots/", exist_ok=True)
 
-    train_dataloader, test_dataloader = get_dataloader(
+    train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
         "data/world_model_data/" + args.datafile + ".hdf5",
         args,
     )
@@ -479,7 +532,7 @@ if __name__ == "__main__":
             print("Test Loss: ", test_loss)
             print()
             test_losses.append(test_loss)
-        if i % 10 == 0:
+        if i % 1 == 0:
             plt.plot(train_losses, label="Train Loss")
             plt.plot(test_losses, label="Test Loss")
             plt.title("Losses for World Model")
@@ -488,6 +541,24 @@ if __name__ == "__main__":
             plt.clf()
             imagination_post_epoch_func(
                 env, world_model, args, args.max_path_length, epoch=i
+            )
+            visualize_dataset_trajectory(
+                env,
+                train_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="train",
+            )
+            visualize_dataset_trajectory(
+                env,
+                test_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="test",
             )
     world_model.load_state_dict(
         torch.load("data/" + args.logdir + "/models/world_model.pt")
