@@ -78,7 +78,17 @@ class BatchLenRandomSampler(Sampler):
 
 @torch.no_grad()
 def visualize_rollout(
-    env, dataset, world_model, logdir, max_path_length, epoch, use_env, forcing, tag
+    env,
+    dataset,
+    world_model,
+    logdir,
+    max_path_length,
+    epoch,
+    use_env,
+    forcing,
+    tag,
+    low_level_primitives,
+    num_low_level_actions_per_primitive,
 ):
     file_path = logdir + "/plots/"
     os.makedirs(file_path, exist_ok=True)
@@ -95,71 +105,198 @@ def visualize_rollout(
     file_path += file_suffix
 
     with torch.cuda.amp.autocast():
-        reconstructions = ptu.zeros(
-            (4, max_path_length + 1, *world_model.image_shape),
-        )
-        obs = np.zeros(
-            (4, max_path_length + 1, env.observation_space.shape[0]),
-            dtype=np.uint8,
-        )
+        if low_level_primitives:
+            reconstructions = ptu.zeros(
+                (
+                    4,
+                    max_path_length * num_low_level_actions_per_primitive + 1,
+                    *world_model.image_shape,
+                ),
+            )
+            obs = np.zeros(
+                (
+                    4,
+                    max_path_length * num_low_level_actions_per_primitive + 1,
+                    env.observation_space.shape[0],
+                ),
+                dtype=np.uint8,
+            )
+        else:
+            reconstructions = ptu.zeros(
+                (4, max_path_length + 1, *world_model.image_shape),
+            )
+            obs = np.zeros(
+                (4, max_path_length + 1, env.observation_space.shape[0]),
+                dtype=np.uint8,
+            )
         for i in range(4):
             state = world_model.initial(1)
-            for j in range(0, max_path_length + 1):
+            if low_level_primitives:
+                # handling reset obs manually:
                 if use_env:
-                    if j == 0:
-                        a = ptu.zeros((1, env.action_space.low.shape[0]))
-                    else:
-                        a = ptu.from_numpy(np.array([env.action_space.sample()]))
+                    a = ptu.zeros((1, 9))
+                    o = env.reset()
                 else:
-                    a = dataset.actions[i, j : j + 1].to(ptu.device)
-                if use_env:
-                    if j == 0:
-                        o = env.reset()
-                    else:
-                        o, r, d, _ = env.step(
-                            a[0].detach().cpu().numpy(),
-                        )
-                    obs[i, j] = o
-                else:
-                    o = ptu.get_numpy(dataset.observations[i, j])
-                    obs[i, j] = o
+                    a = dataset.actions[i, 0:1].to(ptu.device)
+                    o = ptu.get_numpy(dataset.observations[i, 0])
+                obs[i, 0] = o
+
                 if forcing == "teacher":
                     o = ptu.from_numpy(o.reshape(1, -1))
                     embed = world_model.encode(o)
                     state, prior = world_model.obs_step(state, a, embed)
                 elif forcing == "self" and world_model.use_prior_instead_of_posterior:
-                    if j == 0:
-                        state = world_model.action_step(state, a)
-                        prior = None
-                    else:
-                        o = new_img.reshape(-1, obs.shape[-1])
-                        o = torch.clamp(o + 0.5, 0, 1) * 255.0
-                        embed = world_model.encode(o)
-                        state, prior = world_model.obs_step(state, a, embed)
+                    state = world_model.action_step(state, a)
+                    prior = None
                 else:
                     state = world_model.action_step(state, a)
                     prior = None
                 if prior is not None and world_model.use_prior_instead_of_posterior:
                     state = prior
                 new_img = world_model.decode(world_model.get_features(state))
-                reconstructions[i, j] = new_img.unsqueeze(1)
+                reconstructions[i, 0] = new_img.unsqueeze(1)
+                for j in range(0, max_path_length):
+                    if use_env:
+                        a = np.array([env.action_space.sample()])
+                        o, r, d, info = env.step(
+                            a[0],
+                        )
+                        ll_a = np.array(info["actions"])
+                        ll_o = np.array(info["observations"])
+                        ll_o = ll_o.transpose(0, 3, 1, 2).reshape(ll_o.shape[0], -1)
+
+                        num_ll = ll_a.shape[0]
+                        idxs = np.linspace(
+                            0, num_ll, num_low_level_actions_per_primitive + 1
+                        )
+                        spacing = num_ll // (num_low_level_actions_per_primitive)
+                        a = ll_a.reshape(
+                            num_low_level_actions_per_primitive, spacing, -1
+                        )
+                        a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
+                        ll_a = np.concatenate(
+                            (a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1
+                        )
+                        ll_a = ptu.from_numpy(ll_a)
+                        ll_o = ll_o[idxs.astype(np.int)[1:] - 1]
+                    else:
+                        ll_a = dataset.actions[
+                            i,
+                            1
+                            + j * num_low_level_actions_per_primitive : 1
+                            + (j + 1) * num_low_level_actions_per_primitive,
+                        ].to(ptu.device)
+                        ll_o = ptu.get_numpy(
+                            dataset.observations[
+                                i,
+                                1
+                                + j * num_low_level_actions_per_primitive : 1
+                                + (j + 1) * num_low_level_actions_per_primitive,
+                            ]
+                        )
+                    for k in range(0, num_low_level_actions_per_primitive):
+                        a = ll_a[k : k + 1]
+                        o = ll_o[k]
+                        obs[i, j * num_low_level_actions_per_primitive + k] = o
+                        if forcing == "teacher":
+                            o = ptu.from_numpy(o.reshape(1, -1))
+                            embed = world_model.encode(o)
+                            state, prior = world_model.obs_step(state, a, embed)
+                        elif (
+                            forcing == "self"
+                            and world_model.use_prior_instead_of_posterior
+                        ):
+                            o = new_img.reshape(-1, obs.shape[-1])
+                            o = torch.clamp(o + 0.5, 0, 1) * 255.0
+                            embed = world_model.encode(o)
+                            state, prior = world_model.obs_step(state, a, embed)
+                        else:
+                            state = world_model.action_step(state, a)
+                            prior = None
+                        if (
+                            prior is not None
+                            and world_model.use_prior_instead_of_posterior
+                        ):
+                            state = prior
+                        new_img = world_model.decode(world_model.get_features(state))
+                        reconstructions[
+                            i, 1 + j * num_low_level_actions_per_primitive + k
+                        ] = new_img.unsqueeze(1)
+            else:
+                for j in range(0, max_path_length + 1):
+                    if use_env:
+                        if j == 0:
+                            a = ptu.zeros((1, env.action_space.low.shape[0]))
+                            o = env.reset()
+                        else:
+                            a = ptu.from_numpy(np.array([env.action_space.sample()]))
+                            o, r, d, info = env.step(
+                                a[0].detach().cpu().numpy(),
+                            )
+                    else:
+                        a = dataset.actions[i, j : j + 1].to(ptu.device)
+                        o = ptu.get_numpy(dataset.observations[i, j])
+                    obs[i, j] = o
+                    if forcing == "teacher":
+                        o = ptu.from_numpy(o.reshape(1, -1))
+                        embed = world_model.encode(o)
+                        state, prior = world_model.obs_step(state, a, embed)
+                    elif (
+                        forcing == "self" and world_model.use_prior_instead_of_posterior
+                    ):
+                        if j == 0:
+                            state = world_model.action_step(state, a)
+                            prior = None
+                        else:
+                            o = new_img.reshape(-1, obs.shape[-1])
+                            o = torch.clamp(o + 0.5, 0, 1) * 255.0
+                            embed = world_model.encode(o)
+                            state, prior = world_model.obs_step(state, a, embed)
+                    else:
+                        state = world_model.action_step(state, a)
+                        prior = None
+                    if prior is not None and world_model.use_prior_instead_of_posterior:
+                        state = prior
+                    new_img = world_model.decode(world_model.get_features(state))
+                    reconstructions[i, j] = new_img.unsqueeze(1)
 
     reconstructions = (
         torch.clamp(reconstructions.permute(0, 1, 3, 4, 2) + 0.5, 0, 1) * 255.0
     )
     reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
     obs = ptu.from_numpy(obs)
-    obs_np = ptu.get_numpy(
-        obs.reshape(4, max_path_length + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
-    ).astype(np.uint8)
+    if low_level_primitives:
+        obs_np = ptu.get_numpy(
+            obs.reshape(
+                4, max_path_length * num_low_level_actions_per_primitive + 1, 3, 64, 64
+            ).permute(0, 1, 3, 4, 2)
+        ).astype(np.uint8)
+        im = np.zeros(
+            (
+                128 * 4,
+                (max_path_length * num_low_level_actions_per_primitive + 1) * 64,
+                3,
+            ),
+            dtype=np.uint8,
+        )
+        for i in range(4):
+            for j in range(max_path_length * num_low_level_actions_per_primitive + 1):
+                im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+                im[
+                    128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
+                ] = reconstructions[i, j]
+    else:
+        obs_np = ptu.get_numpy(
+            obs.reshape(4, max_path_length + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
+        ).astype(np.uint8)
+        im = np.zeros((128 * 4, (max_path_length + 1) * 64, 3), dtype=np.uint8)
 
-    im = np.zeros((128 * 4, (max_path_length + 1) * 64, 3), dtype=np.uint8)
-    for i in range(4):
-        for j in range(max_path_length + 1):
-            im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
-            im[128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)] = reconstructions[
-                i, j
-            ]
+        for i in range(4):
+            for j in range(max_path_length + 1):
+                im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+                im[
+                    128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)
+                ] = reconstructions[i, j]
     cv2.imwrite(file_path, im)
 
 

@@ -11,7 +11,15 @@ from rlkit.launchers.launcher_util import run_experiment
 
 
 def visualize_wm(
-    env, world_model, train_dataset, test_dataset, logdir, max_path_length, i
+    env,
+    world_model,
+    train_dataset,
+    test_dataset,
+    logdir,
+    max_path_length,
+    i,
+    low_level_primitives,
+    num_low_level_actions_per_primitive,
 ):
     from rlkit.torch.model_based.dreamer.train_world_model import visualize_rollout
 
@@ -25,6 +33,8 @@ def visualize_wm(
         use_env=True,
         forcing="none",
         tag="none",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -36,6 +46,8 @@ def visualize_wm(
         use_env=True,
         forcing="teacher",
         tag="none",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -47,6 +59,8 @@ def visualize_wm(
         use_env=True,
         forcing="self",
         tag="none",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
 
     visualize_rollout(
@@ -59,6 +73,8 @@ def visualize_wm(
         use_env=False,
         forcing="none",
         tag="train",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -70,6 +86,8 @@ def visualize_wm(
         use_env=False,
         forcing="teacher",
         tag="train",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -81,6 +99,8 @@ def visualize_wm(
         use_env=False,
         forcing="self",
         tag="train",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -92,6 +112,8 @@ def visualize_wm(
         use_env=False,
         forcing="none",
         tag="test",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -103,6 +125,8 @@ def visualize_wm(
         use_env=False,
         forcing="teacher",
         tag="test",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
     visualize_rollout(
         env,
@@ -114,6 +138,8 @@ def visualize_wm(
         use_env=False,
         forcing="self",
         tag="test",
+        low_level_primitives=low_level_primitives,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
     )
 
 
@@ -138,6 +164,9 @@ def experiment(variant):
         variant["env_kwargs"],
     )
     max_path_length = variant["env_kwargs"]["max_path_length"]
+    low_level_primitives = variant["low_level_primitives"]
+    num_low_level_actions_per_primitive = variant["num_low_level_actions_per_primitive"]
+    low_level_action_dim = variant["low_level_action_dim"]
     batch_len = variant["batch_len"]
     batch_size = variant["batch_size"]
     train_test_split = variant["train_test_split"]
@@ -145,7 +174,10 @@ def experiment(variant):
     world_model_kwargs = variant["model_kwargs"]
     optimizer_kwargs = variant["optimizer_kwargs"]
     gradient_clip = variant["gradient_clip"]
-    world_model_kwargs["action_dim"] = env.action_space.low.shape[0]
+    if low_level_primitives:
+        world_model_kwargs["action_dim"] = low_level_action_dim
+    else:
+        world_model_kwargs["action_dim"] = env.action_space.low.shape[0]
     image_shape = env.image_shape
     world_model_kwargs["image_shape"] = image_shape
     scaler = torch.cuda.amp.GradScaler()
@@ -161,14 +193,35 @@ def experiment(variant):
     )
     logdir = logger.get_snapshot_dir()
 
-    train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
-        variant["datafile"], train_test_split, batch_len, batch_size, max_path_length
-    )
+    if low_level_primitives:
+        train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
+            variant["datafile"],
+            train_test_split,
+            batch_len,
+            batch_size,
+            max_path_length * num_low_level_actions_per_primitive,
+        )
+    else:
+        train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
+            variant["datafile"],
+            train_test_split,
+            batch_len,
+            batch_size,
+            max_path_length,
+        )
 
     if variant["visualize_wm_from_path"]:
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         visualize_wm(
-            env, world_model, train_dataset, test_dataset, logdir, max_path_length, -1
+            env,
+            world_model,
+            train_dataset,
+            test_dataset,
+            logdir,
+            max_path_length,
+            -1,
+            low_level_primitives,
+            num_low_level_actions_per_primitive,
         )
     else:
         for i in tqdm(range(num_epochs)):
@@ -302,11 +355,21 @@ def experiment(variant):
                     logdir,
                     max_path_length,
                     i,
+                    low_level_primitives,
+                    num_low_level_actions_per_primitive,
                 )
 
         world_model.load_state_dict(torch.load(logdir + "/models/world_model.pt"))
         visualize_wm(
-            env, world_model, train_dataset, test_dataset, logdir, max_path_length, -1
+            env,
+            world_model,
+            train_dataset,
+            test_dataset,
+            logdir,
+            max_path_length,
+            -1,
+            low_level_primitives,
+            num_low_level_actions_per_primitive,
         )
 
 
@@ -325,6 +388,9 @@ if __name__ == "__main__":
         exp_prefix = args.exp_prefix
     variant = dict(
         plotting_period=25,
+        low_level_primitives=True,
+        num_low_level_actions_per_primitive=100,
+        low_level_action_dim=9,
         env_kwargs=dict(
             control_mode="end_effector",
             action_scale=1,
@@ -344,6 +410,9 @@ if __name__ == "__main__":
                 unflatten_images=False,
             ),
             image_kwargs=dict(imwidth=64, imheight=64),
+            collect_primitives_info=True,
+            include_phase_variable=True,
+            render_intermediate_obs_to_info=True,
         ),
         env_suite="metaworld",
         env_name="reach-v2",
@@ -380,19 +449,28 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        # 'batch_len':[50, 100, 250, 500],
-        # 'batch_size':[50, 100, 250, 500],
-        # 'datafile':["/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_500_T_25_E_50_ll.hdf5"],
+        "batch_len": [500],
+        "batch_size": [5],
         "datafile": [
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_50_T_250_E_50_ll.hdf5"
+            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_500_T_25_E_50_ll.hdf5"
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps.hdf5"
         ],
+        # "datafile": [
+        # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_50_T_250_E_50_ll.hdf5"
+        # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_2500_E_50_raps.hdf5"
+        # ],
+        # "env_kwargs.control_mode": ["end_effector"],
         # "env_kwargs.max_path_length": [500],
-        "env_kwargs.max_path_length": [50],
-        "env_kwargs.usage_kwargs.max_path_length": [50],
-        # 'env_kwargs.usage_kwargs.max_path_length':[500],
-        "env_kwargs.control_mode": ["end_effector"],
+        # "env_kwargs.usage_kwargs.max_path_length": [500],
+        # "env_kwargs.max_path_length": [50],
+        # "env_kwargs.usage_kwargs.max_path_length": [50],
+        # "batch_len": [5],
+        # "batch_size": [500],
+        "env_kwargs.max_path_length": [5],
+        "env_kwargs.usage_kwargs.max_path_length": [5],
+        "env_kwargs.control_mode": ["primitives"],
         "num_epochs": [1000],
-        "model_kwargs.use_prior_instead_of_posterior": [True, False],
+        "model_kwargs.use_prior_instead_of_posterior": [True],
         "plotting_period": [25],
         "visualize_wm_from_path": [False],
         # "world_model_path": [

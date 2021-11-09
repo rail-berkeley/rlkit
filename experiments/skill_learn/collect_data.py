@@ -48,7 +48,7 @@ def collect_primitive_cloning_data(env, num_primitives, num_trajs, num_envs):
 
 
 def collect_world_model_data_low_level_primitives(
-    env, num_trajs, num_envs, max_path_length
+    env, num_trajs, num_envs, max_path_length, num_low_level_actions_per_primitive
 ):
     """
     Collect world model data from the environment.
@@ -64,28 +64,71 @@ def collect_world_model_data_low_level_primitives(
 
     """
     data = {}
-    data["actions"] = [[] for i in range(num_trajs // max_path_length)]
-    data["observations"] = [[] for i in range(num_trajs // max_path_length)]
+    data["actions"] = np.zeros(
+        (
+            num_trajs,
+            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            9,
+        ),
+        dtype=np.float32,
+    )
+    data["observations"] = np.zeros(
+        (
+            num_trajs,
+            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            env.observation_space.low.shape[0],
+        ),
+        dtype=np.uint8,
+    )
     env.reset()
     reset_ctr = 0
     ctr = 0
     for k in tqdm(range(num_trajs // num_envs)):
-        actions = [env.action_space.sample() for i in range(num_envs)]
-        o, r, d, i = env.step(actions)
-        low_level_actions = i["actions"]
-        obs = i["observations"]
-        for e in range(num_envs):
-            obs[e].append(o[e : e + 1].reshape(3, 64, 64).transpose(1, 2, 0))
-        for env_num, l in enumerate(data["actions"][reset_ctr : reset_ctr + num_envs]):
-            l.append(low_level_actions[env_num])
-        for env_num, l in enumerate(
-            data["observations"][reset_ctr : reset_ctr + num_envs]
-        ):
-            l.append(obs[env_num])
-        ctr += 1
-        if ctr % max_path_length == 0:
-            env.reset()
-            reset_ctr += num_envs
+        o = env.reset()
+        data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
+            (num_envs, 9)
+        )
+        data["observations"][k * num_envs : k * num_envs + num_envs, 0] = o
+        for p in range(0, max_path_length):
+            actions = [env.action_space.sample() for i in range(num_envs)]
+            o, r, d, i = env.step(actions)
+            low_level_actions = i["actions"]
+            low_level_obs = i["observations"]
+            actions = []
+            obs = []
+            for e in range(num_envs):
+                # a0 + a1 + ...+a_space-1 -> o_space-1, o_space-1+space
+                ll_a = np.array(low_level_actions[e])
+                ll_o = np.array(low_level_obs[e])
+
+                num_ll = ll_a.shape[0]
+                idxs = np.linspace(0, num_ll, num_low_level_actions_per_primitive + 1)
+                spacing = num_ll // (num_low_level_actions_per_primitive)
+                a = ll_a.reshape(num_low_level_actions_per_primitive, spacing, -1)
+                a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
+                a = np.concatenate((a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1)
+                o = ll_o[idxs.astype(np.int)[1:] - 1]
+                actions.append(a)
+                obs.append(o)
+
+            data["actions"][
+                k * num_envs : k * num_envs + num_envs,
+                p * num_low_level_actions_per_primitive
+                + 1 : p * num_low_level_actions_per_primitive
+                + num_low_level_actions_per_primitive
+                + 1,
+            ] = np.array(actions)
+            data["observations"][
+                k * num_envs : k * num_envs + num_envs,
+                p * num_low_level_actions_per_primitive
+                + 1 : p * num_low_level_actions_per_primitive
+                + num_low_level_actions_per_primitive
+                + 1,
+            ] = (
+                np.array(obs)
+                .transpose(0, 1, 4, 2, 3)
+                .reshape(num_envs, num_low_level_actions_per_primitive, -1)
+            )
     return data
 
 
@@ -149,9 +192,9 @@ if __name__ == "__main__":
             unflatten_images=False,
         ),
         image_kwargs=dict(imwidth=64, imheight=64),
-        collect_primitives_info=False,
-        include_phase_variable=False,
-        render_intermediate_obs_to_info=False,
+        collect_primitives_info=True,
+        include_phase_variable=True,
+        render_intermediate_obs_to_info=True,
     )
     env_suite = "metaworld"
     env_name = "reach-v2"
@@ -159,8 +202,16 @@ if __name__ == "__main__":
         lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
     ]
     env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-    data = collect_world_model_data(
-        env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
+    # data = collect_world_model_data(
+    #     env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
+    # )
+
+    data = collect_world_model_data_low_level_primitives(
+        env,
+        args.num_trajs * args.num_envs,
+        args.num_envs,
+        args.max_path_length,
+        args.num_low_level_actions_per_primitive,
     )
     os.makedirs("data/world_model_data", exist_ok=True)
     import h5py
