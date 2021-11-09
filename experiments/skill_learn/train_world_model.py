@@ -346,6 +346,14 @@ def visualize_dataset_trajectory_self_forced(
         for k in range(1, max_path_length + 1):
             action = actions[:, k]
             ob = new_img.reshape(-1, obs.shape[-1])
+            ob = (
+                torch.clamp(
+                    ob + 0.5,
+                    0,
+                    1,
+                )
+                * 255.0
+            )
             embed = world_model.encode(ob)
             new_state, _ = world_model.obs_step(new_state, action, embed)
             new_img = world_model.decode(world_model.get_features(new_state))
