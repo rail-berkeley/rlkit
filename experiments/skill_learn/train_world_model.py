@@ -184,7 +184,7 @@ def visualize_env_rollout_teacher_forced(
                 obs[i, j] = o
                 o = ptu.from_numpy(o.reshape(1, -1))
                 embed = world_model.encode(reset_obs)
-                new_state = world_model.obs_step(new_state, a, embed)
+                new_state, _ = world_model.obs_step(new_state, a, embed)
                 new_img = world_model.decode(world_model.get_features(new_state))
                 reconstructions[i, j] = new_img.unsqueeze(1)
     reconstructions = (
@@ -198,9 +198,7 @@ def visualize_env_rollout_teacher_forced(
     reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
     obs = ptu.from_numpy(obs)
     obs_np = ptu.get_numpy(
-        obs[:, :, : 64 * 64 * 3]
-        .reshape(4, max_path_length, 3, 64, 64)
-        .permute(0, 1, 3, 4, 2)
+        obs.reshape(4, max_path_length + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
     ).astype(np.uint8)
     file_path = (
         "data/"
@@ -221,7 +219,7 @@ def visualize_env_rollout_teacher_forced(
 def visualize_dataset_trajectory(
     dataset, world_model, args, max_path_length, epoch, tag
 ):
-    print("Generating {} Reconstructions: ", tag)
+    print("Generating {} Reconstructions: ".format(tag))
     with torch.cuda.amp.autocast():
         obs = dataset.observations[:4].to(ptu.device)
         actions = dataset.actions[:4].to(ptu.device)
@@ -269,7 +267,7 @@ def visualize_dataset_trajectory(
 def visualize_dataset_trajectory_teacher_forced(
     dataset, world_model, args, max_path_length, epoch, tag
 ):
-    print("Generating Teacher Forced {} Reconstructions: ", tag)
+    print("Generating Teacher Forced {} Reconstructions: ".format(tag))
     with torch.cuda.amp.autocast():
         obs = dataset.observations[:4].to(ptu.device)
         actions = dataset.actions[:4].to(ptu.device)
@@ -287,7 +285,7 @@ def visualize_dataset_trajectory_teacher_forced(
             action = actions[:, k]
             ob = obs[:, k]
             embed = world_model.encode(ob)
-            new_state = world_model.obs_step(new_state, action, embed)
+            new_state, _ = world_model.obs_step(new_state, action, embed)
             new_img = world_model.decode(world_model.get_features(new_state))
             reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
     reconstructions = (
@@ -306,6 +304,58 @@ def visualize_dataset_trajectory_teacher_forced(
         "data/"
         + args.logdir
         + "/plots/teacher_forced_{}_reconstructions_{}.png".format(tag, epoch)
+    )
+    im = np.zeros((128 * 4, max_path_length * 64, 3), dtype=np.uint8)
+    for i in range(4):
+        for j in range(max_path_length):
+            im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
+            im[128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)] = reconstructions[
+                i, j
+            ]
+    cv2.imwrite(file_path, im)
+
+
+@torch.no_grad()
+def visualize_dataset_trajectory_self_forced(
+    dataset, world_model, args, max_path_length, epoch, tag
+):
+    print("Generating Self Forced {} Reconstructions: ".format(tag))
+    with torch.cuda.amp.autocast():
+        obs = dataset.observations[:4].to(ptu.device)
+        actions = dataset.actions[:4].to(ptu.device)
+        null_state = world_model.initial(4)
+        acts = actions[:, 0]
+        init_obs = obs[:, 0]
+        embed = world_model.encode(init_obs)
+        new_state, _ = world_model.obs_step(null_state, acts, embed)
+        new_img = world_model.decode(world_model.get_features(new_state))
+        reconstructions = ptu.zeros(
+            (4, max_path_length + 1, *world_model.image_shape),
+        )
+        reconstructions[:, 0:1] = new_img.unsqueeze(1)
+        for k in range(1, max_path_length + 1):
+            action = actions[:, k]
+            ob = new_img.reshape(-1, obs.shape[-1])
+            embed = world_model.encode(ob)
+            new_state, _ = world_model.obs_step(new_state, action, embed)
+            new_img = world_model.decode(world_model.get_features(new_state))
+            reconstructions[:, k : k + 1] = new_img.unsqueeze(1)
+    reconstructions = (
+        torch.clamp(
+            reconstructions.permute(0, 1, 3, 4, 2) + 0.5,
+            0,
+            1,
+        )
+        * 255.0
+    )
+    reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
+    obs_np = ptu.get_numpy(
+        obs.reshape(4, max_path_length + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
+    ).astype(np.uint8)
+    file_path = (
+        "data/"
+        + args.logdir
+        + "/plots/self_forced_{}_reconstructions_{}.png".format(tag, epoch)
     )
     im = np.zeros((128 * 4, max_path_length * 64, 3), dtype=np.uint8)
     for i in range(4):
@@ -647,7 +697,7 @@ if __name__ == "__main__":
             print("Test Loss: ", test_loss)
             print()
             test_losses.append(test_loss)
-        if i % 1 == 0:
+        if i % 10 == 0:
             plt.plot(train_losses, label="Train Loss")
             plt.plot(test_losses, label="Test Loss")
             plt.title("Losses for World Model")
@@ -655,6 +705,9 @@ if __name__ == "__main__":
             plt.savefig("data/" + args.logdir + "/plots/losses.png")
             plt.clf()
             visualize_env_rollout(env, world_model, args, args.max_path_length, epoch=i)
+            visualize_env_rollout_teacher_forced(
+                env, world_model, args, args.max_path_length, epoch=i
+            )
             visualize_dataset_trajectory(
                 train_dataset,
                 world_model,
@@ -664,6 +717,39 @@ if __name__ == "__main__":
                 tag="train",
             )
             visualize_dataset_trajectory(
+                test_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="test",
+            )
+            visualize_dataset_trajectory_teacher_forced(
+                train_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="train",
+            )
+            visualize_dataset_trajectory_teacher_forced(
+                test_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="test",
+            )
+
+            visualize_dataset_trajectory_self_forced(
+                train_dataset,
+                world_model,
+                args,
+                args.max_path_length,
+                i,
+                tag="train",
+            )
+            visualize_dataset_trajectory_self_forced(
                 test_dataset,
                 world_model,
                 args,
