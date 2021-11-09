@@ -17,6 +17,7 @@ def get_args():
     parser.add_argument("--num_envs", type=int, default=5)
     parser.add_argument("--train_test_split", type=float, default=0.8)
     parser.add_argument("--control_mode", type=str, default="end_effector")
+    parser.add_argument("--use_prior_instead_of_posterior", type=bool, default=False)
 
     # parse arguments
     args = parser.parse_args()

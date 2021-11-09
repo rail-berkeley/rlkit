@@ -178,15 +178,22 @@ def visualize_env_rollout_teacher_forced(
                 a = ptu.from_numpy(
                     np.array([env.action_space.sample() for i in range(1)])
                 )
-                o, r, d, _ = env.step(
-                    a[0].detach().cpu().numpy(),
-                )
-                obs[i, j] = o
+                if not world_model.use_prior_instead_of_posterior:
+                    o, r, d, _ = env.step(
+                        a[0].detach().cpu().numpy(),
+                    )
+                    obs[i, j] = o
                 o = ptu.from_numpy(o.reshape(1, -1))
                 embed = world_model.encode(reset_obs)
                 new_state, _ = world_model.obs_step(new_state, a, embed)
                 new_img = world_model.decode(world_model.get_features(new_state))
                 reconstructions[i, j] = new_img.unsqueeze(1)
+                if world_model.use_prior_instead_of_posterior:
+                    o, r, d, _ = env.step(
+                        a[0].detach().cpu().numpy(),
+                    )
+                    obs[i, j] = o
+
     reconstructions = (
         torch.clamp(
             reconstructions.permute(0, 1, 3, 4, 2) + 0.5,
@@ -283,7 +290,10 @@ def visualize_dataset_trajectory_teacher_forced(
         reconstructions[:, 0:1] = new_img.unsqueeze(1)
         for k in range(1, max_path_length + 1):
             action = actions[:, k]
-            ob = obs[:, k]
+            if world_model.use_prior_instead_of_posterior:
+                ob = obs[:, k - 1]
+            else:
+                ob = obs[:, k]
             embed = world_model.encode(ob)
             new_state, _ = world_model.obs_step(new_state, action, embed)
             new_img = world_model.decode(world_model.get_features(new_state))
@@ -567,9 +577,8 @@ if __name__ == "__main__":
         std_act="sigmoid2",
         action_dim=env.action_space.low.shape[0],
         image_shape=env.image_shape,
-        use_prior_instead_of_posterior=True,
+        use_prior_instead_of_posterior=args.use_prior_instead_of_posterior,
     )
-
     optimizer_kwargs = dict(
         lr=3e-4,
         eps=1e-5,
