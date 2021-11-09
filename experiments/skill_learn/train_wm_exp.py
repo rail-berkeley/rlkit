@@ -394,7 +394,7 @@ if __name__ == "__main__":
         "num_epochs": [1000],
         "model_kwargs.use_prior_instead_of_posterior": [True, False],
         "plotting_period": [25],
-        # "visualize_wm_from_path": [True],
+        "visualize_wm_from_path": [False],
         # "world_model_path": [
         #     "/home/mdalal/research/skill_learn/rlkit/data/11-09-ll-prior-v1/11-09-ll_prior_v1_2021_11_09_12_30_46_0000--s-45920/models/world_model.pt"
         # ],
