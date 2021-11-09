@@ -567,6 +567,7 @@ if __name__ == "__main__":
         std_act="sigmoid2",
         action_dim=env.action_space.low.shape[0],
         image_shape=env.image_shape,
+        use_prior_instead_of_posterior=True,
     )
 
     optimizer_kwargs = dict(

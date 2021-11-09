@@ -38,8 +38,10 @@ class WorldModel(jit.ScriptModule):
         discrete_latents=False,
         discrete_latent_size=32,
         std_act="softplus",
+        use_prior_instead_of_posterior=False,
     ):
         super().__init__()
+        self.use_prior_instead_of_posterior = use_prior_instead_of_posterior
         self.image_shape = image_shape
         self.model_act = model_act
         self.stochastic_state_size = stochastic_state_size
@@ -253,7 +255,12 @@ class WorldModel(jit.ScriptModule):
         for k in prior.keys():
             prior[k] = torch.cat(prior[k], dim=1)
 
-        feat = self.get_features(post)
+        if self.use_prior_instead_of_posterior:
+            # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
+            # only works when first state is reset obs and never changes
+            feat = self.get_features(prior)
+        else:
+            feat = self.get_features(post)
         feat = feat.transpose(1, 0).reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(feat)
