@@ -197,7 +197,7 @@ def visualize_rollout(
                     for k in range(0, num_low_level_actions_per_primitive):
                         a = ll_a[k : k + 1]
                         o = ll_o[k]
-                        obs[i, j * num_low_level_actions_per_primitive + k] = o
+                        obs[i, 1 + j * num_low_level_actions_per_primitive + k] = o
                         if forcing == "teacher":
                             o = ptu.from_numpy(o.reshape(1, -1))
                             embed = world_model.encode(o)

@@ -449,8 +449,8 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "batch_len": [500],
-        "batch_size": [5],
+        "batch_len": [50, 100, 250, 500],
+        "batch_size": [5, 10, 25, 50, 100],
         "datafile": [
             # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_500_T_25_E_50_ll.hdf5"
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps.hdf5"
@@ -471,7 +471,7 @@ if __name__ == "__main__":
         "env_kwargs.control_mode": ["primitives"],
         "num_epochs": [1000],
         "model_kwargs.use_prior_instead_of_posterior": [True],
-        "plotting_period": [25],
+        "plotting_period": [10],
         "visualize_wm_from_path": [False],
         # "world_model_path": [
         #     "/home/mdalal/research/skill_learn/rlkit/data/11-09-ll-prior-v1/11-09-ll_prior_v1_2021_11_09_12_30_46_0000--s-45920/models/world_model.pt"

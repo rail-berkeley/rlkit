@@ -81,8 +81,6 @@ def collect_world_model_data_low_level_primitives(
         dtype=np.uint8,
     )
     env.reset()
-    reset_ctr = 0
-    ctr = 0
     for k in tqdm(range(num_trajs // num_envs)):
         o = env.reset()
         data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
