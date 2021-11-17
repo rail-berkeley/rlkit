@@ -221,6 +221,10 @@ def experiment(variant):
             input_size=world_model.feature_size + env.action_space.low.shape[0] + 1,
             hidden_activation=torch.nn.functional.relu,
         ).to(ptu.device)
+        optimizer = optim.Adam(
+            primitive_model.parameters(),
+            **optimizer_kwargs,
+        )
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         criterion = nn.MSELoss()
         for i in tqdm(range(num_epochs)):
