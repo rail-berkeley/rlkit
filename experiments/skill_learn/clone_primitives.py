@@ -216,7 +216,6 @@ if __name__ == "__main__":
                     test_loss, best_test_losses[primitive]
                 )
                 if test_loss <= best_test_losses[primitive]:
-                    print(test_loss)
                     torch.save(
                         p.state_dict(),
                         "data/"

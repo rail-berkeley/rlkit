@@ -3,6 +3,8 @@ from collections import OrderedDict
 
 import numpy as np
 
+from rlkit.torch.model_based.dreamer.train_world_model import get_dataloader_separately
+
 
 def visualize_wm(
     env,
@@ -180,15 +182,24 @@ def experiment(variant):
     ).to(ptu.device)
     world_model_loss_kwargs = variant["world_model_loss_kwargs"]
     clone_primitives = variant["clone_primitives"]
-
+    clone_primitives_separately = variant["clone_primitives_separately"]
     num_epochs = variant["num_epochs"]
-    optimizer = optim.Adam(
-        world_model.parameters(),
-        **optimizer_kwargs,
-    )
+
     logdir = logger.get_snapshot_dir()
 
-    if low_level_primitives or clone_primitives:
+    if clone_primitives_separately:
+        (
+            train_dataloaders,
+            test_dataloaders,
+            train_datasets,
+            test_datasets,
+        ) = get_dataloader_separately(
+            variant["datafile"],
+            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+            num_primitives=env.num_primitives,
+            **dataloader_kwargs,
+        )
+    elif low_level_primitives or clone_primitives:
         train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
             variant["datafile"],
             max_path_length=max_path_length * num_low_level_actions_per_primitive + 1,
@@ -214,6 +225,136 @@ def experiment(variant):
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )
+    elif clone_primitives_separately:
+        world_model.load_state_dict(torch.load(variant["world_model_path"]))
+        criterion = nn.MSELoss()
+        primitives = []
+        for i in range(env.num_primitives):
+            arguments_size = train_datasets[i].inputs[0].shape[-1]
+            primitives.append(
+                Mlp(
+                    hidden_sizes=variant["mlp_hidden_sizes"],
+                    output_size=low_level_action_dim,
+                    input_size=world_model.feature_size + arguments_size,
+                    hidden_activation=torch.nn.functional.relu,
+                ).to(ptu.device)
+            )
+        optimizers = [
+            optim.Adam(p.parameters(), **optimizer_kwargs) for p in primitives
+        ]
+        for i in tqdm(range(num_epochs)):
+            eval_statistics = OrderedDict()
+            print("Epoch: ", i)
+            for p, (
+                train_dataloader,
+                test_dataloader,
+                primitive_model,
+                optimizer,
+            ) in enumerate(
+                zip(train_dataloaders, test_dataloaders, primitives, optimizers)
+            ):
+                total_loss = 0
+                total_train_steps = 0
+                for data in train_dataloader:
+                    with torch.cuda.amp.autocast():
+                        (arguments, obs), actions = data
+                        obs = obs.to(ptu.device).float()
+                        actions = actions.to(ptu.device).float()
+                        arguments = arguments.to(ptu.device).float()
+                        action_preds = world_model(
+                            obs,
+                            (arguments, actions),
+                            primitive_model,
+                            use_network_action=False,
+                        )[-1]
+                        loss = criterion(action_preds, actions)
+                        total_loss += loss.item()
+                        total_train_steps += 1
+
+                    update_network(
+                        primitive_model, optimizer, loss, gradient_clip, scaler
+                    )
+                    scaler.update()
+                eval_statistics["train/primitive_loss {}".format(p)] = (
+                    total_loss / total_train_steps
+                )
+                best_test_loss = np.inf
+                with torch.no_grad():
+                    total_loss = 0
+                    total_test_steps = 0
+                    for data in test_dataloader:
+                        with torch.cuda.amp.autocast():
+                            (high_level_actions, obs), actions = data
+                            obs = obs.to(ptu.device).float()
+                            actions = actions.to(ptu.device).float()
+                            high_level_actions = high_level_actions.to(
+                                ptu.device
+                            ).float()
+                            action_preds = world_model(
+                                obs,
+                                (high_level_actions, actions),
+                                primitive_model,
+                                use_network_action=False,
+                            )[-1]
+                            loss = criterion(action_preds, actions)
+                            total_loss += loss.item()
+                            total_test_steps += 1
+                    eval_statistics["test/primitive_loss {}".format(p)] = (
+                        total_loss / total_test_steps
+                    )
+                    if (total_loss / total_test_steps) <= best_test_loss:
+                        best_test_loss = total_loss / total_test_steps
+                        os.makedirs(logdir + "/models/", exist_ok=True)
+                        torch.save(
+                            world_model.state_dict(),
+                            logdir + "/models/primitive_model_{}.pt".format(p),
+                        )
+            logger.record_dict(eval_statistics, prefix="")
+            logger.dump_tabular(with_prefix=False, with_timestamp=False)
+            # if i % variant["plotting_period"] == 0:
+            #     visualize_rollout(
+            #         env,
+            #         None,
+            #         None,
+            #         world_model,
+            #         logdir,
+            #         max_path_length,
+            #         use_env=True,
+            #         forcing="none",
+            #         tag="none",
+            #         low_level_primitives=low_level_primitives,
+            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+            #         primitive_model=primitives,
+            #         use_separate_primitives=True,
+            #     )
+            #     visualize_rollout(
+            #         env,
+            #         train_dataset.outputs,
+            #         train_dataset.inputs[1],
+            #         world_model,
+            #         logdir,
+            #         max_path_length,
+            #         use_env=False,
+            #         forcing="teacher",
+            #         tag="train",
+            #         low_level_primitives=low_level_primitives,
+            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+            #         - 1,
+            #     )
+            #     visualize_rollout(
+            #         env,
+            #         test_dataset.outputs,
+            #         test_dataset.inputs[1],
+            #         world_model,
+            #         logdir,
+            #         max_path_length,
+            #         use_env=False,
+            #         forcing="teacher",
+            #         tag="test",
+            #         low_level_primitives=low_level_primitives,
+            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+            #         - 1,
+            #     )
     elif clone_primitives:
         primitive_model = Mlp(
             hidden_sizes=variant["mlp_hidden_sizes"],
@@ -324,6 +465,10 @@ def experiment(variant):
                         - 1,
                     )
     else:
+        optimizer = optim.Adam(
+            world_model.parameters(),
+            **optimizer_kwargs,
+        )
         for i in tqdm(range(num_epochs)):
             eval_statistics = OrderedDict()
             print("Epoch: ", i)

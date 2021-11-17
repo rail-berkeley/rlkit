@@ -73,16 +73,17 @@ if __name__ == "__main__":
         ),
         dataloader_kwargs=dict(
             batch_len=50,
-            batch_size=50,
+            batch_size=100,
             train_test_split=0.8,
-            clone_primitives_preprocess=True,
+            # clone_primitives_preprocess=True,
         ),
-        mlp_hidden_sizes=(512, 512, 512),
+        mlp_hidden_sizes=(100, 100),
         gradient_clip=0,
         num_epochs=1000,
         datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
         world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-09-train-wm-H-5-T-25-E-50-P-100-raps-ll-sweep/11-09-train_wm_H_5_T_25_E_50_P_100_raps_ll_sweep_2021_11_09_21_30_22_0000--s-37547/models/world_model.pt",
-        clone_primitives=True,
+        clone_primitives=False,
+        clone_primitives_separately=True,
     )
 
     search_space = {
@@ -91,8 +92,8 @@ if __name__ == "__main__":
         "visualize_wm_from_path": [False],
         # "dataloader_kwargs.batch_len":[50, 100, 250, 500],
         # "dataloader_kwargs.batch_size":[50, 100, 250, 500],
-        "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
-        "optimizer_kwargs.lr": [1e-3, 3e-4, 8e-5],
+        # "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
+        # "optimizer_kwargs.lr": [1e-3, 3e-4, 8e-5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

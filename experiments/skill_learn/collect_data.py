@@ -24,7 +24,13 @@ def save_wm_data(data, args):
         f.create_dataset("high_level_actions", data=data["high_level_actions"])
 
 
-def collect_primitive_cloning_data(env, num_primitives, num_trajs, num_envs):
+def collect_primitive_cloning_data(
+    env,
+    num_primitives,
+    num_trajs,
+    num_envs,
+    datafile,
+):
     """
     Collect data from the environment.
 
@@ -60,7 +66,7 @@ def collect_primitive_cloning_data(env, num_primitives, num_trajs, num_envs):
         if all(d):
             env.reset()
 
-    return data
+    np.save("data/primitive_data/" + datafile + ".npy", data)
 
 
 def collect_world_model_data_low_level_primitives(
@@ -161,27 +167,21 @@ def collect_world_model_data_low_level_primitives(
                 np.linspace(
                     0,
                     1,
-                    num_low_level_actions_per_primitive * max_path_length,
+                    num_low_level_actions_per_primitive,
                     endpoint=False,
                 )
-                + 1 / (num_low_level_actions_per_primitive * max_path_length)
+                + 1 / (num_low_level_actions_per_primitive)
             )
-            phases = phases[
-                p
-                * num_low_level_actions_per_primitive : p
-                * num_low_level_actions_per_primitive
-                + num_low_level_actions_per_primitive
-            ]
             phases = np.repeat(phases.reshape(1, -1), num_envs, axis=0)
             high_level_actions = np.concatenate(
                 (high_level_actions, np.expand_dims(phases, -1)), axis=2
             )
             data["high_level_actions"][
                 k * num_envs : k * num_envs + num_envs,
-                p
-                * num_low_level_actions_per_primitive : p
-                * num_low_level_actions_per_primitive
-                + num_low_level_actions_per_primitive,
+                p * num_low_level_actions_per_primitive
+                + 1 : p * num_low_level_actions_per_primitive
+                + num_low_level_actions_per_primitive
+                + 1,
             ] = high_level_actions
     return data
 
@@ -248,7 +248,8 @@ if __name__ == "__main__":
         image_kwargs=dict(imwidth=64, imheight=64),
         collect_primitives_info=True,
         include_phase_variable=True,
-        render_intermediate_obs_to_info=True,
+        render_intermediate_obs_to_info=not args.collect_data_fn
+        == "collect_primitive_cloning_data",
     )
     env_suite = "metaworld"
     env_name = "reach-v2"
@@ -273,8 +274,8 @@ if __name__ == "__main__":
     elif args.collect_data_fn == "collect_primitive_cloning_data":
         data = collect_primitive_cloning_data(
             env,
-            env.num_primitives,
+            env_fns[0]().num_primitives,
             args.num_trajs * args.num_envs,
             args.num_envs,
-            args.max_path_length,
+            datafile=args.datafile,
         )

@@ -405,7 +405,6 @@ class NumpyDataset(Dataset):
         """
         :return: (int)
         """
-        self.num_datapoints
         return self.num_datapoints
 
     def __getitem__(self, i):
@@ -436,17 +435,6 @@ class NumpyDataset(Dataset):
         return inputs, outputs
 
 
-def clone_primitives_preprocess_fn(observations, actions):
-    """
-    :param observations: (np.ndarray)
-    :param actions: (np.ndarray)
-    :return: (tuple)
-    """
-    observations = observations[:, :, :]
-    actions = actions[:, :, :]
-    return observations, actions
-
-
 def get_dataloader(
     filename,
     train_test_split,
@@ -467,29 +455,43 @@ def get_dataloader(
         actions = np.array(f["actions"][:])
         if clone_primitives_preprocess:
             high_level_actions = torch.from_numpy(np.array(f["high_level_actions"][:]))
+    num_train_datapoints = int(observations.shape[0] * train_test_split)
     observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
     if clone_primitives_preprocess:
-        observations, actions = clone_primitives_preprocess_fn(observations, actions)
-        inputs, outputs = (high_level_actions, observations), actions
+        train_inputs, train_outputs = (
+            high_level_actions[:num_train_datapoints],
+            observations[:num_train_datapoints],
+        ), actions[:num_train_datapoints]
+        test_inputs, test_outputs = (
+            high_level_actions[num_train_datapoints:],
+            observations[num_train_datapoints:],
+        ), actions[num_train_datapoints:]
         randomize_batch_len = True
         sampler_class = RandomSampler
     else:
-        inputs, outputs = actions, observations
+        train_inputs, train_outputs = (
+            actions[:num_train_datapoints],
+            observations[:num_train_datapoints],
+        )
+        test_inputs, test_outputs = (
+            actions[num_train_datapoints:],
+            observations[num_train_datapoints:],
+        )
         randomize_batch_len = False
         sampler_class = BatchLenRandomSampler
-    num_train_datapoints = int(observations.shape[0] * train_test_split)
 
     train_dataset = NumpyDataset(
-        inputs,
-        outputs,
+        train_inputs,
+        train_outputs,
         batch_len,
         max_path_length,
         num_train_datapoints,
         randomize_batch_len=randomize_batch_len,
     )
+
     test_dataset = NumpyDataset(
-        inputs,
-        outputs,
+        test_inputs,
+        test_outputs,
         batch_len,
         max_path_length,
         observations.shape[0] - num_train_datapoints,
@@ -510,12 +512,104 @@ def get_dataloader(
         sampler=sampler_class(test_dataset),
     )
 
-    print(actions.shape)
-    print(
-        actions.mean().item(),
-        actions.std().item(),
-        actions.min().item(),
-        actions.max().item(),
-    )
-
     return train_dataloader, test_dataloader, train_dataset, test_dataset
+
+
+def get_dataloader_separately(
+    filename,
+    train_test_split,
+    batch_len,
+    batch_size,
+    num_primitives,
+    num_low_level_actions_per_primitive,
+):
+    """
+    :param filename: (str)
+    :param train_test_split: (float)
+    :param num_primitives: (int)
+    :param num_low_level_actions_per_primitive: (int)
+    :return: (tuple)
+    """
+    with h5py.File(filename, "r") as f:
+        observations = np.array(f["observations"][:])
+        actions = np.array(f["actions"][:])
+        high_level_actions = np.array(f["high_level_actions"][:])
+
+    obs = [[] for _ in range(num_primitives)]
+    hls = [[] for _ in range(num_primitives)]
+    acs = [[] for _ in range(num_primitives)]
+    for i in range(observations.shape[0]):
+        for j in range(1, observations.shape[1], num_low_level_actions_per_primitive):
+            ha = high_level_actions[i][j]
+            p = np.argmax(ha[:num_primitives])
+            obs[p].append(observations[i][j : j + num_low_level_actions_per_primitive])
+            hls[p].append(
+                high_level_actions[i][
+                    j : j + num_low_level_actions_per_primitive, num_primitives:
+                ]
+            )
+            acs[p].append(actions[i][j : j + num_low_level_actions_per_primitive])
+    train_datasets = []
+    test_datasets = []
+    train_dataloaders = []
+    test_dataloaders = []
+    for p in range(num_primitives):
+        ob = torch.from_numpy(
+            np.concatenate([np.expand_dims(o, 0) for o in obs[p]], axis=0)
+        )
+        hl = torch.from_numpy(
+            np.concatenate([np.expand_dims(h, 0) for h in hls[p]], axis=0)
+        )
+        ac = torch.from_numpy(
+            np.concatenate([np.expand_dims(a, 0) for a in acs[p]], axis=0)
+        )
+        num_train_datapoints = int(ob.shape[0] * train_test_split)
+
+        inputs, outputs = (hl[:num_train_datapoints], ob[:num_train_datapoints]), ac[
+            :num_train_datapoints
+        ]
+        randomize_batch_len = True
+        sampler_class = RandomSampler
+
+        train_dataset = NumpyDataset(
+            inputs,
+            outputs,
+            batch_len,
+            num_low_level_actions_per_primitive,
+            num_train_datapoints,
+            randomize_batch_len=randomize_batch_len,
+        )
+
+        inputs, outputs = (hl[num_train_datapoints:], ob[num_train_datapoints:]), ac[
+            num_train_datapoints:
+        ]
+
+        test_dataset = NumpyDataset(
+            inputs,
+            outputs,
+            batch_len,
+            num_low_level_actions_per_primitive,
+            ob.shape[0] - num_train_datapoints,
+            randomize_batch_len=randomize_batch_len,
+        )
+
+        train_dataloader = DataLoader(
+            train_dataset,
+            batch_size=batch_size,
+            pin_memory=True,
+            sampler=sampler_class(train_dataset),
+        )
+
+        test_dataloader = DataLoader(
+            test_dataset,
+            batch_size=batch_size,
+            pin_memory=True,
+            sampler=sampler_class(test_dataset),
+        )
+
+        train_datasets.append(train_dataset)
+        test_datasets.append(test_dataset)
+        train_dataloaders.append(train_dataloader)
+        test_dataloaders.append(test_dataloader)
+
+    return train_dataloaders, test_dataloaders, train_datasets, test_datasets
