@@ -19,6 +19,10 @@ def get_args():
     parser.add_argument("--control_mode", type=str, default="end_effector")
     parser.add_argument("--use_prior_instead_of_posterior", type=bool, default=False)
     parser.add_argument("--num_low_level_actions_per_primitive", type=int, default=100)
+    parser.add_argument(
+        "--collect_data_fn", type=str, default="collect_world_model_data"
+    )
+    parser.add_argument("--lr", type=float, default=float(1e-3))
 
     # parse arguments
     args = parser.parse_args()

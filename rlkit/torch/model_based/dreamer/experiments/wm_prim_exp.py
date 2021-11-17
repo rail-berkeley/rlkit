@@ -1,13 +1,7 @@
-import argparse
 import os
-import random
-import subprocess
 from collections import OrderedDict
 
 import numpy as np
-
-import rlkit.util.hyperparameter as hyp
-from rlkit.launchers.launcher_util import run_experiment
 
 
 def visualize_wm(
@@ -145,16 +139,18 @@ def visualize_wm(
 
 def experiment(variant):
     import torch
-    from torch import optim
+    from torch import nn, optim
     from tqdm import tqdm
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.core import logger
     from rlkit.envs.primitives_make_env import make_env
+    from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.train_world_model import (
         compute_world_model_loss,
         get_dataloader,
         update_network,
+        visualize_rollout,
     )
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
 
@@ -167,9 +163,7 @@ def experiment(variant):
     low_level_primitives = variant["low_level_primitives"]
     num_low_level_actions_per_primitive = variant["num_low_level_actions_per_primitive"]
     low_level_action_dim = variant["low_level_action_dim"]
-    batch_len = variant["batch_len"]
-    batch_size = variant["batch_size"]
-    train_test_split = variant["train_test_split"]
+    dataloader_kwargs = variant["dataloader_kwargs"]
     env = make_env(env_suite, env_name, env_kwargs)
     world_model_kwargs = variant["model_kwargs"]
     optimizer_kwargs = variant["optimizer_kwargs"]
@@ -185,6 +179,7 @@ def experiment(variant):
         **world_model_kwargs,
     ).to(ptu.device)
     world_model_loss_kwargs = variant["world_model_loss_kwargs"]
+    clone_primitives = variant["clone_primitives"]
 
     num_epochs = variant["num_epochs"]
     optimizer = optim.Adam(
@@ -193,21 +188,17 @@ def experiment(variant):
     )
     logdir = logger.get_snapshot_dir()
 
-    if low_level_primitives:
+    if low_level_primitives or clone_primitives:
         train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
             variant["datafile"],
-            train_test_split,
-            batch_len,
-            batch_size,
-            max_path_length * num_low_level_actions_per_primitive,
+            max_path_length=max_path_length * num_low_level_actions_per_primitive + 1,
+            **dataloader_kwargs,
         )
     else:
         train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
             variant["datafile"],
-            train_test_split,
-            batch_len,
-            batch_size,
-            max_path_length,
+            max_path_length=max_path_length + 1,
+            **dataloader_kwargs,
         )
 
     if variant["visualize_wm_from_path"]:
@@ -223,6 +214,111 @@ def experiment(variant):
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )
+    elif clone_primitives:
+        primitive_model = Mlp(
+            hidden_sizes=variant["mlp_hidden_sizes"],
+            output_size=low_level_action_dim,
+            input_size=world_model.feature_size + env.action_space.low.shape[0] + 1,
+            hidden_activation=torch.nn.functional.relu,
+        ).to(ptu.device)
+        world_model.load_state_dict(torch.load(variant["world_model_path"]))
+        criterion = nn.MSELoss()
+        for i in tqdm(range(num_epochs)):
+            eval_statistics = OrderedDict()
+            print("Epoch: ", i)
+            total_loss = 0
+            total_train_steps = 0
+            for data in train_dataloader:
+                with torch.cuda.amp.autocast():
+                    (high_level_actions, obs), actions = data
+                    obs = obs.to(ptu.device).float()
+                    actions = actions.to(ptu.device).float()
+                    high_level_actions = high_level_actions.to(ptu.device).float()
+                    action_preds = world_model(
+                        obs,
+                        (high_level_actions, actions),
+                        primitive_model,
+                        use_network_action=False,
+                    )[-1]
+                    loss = criterion(action_preds, actions)
+                    total_loss += loss.item()
+                    total_train_steps += 1
+
+                update_network(primitive_model, optimizer, loss, gradient_clip, scaler)
+                scaler.update()
+            eval_statistics["train/primitive_loss"] = total_loss / total_train_steps
+            best_test_loss = np.inf
+            with torch.no_grad():
+                total_loss = 0
+                total_test_steps = 0
+                for data in test_dataloader:
+                    with torch.cuda.amp.autocast():
+                        (high_level_actions, obs), actions = data
+                        obs = obs.to(ptu.device).float()
+                        actions = actions.to(ptu.device).float()
+                        high_level_actions = high_level_actions.to(ptu.device).float()
+                        action_preds = world_model(
+                            obs,
+                            (high_level_actions, actions),
+                            primitive_model,
+                            use_network_action=False,
+                        )[-1]
+                        loss = criterion(action_preds, actions)
+                        total_loss += loss.item()
+                        total_test_steps += 1
+                eval_statistics["test/primitive_loss"] = total_loss / total_test_steps
+                if (total_loss / total_test_steps) <= best_test_loss:
+                    best_test_loss = total_loss / total_test_steps
+                    os.makedirs(logdir + "/models/", exist_ok=True)
+                    torch.save(
+                        world_model.state_dict(),
+                        logdir + "/models/primitive_model.pt",
+                    )
+                logger.record_dict(eval_statistics, prefix="")
+                logger.dump_tabular(with_prefix=False, with_timestamp=False)
+                if i % variant["plotting_period"] == 0:
+                    visualize_rollout(
+                        env,
+                        None,
+                        None,
+                        world_model,
+                        logdir,
+                        max_path_length,
+                        use_env=True,
+                        forcing="none",
+                        tag="none",
+                        low_level_primitives=low_level_primitives,
+                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                        primitive_model=primitive_model,
+                    )
+                    visualize_rollout(
+                        env,
+                        train_dataset.outputs,
+                        train_dataset.inputs[1],
+                        world_model,
+                        logdir,
+                        max_path_length,
+                        use_env=False,
+                        forcing="teacher",
+                        tag="train",
+                        low_level_primitives=low_level_primitives,
+                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+                        - 1,
+                    )
+                    visualize_rollout(
+                        env,
+                        test_dataset.outputs,
+                        test_dataset.inputs[1],
+                        world_model,
+                        logdir,
+                        max_path_length,
+                        use_env=False,
+                        forcing="teacher",
+                        tag="test",
+                        low_level_primitives=low_level_primitives,
+                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+                        - 1,
+                    )
     else:
         for i in tqdm(range(num_epochs)):
             eval_statistics = OrderedDict()
@@ -235,7 +331,7 @@ def experiment(variant):
             total_train_steps = 0
             for data in train_dataloader:
                 with torch.cuda.amp.autocast():
-                    obs, actions = data
+                    actions, obs = data
                     obs = obs.to(ptu.device).float()
                     actions = actions.to(ptu.device).float()
                     post, prior, post_dist, prior_dist, image_dist = world_model(
@@ -294,7 +390,7 @@ def experiment(variant):
                 total_test_steps = 0
                 for data in test_dataloader:
                     with torch.cuda.amp.autocast():
-                        obs, actions = data
+                        actions, obs = data
                         obs = obs.to(ptu.device).float()
                         actions = actions.to(ptu.device).float()
                         post, prior, post_dist, prior_dist, image_dist = world_model(
@@ -371,131 +467,3 @@ def experiment(variant):
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )
-
-
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
-    if args.debug:
-        algorithm_kwargs = dict()
-        exp_prefix = "test" + args.exp_prefix
-    else:
-        algorithm_kwargs = dict()
-        exp_prefix = args.exp_prefix
-    variant = dict(
-        plotting_period=25,
-        low_level_primitives=True,
-        num_low_level_actions_per_primitive=100,
-        low_level_action_dim=9,
-        env_kwargs=dict(
-            control_mode="end_effector",
-            action_scale=1,
-            max_path_length=50,
-            reward_type="sparse",
-            camera_settings={
-                "distance": 0.38227044687537043,
-                "lookat": [0.21052547, 0.32329237, 0.587819],
-                "azimuth": 141.328125,
-                "elevation": -53.203125160653144,
-            },
-            usage_kwargs=dict(
-                use_dm_backend=True,
-                use_raw_action_wrappers=False,
-                use_image_obs=True,
-                max_path_length=50,
-                unflatten_images=False,
-            ),
-            image_kwargs=dict(imwidth=64, imheight=64),
-            collect_primitives_info=True,
-            include_phase_variable=True,
-            render_intermediate_obs_to_info=True,
-        ),
-        env_suite="metaworld",
-        env_name="reach-v2",
-        world_model_loss_kwargs=dict(
-            forward_kl=False,
-            free_nats=1.0,
-            transition_loss_scale=0.8,
-            kl_loss_scale=0.0,
-            image_loss_scale=1.0,
-        ),
-        model_kwargs=dict(
-            model_hidden_size=400,
-            stochastic_state_size=50,
-            deterministic_state_size=200,
-            embedding_size=1024,
-            rssm_hidden_size=200,
-            reward_num_layers=2,
-            pred_discount_num_layers=3,
-            gru_layer_norm=True,
-            std_act="sigmoid2",
-            use_prior_instead_of_posterior=True,
-        ),
-        optimizer_kwargs=dict(
-            lr=3e-4,
-            eps=1e-5,
-            weight_decay=0.0,
-        ),
-        gradient_clip=100,
-        batch_len=50,
-        batch_size=50,
-        num_epochs=1000,
-        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_50_T_250_E_50_ll.hdf5",
-        train_test_split=0.8,
-    )
-
-    search_space = {
-        "batch_len": [50, 100, 250, 500],
-        "batch_size": [5, 10, 25, 50, 100],
-        "datafile": [
-            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_500_T_25_E_50_ll.hdf5"
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps.hdf5"
-        ],
-        # "datafile": [
-        # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_50_T_250_E_50_ll.hdf5"
-        # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_2500_E_50_raps.hdf5"
-        # ],
-        # "env_kwargs.control_mode": ["end_effector"],
-        # "env_kwargs.max_path_length": [500],
-        # "env_kwargs.usage_kwargs.max_path_length": [500],
-        # "env_kwargs.max_path_length": [50],
-        # "env_kwargs.usage_kwargs.max_path_length": [50],
-        # "batch_len": [5],
-        # "batch_size": [500],
-        "env_kwargs.max_path_length": [5],
-        "env_kwargs.usage_kwargs.max_path_length": [5],
-        "env_kwargs.control_mode": ["primitives"],
-        "num_epochs": [1000],
-        "model_kwargs.use_prior_instead_of_posterior": [True],
-        "plotting_period": [10],
-        "visualize_wm_from_path": [False],
-        # "world_model_path": [
-        #     "/home/mdalal/research/skill_learn/rlkit/data/11-09-ll-prior-v1/11-09-ll_prior_v1_2021_11_09_12_30_46_0000--s-45920/models/world_model.pt"
-        # ],
-    }
-    sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
-    )
-    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        for _ in range(args.num_seeds):
-            seed = random.randint(0, 100000)
-            variant["seed"] = seed
-            variant["exp_id"] = exp_id
-            run_experiment(
-                experiment,
-                exp_prefix=args.exp_prefix,
-                mode=args.mode,
-                variant=variant,
-                use_gpu=True,
-                snapshot_mode="none",
-                python_cmd=subprocess.check_output("which python", shell=True).decode(
-                    "utf-8"
-                )[:-1],
-                seed=seed,
-                exp_id=exp_id,
-            )

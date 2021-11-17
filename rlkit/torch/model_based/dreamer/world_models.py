@@ -208,11 +208,22 @@ class WorldModel(jit.ScriptModule):
         post: Dict[str, List[Tensor]],
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
+        net: jit.ScriptModule = None,
+        use_network_action: bool = False,
     ):
+        actions = []
         for i in range(path_length):
+            if net:
+                inp = torch.cat([action[0][:, i], self.get_features(state)], dim=1)
+                action_ = net(inp)
+                actions.append(action_.unsqueeze(1))
+                if not use_network_action:
+                    action_ = action[1][:, i]
+            else:
+                action_ = action[:, i]
             (post_params, prior_params,) = self.obs_step(
                 state,
-                action[:, i],
+                action_,
                 embed[:, i],
             )
             for k in post.keys():
@@ -221,9 +232,15 @@ class WorldModel(jit.ScriptModule):
             for k in prior.keys():
                 prior[k].append(prior_params[k].unsqueeze(1))
             state = post_params
-        return post, prior
+        return post, prior, actions
 
-    def forward(self, obs, action):
+    def forward(
+        self,
+        obs,
+        action,
+        net=None,
+        use_network_action=False,
+    ):
         """
         :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
         :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
@@ -247,7 +264,16 @@ class WorldModel(jit.ScriptModule):
         embed = embed.reshape(
             path_length, original_batch_size, embedding_size
         ).transpose(1, 0)
-        post, prior = self.forward_batch(path_length, action, embed, post, prior, state)
+        post, prior, actions = self.forward_batch(
+            path_length,
+            action,
+            embed,
+            post,
+            prior,
+            state,
+            net,
+            use_network_action,
+        )
 
         for k in post.keys():
             post[k] = torch.cat(post[k], dim=1)
@@ -265,6 +291,7 @@ class WorldModel(jit.ScriptModule):
         images = self.decode(feat)
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)
+        actions = torch.cat(actions, dim=1)
 
         if self.discrete_latents:
             post_dist = self.get_dist(post["logits"], None, latent=True)
@@ -284,6 +311,7 @@ class WorldModel(jit.ScriptModule):
             reward_dist,
             pred_discount_dist,
             embed,
+            actions,
         )
 
     def get_features(self, state: Dict[str, Tensor]):

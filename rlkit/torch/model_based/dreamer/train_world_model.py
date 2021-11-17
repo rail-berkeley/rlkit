@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.distributions import kl_divergence as kld
 from torch.utils.data import DataLoader, Dataset
-from torch.utils.data.sampler import Sampler
+from torch.utils.data.sampler import RandomSampler, Sampler
 
 import rlkit.torch.pytorch_util as ptu
 
@@ -79,26 +79,27 @@ class BatchLenRandomSampler(Sampler):
 @torch.no_grad()
 def visualize_rollout(
     env,
-    dataset,
+    actions,
+    observations,
     world_model,
     logdir,
     max_path_length,
-    epoch,
     use_env,
     forcing,
     tag,
     low_level_primitives,
     num_low_level_actions_per_primitive,
+    primitive_model=None,
 ):
     file_path = logdir + "/plots/"
     os.makedirs(file_path, exist_ok=True)
 
     if use_env:
         print("Generating Imagination Reconstructions forcing {}: ".format(forcing))
-        file_suffix = "imagination_reconstructions_{}.png".format(epoch)
+        file_suffix = "imagination_reconstructions.png"
     else:
         print("Generating Dataset Reconstructions {} forcing {}: ".format(tag, forcing))
-        file_suffix = "dataset_reconstructions_{}.png".format(epoch)
+        file_suffix = "dataset_reconstructions.png"
         file_suffix = tag + "_" + file_suffix
     if forcing != "none":
         file_suffix = forcing + "_forcing_" + file_suffix
@@ -137,10 +138,12 @@ def visualize_rollout(
                     a = ptu.zeros((1, 9))
                     o = env.reset()
                 else:
-                    a = dataset.actions[i, 0:1].to(ptu.device)
-                    o = ptu.get_numpy(dataset.observations[i, 0])
+                    a = actions[i, 0:1].to(ptu.device)
+                    o = ptu.get_numpy(observations[i, 0])
                 obs[i, 0] = o
 
+                if primitive_model:
+                    a = ptu.zeros((1, 9))
                 if forcing == "teacher":
                     o = ptu.from_numpy(o.reshape(1, -1))
                     embed = world_model.encode(o)
@@ -151,16 +154,17 @@ def visualize_rollout(
                 else:
                     state = world_model.action_step(state, a)
                     prior = None
-                if prior is not None and world_model.use_prior_instead_of_posterior:
-                    state = prior
+                    if prior is not None and world_model.use_prior_instead_of_posterior:
+                        state = prior
                 new_img = world_model.decode(world_model.get_features(state))
                 reconstructions[i, 0] = new_img.unsqueeze(1)
                 for j in range(0, max_path_length):
                     if use_env:
-                        a = np.array([env.action_space.sample()])
+                        high_level_action = np.array([env.action_space.sample()])
                         o, r, d, info = env.step(
-                            a[0],
+                            high_level_action[0],
                         )
+
                         ll_a = np.array(info["actions"])
                         ll_o = np.array(info["observations"])
                         ll_o = ll_o.transpose(0, 3, 1, 2).reshape(ll_o.shape[0], -1)
@@ -180,14 +184,14 @@ def visualize_rollout(
                         ll_a = ptu.from_numpy(ll_a)
                         ll_o = ll_o[idxs.astype(np.int)[1:] - 1]
                     else:
-                        ll_a = dataset.actions[
+                        ll_a = actions[
                             i,
                             1
                             + j * num_low_level_actions_per_primitive : 1
                             + (j + 1) * num_low_level_actions_per_primitive,
                         ].to(ptu.device)
                         ll_o = ptu.get_numpy(
-                            dataset.observations[
+                            observations[
                                 i,
                                 1
                                 + j * num_low_level_actions_per_primitive : 1
@@ -198,26 +202,44 @@ def visualize_rollout(
                         a = ll_a[k : k + 1]
                         o = ll_o[k]
                         obs[i, 1 + j * num_low_level_actions_per_primitive + k] = o
-                        if forcing == "teacher":
-                            o = ptu.from_numpy(o.reshape(1, -1))
-                            embed = world_model.encode(o)
-                            state, prior = world_model.obs_step(state, a, embed)
-                        elif (
-                            forcing == "self"
-                            and world_model.use_prior_instead_of_posterior
-                        ):
-                            o = new_img.reshape(-1, obs.shape[-1])
-                            o = torch.clamp(o + 0.5, 0, 1) * 255.0
-                            embed = world_model.encode(o)
-                            state, prior = world_model.obs_step(state, a, embed)
+                        if primitive_model:
+                            tmp = np.array(
+                                [
+                                    (j * k + 1)
+                                    / (
+                                        num_low_level_actions_per_primitive
+                                        * max_path_length
+                                    )
+                                ]
+                            ).reshape(1, -1)
+                            hl = np.concatenate((high_level_action, tmp), 1)
+                            state = world_model(
+                                ptu.from_numpy(o.reshape(1, 1, o.shape[-1])),
+                                (ptu.from_numpy(hl.reshape(1, 1, hl.shape[-1])), None),
+                                primitive_model,
+                                use_network_action=True,
+                            )[0]
                         else:
-                            state = world_model.action_step(state, a)
-                            prior = None
-                        if (
-                            prior is not None
-                            and world_model.use_prior_instead_of_posterior
-                        ):
-                            state = prior
+                            if forcing == "teacher":
+                                o = ptu.from_numpy(o.reshape(1, -1))
+                                embed = world_model.encode(o)
+                                state, prior = world_model.obs_step(state, a, embed)
+                            elif (
+                                forcing == "self"
+                                and world_model.use_prior_instead_of_posterior
+                            ):
+                                o = new_img.reshape(-1, obs.shape[-1])
+                                o = torch.clamp(o + 0.5, 0, 1) * 255.0
+                                embed = world_model.encode(o)
+                                state, prior = world_model.obs_step(state, a, embed)
+                            else:
+                                state = world_model.action_step(state, a)
+                                prior = None
+                            if (
+                                prior is not None
+                                and world_model.use_prior_instead_of_posterior
+                            ):
+                                state = prior
                         new_img = world_model.decode(world_model.get_features(state))
                         reconstructions[
                             i, 1 + j * num_low_level_actions_per_primitive + k
@@ -234,8 +256,8 @@ def visualize_rollout(
                                 a[0].detach().cpu().numpy(),
                             )
                     else:
-                        a = dataset.actions[i, j : j + 1].to(ptu.device)
-                        o = ptu.get_numpy(dataset.observations[i, j])
+                        a = actions[i, j : j + 1].to(ptu.device)
+                        o = ptu.get_numpy(observations[i, j])
                     obs[i, j] = o
                     if forcing == "teacher":
                         o = ptu.from_numpy(o.reshape(1, -1))
@@ -359,67 +381,141 @@ def update_network(network, optimizer, loss, gradient_clip, scaler):
 
 
 class NumpyDataset(Dataset):
-    def __init__(self, observations, actions, batch_len, max_path_length):
+    def __init__(
+        self,
+        inputs,
+        outputs,
+        batch_len,
+        max_path_length,
+        num_datapoints,
+        randomize_batch_len=False,
+    ):
         """
-        :param observations: (np.ndarray)
-        :param actions: (np.ndarray)
+        :param inputs: (np.ndarray)
+        :param outputs: (np.ndarray)
         :param max_path_length: (int)
         """
-        self.observations, self.actions = observations, actions
+        self.inputs, self.outputs = inputs, outputs
         self.batch_len = batch_len
-        self.max_path_length = max_path_length + 1
+        self.max_path_length = max_path_length
+        self.num_datapoints = num_datapoints
+        self.randomize_batch_len = randomize_batch_len
 
     def __len__(self):
         """
         :return: (int)
         """
-        return self.observations.shape[0]
+        self.num_datapoints
+        return self.num_datapoints
 
     def __getitem__(self, i):
         """
         :param i: (int)
         :return (tuple, np.ndarray)
         """
-        obs, actions = self.observations[i], self.actions[i]
-        return obs, actions
+        if type(self.inputs) != np.ndarray:
+            inputs = []
+            batch_start = np.random.randint(0, self.max_path_length - self.batch_len)
+            idxs = np.linspace(
+                batch_start,
+                batch_start + self.batch_len,
+                self.batch_len,
+                endpoint=False,
+            ).astype(int)
+            for inp in self.inputs:
+                if self.randomize_batch_len:
+                    inputs.append(inp[i, idxs])
+                else:
+                    inputs.append(inp[i])
+            if self.randomize_batch_len:
+                outputs = self.outputs[i, idxs]
+            else:
+                outputs = self.outputs[i]
+        else:
+            inputs, outputs = self.inputs[i], self.outputs[i]
+        return inputs, outputs
 
 
-def get_dataloader(filename, train_test_split, batch_len, batch_size, max_path_length):
+def clone_primitives_preprocess_fn(observations, actions):
+    """
+    :param observations: (np.ndarray)
+    :param actions: (np.ndarray)
+    :return: (tuple)
+    """
+    observations = observations[:, :, :]
+    actions = actions[:, :, :]
+    return observations, actions
+
+
+def get_dataloader(
+    filename,
+    train_test_split,
+    batch_len,
+    batch_size,
+    max_path_length,
+    clone_primitives_preprocess=False,
+):
     """
     :param filename: (str)
     :param train_test_split: (float)
     :param max_path_length: (int)
+    :param clone_primitives_preprocess : (bool)
     :return: (tuple)
     """
     with h5py.File(filename, "r") as f:
         observations = np.array(f["observations"][:])
         actions = np.array(f["actions"][:])
+        if clone_primitives_preprocess:
+            high_level_actions = torch.from_numpy(np.array(f["high_level_actions"][:]))
     observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
+    if clone_primitives_preprocess:
+        observations, actions = clone_primitives_preprocess_fn(observations, actions)
+        inputs, outputs = (high_level_actions, observations), actions
+        randomize_batch_len = True
+        sampler_class = RandomSampler
+    else:
+        inputs, outputs = actions, observations
+        randomize_batch_len = False
+        sampler_class = BatchLenRandomSampler
     num_train_datapoints = int(observations.shape[0] * train_test_split)
+
     train_dataset = NumpyDataset(
-        observations[:num_train_datapoints],
-        actions[:num_train_datapoints],
+        inputs,
+        outputs,
         batch_len,
         max_path_length,
+        num_train_datapoints,
+        randomize_batch_len=randomize_batch_len,
     )
     test_dataset = NumpyDataset(
-        observations[num_train_datapoints:],
-        actions[num_train_datapoints:],
+        inputs,
+        outputs,
         batch_len,
         max_path_length,
+        observations.shape[0] - num_train_datapoints,
+        randomize_batch_len=randomize_batch_len,
     )
 
     train_dataloader = DataLoader(
         train_dataset,
         batch_size=batch_size,
         pin_memory=True,
-        sampler=BatchLenRandomSampler(train_dataset),
+        sampler=sampler_class(train_dataset),
     )
 
     test_dataloader = DataLoader(
         test_dataset,
         batch_size=batch_size,
         pin_memory=True,
-        sampler=BatchLenRandomSampler(test_dataset),
+        sampler=sampler_class(test_dataset),
     )
+
+    print(actions.shape)
+    print(
+        actions.mean().item(),
+        actions.std().item(),
+        actions.min().item(),
+        actions.max().item(),
+    )
+
     return train_dataloader, test_dataloader, train_dataset, test_dataset

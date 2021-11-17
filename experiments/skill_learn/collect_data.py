@@ -8,6 +8,22 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
+def save_wm_data(data, args):
+    """
+    Save world model data to a hdf5 file.
+    :param: dictionary with two keys: observations and actions (numpy arrays)
+    :param: args: arguments from command line
+    """
+    os.makedirs("data/world_model_data", exist_ok=True)
+    import h5py
+
+    f = h5py.File("data/world_model_data/" + args.datafile + ".hdf5", "w")
+    f.create_dataset("observations", data=data["observations"])
+    f.create_dataset("actions", data=data["actions"])
+    if "high_level_actions" in data:
+        f.create_dataset("high_level_actions", data=data["high_level_actions"])
+
+
 def collect_primitive_cloning_data(env, num_primitives, num_trajs, num_envs):
     """
     Collect data from the environment.
@@ -52,7 +68,6 @@ def collect_world_model_data_low_level_primitives(
 ):
     """
     Collect world model data from the environment.
-
     Args:
         env (Environment): the environment to collect data from
         num_trajs (int): the number of actions to collect
@@ -61,7 +76,6 @@ def collect_world_model_data_low_level_primitives(
         dict: the data collected from the environment
             actions: list of H lists of H_t actions
             observations: list of H lists of H_t+1 observations
-
     """
     data = {}
     data["actions"] = np.zeros(
@@ -69,6 +83,14 @@ def collect_world_model_data_low_level_primitives(
             num_trajs,
             (max_path_length * num_low_level_actions_per_primitive) + 1,
             9,
+        ),
+        dtype=np.float32,
+    )
+    data["high_level_actions"] = np.zeros(
+        (
+            num_trajs,
+            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            env.action_space.low.shape[0] + 1,  # includes phase variable
         ),
         dtype=np.float32,
     )
@@ -86,10 +108,13 @@ def collect_world_model_data_low_level_primitives(
         data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
             (num_envs, 9)
         )
+        data["high_level_actions"][
+            k * num_envs : k * num_envs + num_envs, 0
+        ] = np.zeros((num_envs, env.action_space.low.shape[0] + 1))
         data["observations"][k * num_envs : k * num_envs + num_envs, 0] = o
         for p in range(0, max_path_length):
-            actions = [env.action_space.sample() for i in range(num_envs)]
-            o, r, d, i = env.step(actions)
+            high_level_actions = [env.action_space.sample() for i in range(num_envs)]
+            o, r, d, i = env.step(high_level_actions)
             low_level_actions = i["actions"]
             low_level_obs = i["observations"]
             actions = []
@@ -105,7 +130,7 @@ def collect_world_model_data_low_level_primitives(
                 a = ll_a.reshape(num_low_level_actions_per_primitive, spacing, -1)
                 a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
                 a = np.concatenate((a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1)
-                o = ll_o[idxs.astype(np.int)[1:] - 1]
+                o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
                 actions.append(a)
                 obs.append(o)
 
@@ -127,6 +152,37 @@ def collect_world_model_data_low_level_primitives(
                 .transpose(0, 1, 4, 2, 3)
                 .reshape(num_envs, num_low_level_actions_per_primitive, -1)
             )
+            high_level_actions = np.repeat(
+                np.array(high_level_actions).reshape(num_envs, 1, -1),
+                num_low_level_actions_per_primitive,
+                axis=1,
+            )
+            phases = (
+                np.linspace(
+                    0,
+                    1,
+                    num_low_level_actions_per_primitive * max_path_length,
+                    endpoint=False,
+                )
+                + 1 / (num_low_level_actions_per_primitive * max_path_length)
+            )
+            phases = phases[
+                p
+                * num_low_level_actions_per_primitive : p
+                * num_low_level_actions_per_primitive
+                + num_low_level_actions_per_primitive
+            ]
+            phases = np.repeat(phases.reshape(1, -1), num_envs, axis=0)
+            high_level_actions = np.concatenate(
+                (high_level_actions, np.expand_dims(phases, -1)), axis=2
+            )
+            data["high_level_actions"][
+                k * num_envs : k * num_envs + num_envs,
+                p
+                * num_low_level_actions_per_primitive : p
+                * num_low_level_actions_per_primitive
+                + num_low_level_actions_per_primitive,
+            ] = high_level_actions
     return data
 
 
@@ -200,20 +256,25 @@ if __name__ == "__main__":
         lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
     ]
     env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-    # data = collect_world_model_data(
-    #     env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
-    # )
-
-    data = collect_world_model_data_low_level_primitives(
-        env,
-        args.num_trajs * args.num_envs,
-        args.num_envs,
-        args.max_path_length,
-        args.num_low_level_actions_per_primitive,
-    )
-    os.makedirs("data/world_model_data", exist_ok=True)
-    import h5py
-
-    f = h5py.File("data/world_model_data/" + args.datafile + ".hdf5", "w")
-    f.create_dataset("observations", data=data["observations"])
-    f.create_dataset("actions", data=data["actions"])
+    if args.collect_data_fn == "collect_world_model_data":
+        data = collect_world_model_data(
+            env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
+        )
+        save_wm_data(data, args)
+    elif args.collect_data_fn == "collect_world_model_data_low_level_primitives":
+        data = collect_world_model_data_low_level_primitives(
+            env,
+            args.num_trajs * args.num_envs,
+            args.num_envs,
+            args.max_path_length,
+            args.num_low_level_actions_per_primitive,
+        )
+        save_wm_data(data, args)
+    elif args.collect_data_fn == "collect_primitive_cloning_data":
+        data = collect_primitive_cloning_data(
+            env,
+            env.num_primitives,
+            args.num_trajs * args.num_envs,
+            args.num_envs,
+            args.max_path_length,
+        )
