@@ -197,6 +197,7 @@ def experiment(variant):
             variant["datafile"],
             num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
             num_primitives=env.num_primitives,
+            env=env,
             **dataloader_kwargs,
         )
     elif low_level_primitives or clone_primitives:
@@ -229,16 +230,22 @@ def experiment(variant):
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         criterion = nn.MSELoss()
         primitives = []
-        for i in range(env.num_primitives):
-            arguments_size = train_datasets[i].inputs[0].shape[-1]
-            primitives.append(
-                Mlp(
-                    hidden_sizes=variant["mlp_hidden_sizes"],
-                    output_size=low_level_action_dim,
-                    input_size=world_model.feature_size + arguments_size,
-                    hidden_activation=torch.nn.functional.relu,
-                ).to(ptu.device)
-            )
+        for p in range(env.num_primitives):
+            arguments_size = train_datasets[p].inputs[0].shape[-1]
+            m = Mlp(
+                hidden_sizes=variant["mlp_hidden_sizes"],
+                output_size=low_level_action_dim,
+                input_size=world_model.feature_size + arguments_size,
+                hidden_activation=torch.nn.functional.relu,
+            ).to(ptu.device)
+            if variant.get("primitives_path", None):
+                m.load_state_dict(
+                    torch.load(
+                        variant["primitives_path"] + "primitive_model_{}.pt".format(p)
+                    )
+                )
+            primitives.append(m)
+
         optimizers = [
             optim.Adam(p.parameters(), **optimizer_kwargs) for p in primitives
         ]
@@ -306,7 +313,7 @@ def experiment(variant):
                         best_test_loss = total_loss / total_test_steps
                         os.makedirs(logdir + "/models/", exist_ok=True)
                         torch.save(
-                            world_model.state_dict(),
+                            primitive_model.state_dict(),
                             logdir + "/models/primitive_model_{}.pt".format(p),
                         )
             logger.record_dict(eval_statistics, prefix="")

@@ -182,7 +182,6 @@ def visualize_rollout(
                         ll_a = np.concatenate(
                             (a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1
                         )
-                        ll_a = ptu.from_numpy(ll_a)
                         ll_o = ll_o[idxs.astype(np.int)[1:] - 1]
                     else:
                         ll_a = actions[
@@ -205,22 +204,29 @@ def visualize_rollout(
                         obs[i, 1 + j * num_low_level_actions_per_primitive + k] = o
                         if primitive_model:
                             tmp = np.array(
-                                [
-                                    (k + 1)
-                                    / (
-                                        num_low_level_actions_per_primitive
-                                        * max_path_length
-                                    )
-                                ]
+                                [(k + 1) / (num_low_level_actions_per_primitive)]
                             ).reshape(1, -1)
-                            hl = np.concatenate((high_level_action, tmp), 1)
                             if use_separate_primitives:
-                                net = primitive_model[
-                                    torch.argmax(a[: env.num_primitives])
+                                primitive_idx, primitive_args = (
+                                    np.argmax(
+                                        high_level_action[0, : env.num_primitives]
+                                    ),
+                                    high_level_action[0, env.num_primitives :],
+                                )
+                                net = primitive_model[primitive_idx]
+                                primitive_name = env.primitive_idx_to_name[
+                                    primitive_idx
                                 ]
-                                hl = hl[:, env.num_primitives :]
+                                primitive_name_to_action_dict = env.break_apart_action(
+                                    primitive_args
+                                )
+                                hl = primitive_name_to_action_dict[
+                                    primitive_name
+                                ].reshape(1, -1)
                             else:
                                 net = primitive_model
+                                hl = high_level_action
+                            hl = np.concatenate((hl, tmp), 1)
                             state = world_model(
                                 ptu.from_numpy(o.reshape(1, 1, o.shape[-1])),
                                 (ptu.from_numpy(hl.reshape(1, 1, hl.shape[-1])), None),
@@ -228,6 +234,7 @@ def visualize_rollout(
                                 use_network_action=True,
                             )[0]
                         else:
+                            a = ptu.from_numpy(a)
                             if forcing == "teacher":
                                 o = ptu.from_numpy(o.reshape(1, -1))
                                 embed = world_model.encode(o)
@@ -530,6 +537,7 @@ def get_dataloader_separately(
     batch_size,
     num_primitives,
     num_low_level_actions_per_primitive,
+    env,
 ):
     """
     :param filename: (str)
@@ -548,15 +556,40 @@ def get_dataloader_separately(
     acs = [[] for _ in range(num_primitives)]
     for i in range(observations.shape[0]):
         for j in range(1, observations.shape[1], num_low_level_actions_per_primitive):
-            ha = high_level_actions[i][j]
-            p = np.argmax(ha[:num_primitives])
-            obs[p].append(observations[i][j : j + num_low_level_actions_per_primitive])
-            hls[p].append(
+            a = high_level_actions[i][j]
+            primitive_idx, primitive_args = (
+                np.argmax(a[: env.num_primitives]),
                 high_level_actions[i][
-                    j : j + num_low_level_actions_per_primitive, num_primitives:
-                ]
+                    j : j + num_low_level_actions_per_primitive, env.num_primitives :
+                ],
             )
-            acs[p].append(actions[i][j : j + num_low_level_actions_per_primitive])
+            primitive_name = env.primitive_idx_to_name[primitive_idx]
+            primitive_actions = []
+            for k in range(num_low_level_actions_per_primitive):
+                primitive_name_to_action_dict = env.break_apart_action(
+                    primitive_args[k]
+                )
+                primitive_action = primitive_name_to_action_dict[primitive_name]
+                primitive_actions.append(primitive_action)
+            primitive_actions = np.array(primitive_actions)
+            if len(primitive_actions.shape) == 1:
+                primitive_actions = primitive_actions.reshape(-1, 1)
+            primitive_actions = np.concatenate(
+                (
+                    primitive_actions,
+                    high_level_actions[i][
+                        j : j + num_low_level_actions_per_primitive, -2:-1
+                    ],
+                ),
+                axis=1,
+            )
+            obs[primitive_idx].append(
+                observations[i][j : j + num_low_level_actions_per_primitive]
+            )
+            hls[primitive_idx].append(primitive_actions)
+            acs[primitive_idx].append(
+                actions[i][j : j + num_low_level_actions_per_primitive]
+            )
     train_datasets = []
     test_datasets = []
     train_dataloaders = []
@@ -620,4 +653,5 @@ def get_dataloader_separately(
         train_dataloaders.append(train_dataloader)
         test_dataloaders.append(test_dataloader)
 
+        print(p, hl.shape)
     return train_dataloaders, test_dataloaders, train_datasets, test_datasets

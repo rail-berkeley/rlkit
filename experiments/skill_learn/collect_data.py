@@ -18,10 +18,22 @@ def save_wm_data(data, args):
     import h5py
 
     f = h5py.File("data/world_model_data/" + args.datafile + ".hdf5", "w")
-    f.create_dataset("observations", data=data["observations"])
-    f.create_dataset("actions", data=data["actions"])
+    f.create_dataset(
+        "observations",
+        data=data["observations"],
+        compression="gzip",
+        compression_opts=9,
+    )
+    f.create_dataset(
+        "actions", data=data["actions"], compression="gzip", compression_opts=9
+    )
     if "high_level_actions" in data:
-        f.create_dataset("high_level_actions", data=data["high_level_actions"])
+        f.create_dataset(
+            "high_level_actions",
+            data=data["high_level_actions"],
+            compression="gzip",
+            compression_opts=9,
+        )
 
 
 def collect_primitive_cloning_data(
@@ -108,7 +120,6 @@ def collect_world_model_data_low_level_primitives(
         ),
         dtype=np.uint8,
     )
-    env.reset()
     for k in tqdm(range(num_trajs // num_envs)):
         o = env.reset()
         data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
@@ -135,7 +146,9 @@ def collect_world_model_data_low_level_primitives(
                 spacing = num_ll // (num_low_level_actions_per_primitive)
                 a = ll_a.reshape(num_low_level_actions_per_primitive, spacing, -1)
                 a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
-                a = np.concatenate((a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1)
+                a = np.concatenate(
+                    (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
+                )  # try to get last index of each block
                 o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
                 actions.append(a)
                 obs.append(o)
