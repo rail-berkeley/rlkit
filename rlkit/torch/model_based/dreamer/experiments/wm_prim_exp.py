@@ -311,50 +311,23 @@ def experiment(variant):
                         )
             logger.record_dict(eval_statistics, prefix="")
             logger.dump_tabular(with_prefix=False, with_timestamp=False)
-            # if i % variant["plotting_period"] == 0:
-            #     visualize_rollout(
-            #         env,
-            #         None,
-            #         None,
-            #         world_model,
-            #         logdir,
-            #         max_path_length,
-            #         use_env=True,
-            #         forcing="none",
-            #         tag="none",
-            #         low_level_primitives=low_level_primitives,
-            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-            #         primitive_model=primitives,
-            #         use_separate_primitives=True,
-            #     )
-            #     visualize_rollout(
-            #         env,
-            #         train_dataset.outputs,
-            #         train_dataset.inputs[1],
-            #         world_model,
-            #         logdir,
-            #         max_path_length,
-            #         use_env=False,
-            #         forcing="teacher",
-            #         tag="train",
-            #         low_level_primitives=low_level_primitives,
-            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
-            #         - 1,
-            #     )
-            #     visualize_rollout(
-            #         env,
-            #         test_dataset.outputs,
-            #         test_dataset.inputs[1],
-            #         world_model,
-            #         logdir,
-            #         max_path_length,
-            #         use_env=False,
-            #         forcing="teacher",
-            #         tag="test",
-            #         low_level_primitives=low_level_primitives,
-            #         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
-            #         - 1,
-            #     )
+            if i % variant["plotting_period"] == 0:
+                visualize_rollout(
+                    env,
+                    None,
+                    None,
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=True,
+                    forcing="none",
+                    tag="none",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                    primitive_model=primitives,
+                    use_separate_primitives=True,
+                )
+
     elif clone_primitives:
         primitive_model = Mlp(
             hidden_sizes=variant["mlp_hidden_sizes"],

@@ -90,10 +90,9 @@ if __name__ == "__main__":
         "num_epochs": [10000],
         "plotting_period": [1000],
         "visualize_wm_from_path": [False],
-        # "dataloader_kwargs.batch_len":[50, 100, 250, 500],
+        "dataloader_kwargs.batch_len": [50, 100],
         # "dataloader_kwargs.batch_size":[50, 100, 250, 500],
-        # "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
-        # "optimizer_kwargs.lr": [1e-3, 3e-4, 8e-5],
+        "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

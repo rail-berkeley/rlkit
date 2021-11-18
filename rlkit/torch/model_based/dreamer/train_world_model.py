@@ -90,6 +90,7 @@ def visualize_rollout(
     low_level_primitives,
     num_low_level_actions_per_primitive,
     primitive_model=None,
+    use_separate_primitives=False,
 ):
     file_path = logdir + "/plots/"
     os.makedirs(file_path, exist_ok=True)
@@ -205,7 +206,7 @@ def visualize_rollout(
                         if primitive_model:
                             tmp = np.array(
                                 [
-                                    (j * k + 1)
+                                    (k + 1)
                                     / (
                                         num_low_level_actions_per_primitive
                                         * max_path_length
@@ -213,10 +214,17 @@ def visualize_rollout(
                                 ]
                             ).reshape(1, -1)
                             hl = np.concatenate((high_level_action, tmp), 1)
+                            if use_separate_primitives:
+                                net = primitive_model[
+                                    torch.argmax(a[: env.num_primitives])
+                                ]
+                                hl = hl[:, env.num_primitives :]
+                            else:
+                                net = primitive_model
                             state = world_model(
                                 ptu.from_numpy(o.reshape(1, 1, o.shape[-1])),
                                 (ptu.from_numpy(hl.reshape(1, 1, hl.shape[-1])), None),
-                                primitive_model,
+                                net,
                                 use_network_action=True,
                             )[0]
                         else:
