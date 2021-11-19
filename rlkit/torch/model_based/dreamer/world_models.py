@@ -232,6 +232,8 @@ class WorldModel(jit.ScriptModule):
             for k in prior.keys():
                 prior[k].append(prior_params[k].unsqueeze(1))
             state = post_params
+        if len(actions) > 0:
+            actions = torch.cat(actions, dim=1)
         return post, prior, actions
 
     def forward(
@@ -291,7 +293,6 @@ class WorldModel(jit.ScriptModule):
         images = self.decode(feat)
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)
-        actions = torch.cat(actions, dim=1)
 
         if self.discrete_latents:
             post_dist = self.get_dist(post["logits"], None, latent=True)

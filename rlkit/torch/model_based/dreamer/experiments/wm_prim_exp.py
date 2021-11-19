@@ -13,7 +13,6 @@ def visualize_wm(
     test_dataset,
     logdir,
     max_path_length,
-    i,
     low_level_primitives,
     num_low_level_actions_per_primitive,
 ):
@@ -22,10 +21,10 @@ def visualize_wm(
     visualize_rollout(
         env,
         None,
+        None,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=True,
         forcing="none",
         tag="none",
@@ -35,10 +34,10 @@ def visualize_wm(
     visualize_rollout(
         env,
         None,
+        None,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=True,
         forcing="teacher",
         tag="none",
@@ -48,10 +47,10 @@ def visualize_wm(
     visualize_rollout(
         env,
         None,
+        None,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=True,
         forcing="self",
         tag="none",
@@ -61,11 +60,11 @@ def visualize_wm(
 
     visualize_rollout(
         env,
-        train_dataset,
+        train_dataset.inputs,
+        train_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="none",
         tag="train",
@@ -74,11 +73,11 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset,
+        train_dataset.inputs,
+        train_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="teacher",
         tag="train",
@@ -87,11 +86,11 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset,
+        train_dataset.inputs,
+        train_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="self",
         tag="train",
@@ -100,11 +99,11 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        test_dataset,
+        test_dataset.inputs,
+        test_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="none",
         tag="test",
@@ -113,11 +112,11 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        test_dataset,
+        test_dataset.inputs,
+        test_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="teacher",
         tag="test",
@@ -126,11 +125,11 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        test_dataset,
+        test_dataset.inputs,
+        test_dataset.outputs,
         world_model,
         logdir,
         max_path_length,
-        i,
         use_env=False,
         forcing="self",
         tag="test",
@@ -222,7 +221,6 @@ def experiment(variant):
             test_dataset,
             logdir,
             max_path_length,
-            -1,
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )
@@ -579,7 +577,6 @@ def experiment(variant):
                     test_dataset,
                     logdir,
                     max_path_length,
-                    i,
                     low_level_primitives,
                     num_low_level_actions_per_primitive,
                 )
@@ -592,7 +589,6 @@ def experiment(variant):
             test_dataset,
             logdir,
             max_path_length,
-            -1,
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )

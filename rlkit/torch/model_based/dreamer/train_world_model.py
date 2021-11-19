@@ -182,6 +182,7 @@ def visualize_rollout(
                         ll_a = np.concatenate(
                             (a, ll_a[idxs.astype(np.int)[0:-1], 3:]), axis=1
                         )
+                        ll_a = ptu.from_numpy(ll_a)
                         ll_o = ll_o[idxs.astype(np.int)[1:] - 1]
                     else:
                         ll_a = actions[
@@ -234,7 +235,6 @@ def visualize_rollout(
                                 use_network_action=True,
                             )[0]
                         else:
-                            a = ptu.from_numpy(a)
                             if forcing == "teacher":
                                 o = ptu.from_numpy(o.reshape(1, -1))
                                 embed = world_model.encode(o)
@@ -427,7 +427,7 @@ class NumpyDataset(Dataset):
         :param i: (int)
         :return (tuple, np.ndarray)
         """
-        if type(self.inputs) != np.ndarray:
+        if type(self.inputs) == list or type(self.inputs) == tuple:
             inputs = []
             batch_start = np.random.randint(0, self.max_path_length - self.batch_len)
             idxs = np.linspace(
@@ -446,7 +446,22 @@ class NumpyDataset(Dataset):
             else:
                 outputs = self.outputs[i]
         else:
-            inputs, outputs = self.inputs[i], self.outputs[i]
+            batch_start = np.random.randint(0, self.max_path_length - self.batch_len)
+            idxs = np.linspace(
+                batch_start,
+                batch_start + self.batch_len,
+                self.batch_len,
+                endpoint=False,
+            ).astype(int)
+            if self.randomize_batch_len:
+                inputs = self.inputs[i, idxs]
+            else:
+                inputs = self.inputs[i]
+
+            if self.randomize_batch_len:
+                outputs = self.outputs[i, idxs]
+            else:
+                outputs = self.outputs[i]
         return inputs, outputs
 
 
@@ -457,6 +472,7 @@ def get_dataloader(
     batch_size,
     max_path_length,
     clone_primitives_preprocess=False,
+    randomize_batch_len=False,
 ):
     """
     :param filename: (str)
@@ -481,8 +497,6 @@ def get_dataloader(
             high_level_actions[num_train_datapoints:],
             observations[num_train_datapoints:],
         ), actions[num_train_datapoints:]
-        randomize_batch_len = True
-        sampler_class = RandomSampler
     else:
         train_inputs, train_outputs = (
             actions[:num_train_datapoints],
@@ -492,7 +506,9 @@ def get_dataloader(
             actions[num_train_datapoints:],
             observations[num_train_datapoints:],
         )
-        randomize_batch_len = False
+    if randomize_batch_len:
+        sampler_class = RandomSampler
+    else:
         sampler_class = BatchLenRandomSampler
 
     train_dataset = NumpyDataset(
@@ -538,6 +554,7 @@ def get_dataloader_separately(
     num_primitives,
     num_low_level_actions_per_primitive,
     env,
+    randomize_batch_len=True,
 ):
     """
     :param filename: (str)
@@ -609,14 +626,16 @@ def get_dataloader_separately(
         inputs, outputs = (hl[:num_train_datapoints], ob[:num_train_datapoints]), ac[
             :num_train_datapoints
         ]
-        randomize_batch_len = True
-        sampler_class = RandomSampler
+        if randomize_batch_len:
+            sampler_class = RandomSampler
+        else:
+            sampler_class = BatchLenRandomSampler
 
         train_dataset = NumpyDataset(
             inputs,
             outputs,
             batch_len,
-            num_low_level_actions_per_primitive,
+            num_low_level_actions_per_primitive + 1,
             num_train_datapoints,
             randomize_batch_len=randomize_batch_len,
         )
@@ -629,7 +648,7 @@ def get_dataloader_separately(
             inputs,
             outputs,
             batch_len,
-            num_low_level_actions_per_primitive,
+            num_low_level_actions_per_primitive + 1,
             ob.shape[0] - num_train_datapoints,
             randomize_batch_len=randomize_batch_len,
         )

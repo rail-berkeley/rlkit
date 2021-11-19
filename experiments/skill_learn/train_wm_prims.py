@@ -76,6 +76,7 @@ if __name__ == "__main__":
             batch_size=50,
             train_test_split=0.8,
             # clone_primitives_preprocess=True,
+            randomize_batch_len=True,
         ),
         mlp_hidden_sizes=(100, 100),
         gradient_clip=0,
@@ -89,15 +90,14 @@ if __name__ == "__main__":
 
     search_space = {
         "num_epochs": [10000],
-        "plotting_period": [1000],
+        "plotting_period": [10],
         "visualize_wm_from_path": [False],
+        "dataloader_kwargs.randomize_batch_len": [True, False],
         "dataloader_kwargs.batch_len": [50, 100],
         "dataloader_kwargs.batch_size": [50],
         "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
         "datafile": [
-            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
-            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_50_E_50_P_100_raps_ll_hl.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_10_P_100_raps_ll_hl.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

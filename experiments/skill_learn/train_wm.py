@@ -3,8 +3,8 @@ import random
 import subprocess
 
 import rlkit.util.hyperparameter as hyp
-from experiments.skill_learn.experiment import experiment
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.wm_prim_exp import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -74,17 +74,24 @@ if __name__ == "__main__":
             weight_decay=0.0,
         ),
         gradient_clip=100,
-        batch_len=50,
-        batch_size=50,
+        dataloader_kwargs=dict(
+            batch_len=50,
+            batch_size=50,
+            train_test_split=0.8,
+            randomize_batch_len=True,
+        ),
         num_epochs=1000,
-        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps.hdf5",
+        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
         train_test_split=0.8,
+        clone_primitives=False,
+        clone_primitives_separately=False,
     )
 
     search_space = {
-        "num_epochs": [1000],
+        "num_epochs": [10000],
         "plotting_period": [10],
         "visualize_wm_from_path": [False],
+        "dataloader_kwargs.randomize_batch_len": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
