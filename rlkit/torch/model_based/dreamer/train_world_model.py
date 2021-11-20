@@ -87,16 +87,20 @@ def subsample_paths(actions, observations, num_inputs, num_outputs):
     return actions, observations
 
 
-def get_state(o, a, state, world_model, forcing, new_img):
+def get_state(o, a, state, world_model, forcing, new_img, first_output=False):
     if forcing == "teacher":
         o = ptu.from_numpy(o.reshape(1, -1))
         embed = world_model.encode(o)
         state, prior = world_model.obs_step(state, a, embed)
     elif forcing == "self" and world_model.use_prior_instead_of_posterior:
-        o = new_img.reshape(-1, o.shape[-1])
-        o = torch.clamp(o + 0.5, 0, 1) * 255.0
-        embed = world_model.encode(o)
-        state, prior = world_model.obs_step(state, a, embed)
+        if first_output:
+            state = world_model.action_step(state, a)
+            prior = None
+        else:
+            o = new_img.reshape(-1, o.shape[-1])
+            o = torch.clamp(o + 0.5, 0, 1) * 255.0
+            embed = world_model.encode(o)
+            state, prior = world_model.obs_step(state, a, embed)
     else:
         state = world_model.action_step(state, a)
         prior = None
@@ -116,6 +120,7 @@ def forward_low_level_primitive(
     new_img,
     high_level,
     state,
+    primitive_name=None,
 ):
     reconstructions = []
     for k in range(0, num_low_level_actions_per_primitive):
@@ -130,13 +135,13 @@ def forward_low_level_primitive(
                 [ptu.from_numpy(hl), world_model.get_features(state)], dim=1
             )
             a_pred = net(inp)
-            print(k, torch.nn.functional.mse_loss(a_pred, a).item())
+            print(primitive_name, k, torch.nn.functional.mse_loss(a_pred, a).item())
             a = a_pred
 
         state = get_state(o, a, state, world_model, forcing, new_img)
         new_img = world_model.decode(world_model.get_features(state))
         reconstructions.append(new_img.unsqueeze(1))
-    return reconstructions
+    return reconstructions, state
 
 
 @torch.no_grad()
@@ -199,12 +204,12 @@ def visualize_rollout(
                     a = actions[i, 0:1].to(ptu.device)
                     o = ptu.get_numpy(observations[i, 0])
                 obs[i, 0] = o
-                new_img = world_model.decode(world_model.get_features(state))
+                new_img = None
                 if primitive_model:
                     a = ptu.zeros((1, 9))
-                    state = world_model.initial(1)
-                else:
-                    state = get_state(o, a, state, world_model, forcing, new_img)
+                state = get_state(
+                    o, a, state, world_model, forcing, new_img, first_output=True
+                )
                 new_img = world_model.decode(world_model.get_features(state))
                 reconstructions[i, 0] = new_img.unsqueeze(1)
                 for j in range(0, max_path_length):
@@ -261,8 +266,8 @@ def visualize_rollout(
                         )
                         hl = None
                         net = None
-
                     if use_separate_primitives and primitive_name == "top_x_y_grasp":
+                        print(primitive_name)
                         xyzd = primitive_name_to_action_dict["top_x_y_grasp"]
                         x_dist, y_dist, z_dist, d = xyzd
 
@@ -286,24 +291,27 @@ def visualize_rollout(
                                 300,
                                 num_low_level_actions_per_primitive,
                             )
-                            recons.extend(
-                                forward_low_level_primitive(
-                                    ll_a_,
-                                    ll_o_,
-                                    world_model,
-                                    num_low_level_actions_per_primitive,
-                                    primitive_model,
-                                    net,
-                                    forcing,
-                                    new_img,
-                                    hl,
-                                    state,
-                                )
+                            recon, state = forward_low_level_primitive(
+                                ll_a_,
+                                ll_o_,
+                                world_model,
+                                num_low_level_actions_per_primitive,
+                                primitive_model,
+                                net,
+                                forcing,
+                                new_img,
+                                hl,
+                                state,
                             )
-                        idxs = np.linspace(
-                            0, len(recons), num_low_level_actions_per_primitive
+                            recons.extend(recon)
+                        idxs = list(
+                            range(
+                                0,
+                                len(recons),
+                                len(recons) // num_low_level_actions_per_primitive,
+                            )
                         )
-                        recons = torch.cat(recons[idxs], dim=1)
+                        recons = [recons[idx] for idx in idxs]
                         ll_a, ll_o = subsample_paths(
                             ll_a,
                             ll_o,
@@ -311,7 +319,7 @@ def visualize_rollout(
                             num_low_level_actions_per_primitive,
                         )
                     else:
-                        recons = forward_low_level_primitive(
+                        recons, state = forward_low_level_primitive(
                             ll_a,
                             ll_o,
                             world_model,
@@ -351,7 +359,9 @@ def visualize_rollout(
                         a = actions[i, j : j + 1].to(ptu.device)
                         o = ptu.get_numpy(observations[i, j])
                     obs[i, j] = o
-                    state = get_state(o, a, state, world_model, forcing, new_img)
+                    state = get_state(
+                        o, a, state, world_model, forcing, new_img, first_output=j == 0
+                    )
                     new_img = world_model.decode(world_model.get_features(state))
                     reconstructions[i, j] = new_img.unsqueeze(1)
 

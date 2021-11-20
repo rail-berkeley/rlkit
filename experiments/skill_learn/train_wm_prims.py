@@ -75,15 +75,13 @@ if __name__ == "__main__":
             batch_len=50,
             batch_size=50,
             train_test_split=0.8,
-            # clone_primitives_preprocess=True,
             randomize_batch_len=True,
         ),
         mlp_hidden_sizes=(100, 100),
         gradient_clip=0,
         num_epochs=1000,
-        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
-        world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-09-train-wm-H-5-T-25-E-50-P-100-raps-ll-sweep/11-09-train_wm_H_5_T_25_E_50_P_100_raps_ll_sweep_2021_11_09_21_30_22_0000--s-37547/models/world_model.pt",
-        # primitives_path="/home/mdalal/research/skill_learn/rlkit/data/11-18-train-primitive-model-ll-hl-separately-sweep-bugfixes-1/11-18-train_primitive_model_ll_hl_separately_sweep_bugfixes_1_2021_11_18_19_09_59_0000--s-4184/models/",
+        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
+        world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-19-train-wm-even-100-1/11-19-train_wm_even_100_1_2021_11_19_21_48_13_0000--s-23958/models/world_model.pt",
         clone_primitives=False,
         clone_primitives_separately=True,
     )
@@ -93,12 +91,9 @@ if __name__ == "__main__":
         "plotting_period": [10],
         "visualize_wm_from_path": [False],
         "dataloader_kwargs.randomize_batch_len": [True],
-        # "dataloader_kwargs.batch_len": [50, 100],
         "dataloader_kwargs.batch_size": [50],
-        # "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
         "datafile": [
-            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
