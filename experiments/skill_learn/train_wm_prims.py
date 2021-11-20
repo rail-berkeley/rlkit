@@ -82,6 +82,7 @@ if __name__ == "__main__":
         num_epochs=1000,
         datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
         world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-19-train-wm-even-100-1/11-19-train_wm_even_100_1_2021_11_19_21_48_13_0000--s-23958/models/world_model.pt",
+        # primitives_path="/home/mdalal/research/skill_learn/rlkit/data/11-20-train-primitive-model-ll-hl-separately-sweep-bugfixes-2/11-20-train_primitive_model_ll_hl_separately_sweep_bugfixes_2_2021_11_20_14_56_05_0000--s-25804/models/",
         clone_primitives=False,
         clone_primitives_separately=True,
     )
@@ -90,8 +91,9 @@ if __name__ == "__main__":
         "num_epochs": [10000],
         "plotting_period": [10],
         "visualize_wm_from_path": [False],
-        "dataloader_kwargs.randomize_batch_len": [True],
+        "dataloader_kwargs.randomize_batch_len": [True, False],
         "dataloader_kwargs.batch_size": [50],
+        "mlp_hidden_sizes": [(100, 100), (256, 256), (512, 512)],
         "datafile": [
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
         ],
@@ -102,6 +104,8 @@ if __name__ == "__main__":
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):
+            if not variant["dataloader_kwargs"]["randomize_batch_len"]:
+                variant["plotting_period"] = 1
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id

@@ -249,21 +249,21 @@ def experiment(variant):
         ]
         for i in tqdm(range(num_epochs)):
             if i % variant["plotting_period"] == 0:
-                # visualize_rollout(
-                #     env,
-                #     None,
-                #     None,
-                #     world_model,
-                #     logdir,
-                #     max_path_length,
-                #     use_env=True,
-                #     forcing="none",
-                #     tag="none",
-                #     low_level_primitives=low_level_primitives,
-                #     num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-                #     primitive_model=primitives,
-                #     use_separate_primitives=True,
-                # )
+                visualize_rollout(
+                    env,
+                    None,
+                    None,
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=True,
+                    forcing="none",
+                    tag="none",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                    primitive_model=primitives,
+                    use_separate_primitives=True,
+                )
                 visualize_rollout(
                     env,
                     None,
@@ -279,21 +279,21 @@ def experiment(variant):
                     primitive_model=primitives,
                     use_separate_primitives=True,
                 )
-                # visualize_rollout(
-                #     env,
-                #     None,
-                #     None,
-                #     world_model,
-                #     logdir,
-                #     max_path_length,
-                #     use_env=True,
-                #     forcing="self",
-                #     tag="none",
-                #     low_level_primitives=low_level_primitives,
-                #     num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-                #     primitive_model=primitives,
-                #     use_separate_primitives=True,
-                # )
+                visualize_rollout(
+                    env,
+                    None,
+                    None,
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=True,
+                    forcing="self",
+                    tag="none",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                    primitive_model=primitives,
+                    use_separate_primitives=True,
+                )
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
             for p, (

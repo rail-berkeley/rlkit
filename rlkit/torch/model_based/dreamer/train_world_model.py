@@ -266,6 +266,7 @@ def visualize_rollout(
                         )
                         hl = None
                         net = None
+                        primitive_name = None
                     if use_separate_primitives and primitive_name == "top_x_y_grasp":
                         print(primitive_name)
                         xyzd = primitive_name_to_action_dict["top_x_y_grasp"]
@@ -284,7 +285,15 @@ def visualize_rollout(
                             primitive_model[9],
                         ]
                         recons = []
-                        for k, (hl, net) in enumerate(zip(hls, nets)):
+                        primitive_names = [
+                            "open_gripper",
+                            "move_delta_ee_pose",
+                            "drop",
+                            "close_gripper",
+                        ]
+                        for k, (hl, net, primitive_name) in enumerate(
+                            zip(hls, nets, primitive_names)
+                        ):
                             ll_a_, ll_o_ = subsample_paths(
                                 ll_a[300 * k : 300 * (k + 1)],
                                 ll_o[300 * k : 300 * (k + 1)],
@@ -302,6 +311,7 @@ def visualize_rollout(
                                 new_img,
                                 hl,
                                 state,
+                                primitive_name=primitive_name,
                             )
                             recons.extend(recon)
                         idxs = list(
@@ -330,6 +340,7 @@ def visualize_rollout(
                             new_img,
                             hl,
                             state,
+                            primitive_name=primitive_name,
                         )
                     reconstructions[
                         i,
