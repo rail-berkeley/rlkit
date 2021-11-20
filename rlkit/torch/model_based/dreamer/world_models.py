@@ -236,19 +236,14 @@ class WorldModel(jit.ScriptModule):
             actions = torch.cat(actions, dim=1)
         return post, prior, actions
 
-    def forward(
-        self,
-        obs,
-        action,
-        net=None,
-        use_network_action=False,
-    ):
+    def forward(self, obs, action, net=None, use_network_action=False, state=None):
         """
         :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
         :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
         """
         original_batch_size = obs.shape[0]
-        state = self.initial(original_batch_size)
+        if state is None:
+            state = self.initial(original_batch_size)
         path_length = obs.shape[1]
         if self.discrete_latents:
             post, prior = (

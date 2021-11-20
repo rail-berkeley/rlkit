@@ -248,6 +248,52 @@ def experiment(variant):
             optim.Adam(p.parameters(), **optimizer_kwargs) for p in primitives
         ]
         for i in tqdm(range(num_epochs)):
+            if i % variant["plotting_period"] == 0:
+                # visualize_rollout(
+                #     env,
+                #     None,
+                #     None,
+                #     world_model,
+                #     logdir,
+                #     max_path_length,
+                #     use_env=True,
+                #     forcing="none",
+                #     tag="none",
+                #     low_level_primitives=low_level_primitives,
+                #     num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                #     primitive_model=primitives,
+                #     use_separate_primitives=True,
+                # )
+                visualize_rollout(
+                    env,
+                    None,
+                    None,
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=True,
+                    forcing="teacher",
+                    tag="none",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                    primitive_model=primitives,
+                    use_separate_primitives=True,
+                )
+                # visualize_rollout(
+                #     env,
+                #     None,
+                #     None,
+                #     world_model,
+                #     logdir,
+                #     max_path_length,
+                #     use_env=True,
+                #     forcing="self",
+                #     tag="none",
+                #     low_level_primitives=low_level_primitives,
+                #     num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                #     primitive_model=primitives,
+                #     use_separate_primitives=True,
+                # )
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
             for p, (
@@ -316,22 +362,21 @@ def experiment(variant):
                         )
             logger.record_dict(eval_statistics, prefix="")
             logger.dump_tabular(with_prefix=False, with_timestamp=False)
-            if i % variant["plotting_period"] == 0:
-                visualize_rollout(
-                    env,
-                    None,
-                    None,
-                    world_model,
-                    logdir,
-                    max_path_length,
-                    use_env=True,
-                    forcing="none",
-                    tag="none",
-                    low_level_primitives=low_level_primitives,
-                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-                    primitive_model=primitives,
-                    use_separate_primitives=True,
-                )
+        visualize_rollout(
+            env,
+            None,
+            None,
+            world_model,
+            logdir,
+            max_path_length,
+            use_env=True,
+            forcing="none",
+            tag="none",
+            low_level_primitives=low_level_primitives,
+            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+            primitive_model=primitives,
+            use_separate_primitives=True,
+        )
 
     elif clone_primitives:
         primitive_model = Mlp(
@@ -448,6 +493,17 @@ def experiment(variant):
             **optimizer_kwargs,
         )
         for i in tqdm(range(num_epochs)):
+            if i % variant["plotting_period"] == 0:
+                visualize_wm(
+                    env,
+                    world_model,
+                    train_dataset,
+                    test_dataset,
+                    logdir,
+                    max_path_length,
+                    low_level_primitives,
+                    num_low_level_actions_per_primitive,
+                )
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
             total_wm_loss = 0
@@ -569,17 +625,6 @@ def experiment(variant):
                     )
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
-            if i % variant["plotting_period"] == 0:
-                visualize_wm(
-                    env,
-                    world_model,
-                    train_dataset,
-                    test_dataset,
-                    logdir,
-                    max_path_length,
-                    low_level_primitives,
-                    num_low_level_actions_per_primitive,
-                )
 
         world_model.load_state_dict(torch.load(logdir + "/models/world_model.pt"))
         visualize_wm(

@@ -83,7 +83,7 @@ if __name__ == "__main__":
         num_epochs=1000,
         datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
         world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-09-train-wm-H-5-T-25-E-50-P-100-raps-ll-sweep/11-09-train_wm_H_5_T_25_E_50_P_100_raps_ll_sweep_2021_11_09_21_30_22_0000--s-37547/models/world_model.pt",
-        # primitives_path="/home/mdalal/research/skill_learn/rlkit/data/11-17-train-primitive-model-ll-hl-separately/11-17-train_primitive_model_ll_hl_separately_2021_11_17_17_52_08_0000--s-39902/models/",
+        # primitives_path="/home/mdalal/research/skill_learn/rlkit/data/11-18-train-primitive-model-ll-hl-separately-sweep-bugfixes-1/11-18-train_primitive_model_ll_hl_separately_sweep_bugfixes_1_2021_11_18_19_09_59_0000--s-4184/models/",
         clone_primitives=False,
         clone_primitives_separately=True,
     )
@@ -92,12 +92,13 @@ if __name__ == "__main__":
         "num_epochs": [10000],
         "plotting_period": [10],
         "visualize_wm_from_path": [False],
-        "dataloader_kwargs.randomize_batch_len": [True, False],
-        "dataloader_kwargs.batch_len": [50, 100],
+        "dataloader_kwargs.randomize_batch_len": [True],
+        # "dataloader_kwargs.batch_len": [50, 100],
         "dataloader_kwargs.batch_size": [50],
-        "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
+        # "mlp_hidden_sizes": [(100, 100), (100, 100, 100), (100, 100, 100, 100)],
         "datafile": [
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
+            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
