@@ -200,6 +200,7 @@ def experiment(variant):
             **dataloader_kwargs,
         )
     elif low_level_primitives or clone_primitives:
+        dataloader_kwargs["clone_primitives"] = clone_primitives
         train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
             variant["datafile"],
             max_path_length=max_path_length * num_low_level_actions_per_primitive + 1,
@@ -379,6 +380,8 @@ def experiment(variant):
         )
 
     elif clone_primitives:
+        world_model.load_state_dict(torch.load(variant["world_model_path"]))
+        criterion = nn.MSELoss()
         primitive_model = Mlp(
             hidden_sizes=variant["mlp_hidden_sizes"],
             output_size=low_level_action_dim,
@@ -389,9 +392,50 @@ def experiment(variant):
             primitive_model.parameters(),
             **optimizer_kwargs,
         )
-        world_model.load_state_dict(torch.load(variant["world_model_path"]))
-        criterion = nn.MSELoss()
         for i in tqdm(range(num_epochs)):
+            if i % variant["plotting_period"] == 0:
+                visualize_rollout(
+                    env,
+                    None,
+                    None,
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=True,
+                    forcing="none",
+                    tag="none",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                    primitive_model=primitive_model,
+                )
+                visualize_rollout(
+                    env,
+                    train_dataset.outputs,
+                    train_dataset.inputs[1],
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=False,
+                    forcing="teacher",
+                    tag="train",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+                    - 1,
+                )
+                visualize_rollout(
+                    env,
+                    test_dataset.outputs,
+                    test_dataset.inputs[1],
+                    world_model,
+                    logdir,
+                    max_path_length,
+                    use_env=False,
+                    forcing="teacher",
+                    tag="test",
+                    low_level_primitives=low_level_primitives,
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
+                    - 1,
+                )
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
             total_loss = 0
@@ -444,49 +488,6 @@ def experiment(variant):
                     )
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
-                if i % variant["plotting_period"] == 0:
-                    visualize_rollout(
-                        env,
-                        None,
-                        None,
-                        world_model,
-                        logdir,
-                        max_path_length,
-                        use_env=True,
-                        forcing="none",
-                        tag="none",
-                        low_level_primitives=low_level_primitives,
-                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-                        primitive_model=primitive_model,
-                    )
-                    visualize_rollout(
-                        env,
-                        train_dataset.outputs,
-                        train_dataset.inputs[1],
-                        world_model,
-                        logdir,
-                        max_path_length,
-                        use_env=False,
-                        forcing="teacher",
-                        tag="train",
-                        low_level_primitives=low_level_primitives,
-                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
-                        - 1,
-                    )
-                    visualize_rollout(
-                        env,
-                        test_dataset.outputs,
-                        test_dataset.inputs[1],
-                        world_model,
-                        logdir,
-                        max_path_length,
-                        use_env=False,
-                        forcing="teacher",
-                        tag="test",
-                        low_level_primitives=low_level_primitives,
-                        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive
-                        - 1,
-                    )
     else:
         optimizer = optim.Adam(
             world_model.parameters(),

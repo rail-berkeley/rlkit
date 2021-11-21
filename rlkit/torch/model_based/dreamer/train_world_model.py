@@ -215,6 +215,14 @@ def visualize_rollout(
                 for j in range(0, max_path_length):
                     if use_env:
                         high_level_action = np.array([env.action_space.sample()])
+                        argmax = np.argmax(
+                            high_level_action[:, : env.num_primitives], axis=-1
+                        )
+                        one_hots = np.eye(env.num_primitives)[argmax]
+                        high_level_action = np.concatenate(
+                            (one_hots, high_level_action[:, env.num_primitives :]),
+                            axis=-1,
+                        )
                         o, r, d, info = env.step(
                             high_level_action[0],
                         )
@@ -528,7 +536,7 @@ def get_dataloader(
     batch_len,
     batch_size,
     max_path_length,
-    clone_primitives_preprocess=False,
+    clone_primitives=False,
     randomize_batch_len=False,
 ):
     """
@@ -541,11 +549,18 @@ def get_dataloader(
     with h5py.File(filename, "r") as f:
         observations = np.array(f["observations"][:])
         actions = np.array(f["actions"][:])
-        if clone_primitives_preprocess:
-            high_level_actions = torch.from_numpy(np.array(f["high_level_actions"][:]))
+        high_level_actions = np.array(f["high_level_actions"][:])
+    argmax = np.argmax(high_level_actions[:, :, :10], axis=-1)
+    one_hots = np.eye(10)[argmax]
+    one_hots[:, 0:1, :] = np.zeros((one_hots.shape[0], 1, 10))
+    high_level_actions = np.concatenate(
+        (one_hots, high_level_actions[:, :, 10:]), axis=-1
+    )
     num_train_datapoints = int(observations.shape[0] * train_test_split)
     observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
-    if clone_primitives_preprocess:
+    high_level_actions = torch.from_numpy(high_level_actions)
+
+    if clone_primitives:
         train_inputs, train_outputs = (
             high_level_actions[:num_train_datapoints],
             observations[:num_train_datapoints],
