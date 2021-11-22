@@ -78,21 +78,24 @@ if __name__ == "__main__":
         ),
         mlp_hidden_sizes=(512, 512),
         gradient_clip=0,
-        datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
+        # datafile="/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
         world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-19-train-wm-even-100-1/11-19-train_wm_even_100_1_2021_11_19_21_48_13_0000--s-23958/models/world_model.pt",
         # primitives_path="/home/mdalal/research/skill_learn/rlkit/data/11-20-train-primitive-model-ll-hl-separately-sweep-bugfixes-2/11-20-train_primitive_model_ll_hl_separately_sweep_bugfixes_2_2021_11_20_14_56_05_0000--s-25804/models/",
         clone_primitives=False,
         clone_primitives_separately=True,
         plotting_period=100,
         num_epochs=10000,
+        visualize_wm_from_path=False,
     )
 
     search_space = {
-        "clone_primitives": [True, False],
-        "clone_primitives_separately": [False, False],
-        "mlp_hidden_sizes": [(512, 512), (512, 1024, 512), (512, 1024, 1024, 512)],
+        "clone_primitives": [True],
+        "dataloader_kwargs.batch_len": [100],
+        "clone_primitives_separately": [False],
+        "mlp_hidden_sizes": [(512, 512)],
         "datafile": [
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -106,7 +109,7 @@ if __name__ == "__main__":
             if variant["clone_primitives"] and variant["clone_primitives_separately"]:
                 continue
             if not (
-                variant["clone_primitives"] and variant["clone_primitives_separately"]
+                variant["clone_primitives"] or variant["clone_primitives_separately"]
             ):
                 continue
             seed = random.randint(0, 100000)
