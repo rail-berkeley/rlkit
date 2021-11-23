@@ -1,72 +1,3 @@
-def load_data(filename, num_primitives):
-    """
-    :param filename: (str)
-    :param num_primitives: (int)
-    :param batch_size: (int)
-    :param train_test_split: (float)
-    :return: (tuple)
-    """
-    import numpy as np
-    import torch
-
-    data = np.load(filename, allow_pickle=True).item()
-    data["inputs"] = [
-        torch.Tensor(np.array(data["inputs"][i])) for i in range(num_primitives)
-    ]
-    data["inputs"] = [
-        data["inputs"][i].reshape(-1, data["inputs"][i].shape[-1])
-        for i in range(num_primitives)
-    ]
-
-    data["actions"] = [
-        torch.Tensor(np.array(data["actions"][i])) for i in range(num_primitives)
-    ]
-    data["actions"] = [
-        data["actions"][i].reshape(-1, data["actions"][i].shape[-1])
-        for i in range(num_primitives)
-    ]
-
-    return data
-
-
-def load_primitives(logdir, datafile, num_primitives, input_subselect, hidden_sizes):
-    import torch
-
-    from rlkit.torch.model_based.dreamer.mlp import Mlp
-
-    data = load_data(
-        "/home/mdalal/research/skill_learn/rlkit/data/primitive_data/"
-        + datafile
-        + ".npy",
-        num_primitives,
-    )
-    primitives = []
-    for i in range(num_primitives):
-        input_size = data["inputs"][i].shape[-1]
-        if input_subselect == "ee":
-            input_size = input_size - 20
-        primitives.append(
-            Mlp(
-                hidden_sizes=hidden_sizes,
-                output_size=data["actions"][i].shape[1],
-                input_size=input_size,
-                hidden_activation=torch.nn.functional.relu,
-            )
-        )
-
-    for i in range(num_primitives):
-        primitives[i].load_state_dict(
-            torch.load(
-                "/home/mdalal/research/skill_learn/rlkit/data/"
-                + logdir
-                + "/models/primitive_{}.pt".format(i)
-            )
-        )
-        primitives[i].eval().cpu()
-
-    return primitives
-
-
 def experiment(variant):
     import os
 
@@ -85,11 +16,16 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
+        DreamerLowLevelRAPSPolicy,
         DreamerPolicy,
     )
-    from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
+    from rlkit.torch.model_based.dreamer.dreamer_v2 import (
+        DreamerV2LowLevelRAPSTrainer,
+        DreamerV2Trainer,
+    )
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
+        EpisodeReplayBufferLowLevelRAPS,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mcts.dreamer_v2_mcts import (
@@ -97,7 +33,11 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.rollout_functions import (
+        vec_rollout_low_level_raps,
+    )
     from rlkit.torch.model_based.dreamer.world_models import (
+        LowlevelRAPSWorldModel,
         StateConcatObsWorldModel,
         WorldModel,
     )
@@ -114,10 +54,8 @@ def experiment(variant):
     use_raw_actions = variant["use_raw_actions"]
     num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
-    load_primitives_kwargs = variant.get("load_primitives_kwargs", {})
-    if env_kwargs.get("use_learned_primitives", False):
-        primitives = load_primitives(**load_primitives_kwargs)
-        env_kwargs["learned_primitives"] = primitives
+    num_low_level_actions_per_primitive = variant["num_low_level_actions_per_primitive"]
+    low_level_action_dim = variant["low_level_action_dim"]
     if variant.get("make_multi_task_env", False):
         make_env_lambda = lambda: MultiTaskEnv(
             env_suite, variant["env_names"], env_kwargs
@@ -143,7 +81,6 @@ def experiment(variant):
         discrete_continuous_dist = False
         continuous_action_dim = eval_env.action_space.low.size
         discrete_action_dim = 0
-        use_batch_length = True
         action_dim = continuous_action_dim
     else:
         discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
@@ -153,13 +90,6 @@ def experiment(variant):
             continuous_action_dim = continuous_action_dim + discrete_action_dim
             discrete_action_dim = 0
         action_dim = continuous_action_dim + discrete_action_dim
-        use_batch_length = False
-    if variant.get("world_model_class_name", "world_model") == "world_model":
-        world_model_class = WorldModel
-    else:
-        world_model_class = StateConcatObsWorldModel
-        variant["model_kwargs"]["vec_obs_size"] = len(variant["env_names"])
-        variant["model_kwargs"]["embedding_size"] += len(variant["env_names"])
     obs_dim = expl_env.observation_space.low.size
     if actor_model_class_name == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
@@ -167,6 +97,13 @@ def experiment(variant):
         actor_model_class = ConditionalContinuousActorModel
     elif actor_model_class_name == "actor_model":
         actor_model_class = ActorModel
+
+    primitive_model = Mlp(
+        hidden_sizes=variant["mlp_hidden_sizes"],
+        output_size=variant["low_level_action_dim"],
+        input_size=250 + eval_env.envs[0].action_space.low.shape[0] + 1,
+        hidden_activation=torch.nn.functional.relu,
+    ).to(ptu.device)
     if variant.get("load_from_path", False):
         filename = variant["models_path"] + variant["pkl_file_name"]
         print(filename)
@@ -176,9 +113,11 @@ def experiment(variant):
         target_vf = data["trainer/target_vf"]
         world_model = data["trainer/world_model"]
     else:
+        world_model_class = LowlevelRAPSWorldModel
         world_model = world_model_class(
-            action_dim,
+            low_level_action_dim,
             image_shape=eval_envs[0].image_shape,
+            primitive_model=primitive_model,
             **variant["model_kwargs"],
         )
     if variant.get("retrain_actor_and_vf", True):
@@ -227,22 +166,28 @@ def experiment(variant):
             **variant["eval_policy_kwargs"],
         )
     else:
-        expl_policy = DreamerPolicy(
+        expl_policy = DreamerLowLevelRAPSPolicy(
             world_model,
             actor,
             obs_dim,
             action_dim,
+            primitive_model=primitive_model,
+            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+            low_level_action_dim=low_level_action_dim,
             exploration=True,
             expl_amount=variant.get("expl_amount", 0.3),
             discrete_action_dim=discrete_action_dim,
             continuous_action_dim=continuous_action_dim,
             discrete_continuous_dist=discrete_continuous_dist,
         )
-        eval_policy = DreamerPolicy(
+        eval_policy = DreamerLowLevelRAPSPolicy(
             world_model,
             actor,
             obs_dim,
             action_dim,
+            primitive_model=primitive_model,
+            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+            low_level_action_dim=low_level_action_dim,
             exploration=False,
             expl_amount=0.0,
             discrete_action_dim=discrete_action_dim,
@@ -256,38 +201,35 @@ def experiment(variant):
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
+        rollout_fn=vec_rollout_low_level_raps,
     )
 
     eval_path_collector = VecMdpPathCollector(
         eval_env,
         eval_policy,
         save_env_in_snapshot=False,
+        rollout_fn=vec_rollout_low_level_raps,
     )
 
-    replay_buffer = EpisodeReplayBuffer(
+    replay_buffer = EpisodeReplayBufferLowLevelRAPS(
         variant["replay_buffer_size"],
         expl_env,
-        variant["algorithm_kwargs"]["max_path_length"] + 1,
+        variant["algorithm_kwargs"]["max_path_length"],
+        num_low_level_actions_per_primitive,
         obs_dim,
         action_dim,
+        low_level_action_dim,
         replace=False,
-        use_batch_length=use_batch_length,
-        batch_length=50,
     )
-    trainer_class_name = variant.get("algorithm", "DreamerV2")
-    if trainer_class_name == "DreamerV2":
-        trainer_class = DreamerV2Trainer
-    elif trainer_class_name == "DreamerV2MCTS":
-        trainer_class = DreamerV2MCTSTrainer
-    else:
-        trainer_class = DreamerTrainer
-    trainer = trainer_class(
+    trainer = DreamerV2LowLevelRAPSTrainer(
         eval_env,
         actor,
         vf,
         target_vf,
         world_model,
         eval_envs[0].image_shape,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        num_primitives=eval_env.envs[0].num_primitives,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(
@@ -300,7 +242,6 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
-    trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_post_epoch_func)
     print("TRAINING")

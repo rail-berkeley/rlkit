@@ -4,6 +4,7 @@ from typing import Tuple
 import numpy as np
 import torch
 import torch.optim as optim
+from torch import nn
 from torch.distributions import kl_divergence as kld
 
 import rlkit.torch.pytorch_util as ptu
@@ -209,6 +210,37 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         rewards,
         terminals,
     ):
+        """
+        :param image_dist: Normal(mu, 1)
+            mu: torch.Tensor (batch_size*(path_length+1), image_shape)
+        :param reward_dist: Normal(mu, 1)
+            mu: torch.Tensor (batch_size*(path_length+1), 1)
+        :param prior: dict
+            stoch: torch.Tensor (batch_size*(path_length+1), latent_size)
+            deter: torch.Tensor (batch_size*(path_length+1), latent_size)
+            mean: torch.Tensor (batch_size*(path_length+1), latent_size)
+            std: torch.Tensor (batch_size*(path_length+1), latent_size)
+        :param post: dict
+            stoch: torch.Tensor (batch_size*(path_length+1), latent_size)
+            deter: torch.Tensor (batch_size*(path_length+1), latent_size)
+            mean: torch.Tensor (batch_size*(path_length+1), latent_size)
+            std: torch.Tensor (batch_size*(path_length+1), latent_size)
+        :param prior_dist: Normal(prior['mean'], prior['std'])
+        :param post_dist: Normal(post['mean'], post['std'])
+        :param pred_discount_dist: Bernoulli(logits, 1)
+            logits: torch.Tensor (batch_size*(path_length+1), 1)
+        :param obs: torch.Tensor (batch_size*(path_length+1), obs_dim)
+        :param rewards: torch.Tensor (batch_size*(path_length+1), 1)
+        :param terminals: torch.Tensor (batch_size*(path_length+1), 1)
+        :return losses (list):
+            world_model_loss,
+            div,
+            image_pred_loss,
+            reward_pred_loss,
+            transition_loss,
+            entropy_loss,
+            pred_discount_loss,
+        """
         preprocessed_obs = self.world_model.flatten_obs(
             self.world_model.preprocess(obs), self.image_shape
         )
@@ -271,6 +303,19 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys,
         prefix="",
     ):
+        """
+        :param imagined_returns:
+        :param value:
+        :param imagined_features:
+        :param imagined_actions:
+        :param weights:
+        :param old_imagined_log_probs:
+        :param actor:
+        :param log_keys:
+        :param prefix:
+
+        :return actor_loss:
+        """
         if self.use_baseline:
             advantages = imagined_returns - value[:-1]
         else:
@@ -341,6 +386,17 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         old_imagined_value=None,
         prefix="",
     ):
+        """
+        :param imagined_features_v:
+        :param weights:
+        :param imagined_returns:
+        :param vf:
+        :param log_keys:
+        :param old_imagined_value:
+        :param prefix:
+
+        :return vf_loss:
+        """
         values = vf(imagined_features_v)[:-1]
         value_dist = self.world_model.get_dist(values, 1)
         if self.use_clipped_value_loss:
@@ -379,6 +435,16 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         batch,
         skip_statistics=False,
     ) -> Tuple[DreamerLosses, LossStatistics]:
+        """
+        :param: batch dict[
+            "rewards": (batch_size, path_length+1, 1),
+            "terminals": (batch_size, path_length+1, 1),
+            "observations": (batch_size, path_length+1, obs_dim),
+            "actions": (batch_size, path_length+1, act_dim),
+            ]
+        :param: skip_statistics bool
+        :returns: Tuple[DreamerLosses, LossStatistics]
+        """
         rewards = batch["rewards"] * self.reward_scale
         terminals = batch["terminals"]
         obs = batch["observations"]
@@ -395,6 +461,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 image_dist,
                 reward_dist,
                 pred_discount_dist,
+                _,
                 _,
             ) = self.world_model(obs, actions)
             obs = self.world_model.flatten_obs(
@@ -726,22 +793,24 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         pass
 
 
-class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
+class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
     def __init__(
         self,
         *args,
-        primitives,
+        num_primitives,
         primitive_optimizer_kwargs=None,
         num_low_level_actions_per_primitive=100,
+        batch_length=50,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.primitives = primitives
-        self.primitive_optimizers = [
-            optim.Adam(p.parameters(), **primitive_optimizer_kwargs) for p in primitives
-        ]
-        self.num_primitives = len(self.primitives)
+        self.primitive_model_optimizer = optim.Adam(
+            self.world_model.primitive_model.parameters(), **primitive_optimizer_kwargs
+        )
+        self.num_primitives = num_primitives
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
+        self.batch_length = batch_length
+        self.criterion = nn.MSELoss()
 
     def imagine_ahead(self, state, actor=None):
         if actor is None:
@@ -765,220 +834,76 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
             for k in states.keys():
                 states[k].append(new_state[k].unsqueeze(0))
             action_dist = actor(features.detach())
-            action = action_dist.rsample()
+            high_level_action = (
+                action_dist.rsample()
+            )  # this should sample a one-hot vector + args
+            assert all(
+                torch.sum(high_level_action[:, : self.num_primitives], dim=1) == 1
+            )
             for k in range(0, self.num_low_level_actions_per_primitive):
-                # TODO: group by primitive and forward each model
                 tmp = np.array(
                     [(k + 1) / (self.num_low_level_actions_per_primitive)]
                 ).reshape(1, -1)
-                tmp = np.repeat(tmp, action.shape[0], axis=0)
+                tmp = np.repeat(tmp, high_level_action.shape[0], axis=0)
                 tmp = ptu.from_numpy(tmp)
-                hl = torch.cat((action, tmp), 1)
+                hl = torch.cat((high_level_action, tmp), 1)
                 inp = torch.cat(
-                    [ptu.from_numpy(hl), self.world_model.get_features(new_state)],
+                    [hl, self.world_model.get_features(new_state)],
                     dim=1,
                 )
-                a = net(inp)
+                a = self.world_model.primitive_model(inp)
                 new_state = self.world_model.action_step(new_state, a)
             imagined_features.append(features.unsqueeze(0))
-            imagined_actions.append(action.unsqueeze(0))
+            imagined_actions.append(high_level_action.unsqueeze(0))
         imagined_features = torch.cat(imagined_features)
         imagined_actions = torch.cat(imagined_actions)
         for k in states.keys():
             states[k] = torch.cat(states[k])
         return imagined_features, imagined_actions, states
 
-    def world_model_loss(
-        self,
-        image_dist,
-        reward_dist,
-        prior,
-        post,
-        prior_dist,
-        post_dist,
-        pred_discount_dist,
-        obs,
-        rewards,
-        terminals,
-    ):
-        preprocessed_obs = self.world_model.flatten_obs(
-            self.world_model.preprocess(obs), self.image_shape
-        )
-        image_pred_loss = -1 * image_dist.log_prob(preprocessed_obs).mean()
-        if self.detach_rewards:
-            reward_pred_loss = -1 * reward_dist.log_prob(rewards.detach()).mean()
-        else:
-            reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
-        pred_discount_target = self.discount * (1 - terminals.float())
-        pred_discount_loss = (
-            -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
-        )
-
-        post_detached_dist = self.world_model.get_detached_dist(post)
-        prior_detached_dist = self.world_model.get_detached_dist(prior)
-        if self.forward_kl:
-            div = kld(post_dist, prior_dist).mean()
-            div = torch.max(div, ptu.tensor(self.free_nats))
-            prior_kld = kld(post_detached_dist, prior_dist).mean()
-            post_kld = kld(post_dist, prior_detached_dist).mean()
-        else:
-            div = kld(prior_dist, post_dist).mean()
-            div = torch.max(div, ptu.tensor(self.free_nats))
-            prior_kld = kld(prior_dist, post_detached_dist).mean()
-            post_kld = kld(prior_detached_dist, post_dist).mean()
-        transition_loss = torch.max(prior_kld, ptu.tensor(self.free_nats))
-        entropy_loss = torch.max(post_kld, ptu.tensor(self.free_nats))
-        entropy_loss_scale = 1 - self.transition_loss_scale
-        entropy_loss_scale = (1 - self.kl_loss_scale) * entropy_loss_scale
-        transition_loss_scale = (1 - self.kl_loss_scale) * self.transition_loss_scale
-        world_model_loss = (
-            self.kl_loss_scale * div
-            + self.image_loss_scale * image_pred_loss
-            + self.reward_loss_scale * reward_pred_loss
-            + transition_loss_scale * transition_loss
-            + entropy_loss_scale * entropy_loss
-        )
-
-        if self.use_pred_discount:
-            world_model_loss += self.pred_discount_loss_scale * pred_discount_loss
-        return (
-            world_model_loss,
-            div,
-            image_pred_loss,
-            reward_pred_loss,
-            transition_loss,
-            entropy_loss,
-            pred_discount_loss,
-        )
-
-    def actor_loss(
-        self,
-        imagined_returns,
-        value,
-        imagined_features,
-        imagined_actions,
-        weights,
-        old_imagined_log_probs,
-        actor,
-        log_keys,
-        prefix="",
-    ):
-        if self.use_baseline:
-            advantages = imagined_returns - value[:-1]
-        else:
-            advantages = imagined_returns
-        if self.use_advantage_normalization:
-            advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
-        advantages = advantages.reshape(-1).detach()
-
-        imagined_features_actions = (
-            imagined_features[:-1].reshape(-1, imagined_features.shape[-1]).detach()
-        )
-        imagined_actions = (
-            imagined_actions[:-1].reshape(-1, imagined_actions.shape[-1]).detach()
-        )
-
-        imagined_actor_dist = actor(imagined_features_actions)
-        imagined_log_probs = imagined_actor_dist.log_prob(imagined_actions)
-        if self.use_ppo_loss:
-            ratio = torch.exp(imagined_log_probs - old_imagined_log_probs)
-            surr1 = ratio * advantages
-            surr2 = (
-                torch.clamp(ratio, 1.0 - self.ppo_clip_param, 1.0 + self.ppo_clip_param)
-                * advantages
-            )
-            policy_gradient_loss = -torch.min(surr1, surr2)
-        else:
-            policy_gradient_loss = -1 * imagined_log_probs * advantages
-        actor_entropy_loss = -1 * imagined_actor_dist.entropy()
-
-        dynamics_backprop_loss = -(imagined_returns)
-        dynamics_backprop_loss = dynamics_backprop_loss.reshape(-1)
-        weights = weights.reshape(-1)
-        actor_entropy_loss_scale = self.actor_entropy_loss_scale()
-        dynamics_backprop_loss_scale = 1 - self.policy_gradient_loss_scale
-        if self.num_actor_value_updates > 1:
-            actor_loss = (
-                (
-                    self.policy_gradient_loss_scale * policy_gradient_loss
-                    + actor_entropy_loss_scale * actor_entropy_loss
-                )
-                * weights
-            ).mean()
-        else:
-            actor_loss = (
-                (
-                    dynamics_backprop_loss_scale * dynamics_backprop_loss
-                    + self.policy_gradient_loss_scale * policy_gradient_loss
-                    + actor_entropy_loss_scale * actor_entropy_loss
-                )
-                * weights
-            ).mean()
-        log_keys[prefix + "actor_loss"] += actor_loss.item()
-        log_keys[
-            prefix + "dynamics_backprop_loss"
-        ] += dynamics_backprop_loss.mean().item()
-        log_keys[prefix + "actor_entropy_loss"] += actor_entropy_loss.mean().item()
-        log_keys[prefix + "actor_entropy_loss_scale"] += actor_entropy_loss_scale
-        log_keys[prefix + "imagined_log_probs"] += imagined_log_probs.mean().item()
-        return actor_loss
-
-    def value_loss(
-        self,
-        imagined_features_v,
-        weights,
-        imagined_returns,
-        vf,
-        log_keys,
-        old_imagined_value=None,
-        prefix="",
-    ):
-        values = vf(imagined_features_v)[:-1]
-        value_dist = self.world_model.get_dist(values, 1)
-        if self.use_clipped_value_loss:
-            value_pred_clipped = old_imagined_value[:-1] + (
-                values - old_imagined_value[:-1]
-            ).clamp(-self.ppo_clip_param, self.ppo_clip_param)
-            vf_losses = value_dist.log_prob(imagined_returns)
-            vf_clipped_dist = self.world_model.get_dist(value_pred_clipped, 1)
-            vf_losses_clipped = vf_clipped_dist.log_prob(imagined_returns)
-            weights = weights.squeeze(-1)
-            vf_loss = (torch.max(-vf_losses, -vf_losses_clipped) * weights).mean()
-        else:
-            log_probs = value_dist.log_prob(imagined_returns)
-            weights = weights.squeeze(-1)
-            vf_loss = -(weights * log_probs).mean()
-        log_keys[prefix + "vf_loss"] += vf_loss.item()
-        log_keys[prefix + "value_dist"] += value_dist.mean.mean().item()
-        return vf_loss
-
-    def update_network(self, network, optimizer, loss, gradient_clip):
-        if type(network) == list:
-            parameters = []
-            for net in network:
-                parameters.extend(list(net.parameters()))
-        else:
-            parameters = list(network.parameters())
-        self.scaler.scale(loss).backward()
-        if gradient_clip > 0:
-            self.scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
-        self.scaler.step(optimizer)
-        optimizer.zero_grad(set_to_none=True)
-
     def train_networks(
         self,
         batch,
         skip_statistics=False,
     ) -> Tuple[DreamerLosses, LossStatistics]:
+        """
+        :param: batch dict[
+            "rewards": (batch_size, path_length+1, 1),
+            "terminals": (batch_size, path_length+1, 1),
+            "observations": (batch_size, path_length*num_low_level_actions_per_primitive+1, obs_dim),
+            "high_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, act_dim),
+            "low_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, low_level_act_dim),
+            ]
+        :param: skip_statistics bool
+        :returns: Tuple[DreamerLosses, LossStatistics]
+        """
         rewards = batch["rewards"] * self.reward_scale
         terminals = batch["terminals"]
         obs = batch["observations"]
-        actions = batch["actions"]
+        high_level_actions = batch["high_level_actions"]
+        low_level_actions = batch["low_level_actions"]
         """
         World Model Loss
         """
         with torch.cuda.amp.autocast():
+            rt_idxs = np.arange(
+                self.num_low_level_actions_per_primitive,
+                obs.shape[1],
+                self.num_low_level_actions_per_primitive,
+            )
+            rt_idxs = np.concatenate(
+                [[0], rt_idxs]
+            )  # reset obs, effect of first primitive, second primitive, so on
+
+            batch_start = np.random.randint(
+                0, obs.shape[1] - self.batch_length, size=(obs.shape[0])
+            )
+            batch_indices = np.linspace(
+                batch_start,
+                batch_start + self.batch_length,
+                self.batch_length,
+                endpoint=False,
+            ).astype(int)
             (
                 post,
                 prior,
@@ -988,9 +913,17 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
                 reward_dist,
                 pred_discount_dist,
                 _,
-            ) = self.world_model(obs, actions)
+                action_preds,
+            ) = self.world_model(
+                obs,
+                (high_level_actions, low_level_actions),
+                use_network_action=False,
+                batch_indices=batch_indices,
+                rt_idxs=rt_idxs,
+            )
             obs = self.world_model.flatten_obs(
-                obs.transpose(1, 0), (int(np.prod(self.image_shape)),)
+                obs[np.arange(batch_indices.shape[1]), batch_indices],
+                (int(np.prod(self.image_shape)),),
             )
             rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
             terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
@@ -1005,8 +938,18 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
             ) = self.world_model_loss(
                 image_dist,
                 reward_dist,
-                prior,
-                post,
+                {
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices].permute(
+                        1, 0, 2
+                    )
+                    for k, v in prior.items()
+                },
+                {
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices].permute(
+                        1, 0, 2
+                    )
+                    for k, v in post.items()
+                },
                 prior_dist,
                 post_dist,
                 pred_discount_dist,
@@ -1015,12 +958,23 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
                 terminals,
             )
 
+            primitive_loss = self.criterion(
+                action_preds, low_level_actions[:, batch_indices]
+            )
+
         self.update_network(
             self.world_model,
             self.world_model_optimizer,
-            world_model_loss,
+            world_model_loss
+            + primitive_loss,  # we will have to test to see if this works
             self.world_model_gradient_clip,
         )
+
+        if self.world_model.use_prior_instead_of_posterior:
+            state = prior
+        else:
+            state = post
+        state = {k: v[:, rt_idxs] for k, v in state.items()}
 
         """
         Actor Value Loss
@@ -1033,7 +987,7 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
         for _ in range(self.num_imagination_iterations):
             with torch.cuda.amp.autocast():
                 with FreezeParameters(world_model_params + pred_discount_params):
-                    (imagined_features, imagined_actions, _) = self.imagine_ahead(post)
+                    (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
                     imagined_reward = self.world_model.reward(imagined_features)
                     if self.use_pred_discount:
                         discount = self.world_model.get_dist(
@@ -1132,6 +1086,7 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
         """
         eval_statistics = OrderedDict()
         if not skip_statistics:
+            eval_statistics["Primitive Model Loss"] = primitive_loss.item()
             eval_statistics["World Model Loss"] = world_model_loss.item()
             eval_statistics["Image Loss"] = image_pred_loss.item()
             eval_statistics["Reward Loss"] = reward_pred_loss.item()
@@ -1167,5 +1122,4 @@ class DreamerV2LowLevelRAPSTrainer(TorchTrainer, LossFunction):
             world_model_loss=world_model_loss,
             vf_loss=vf_loss,
         )
-
         return loss, eval_statistics

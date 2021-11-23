@@ -18,7 +18,7 @@ class DummyVecEnv(Env):
         actions,
         render_every_step=False,
         render_mode="rgb_array",
-        render_im_shape=(1000, 1000),
+        render_im_shape=(64, 64),
     ):
         if self.pass_render_kwargs:
             promises = [

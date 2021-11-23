@@ -91,9 +91,9 @@ if __name__ == "__main__":
         "num_epochs": [10000],
         "plotting_period": [100],
         "visualize_wm_from_path": [False],
-        "dataloader_kwargs.randomize_batch_len": [True],
-        "dataloader_kwargs.batch_len": [100],
-        "dataloader_kwargs.batch_size": [50],
+        "dataloader_kwargs.randomize_batch_len": [False],
+        "dataloader_kwargs.batch_len": [50, 100],
+        "dataloader_kwargs.batch_size": [25, 50],
         "datafile": [
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",

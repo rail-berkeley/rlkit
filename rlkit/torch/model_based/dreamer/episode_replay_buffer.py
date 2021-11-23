@@ -116,3 +116,106 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             terminals=terminals,
         )
         return batch
+
+
+class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
+    def __init__(
+        self,
+        max_replay_buffer_size,
+        env,
+        max_path_length,
+        num_low_level_actions_per_primitive,
+        observation_dim,
+        action_dim,
+        low_level_action_dim,
+        replace=True,
+        batch_length=50,
+        use_batch_length=False,
+    ):
+        self.env = env
+        self._ob_space = env.observation_space
+        self._action_space = env.action_space
+
+        self._observation_dim = get_dim(self._ob_space)
+        self._action_dim = get_dim(self._action_space)
+        self.max_path_length = max_path_length
+        self._max_replay_buffer_size = max_replay_buffer_size
+        self._observations = np.zeros(
+            (
+                max_replay_buffer_size,
+                max_path_length * num_low_level_actions_per_primitive + 1,
+                observation_dim,
+            ),
+            dtype=np.uint8,
+        )
+        self._low_level_actions = np.zeros(
+            (
+                max_replay_buffer_size,
+                max_path_length * num_low_level_actions_per_primitive + 1,
+                low_level_action_dim,
+            )
+        )
+        self._high_level_actions = np.zeros(
+            (
+                max_replay_buffer_size,
+                max_path_length * num_low_level_actions_per_primitive + 1,
+                action_dim + 1,
+            )
+        )
+        self._rewards = np.zeros((max_replay_buffer_size, max_path_length + 1, 1))
+        self._terminals = np.zeros(
+            (max_replay_buffer_size, max_path_length + 1, 1), dtype="uint8"
+        )
+        self._replace = replace
+        self.batch_length = batch_length
+        self.use_batch_length = use_batch_length
+        self._top = 0
+        self._size = 0
+
+    def add_path(self, path):
+        self._observations[self._top : self._top + self.env.n_envs] = path[
+            "observations"
+        ]
+        self._low_level_actions[self._top : self._top + self.env.n_envs] = path[
+            "low_level_actions"
+        ]
+        self._high_level_actions[self._top : self._top + self.env.n_envs] = path[
+            "high_level_actions"
+        ]
+        self._rewards[self._top : self._top + self.env.n_envs] = np.expand_dims(
+            path["rewards"].transpose(1, 0), -1
+        )
+        self._terminals[self._top : self._top + self.env.n_envs] = np.expand_dims(
+            path["terminals"].transpose(1, 0), -1
+        )
+
+        self._advance()
+
+    def _advance(self):
+        self._top = (self._top + self.env.n_envs) % self._max_replay_buffer_size
+        if self._size < self._max_replay_buffer_size:
+            self._size += self.env.n_envs
+
+    def random_batch(self, batch_size):
+        indices = np.random.choice(
+            self._size,
+            size=batch_size,
+            replace=self._replace or self._size < batch_size,
+        )
+        if not self._replace and self._size < batch_size:
+            warnings.warn(
+                "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+            )
+        observations = self._observations[indices]
+        high_level_actions = self._high_level_actions[indices]
+        low_level_actions = self._low_level_actions[indices]
+        rewards = self._rewards[indices]
+        terminals = self._terminals[indices]
+        batch = dict(
+            observations=observations,
+            high_level_actions=high_level_actions,
+            low_level_actions=low_level_actions,
+            rewards=rewards,
+            terminals=terminals,
+        )
+        return batch

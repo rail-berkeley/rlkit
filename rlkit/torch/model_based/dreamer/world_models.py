@@ -1,6 +1,6 @@
 import math
 import numbers
-from typing import Dict, List
+from typing import Dict, List, Tuple
 
 import numpy as np
 import torch
@@ -373,6 +373,149 @@ class WorldModel(jit.ScriptModule):
     def flatten_obs(self, obs, shape):
         obs = obs.reshape(-1, *shape)
         return obs
+
+
+class LowlevelRAPSWorldModel(WorldModel):
+    def __init__(self, *args, primitive_model, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.primitive_model = primitive_model
+
+    @jit.script_method
+    def forward_batch(
+        self,
+        path_length: int,
+        action: Tuple[Tensor, Tensor],
+        embed: Tensor,
+        post: Dict[str, List[Tensor]],
+        prior: Dict[str, List[Tensor]],
+        state: Dict[str, Tensor],
+        use_network_action: bool = False,
+    ):
+        actions = []
+        for i in range(path_length):
+            inp = torch.cat([action[0][:, i], self.get_features(state).detach()], dim=1)
+            action_ = self.primitive_model(inp)
+            actions.append(action_.unsqueeze(1))
+            if use_network_action:
+                action_ = action_
+            else:
+                action_ = action[1][:, i]
+            (post_params, prior_params,) = self.obs_step(
+                state,
+                action_.detach(),
+                embed[:, i],
+            )
+            for k in post.keys():
+                post[k].append(post_params[k].unsqueeze(1))
+
+            for k in prior.keys():
+                prior[k].append(prior_params[k].unsqueeze(1))
+            state = post_params
+        return post, prior, torch.cat(actions, dim=1)
+
+    def forward(
+        self,
+        obs,
+        action,
+        use_network_action=False,
+        state=None,
+        batch_indices=None,
+        rt_idxs=None,
+    ):
+        """
+        :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
+        :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
+        """
+
+        original_batch_size = obs.shape[0]
+        if state is None:
+            state = self.initial(original_batch_size)
+        path_length = obs.shape[1]
+        if self.discrete_latents:
+            post, prior = (
+                dict(logits=[], stoch=[], deter=[]),
+                dict(logits=[], stoch=[], deter=[]),
+            )
+        else:
+            post, prior = (
+                dict(mean=[], std=[], stoch=[], deter=[]),
+                dict(mean=[], std=[], stoch=[], deter=[]),
+            )
+        obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
+        embed = self.encode(obs)
+        embedding_size = embed.shape[1]
+        embed = embed.reshape(
+            path_length, original_batch_size, embedding_size
+        ).transpose(1, 0)
+        post, prior, actions = self.forward_batch(
+            path_length,
+            action,
+            embed,
+            post,
+            prior,
+            state,
+            use_network_action,
+        )
+
+        for k in post.keys():
+            post[k] = torch.cat(post[k], dim=1)
+
+        for k in prior.keys():
+            prior[k] = torch.cat(prior[k], dim=1)
+
+        if self.use_prior_instead_of_posterior:
+            # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
+            # only works when first state is reset obs and never changes
+            feat = self.get_features(prior)
+        else:
+            feat = self.get_features(post)
+        rt_feat = feat[:, rt_idxs]
+        rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
+        batch_size = batch_indices.shape[1]
+        feat = feat[
+            np.arange(batch_size), batch_indices
+        ]  # no need to do transpose(1,0) in next line anymore
+        feat = feat.reshape(-1, feat.shape[-1])
+        images = self.decode(feat)
+        rewards = self.reward(rt_feat)
+        pred_discounts = self.pred_discount(rt_feat)
+
+        if self.discrete_latents:
+            post_dist = self.get_dist(
+                post["logits"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                None,
+                latent=True,
+            )
+            prior_dist = self.get_dist(
+                prior["logits"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                None,
+                latent=True,
+            )
+        else:
+            post_dist = self.get_dist(
+                post["mean"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                post["std"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                latent=True,
+            )
+            prior_dist = self.get_dist(
+                prior["mean"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                prior["std"][np.arange(batch_size), batch_indices].permute(1, 0, 2),
+                latent=True,
+            )
+        image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
+        reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
+        pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
+        return (
+            post,
+            prior,
+            post_dist,
+            prior_dist,
+            image_dist,
+            reward_dist,
+            pred_discount_dist,
+            embed,
+            actions[:, batch_indices],
+        )
 
 
 class StateConcatObsWorldModel(WorldModel):
