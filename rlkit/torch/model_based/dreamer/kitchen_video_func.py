@@ -7,6 +7,7 @@ import torch
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.actor_models import ConditionalActorModel
+from rlkit.torch.model_based.dreamer.train_world_model import visualize_rollout
 
 
 def video_post_epoch_func(algorithm, epoch):
@@ -35,6 +36,24 @@ def video_post_epoch_func(algorithm, epoch):
         )
     except Exception:
         pass
+
+
+def video_low_level_func(algorithm, epoch):
+    visualize_rollout(
+        algorithm.eval_env.envs[0],
+        None,
+        None,
+        algorithm.trainer.world_model,
+        logger.get_snapshot_dir(),
+        algorithm.eval_env.envs[0].max_path_length,
+        use_env=True,
+        forcing="none",
+        tag="none",
+        low_level_primitives=True,
+        num_low_level_actions_per_primitive=algorithm.trainer.num_low_level_actions_per_primitive,
+        primitive_model=algorithm.trainer.world_model.primitive_model,
+        use_separate_primitives=False,
+    )
 
 
 @torch.no_grad()

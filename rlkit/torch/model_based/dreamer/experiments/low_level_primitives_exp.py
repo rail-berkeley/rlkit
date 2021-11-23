@@ -1,3 +1,6 @@
+from rlkit.torch.model_based.dreamer.kitchen_video_func import video_low_level_func
+
+
 def experiment(variant):
     import os
 
@@ -242,10 +245,11 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
+    video_low_level_func(algorithm, 0)
     if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(video_post_epoch_func)
+        algorithm.post_epoch_funcs.append(video_low_level_func)
     print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
     if variant.get("save_video", False):
-        video_post_epoch_func(algorithm, -1)
+        video_low_level_func(algorithm, -1)
