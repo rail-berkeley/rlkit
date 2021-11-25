@@ -1,10 +1,6 @@
 import os
 from collections import OrderedDict
 
-import numpy as np
-
-from rlkit.torch.model_based.dreamer.train_world_model import get_dataloader_separately
-
 
 def visualize_wm(
     env,
@@ -15,6 +11,8 @@ def visualize_wm(
     max_path_length,
     low_level_primitives,
     num_low_level_actions_per_primitive,
+    primitive_model=None,
+    use_separate_primitives=False,
 ):
     from rlkit.torch.model_based.dreamer.train_world_model import visualize_rollout
 
@@ -30,6 +28,8 @@ def visualize_wm(
         tag="none",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=primitive_model,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
@@ -43,6 +43,8 @@ def visualize_wm(
         tag="none",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=primitive_model,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
@@ -56,12 +58,13 @@ def visualize_wm(
         tag="none",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=primitive_model,
+        use_separate_primitives=use_separate_primitives,
     )
-
     visualize_rollout(
         env,
-        train_dataset.inputs,
         train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -70,11 +73,13 @@ def visualize_wm(
         tag="train",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
-        train_dataset.inputs,
         train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -83,11 +88,13 @@ def visualize_wm(
         tag="train",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
-        train_dataset.inputs,
         train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -96,11 +103,13 @@ def visualize_wm(
         tag="train",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
-        test_dataset.inputs,
-        test_dataset.outputs,
+        train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -109,11 +118,13 @@ def visualize_wm(
         tag="test",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
-        test_dataset.inputs,
-        test_dataset.outputs,
+        train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -122,11 +133,13 @@ def visualize_wm(
         tag="test",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
     visualize_rollout(
         env,
-        test_dataset.inputs,
-        test_dataset.outputs,
+        train_dataset.outputs,
+        train_dataset.inputs[1],
         world_model,
         logdir,
         max_path_length,
@@ -135,10 +148,13 @@ def visualize_wm(
         tag="test",
         low_level_primitives=low_level_primitives,
         num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        primitive_model=None,
+        use_separate_primitives=use_separate_primitives,
     )
 
 
 def experiment(variant):
+    import numpy as np
     import torch
     from torch import nn, optim
     from tqdm import tqdm
@@ -150,10 +166,16 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.train_world_model import (
         compute_world_model_loss,
         get_dataloader,
+        get_dataloader_rt,
+        get_dataloader_separately,
         update_network,
         visualize_rollout,
+        world_model_loss_rt,
     )
-    from rlkit.torch.model_based.dreamer.world_models import WorldModel
+    from rlkit.torch.model_based.dreamer.world_models import (
+        LowlevelRAPSWorldModel,
+        WorldModel,
+    )
 
     env_suite, env_name, env_kwargs = (
         variant["env_suite"],
@@ -176,13 +198,15 @@ def experiment(variant):
     image_shape = env.image_shape
     world_model_kwargs["image_shape"] = image_shape
     scaler = torch.cuda.amp.GradScaler()
-    world_model = WorldModel(
-        **world_model_kwargs,
-    ).to(ptu.device)
     world_model_loss_kwargs = variant["world_model_loss_kwargs"]
     clone_primitives = variant["clone_primitives"]
     clone_primitives_separately = variant["clone_primitives_separately"]
+    clone_primitives_and_train_world_model = variant[
+        "clone_primitives_and_train_world_model"
+    ]
+    batch_len = variant["batch_len"]
     num_epochs = variant["num_epochs"]
+    loss_to_use = variant["loss_to_use"]
 
     logdir = logger.get_snapshot_dir()
 
@@ -197,6 +221,17 @@ def experiment(variant):
             num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
             num_primitives=env.num_primitives,
             env=env,
+            **dataloader_kwargs,
+        )
+    elif clone_primitives_and_train_world_model:
+        (
+            train_dataloader,
+            test_dataloader,
+            train_dataset,
+            test_dataset,
+        ) = get_dataloader_rt(
+            variant["datafile"],
+            max_path_length=max_path_length * num_low_level_actions_per_primitive + 1,
             **dataloader_kwargs,
         )
     elif low_level_primitives or clone_primitives:
@@ -214,6 +249,9 @@ def experiment(variant):
         )
 
     if variant["visualize_wm_from_path"]:
+        world_model = WorldModel(
+            **world_model_kwargs,
+        ).to(ptu.device)
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         visualize_wm(
             env,
@@ -225,6 +263,326 @@ def experiment(variant):
             low_level_primitives,
             num_low_level_actions_per_primitive,
         )
+    elif clone_primitives_and_train_world_model:
+        criterion = nn.MSELoss()
+        primitive_model = Mlp(
+            hidden_sizes=variant["mlp_hidden_sizes"],
+            output_size=low_level_action_dim,
+            input_size=250 + env.action_space.low.shape[0] + 1,
+            hidden_activation=torch.nn.functional.relu,
+        ).to(ptu.device)
+        world_model_class = LowlevelRAPSWorldModel
+        world_model = world_model_class(
+            primitive_model=primitive_model,
+            **world_model_kwargs,
+        ).to(ptu.device)
+        optimizer = optim.Adam(
+            world_model.parameters(),
+            **optimizer_kwargs,
+        )
+        for i in tqdm(range(num_epochs)):
+            if i % variant["plotting_period"] == 0:
+                visualize_wm(
+                    env,
+                    world_model,
+                    train_dataset,
+                    test_dataset,
+                    logdir,
+                    max_path_length,
+                    low_level_primitives,
+                    num_low_level_actions_per_primitive,
+                    primitive_model=primitive_model,
+                )
+            eval_statistics = OrderedDict()
+            print("Epoch: ", i)
+            total_primitive_loss = 0
+            total_world_model_loss = 0
+            total_div_loss = 0
+            total_image_pred_loss = 0
+            total_transition_loss = 0
+            total_entropy_loss = 0
+            total_pred_discount_loss = 0
+            total_reward_pred_loss = 0
+            total_train_steps = 0
+            for data in train_dataloader:
+                with torch.cuda.amp.autocast():
+                    (
+                        high_level_actions,
+                        obs,
+                        rewards,
+                        terminals,
+                    ), low_level_actions = data
+                    obs = obs.to(ptu.device).float()
+                    low_level_actions = low_level_actions.to(ptu.device).float()
+                    high_level_actions = high_level_actions.to(ptu.device).float()
+                    rewards = rewards.to(ptu.device).float()
+                    terminals = terminals.to(ptu.device).float()
+                    rt_idxs = np.arange(
+                        num_low_level_actions_per_primitive,
+                        obs.shape[1],
+                        num_low_level_actions_per_primitive,
+                    )
+                    rt_idxs = np.concatenate(
+                        [[0], rt_idxs]
+                    )  # reset obs, effect of first primitive, second primitive, so on
+
+                    batch_start = np.random.randint(
+                        0, obs.shape[1] - batch_len, size=(obs.shape[0])
+                    )
+                    batch_indices = np.linspace(
+                        batch_start,
+                        batch_start + batch_len,
+                        batch_len,
+                        endpoint=False,
+                    ).astype(int)
+                    (
+                        post,
+                        prior,
+                        post_dist,
+                        prior_dist,
+                        image_dist,
+                        reward_dist,
+                        pred_discount_dist,
+                        _,
+                        action_preds,
+                    ) = world_model(
+                        obs,
+                        (high_level_actions, low_level_actions),
+                        use_network_action=False,
+                        batch_indices=batch_indices,
+                        rt_idxs=rt_idxs,
+                    )
+                    obs = world_model.flatten_obs(
+                        obs[np.arange(batch_indices.shape[1]), batch_indices],
+                        (int(np.prod(image_shape)),),
+                    )
+                    rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+                    terminals = terminals.transpose(1, 0).reshape(
+                        -1, terminals.shape[-1]
+                    )
+                    (
+                        world_model_loss,
+                        div,
+                        image_pred_loss,
+                        reward_pred_loss,
+                        transition_loss,
+                        entropy_loss,
+                        pred_discount_loss,
+                    ) = world_model_loss_rt(
+                        world_model,
+                        image_shape,
+                        image_dist,
+                        reward_dist,
+                        {
+                            k: v[
+                                np.arange(batch_indices.shape[1]), batch_indices
+                            ].permute(1, 0, 2)
+                            for k, v in prior.items()
+                        },
+                        {
+                            k: v[
+                                np.arange(batch_indices.shape[1]), batch_indices
+                            ].permute(1, 0, 2)
+                            for k, v in post.items()
+                        },
+                        prior_dist,
+                        post_dist,
+                        pred_discount_dist,
+                        obs,
+                        rewards,
+                        terminals,
+                        **world_model_loss_kwargs,
+                    )
+
+                    primitive_loss = criterion(
+                        action_preds, low_level_actions[:, batch_indices]
+                    )
+                    total_primitive_loss += primitive_loss.item()
+                    total_world_model_loss += world_model_loss.item()
+                    total_div_loss += div.item()
+                    total_image_pred_loss += image_pred_loss.item()
+                    total_transition_loss += transition_loss.item()
+                    total_entropy_loss += entropy_loss.item()
+                    total_pred_discount_loss += pred_discount_loss.item()
+                    total_reward_pred_loss += reward_pred_loss.item()
+
+                    if loss_to_use == "wm":
+                        loss = world_model_loss
+                    elif loss_to_use == "primitive":
+                        loss = primitive_loss
+                    else:
+                        loss = world_model_loss + primitive_loss
+                    total_train_steps += 1
+
+                update_network(world_model, optimizer, loss, gradient_clip, scaler)
+                scaler.update()
+            eval_statistics["train/primitive_loss"] = (
+                total_primitive_loss / total_train_steps
+            )
+            eval_statistics["train/world_model_loss"] = (
+                total_world_model_loss / total_train_steps
+            )
+            eval_statistics["train/image_pred_loss"] = (
+                total_image_pred_loss / total_train_steps
+            )
+            eval_statistics["train/transition_loss"] = (
+                total_transition_loss / total_train_steps
+            )
+            eval_statistics["train/entropy_loss"] = (
+                total_entropy_loss / total_train_steps
+            )
+            eval_statistics["train/pred_discount_loss"] = (
+                total_pred_discount_loss / total_train_steps
+            )
+            eval_statistics["train/reward_pred_loss"] = (
+                total_reward_pred_loss / total_train_steps
+            )
+            best_test_loss = np.inf
+            with torch.no_grad():
+                total_primitive_loss = 0
+                total_world_model_loss = 0
+                total_div_loss = 0
+                total_image_pred_loss = 0
+                total_transition_loss = 0
+                total_entropy_loss = 0
+                total_pred_discount_loss = 0
+                total_reward_pred_loss = 0
+                total_loss = 0
+                total_test_steps = 0
+                for data in test_dataloader:
+                    with torch.cuda.amp.autocast():
+                        (
+                            high_level_actions,
+                            obs,
+                            rewards,
+                            terminals,
+                        ), low_level_actions = data
+                        obs = obs.to(ptu.device).float()
+                        low_level_actions = low_level_actions.to(ptu.device).float()
+                        high_level_actions = high_level_actions.to(ptu.device).float()
+                        rewards = rewards.to(ptu.device).float()
+                        terminals = terminals.to(ptu.device).float()
+                        rt_idxs = np.arange(
+                            num_low_level_actions_per_primitive,
+                            obs.shape[1],
+                            num_low_level_actions_per_primitive,
+                        )
+                        rt_idxs = np.concatenate(
+                            [[0], rt_idxs]
+                        )  # reset obs, effect of first primitive, second primitive, so on
+
+                        batch_start = np.random.randint(
+                            0, obs.shape[1] - batch_len, size=(obs.shape[0])
+                        )
+                        batch_indices = np.linspace(
+                            batch_start,
+                            batch_start + batch_len,
+                            batch_len,
+                            endpoint=False,
+                        ).astype(int)
+                        (
+                            post,
+                            prior,
+                            post_dist,
+                            prior_dist,
+                            image_dist,
+                            reward_dist,
+                            pred_discount_dist,
+                            _,
+                            action_preds,
+                        ) = world_model(
+                            obs,
+                            (high_level_actions, low_level_actions),
+                            use_network_action=False,
+                            batch_indices=batch_indices,
+                            rt_idxs=rt_idxs,
+                        )
+                        obs = world_model.flatten_obs(
+                            obs[np.arange(batch_indices.shape[1]), batch_indices],
+                            (int(np.prod(image_shape)),),
+                        )
+                        rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+                        terminals = terminals.transpose(1, 0).reshape(
+                            -1, terminals.shape[-1]
+                        )
+                        (
+                            world_model_loss,
+                            div,
+                            image_pred_loss,
+                            reward_pred_loss,
+                            transition_loss,
+                            entropy_loss,
+                            pred_discount_loss,
+                        ) = world_model_loss_rt(
+                            world_model,
+                            image_shape,
+                            image_dist,
+                            reward_dist,
+                            {
+                                k: v[
+                                    np.arange(batch_indices.shape[1]), batch_indices
+                                ].permute(1, 0, 2)
+                                for k, v in prior.items()
+                            },
+                            {
+                                k: v[
+                                    np.arange(batch_indices.shape[1]), batch_indices
+                                ].permute(1, 0, 2)
+                                for k, v in post.items()
+                            },
+                            prior_dist,
+                            post_dist,
+                            pred_discount_dist,
+                            obs,
+                            rewards,
+                            terminals,
+                            **world_model_loss_kwargs,
+                        )
+
+                        primitive_loss = criterion(
+                            action_preds, low_level_actions[:, batch_indices]
+                        )
+                        total_primitive_loss += primitive_loss.item()
+                        total_world_model_loss += world_model_loss.item()
+                        total_div_loss += div.item()
+                        total_image_pred_loss += image_pred_loss.item()
+                        total_transition_loss += transition_loss.item()
+                        total_entropy_loss += entropy_loss.item()
+                        total_pred_discount_loss += pred_discount_loss.item()
+                        total_reward_pred_loss += reward_pred_loss.item()
+                        loss = world_model_loss.item() + primitive_loss.item()
+                        total_loss += loss
+                        total_test_steps += 1
+                eval_statistics["test/primitive_loss"] = (
+                    total_primitive_loss / total_test_steps
+                )
+                eval_statistics["test/world_model_loss"] = (
+                    total_world_model_loss / total_test_steps
+                )
+                eval_statistics["test/image_pred_loss"] = (
+                    total_image_pred_loss / total_test_steps
+                )
+                eval_statistics["test/transition_loss"] = (
+                    total_transition_loss / total_test_steps
+                )
+                eval_statistics["test/entropy_loss"] = (
+                    total_entropy_loss / total_test_steps
+                )
+                eval_statistics["test/pred_discount_loss"] = (
+                    total_pred_discount_loss / total_test_steps
+                )
+                eval_statistics["test/reward_pred_loss"] = (
+                    total_reward_pred_loss / total_test_steps
+                )
+                if (total_loss / total_test_steps) <= best_test_loss:
+                    best_test_loss = total_loss / total_test_steps
+                    os.makedirs(logdir + "/models/", exist_ok=True)
+                    torch.save(
+                        world_model.state_dict(),
+                        logdir + "/models/world_model.pt",
+                    )
+                logger.record_dict(eval_statistics, prefix="")
+                logger.dump_tabular(with_prefix=False, with_timestamp=False)
     elif clone_primitives_separately:
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         criterion = nn.MSELoss()
@@ -483,7 +841,7 @@ def experiment(variant):
                     best_test_loss = total_loss / total_test_steps
                     os.makedirs(logdir + "/models/", exist_ok=True)
                     torch.save(
-                        world_model.state_dict(),
+                        primitive_model.state_dict(),
                         logdir + "/models/primitive_model.pt",
                     )
                 logger.record_dict(eval_statistics, prefix="")

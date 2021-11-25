@@ -23,6 +23,7 @@ def get_args():
         "--collect_data_fn", type=str, default="collect_world_model_data"
     )
     parser.add_argument("--lr", type=float, default=float(1e-3))
+    parser.add_argument("--env_name", type=str, default="reach-v2")
 
     # parse arguments
     args = parser.parse_args()

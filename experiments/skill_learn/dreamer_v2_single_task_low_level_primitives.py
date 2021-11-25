@@ -38,7 +38,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=50,
+            batch_size=25,
             num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
@@ -122,7 +122,7 @@ if __name__ == "__main__":
         num_expl_envs=5 * 1,
         num_eval_envs=1,
         expl_amount=0.3,
-        save_video=False,
+        save_video=True,
         low_level_action_dim=9,
         num_low_level_actions_per_primitive=100,
         mlp_hidden_sizes=[512, 512],

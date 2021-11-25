@@ -8,7 +8,7 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
-def save_wm_data(data, args):
+def save_data(data, args):
     """
     Save world model data to a hdf5 file.
     :param: dictionary with two keys: observations and actions (numpy arrays)
@@ -17,23 +17,11 @@ def save_wm_data(data, args):
     os.makedirs("data/world_model_data", exist_ok=True)
     import h5py
 
-    f = h5py.File("data/world_model_data/" + args.datafile + ".hdf5", "w")
-    f.create_dataset(
-        "observations",
-        data=data["observations"],
-        compression="gzip",
-        compression_opts=9,
+    f = h5py.File(
+        "data/world_model_data/" + args.datafile + "_" + args.env_name + ".hdf5", "w"
     )
-    f.create_dataset(
-        "actions", data=data["actions"], compression="gzip", compression_opts=9
-    )
-    if "high_level_actions" in data:
-        f.create_dataset(
-            "high_level_actions",
-            data=data["high_level_actions"],
-            compression="gzip",
-            compression_opts=9,
-        )
+    for k, v in data.items():
+        f.create_dataset(k, data=v, compression="gzip", compression_opts=9)
 
 
 def collect_primitive_cloning_data(
@@ -120,18 +108,20 @@ def collect_world_model_data_low_level_primitives(
         ),
         dtype=np.uint8,
     )
+    data["rewards"] = np.zeros((num_trajs, max_path_length + 1, 1))
+    data["terminals"] = np.zeros((num_trajs, max_path_length + 1, 1))
     for k in tqdm(range(num_trajs // num_envs)):
         o = env.reset()
-        data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
-            (num_envs, 9)
+        data["actions"][k * num_envs : (k + 1) * num_envs, 0] = np.zeros((num_envs, 9))
+        data["high_level_actions"][k * num_envs : (k + 1) * num_envs, 0] = np.zeros(
+            (num_envs, env.action_space.low.shape[0] + 1)
         )
-        data["high_level_actions"][
-            k * num_envs : k * num_envs + num_envs, 0
-        ] = np.zeros((num_envs, env.action_space.low.shape[0] + 1))
-        data["observations"][k * num_envs : k * num_envs + num_envs, 0] = o
+        data["observations"][k * num_envs : (k + 1) * num_envs, 0] = o
         for p in range(0, max_path_length):
-            high_level_actions = [env.action_space.sample() for i in range(num_envs)]
+            high_level_actions = [env.action_space.sample() for _ in range(num_envs)]
             o, r, d, i = env.step(high_level_actions)
+            data["rewards"][k * num_envs : (k + 1) * num_envs, p] = r.reshape(-1, 1)
+            data["terminals"][k * num_envs : (k + 1) * num_envs, p] = d.reshape(-1, 1)
             low_level_actions = i["actions"]
             low_level_obs = i["observations"]
             actions = []
@@ -154,14 +144,14 @@ def collect_world_model_data_low_level_primitives(
                 obs.append(o)
 
             data["actions"][
-                k * num_envs : k * num_envs + num_envs,
+                k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : p * num_low_level_actions_per_primitive
                 + num_low_level_actions_per_primitive
                 + 1,
             ] = np.array(actions)
             data["observations"][
-                k * num_envs : k * num_envs + num_envs,
+                k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : p * num_low_level_actions_per_primitive
                 + num_low_level_actions_per_primitive
@@ -190,7 +180,7 @@ def collect_world_model_data_low_level_primitives(
                 (high_level_actions, np.expand_dims(phases, -1)), axis=2
             )
             data["high_level_actions"][
-                k * num_envs : k * num_envs + num_envs,
+                k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : p * num_low_level_actions_per_primitive
                 + num_low_level_actions_per_primitive
@@ -224,17 +214,15 @@ def collect_world_model_data(env, num_trajs, num_envs, max_path_length):
     )
     for k in tqdm(range(num_trajs // num_envs)):
         o = env.reset()
-        data["actions"][k * num_envs : k * num_envs + num_envs, 0] = np.zeros(
+        data["actions"][k * num_envs : (k + 1) * num_envs, 0] = np.zeros(
             (num_envs, env.action_space.low.shape[0])
         )
-        data["observations"][k * num_envs : k * num_envs + num_envs, 0] = o
+        data["observations"][k * num_envs : (k + 1) * num_envs, 0] = o
         for p in range(1, max_path_length + 1):
             actions = [env.action_space.sample() for i in range(num_envs)]
             o, r, d, i = env.step(actions)
-            data["actions"][k * num_envs : k * num_envs + num_envs, p] = np.array(
-                actions
-            )
-            data["observations"][k * num_envs : k * num_envs + num_envs, p] = o
+            data["actions"][k * num_envs : (k + 1) * num_envs, p] = np.array(actions)
+            data["observations"][k * num_envs : (k + 1) * num_envs, p] = o
     return data
 
 
@@ -265,7 +253,7 @@ if __name__ == "__main__":
         == "collect_primitive_cloning_data",
     )
     env_suite = "metaworld"
-    env_name = "reach-v2"
+    env_name = args.env_name
     env_fns = [
         lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
     ]
@@ -274,7 +262,7 @@ if __name__ == "__main__":
         data = collect_world_model_data(
             env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
         )
-        save_wm_data(data, args)
+        save_data(data, args)
     elif args.collect_data_fn == "collect_world_model_data_low_level_primitives":
         data = collect_world_model_data_low_level_primitives(
             env,
@@ -283,7 +271,7 @@ if __name__ == "__main__":
             args.max_path_length,
             args.num_low_level_actions_per_primitive,
         )
-        save_wm_data(data, args)
+        save_data(data, args)
     elif args.collect_data_fn == "collect_primitive_cloning_data":
         data = collect_primitive_cloning_data(
             env,

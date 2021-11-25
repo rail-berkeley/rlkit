@@ -445,6 +445,69 @@ def compute_world_model_loss(
     return world_model_loss, div, image_pred_loss, transition_loss, entropy_loss
 
 
+def world_model_loss_rt(
+    world_model,
+    image_shape,
+    image_dist,
+    reward_dist,
+    prior,
+    post,
+    prior_dist,
+    post_dist,
+    pred_discount_dist,
+    obs,
+    rewards,
+    terminals,
+    forward_kl,
+    free_nats,
+    transition_loss_scale,
+    kl_loss_scale,
+    image_loss_scale,
+    reward_loss_scale,
+    pred_discount_loss_scale,
+    discount,
+):
+    preprocessed_obs = world_model.flatten_obs(world_model.preprocess(obs), image_shape)
+    image_pred_loss = -1 * image_dist.log_prob(preprocessed_obs).mean()
+    post_detached_dist = world_model.get_detached_dist(post)
+    prior_detached_dist = world_model.get_detached_dist(prior)
+    reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
+    pred_discount_target = discount * (1 - terminals.float())
+    pred_discount_loss = -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
+    if forward_kl:
+        div = kld(post_dist, prior_dist).mean()
+        div = torch.max(div, ptu.tensor(free_nats))
+        prior_kld = kld(post_detached_dist, prior_dist).mean()
+        post_kld = kld(post_dist, prior_detached_dist).mean()
+    else:
+        div = kld(prior_dist, post_dist).mean()
+        div = torch.max(div, ptu.tensor(free_nats))
+        prior_kld = kld(prior_dist, post_detached_dist).mean()
+        post_kld = kld(prior_detached_dist, post_dist).mean()
+    transition_loss = torch.max(prior_kld, ptu.tensor(free_nats))
+    entropy_loss = torch.max(post_kld, ptu.tensor(free_nats))
+    entropy_loss_scale = 1 - transition_loss_scale
+    entropy_loss_scale = (1 - kl_loss_scale) * entropy_loss_scale
+    transition_loss_scale = (1 - kl_loss_scale) * transition_loss_scale
+    world_model_loss = (
+        kl_loss_scale * div
+        + image_loss_scale * image_pred_loss
+        + transition_loss_scale * transition_loss
+        + entropy_loss_scale * entropy_loss
+        + reward_loss_scale * reward_pred_loss
+        + pred_discount_loss_scale * pred_discount_loss
+    )
+    return (
+        world_model_loss,
+        div,
+        image_pred_loss,
+        reward_pred_loss,
+        transition_loss,
+        entropy_loss,
+        pred_discount_loss,
+    )
+
+
 def update_network(network, optimizer, loss, gradient_clip, scaler):
     if type(network) == list:
         parameters = []
@@ -599,6 +662,84 @@ def get_dataloader(
         max_path_length,
         observations.shape[0] - num_train_datapoints,
         randomize_batch_len=randomize_batch_len,
+    )
+
+    train_dataloader = DataLoader(
+        train_dataset,
+        batch_size=batch_size,
+        pin_memory=True,
+        sampler=sampler_class(train_dataset),
+    )
+
+    test_dataloader = DataLoader(
+        test_dataset,
+        batch_size=batch_size,
+        pin_memory=True,
+        sampler=sampler_class(test_dataset),
+    )
+
+    return train_dataloader, test_dataloader, train_dataset, test_dataset
+
+
+def get_dataloader_rt(
+    filename,
+    train_test_split,
+    batch_size,
+    max_path_length,
+):
+    """
+    :param filename: (str)
+    :param train_test_split: (float)
+    :param max_path_length: (int)
+    :return: (tuple)
+    """
+    with h5py.File(filename, "r") as f:
+        observations = np.array(f["observations"][:])
+        actions = np.array(f["actions"][:])
+        high_level_actions = np.array(f["high_level_actions"][:])
+        rewards = np.array(f["rewards"][:])
+        terminals = np.array(f["terminals"][:])
+    argmax = np.argmax(high_level_actions[:, :, :10], axis=-1)
+    one_hots = np.eye(10)[argmax]
+    one_hots[:, 0:1, :] = np.zeros((one_hots.shape[0], 1, 10))
+    high_level_actions = np.concatenate(
+        (one_hots, high_level_actions[:, :, 10:]), axis=-1
+    )
+    num_train_datapoints = int(observations.shape[0] * train_test_split)
+    observations, actions = torch.from_numpy(observations), torch.from_numpy(actions)
+    high_level_actions = torch.from_numpy(high_level_actions)
+    rewards, terminals = torch.from_numpy(rewards), torch.from_numpy(terminals)
+
+    train_inputs, train_outputs = (
+        high_level_actions[:num_train_datapoints],
+        observations[:num_train_datapoints],
+        rewards[:num_train_datapoints],
+        terminals[:num_train_datapoints],
+    ), actions[:num_train_datapoints]
+    test_inputs, test_outputs = (
+        high_level_actions[num_train_datapoints:],
+        observations[num_train_datapoints:],
+        rewards[num_train_datapoints:],
+        terminals[num_train_datapoints:],
+    ), actions[num_train_datapoints:]
+    sampler_class = RandomSampler
+
+    train_dataset = NumpyDataset(
+        train_inputs,
+        train_outputs,
+        0,
+        max_path_length,
+        num_train_datapoints,
+        randomize_batch_len=False,
+    )
+
+    test_dataset = NumpyDataset(
+        test_inputs,
+        test_outputs,
+        0,
+        max_path_length,
+        observations.shape[0] - num_train_datapoints,
+        randomize_batch_len=False,
     )
 
     train_dataloader = DataLoader(
