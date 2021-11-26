@@ -1,3 +1,6 @@
+import h5py
+import numpy as np
+
 from rlkit.torch.model_based.dreamer.kitchen_video_func import video_low_level_func
 
 
@@ -80,19 +83,13 @@ def experiment(variant):
     eval_env = DummyVecEnv(
         eval_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
     )
-    if use_raw_actions:
-        discrete_continuous_dist = False
-        continuous_action_dim = eval_env.action_space.low.size
+    discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
+    continuous_action_dim = eval_envs[0].max_arg_len
+    discrete_action_dim = eval_envs[0].num_primitives
+    if not discrete_continuous_dist:
+        continuous_action_dim = continuous_action_dim + discrete_action_dim
         discrete_action_dim = 0
-        action_dim = continuous_action_dim
-    else:
-        discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
-        continuous_action_dim = eval_envs[0].max_arg_len
-        discrete_action_dim = eval_envs[0].num_primitives
-        if not discrete_continuous_dist:
-            continuous_action_dim = continuous_action_dim + discrete_action_dim
-            discrete_action_dim = 0
-        action_dim = continuous_action_dim + discrete_action_dim
+    action_dim = continuous_action_dim + discrete_action_dim
     obs_dim = expl_env.observation_space.low.size
     if actor_model_class_name == "conditional_actor_model":
         actor_model_class = ConditionalActorModel
@@ -106,99 +103,72 @@ def experiment(variant):
         output_size=variant["low_level_action_dim"],
         input_size=250 + eval_env.envs[0].action_space.low.shape[0] + 1,
         hidden_activation=torch.nn.functional.relu,
-    ).to(ptu.device)
-    if variant.get("load_from_path", False):
-        filename = variant["models_path"] + variant["pkl_file_name"]
-        print(filename)
-        data = torch.load(filename)
-        actor = data["trainer/actor"]
-        vf = data["trainer/vf"]
-        target_vf = data["trainer/target_vf"]
-        world_model = data["trainer/world_model"]
-    else:
-        world_model_class = LowlevelRAPSWorldModel
-        world_model = world_model_class(
-            low_level_action_dim,
-            image_shape=eval_envs[0].image_shape,
-            primitive_model=primitive_model,
-            **variant["model_kwargs"],
-        )
-    if variant.get("retrain_actor_and_vf", True):
-        actor = actor_model_class(
-            variant["model_kwargs"]["model_hidden_size"],
-            world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            **variant["actor_kwargs"],
-        )
-        vf = Mlp(
-            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-            * variant["vf_kwargs"]["num_layers"],
-            output_size=1,
-            input_size=world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-        )
-        target_vf = Mlp(
-            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-            * variant["vf_kwargs"]["num_layers"],
-            output_size=1,
-            input_size=world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-        )
+    )
+    world_model_class = LowlevelRAPSWorldModel
+    world_model = world_model_class(
+        low_level_action_dim,
+        image_shape=eval_envs[0].image_shape,
+        primitive_model=primitive_model,
+        **variant["model_kwargs"],
+    )
+    world_model.load_state_dict(torch.load(variant["world_model_path"]))
 
-    if variant.get("use_mcts_policy", False):
-        expl_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            discrete_action_dim,
-            action_dim,
-            eval_envs[0].action_space,
-            actor,
-            None,
-            vf,
-            **variant["expl_policy_kwargs"],
-        )
-        eval_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            discrete_action_dim,
-            action_dim,
-            eval_envs[0].action_space,
-            actor,
-            None,
-            vf,
-            **variant["eval_policy_kwargs"],
-        )
-    else:
-        expl_policy = DreamerLowLevelRAPSPolicy(
-            world_model,
-            actor,
-            obs_dim,
-            action_dim,
-            primitive_model=primitive_model,
-            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-            low_level_action_dim=low_level_action_dim,
-            exploration=True,
-            expl_amount=variant.get("expl_amount", 0.3),
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=discrete_continuous_dist,
-        )
-        eval_policy = DreamerLowLevelRAPSPolicy(
-            world_model,
-            actor,
-            obs_dim,
-            action_dim,
-            primitive_model=primitive_model,
-            num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-            low_level_action_dim=low_level_action_dim,
-            exploration=False,
-            expl_amount=0.0,
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=discrete_continuous_dist,
-        )
+    actor = actor_model_class(
+        variant["model_kwargs"]["model_hidden_size"],
+        world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        **variant["actor_kwargs"],
+    )
+    vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+    target_vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+
+    expl_policy = DreamerLowLevelRAPSPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        primitive_model=primitive_model,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        low_level_action_dim=low_level_action_dim,
+        exploration=True,
+        expl_amount=variant.get("expl_amount", 0.3),
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=discrete_continuous_dist,
+    )
+    eval_policy = DreamerLowLevelRAPSPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        primitive_model=primitive_model,
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        low_level_action_dim=low_level_action_dim,
+        exploration=False,
+        expl_amount=0.0,
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=discrete_continuous_dist,
+    )
+    expl_policy.num_primitives = eval_env.envs[0].num_primitives
+    eval_policy.num_primitives = eval_env.envs[0].num_primitives
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
+    rand_policy.num_primitives = eval_env.envs[0].num_primitives
 
     expl_path_collector = VecMdpPathCollector(
         expl_env,
@@ -224,6 +194,32 @@ def experiment(variant):
         low_level_action_dim,
         replace=False,
     )
+    filename = variant["replay_buffer_path"]
+    with h5py.File(filename, "r") as f:
+        observations = np.array(f["observations"][:])
+        low_level_actions = np.array(f["actions"][:])
+        high_level_actions = np.array(f["high_level_actions"][:])
+        rewards = np.array(f["rewards"][:])
+        terminals = np.array(f["terminals"][:])
+    num_trajs = observations.shape[0]
+    replay_buffer._observations[:num_trajs] = observations
+    replay_buffer._low_level_actions[:num_trajs] = low_level_actions
+    argmax = np.argmax(
+        high_level_actions[:, :, : eval_env.envs[0].num_primitives], axis=-1
+    )
+    one_hots = np.eye(eval_env.envs[0].num_primitives)[argmax]
+    one_hots[:, 0:1, :] = np.zeros(
+        (one_hots.shape[0], 1, eval_env.envs[0].num_primitives)
+    )
+    high_level_actions = np.concatenate(
+        (one_hots, high_level_actions[:, :, eval_env.envs[0].num_primitives :]), axis=-1
+    )
+    replay_buffer._high_level_actions[:num_trajs] = high_level_actions
+    replay_buffer._rewards[:num_trajs] = rewards
+    replay_buffer._terminals[:num_trajs] = terminals
+    replay_buffer._top = num_trajs
+    replay_buffer._size = num_trajs
+
     trainer = DreamerV2LowLevelRAPSTrainer(
         eval_env,
         actor,

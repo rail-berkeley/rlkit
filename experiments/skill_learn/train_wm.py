@@ -75,8 +75,8 @@ if __name__ == "__main__":
         ),
         gradient_clip=100,
         dataloader_kwargs=dict(
-            batch_len=50,
-            batch_size=50,
+            batch_len=100,
+            batch_size=25,
             train_test_split=0.8,
             randomize_batch_len=True,
         ),
@@ -89,14 +89,12 @@ if __name__ == "__main__":
 
     search_space = {
         "num_epochs": [10000],
-        "plotting_period": [100],
         "visualize_wm_from_path": [False],
-        "dataloader_kwargs.randomize_batch_len": [False],
-        "dataloader_kwargs.batch_len": [50, 100],
-        "dataloader_kwargs.batch_size": [25, 50],
+        "dataloader_kwargs.randomize_batch_len": [False, True],
         "datafile": [
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_100_E_50_P_100_raps_ll_hl_even.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5",
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_reach-v2.hdf5",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -104,6 +102,25 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        if variant["dataloader_kwargs"]["randomize_batch_len"]:
+            variant["plotting_period"] = 100
+        else:
+            variant["plotting_period"] = 1
+        if (
+            variant["datafile"]
+            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
+        ):
+            variant["env_name"] = "drawer-close-v2"
+        elif (
+            variant["datafile"]
+            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5"
+        ):
+            variant["env_name"] = "soccer-v2"
+        elif (
+            variant["datafile"]
+            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_reach-v2.hdf5"
+        ):
+            variant["env_name"] = "reach-v2"
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed

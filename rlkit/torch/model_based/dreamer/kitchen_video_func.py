@@ -55,6 +55,22 @@ def video_low_level_func(algorithm, epoch):
         use_separate_primitives=False,
     )
 
+    visualize_rollout(
+        algorithm.eval_env.envs[0],
+        None,
+        None,
+        algorithm.trainer.world_model,
+        logger.get_snapshot_dir(),
+        algorithm.eval_env.envs[0].max_path_length,
+        use_env=True,
+        forcing="teacher",
+        tag="none",
+        low_level_primitives=True,
+        num_low_level_actions_per_primitive=algorithm.trainer.num_low_level_actions_per_primitive,
+        primitive_model=algorithm.trainer.world_model.primitive_model,
+        use_separate_primitives=False,
+    )
+
 
 @torch.no_grad()
 def imagination_post_epoch_func(algorithm, env, epoch, policy, mode="eval"):

@@ -514,7 +514,7 @@ class LowlevelRAPSWorldModel(WorldModel):
             reward_dist,
             pred_discount_dist,
             embed,
-            actions[:, batch_indices],
+            actions,
         )
 
 

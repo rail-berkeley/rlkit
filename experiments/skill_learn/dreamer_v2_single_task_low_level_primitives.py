@@ -23,20 +23,20 @@ if __name__ == "__main__":
             num_epochs=5,
             num_eval_steps_per_epoch=5,
             num_expl_steps_per_train_loop=5,
-            min_num_steps_before_training=10,
+            min_num_steps_before_training=0,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=30,
+            batch_size=25,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
-            num_eval_steps_per_epoch=30,
-            min_num_steps_before_training=2500,
-            num_pretrain_steps=100,
+            num_epochs=10,
+            num_eval_steps_per_epoch=30 * 2,
+            min_num_steps_before_training=0,
+            num_pretrain_steps=1000,
             max_path_length=5,
             batch_size=25,
             num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
@@ -94,9 +94,10 @@ if __name__ == "__main__":
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            use_prior_instead_of_posterior=True,
         ),
         trainer_kwargs=dict(
-            adam_eps=1e-5,
+            adam_eps=1e-8,
             discount=0.8,
             lam=0.95,
             forward_kl=False,
@@ -106,7 +107,7 @@ if __name__ == "__main__":
             transition_loss_scale=0.8,
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=3e-4,
+            world_model_lr=1e-3,
             reward_loss_scale=2.0,
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
@@ -119,7 +120,7 @@ if __name__ == "__main__":
                 lr=1e-3,
             ),
         ),
-        num_expl_envs=5 * 1,
+        num_expl_envs=5 * 2,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -133,7 +134,7 @@ if __name__ == "__main__":
             # "assembly-v2",
             # "disassemble-v2",
             # "peg-unplug-side-v2",
-            # "soccer-v2",
+            "soccer-v2",
             # "sweep-into-v2",
             "drawer-close-v2",
         ],
@@ -143,6 +144,21 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        if variant["env_name"] == "soccer-v2":
+            variant[
+                "world_model_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_14_0000--s-96844/models/world_model.pt"
+            variant[
+                "replay_buffer_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5"
+        elif variant["env_name"] == "drawer-close-v2":
+            variant[
+                "world_model_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_13_0000--s-1126/models/world_model.pt"
+            variant[
+                "replay_buffer_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
+
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

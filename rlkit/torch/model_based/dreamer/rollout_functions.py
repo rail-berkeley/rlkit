@@ -53,7 +53,6 @@ def vec_rollout(
     while path_length < max_path_length:
         o_for_agent = preprocess_obs_for_policy_fn(o)
         a, agent_info = agent.get_action(o_for_agent, **get_action_kwargs)
-
         if full_o_postprocess_func:
             full_o_postprocess_func(env, agent, o)
 
@@ -167,6 +166,11 @@ def vec_rollout_low_level_raps(
         cv2.waitKey(1)
     for p in range(0, max_path_length):
         ha, agent_info = agent.get_action(o, **get_action_kwargs)
+        if (ha[:, : agent.num_primitives].sum(axis=-1) != 1).any():
+            argmax = np.argmax(ha[:, : agent.num_primitives], axis=-1)
+            one_hots = np.eye(agent.num_primitives)[argmax]
+            ha = np.concatenate((one_hots, ha[:, agent.num_primitives :]), axis=-1)
+
         next_o, r, d, i = env.step(ha)
         rewards.append(r)
         terminals.append(d)

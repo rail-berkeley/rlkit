@@ -104,9 +104,9 @@ def get_state(o, a, state, world_model, forcing, new_img, first_output=False):
     else:
         state = world_model.action_step(state, a)
         prior = None
-    if prior is not None and world_model.use_prior_instead_of_posterior:
-        state = prior
-    return state
+    if prior is None:
+        prior = state
+    return state, prior
 
 
 def forward_low_level_primitive(
@@ -138,8 +138,11 @@ def forward_low_level_primitive(
             print(primitive_name, k, torch.nn.functional.mse_loss(a_pred, a).item())
             a = a_pred
 
-        state = get_state(o, a, state, world_model, forcing, new_img)
-        new_img = world_model.decode(world_model.get_features(state))
+        state, prior = get_state(o, a, state, world_model, forcing, new_img)
+        if world_model.use_prior_instead_of_posterior:
+            new_img = world_model.decode(world_model.get_features(prior))
+        else:
+            new_img = world_model.decode(world_model.get_features(state))
         reconstructions.append(new_img.unsqueeze(1))
     return reconstructions, state
 
@@ -207,10 +210,13 @@ def visualize_rollout(
                 new_img = None
                 if primitive_model:
                     a = ptu.zeros((1, 9))
-                state = get_state(
+                state, prior = get_state(
                     o, a, state, world_model, forcing, new_img, first_output=True
                 )
-                new_img = world_model.decode(world_model.get_features(state))
+                if world_model.use_prior_instead_of_posterior:
+                    new_img = world_model.decode(world_model.get_features(prior))
+                else:
+                    new_img = world_model.decode(world_model.get_features(state))
                 reconstructions[i, 0] = new_img.unsqueeze(1)
                 for j in range(0, max_path_length):
                     if use_env:

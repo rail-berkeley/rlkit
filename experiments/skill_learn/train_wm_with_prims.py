@@ -95,10 +95,8 @@ if __name__ == "__main__":
         "dataloader_kwargs.batch_size": [25],
         "optimizer_kwargs.lr": [1e-3],
         "optimizer_kwargs.eps": [1e-8],
-        "loss_to_use": ["wm"],
+        "loss_to_use": ["both"],
         "gradient_clip": [100],
-        "world_model_loss_kwargs.reward_loss_scale": [2.0, 0.0],
-        "world_model_loss_kwargs.pred_discount_loss_scale": [10.0, 0.0],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

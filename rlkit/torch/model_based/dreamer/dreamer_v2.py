@@ -811,6 +811,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.batch_length = batch_length
         self.criterion = nn.MSELoss()
+        self.train_wm = True
 
     def imagine_ahead(self, state, actor=None):
         if actor is None:
@@ -882,6 +883,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         obs = batch["observations"]
         high_level_actions = batch["high_level_actions"]
         low_level_actions = batch["low_level_actions"]
+        assert torch.all(
+            high_level_actions[:, 1:, : self.num_primitives].sum(dim=-1) == 1
+        ).item()
         """
         World Model Loss
         """
@@ -959,16 +963,21 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             )
 
             primitive_loss = self.criterion(
-                action_preds, low_level_actions[:, batch_indices]
+                action_preds[
+                    np.arange(batch_indices.shape[1]), batch_indices
+                ].transpose(1, 0),
+                low_level_actions[
+                    np.arange(batch_indices.shape[1]), batch_indices
+                ].transpose(1, 0),
             )
 
-        self.update_network(
-            self.world_model,
-            self.world_model_optimizer,
-            world_model_loss
-            + primitive_loss,  # we will have to test to see if this works
-            self.world_model_gradient_clip,
-        )
+        if self.train_wm:
+            self.update_network(
+                self.world_model,
+                self.world_model_optimizer,
+                world_model_loss + primitive_loss,
+                self.world_model_gradient_clip,
+            )
 
         if self.world_model.use_prior_instead_of_posterior:
             state = prior

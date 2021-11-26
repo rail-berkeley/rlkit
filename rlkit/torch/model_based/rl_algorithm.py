@@ -282,8 +282,10 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             for train_loop in range(self.num_train_loops_per_epoch):
                 if epoch == 0 and train_loop == 0:
                     num_train_steps = self.num_pretrain_steps
+                    self.trainer.train_wm = False
                 else:
                     num_train_steps = self.num_trains_per_train_loop
+                    self.trainer.train_wm = True
                 self.training_mode(True)
                 for train_step in range(num_train_steps):
                     train_data = self.replay_buffer.random_batch(self.batch_size)

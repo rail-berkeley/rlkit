@@ -5,8 +5,10 @@ from collections import OrderedDict
 def visualize_wm(
     env,
     world_model,
-    train_dataset,
-    test_dataset,
+    train_actions,
+    train_obs,
+    test_actions,
+    test_obs,
     logdir,
     max_path_length,
     low_level_primitives,
@@ -63,8 +65,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        train_actions,
+        train_obs,
         world_model,
         logdir,
         max_path_length,
@@ -78,8 +80,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        train_actions,
+        train_obs,
         world_model,
         logdir,
         max_path_length,
@@ -93,8 +95,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        train_actions,
+        train_obs,
         world_model,
         logdir,
         max_path_length,
@@ -108,8 +110,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        test_actions,
+        test_obs,
         world_model,
         logdir,
         max_path_length,
@@ -123,8 +125,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        test_actions,
+        test_obs,
         world_model,
         logdir,
         max_path_length,
@@ -138,8 +140,8 @@ def visualize_wm(
     )
     visualize_rollout(
         env,
-        train_dataset.outputs,
-        train_dataset.inputs[1],
+        test_actions,
+        test_obs,
         world_model,
         logdir,
         max_path_length,
@@ -201,12 +203,12 @@ def experiment(variant):
     world_model_loss_kwargs = variant["world_model_loss_kwargs"]
     clone_primitives = variant["clone_primitives"]
     clone_primitives_separately = variant["clone_primitives_separately"]
-    clone_primitives_and_train_world_model = variant[
-        "clone_primitives_and_train_world_model"
-    ]
-    batch_len = variant["batch_len"]
+    clone_primitives_and_train_world_model = variant.get(
+        "clone_primitives_and_train_world_model", False
+    )
+    batch_len = variant.get("batch_len", dataloader_kwargs["batch_len"])
     num_epochs = variant["num_epochs"]
-    loss_to_use = variant["loss_to_use"]
+    loss_to_use = variant.get("loss_to_use", "both")
 
     logdir = logger.get_snapshot_dir()
 
@@ -224,6 +226,7 @@ def experiment(variant):
             **dataloader_kwargs,
         )
     elif clone_primitives_and_train_world_model:
+        print("LOADING DATA")
         (
             train_dataloader,
             test_dataloader,
@@ -235,8 +238,13 @@ def experiment(variant):
             **dataloader_kwargs,
         )
     elif low_level_primitives or clone_primitives:
-        dataloader_kwargs["clone_primitives"] = clone_primitives
-        train_dataloader, test_dataloader, train_dataset, test_dataset = get_dataloader(
+        print("LOADING DATA")
+        (
+            train_dataloader,
+            test_dataloader,
+            train_dataset,
+            test_dataset,
+        ) = get_dataloader(
             variant["datafile"],
             max_path_length=max_path_length * num_low_level_actions_per_primitive + 1,
             **dataloader_kwargs,
@@ -248,22 +256,7 @@ def experiment(variant):
             **dataloader_kwargs,
         )
 
-    if variant["visualize_wm_from_path"]:
-        world_model = WorldModel(
-            **world_model_kwargs,
-        ).to(ptu.device)
-        world_model.load_state_dict(torch.load(variant["world_model_path"]))
-        visualize_wm(
-            env,
-            world_model,
-            train_dataset,
-            test_dataset,
-            logdir,
-            max_path_length,
-            low_level_primitives,
-            num_low_level_actions_per_primitive,
-        )
-    elif clone_primitives_and_train_world_model:
+    if clone_primitives_and_train_world_model:
         criterion = nn.MSELoss()
         primitive_model = Mlp(
             hidden_sizes=variant["mlp_hidden_sizes"],
@@ -285,8 +278,10 @@ def experiment(variant):
                 visualize_wm(
                     env,
                     world_model,
-                    train_dataset,
-                    test_dataset,
+                    train_dataset.outputs,
+                    train_dataset.inputs[1],
+                    test_dataset.outputs,
+                    test_dataset.inputs[1],
                     logdir,
                     max_path_length,
                     low_level_primitives,
@@ -395,7 +390,12 @@ def experiment(variant):
                     )
 
                     primitive_loss = criterion(
-                        action_preds, low_level_actions[:, batch_indices]
+                        action_preds[
+                            np.arange(batch_indices.shape[1]), batch_indices
+                        ].transpose(1, 0),
+                        low_level_actions[
+                            np.arange(batch_indices.shape[1]), batch_indices
+                        ].transpose(1, 0),
                     )
                     total_primitive_loss += primitive_loss.item()
                     total_world_model_loss += world_model_loss.item()
@@ -847,6 +847,7 @@ def experiment(variant):
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
     else:
+        world_model = WorldModel(**world_model_kwargs).to(ptu.device)
         optimizer = optim.Adam(
             world_model.parameters(),
             **optimizer_kwargs,
@@ -856,8 +857,10 @@ def experiment(variant):
                 visualize_wm(
                     env,
                     world_model,
-                    train_dataset,
-                    test_dataset,
+                    train_dataset.inputs,
+                    train_dataset.outputs,
+                    test_dataset.inputs,
+                    test_dataset.outputs,
                     logdir,
                     max_path_length,
                     low_level_primitives,
