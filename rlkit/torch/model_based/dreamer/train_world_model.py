@@ -123,6 +123,7 @@ def forward_low_level_primitive(
     primitive_name=None,
 ):
     reconstructions = []
+    total_err = 0
     for k in range(0, num_low_level_actions_per_primitive):
         a = ll_a[k : k + 1]
         o = ll_o[k]
@@ -135,7 +136,7 @@ def forward_low_level_primitive(
                 [ptu.from_numpy(hl), world_model.get_features(state)], dim=1
             )
             a_pred = net(inp)
-            print(primitive_name, k, torch.nn.functional.mse_loss(a_pred, a).item())
+            total_err += torch.nn.functional.mse_loss(a_pred, a).item()
             a = a_pred
 
         state, prior = get_state(o, a, state, world_model, forcing, new_img)
@@ -144,6 +145,7 @@ def forward_low_level_primitive(
         else:
             new_img = world_model.decode(world_model.get_features(state))
         reconstructions.append(new_img.unsqueeze(1))
+    print(primitive_name, total_err / num_low_level_actions_per_primitive)
     return reconstructions, state
 
 
@@ -162,6 +164,7 @@ def visualize_rollout(
     num_low_level_actions_per_primitive,
     primitive_model=None,
     use_separate_primitives=False,
+    policy=None,
 ):
     file_path = logdir + "/plots/"
     os.makedirs(file_path, exist_ok=True)
@@ -203,6 +206,8 @@ def visualize_rollout(
                 if use_env:
                     a = ptu.zeros((1, 9))
                     o = env.reset()
+                    if policy:
+                        policy.reset(o.reshape(1, -1))
                 else:
                     a = actions[i, 0:1].to(ptu.device)
                     o = ptu.get_numpy(observations[i, 0])
@@ -220,7 +225,10 @@ def visualize_rollout(
                 reconstructions[i, 0] = new_img.unsqueeze(1)
                 for j in range(0, max_path_length):
                     if use_env:
-                        high_level_action = np.array([env.action_space.sample()])
+                        if policy is not None:
+                            high_level_action, _ = policy.get_action(o.reshape(1, -1))
+                        else:
+                            high_level_action = np.array([env.action_space.sample()])
                         argmax = np.argmax(
                             high_level_action[:, : env.num_primitives], axis=-1
                         )

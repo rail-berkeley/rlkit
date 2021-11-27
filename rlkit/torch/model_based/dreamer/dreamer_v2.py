@@ -374,6 +374,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys[prefix + "actor_entropy_loss"] += actor_entropy_loss.mean().item()
         log_keys[prefix + "actor_entropy_loss_scale"] += actor_entropy_loss_scale
         log_keys[prefix + "imagined_log_probs"] += imagined_log_probs.mean().item()
+        log_keys[prefix + "policy_gradient_loss"] += policy_gradient_loss.mean().item()
+        log_keys[prefix + "actor_log_probs"] += imagined_log_probs.mean().item()
         return actor_loss
 
     def value_loss(
@@ -412,7 +414,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             log_probs = value_dist.log_prob(imagined_returns)
             weights = weights.squeeze(-1)
             vf_loss = -(weights * log_probs).mean()
-        log_keys[prefix + "vf_loss"] += vf_loss.item()
+        log_keys[prefix + "value_loss"] += vf_loss.item()
         log_keys[prefix + "value_dist"] += value_dist.mean.mean().item()
         return vf_loss
 
@@ -979,11 +981,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 self.world_model_gradient_clip,
             )
 
-        if self.world_model.use_prior_instead_of_posterior:
-            state = prior
-        else:
-            state = post
-        state = {k: v[:, rt_idxs] for k, v in state.items()}
+        state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
 
         """
         Actor Value Loss
@@ -1084,12 +1082,13 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         vf_loss,
                         self.value_gradient_clip,
                     )
+            self.scaler.update()
+
         if self.num_imagination_iterations > 0:
             for key in log_keys:
                 log_keys[key] /= (
                     self.num_actor_value_updates * self.num_imagination_iterations
                 )
-        self.scaler.update()
         """
         Save some statistics for eval
         """
@@ -1113,6 +1112,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 "dynamics_backprop_loss"
             ]
             eval_statistics["Policy Gradient Loss"] = log_keys["policy_gradient_loss"]
+            print(log_keys["policy_gradient_loss"])
             eval_statistics["Actor Entropy Loss"] = log_keys["actor_entropy_loss"]
             eval_statistics["Actor Entropy Loss Scale"] = log_keys[
                 "actor_entropy_loss_scale"

@@ -33,21 +33,21 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=5,
             num_eval_steps_per_epoch=30 * 2,
             min_num_steps_before_training=0,
             num_pretrain_steps=1000,
             max_path_length=5,
             batch_size=25,
-            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
-            num_trains_per_train_loop=10 * 2,  # 400//40
+            num_expl_steps_per_train_loop=60,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=20,  # 1000//(5*5)
+            num_trains_per_train_loop=20,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(5e3),
+        replay_buffer_size=int(6e3),
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
         env_suite="metaworld",
@@ -134,10 +134,11 @@ if __name__ == "__main__":
             # "assembly-v2",
             # "disassemble-v2",
             # "peg-unplug-side-v2",
-            "soccer-v2",
+            # "soccer-v2",
             # "sweep-into-v2",
             "drawer-close-v2",
         ],
+        # "trainer_kwargs.num_imagination_iterations":[1, 10, 100],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
