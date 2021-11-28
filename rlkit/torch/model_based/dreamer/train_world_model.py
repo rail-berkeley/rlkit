@@ -146,7 +146,7 @@ def forward_low_level_primitive(
             new_img = world_model.decode(world_model.get_features(state))
         reconstructions.append(new_img.unsqueeze(1))
     print(primitive_name, total_err / num_low_level_actions_per_primitive)
-    return reconstructions, state
+    return reconstructions, state, new_img
 
 
 @torch.no_grad()
@@ -322,7 +322,7 @@ def visualize_rollout(
                                 300,
                                 num_low_level_actions_per_primitive,
                             )
-                            recon, state = forward_low_level_primitive(
+                            recon, state, new_img = forward_low_level_primitive(
                                 ll_a_,
                                 ll_o_,
                                 world_model,
@@ -351,7 +351,7 @@ def visualize_rollout(
                             num_low_level_actions_per_primitive,
                         )
                     else:
-                        recons, state = forward_low_level_primitive(
+                        recons, state, new_img = forward_low_level_primitive(
                             ll_a,
                             ll_o,
                             world_model,
