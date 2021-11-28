@@ -62,15 +62,9 @@ class DreamerPolicy(Policy):
 
 class DreamerLowLevelRAPSPolicy(DreamerPolicy):
     def __init__(
-        self,
-        *args,
-        primitive_model,
-        num_low_level_actions_per_primitive,
-        low_level_action_dim,
-        **kwargs
+        self, *args, num_low_level_actions_per_primitive, low_level_action_dim, **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.primitive_model = primitive_model
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.low_level_action_dim = low_level_action_dim
 
@@ -111,7 +105,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                         [hl, self.world_model.get_features(new_state)],
                         dim=1,
                     )
-                    a = self.primitive_model(inp)
+                    a = self.world_model.primitive_model(inp)
                     new_state = self.world_model.action_step(new_state, a)
             feat = self.world_model.get_features(new_state)
             dist = self.actor(feat)

@@ -375,7 +375,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys[prefix + "actor_entropy_loss_scale"] += actor_entropy_loss_scale
         log_keys[prefix + "imagined_log_probs"] += imagined_log_probs.mean().item()
         log_keys[prefix + "policy_gradient_loss"] += policy_gradient_loss.mean().item()
-        log_keys[prefix + "actor_log_probs"] += imagined_log_probs.mean().item()
+        log_keys[prefix + "log_probs"] += imagined_log_probs.mean().item()
         return actor_loss
 
     def value_loss(
@@ -415,7 +415,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             weights = weights.squeeze(-1)
             vf_loss = -(weights * log_probs).mean()
         log_keys[prefix + "value_loss"] += vf_loss.item()
-        log_keys[prefix + "value_dist"] += value_dist.mean.mean().item()
+        log_keys[prefix + "imagined_value_mean"] += value_dist.mean.mean().item()
         return vf_loss
 
     def update_network(self, network, optimizer, loss, gradient_clip):
@@ -800,15 +800,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self,
         *args,
         num_primitives,
-        primitive_optimizer_kwargs=None,
         num_low_level_actions_per_primitive=100,
         batch_length=50,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.primitive_model_optimizer = optim.Adam(
-            self.world_model.primitive_model.parameters(), **primitive_optimizer_kwargs
-        )
         self.num_primitives = num_primitives
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.batch_length = batch_length
@@ -973,13 +969,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 ].transpose(1, 0),
             )
 
-        if self.train_wm:
-            self.update_network(
-                self.world_model,
-                self.world_model_optimizer,
-                world_model_loss + primitive_loss,
-                self.world_model_gradient_clip,
-            )
+        self.update_network(
+            self.world_model,
+            self.world_model_optimizer,
+            world_model_loss + primitive_loss,
+            self.world_model_gradient_clip,
+        )
 
         state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
 
@@ -1112,7 +1107,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 "dynamics_backprop_loss"
             ]
             eval_statistics["Policy Gradient Loss"] = log_keys["policy_gradient_loss"]
-            print(log_keys["policy_gradient_loss"])
             eval_statistics["Actor Entropy Loss"] = log_keys["actor_entropy_loss"]
             eval_statistics["Actor Entropy Loss Scale"] = log_keys[
                 "actor_entropy_loss_scale"

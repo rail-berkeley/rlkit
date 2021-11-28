@@ -206,7 +206,7 @@ def experiment(variant):
     clone_primitives_and_train_world_model = variant.get(
         "clone_primitives_and_train_world_model", False
     )
-    batch_len = variant.get("batch_len", dataloader_kwargs["batch_len"])
+    batch_len = variant.get("batch_len", 100)
     num_epochs = variant["num_epochs"]
     loss_to_use = variant.get("loss_to_use", "both")
 
@@ -540,7 +540,12 @@ def experiment(variant):
                         )
 
                         primitive_loss = criterion(
-                            action_preds, low_level_actions[:, batch_indices]
+                            action_preds[
+                                np.arange(batch_indices.shape[1]), batch_indices
+                            ].transpose(1, 0),
+                            low_level_actions[
+                                np.arange(batch_indices.shape[1]), batch_indices
+                            ].transpose(1, 0),
                         )
                         total_primitive_loss += primitive_loss.item()
                         total_world_model_loss += world_model_loss.item()

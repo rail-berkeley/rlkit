@@ -128,27 +128,28 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
                 epoch=epoch,
             )
         expl_paths = self.expl_data_collector.get_epoch_paths()
-        if hasattr(self.expl_env, "get_diagnostics"):
+        if len(expl_paths) > 0:
+            if hasattr(self.expl_env, "get_diagnostics"):
+                logger.record_dict(
+                    self.expl_env.get_diagnostics(expl_paths),
+                    prefix="exploration/",
+                )
+                if self.use_wandb:
+                    self._log_wandb(
+                        self.expl_env.get_diagnostics(expl_paths),
+                        prefix="exploration/",
+                        epoch=epoch,
+                    )
             logger.record_dict(
-                self.expl_env.get_diagnostics(expl_paths),
+                eval_util.get_generic_path_information(expl_paths),
                 prefix="exploration/",
             )
             if self.use_wandb:
                 self._log_wandb(
-                    self.expl_env.get_diagnostics(expl_paths),
+                    eval_util.get_generic_path_information(expl_paths),
                     prefix="exploration/",
                     epoch=epoch,
                 )
-        logger.record_dict(
-            eval_util.get_generic_path_information(expl_paths),
-            prefix="exploration/",
-        )
-        if self.use_wandb:
-            self._log_wandb(
-                eval_util.get_generic_path_information(expl_paths),
-                prefix="exploration/",
-                epoch=epoch,
-            )
         """
         Evaluation
         """
@@ -282,10 +283,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             for train_loop in range(self.num_train_loops_per_epoch):
                 if epoch == 0 and train_loop == 0:
                     num_train_steps = self.num_pretrain_steps
-                    self.trainer.train_wm = False
                 else:
                     num_train_steps = self.num_trains_per_train_loop
-                    self.trainer.train_wm = True
                 self.training_mode(True)
                 for train_step in range(num_train_steps):
                     train_data = self.replay_buffer.random_batch(self.batch_size)

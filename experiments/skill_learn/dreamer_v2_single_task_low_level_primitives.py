@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=5,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30 * 2,
             min_num_steps_before_training=0,
             num_pretrain_steps=1000,
@@ -116,9 +116,6 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
             batch_length=100,
-            primitive_optimizer_kwargs=dict(
-                lr=1e-3,
-            ),
         ),
         num_expl_envs=5 * 2,
         num_eval_envs=1,
@@ -138,7 +135,10 @@ if __name__ == "__main__":
             # "sweep-into-v2",
             "drawer-close-v2",
         ],
-        # "trainer_kwargs.num_imagination_iterations":[1, 10, 100],
+        "algorithm_kwargs.num_train_loops_per_epoch": [10],
+        "algorithm_kwargs.num_expl_steps_per_train_loop": [0],
+        "algorithm_kwargs.num_pretrain_steps": [1500],
+        "algorithm_kwargs.num_trains_per_train_loop": [40],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
