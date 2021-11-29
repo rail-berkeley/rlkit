@@ -204,6 +204,11 @@ def vec_rollout_low_level_raps(
             o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
             la.append(a)
             lo.append(o)
+        lo = (
+            np.array(lo)
+            .transpose(0, 1, 4, 2, 3)
+            .reshape(env.n_envs, num_low_level_actions_per_primitive, -1)
+        )
         low_level_actions[
             :,
             p * num_low_level_actions_per_primitive
@@ -216,11 +221,7 @@ def vec_rollout_low_level_raps(
             + 1 : p * num_low_level_actions_per_primitive
             + num_low_level_actions_per_primitive
             + 1,
-        ] = (
-            np.array(lo)
-            .transpose(0, 1, 4, 2, 3)
-            .reshape(env.n_envs, num_low_level_actions_per_primitive, -1)
-        )
+        ] = lo
         ha = np.repeat(
             np.array(ha).reshape(next_o.shape[0], 1, -1),
             num_low_level_actions_per_primitive,
@@ -248,7 +249,7 @@ def vec_rollout_low_level_raps(
         path_length += 1
         if d.all():
             break
-        o = next_o
+        o = lo
     rewards = np.array(rewards)
     if len(rewards.shape) == 1:
         rewards = rewards.reshape(-1, 1)

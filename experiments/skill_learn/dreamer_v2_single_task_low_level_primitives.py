@@ -131,8 +131,8 @@ if __name__ == "__main__":
             # "assembly-v2",
             # "disassemble-v2",
             # "peg-unplug-side-v2",
-            "soccer-v2",
-            # "sweep-into-v2",
+            # "soccer-v2",
+            "sweep-into-v2",
             # "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
@@ -145,6 +145,8 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        if args.debug:
+            variant["algorithm_kwargs"]["num_pretrain_steps"] = 1
         if variant["env_name"] == "soccer-v2":
             variant[
                 "world_model_path"
@@ -159,6 +161,13 @@ if __name__ == "__main__":
             variant[
                 "replay_buffer_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
+        elif variant["env_name"] == "sweep-into-v2":
+            variant[
+                "world_model_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/11-27-train-wm-with-prims-sweep-envs-all-1/11-27-train_wm_with_prims_sweep_envs_all_1_2021_11_27_23_16_29_0000--s-93127/models/world_model.pt"
+            variant[
+                "replay_buffer_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_sweep-into-v2.hdf5"
 
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):

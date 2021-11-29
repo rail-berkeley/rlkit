@@ -78,18 +78,9 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         with torch.cuda.amp.autocast():
             observation = ptu.from_numpy(np.array(observation))
             if self.state:
+                # only if we are not at reset state do we have an actual primitive to execute
                 prev_state, high_level_action = self.state
-            else:
-                prev_state = self.world_model.initial(observation.shape[0])
-                high_level_action = ptu.zeros((observation.shape[0], self.action_dim))
-            embed = self.world_model.encode(observation)
-            new_state, _ = self.world_model.obs_step(
-                prev_state,
-                ptu.zeros((observation.shape[0], self.low_level_action_dim)),
-                embed,
-            )
-            if self.state:
-                # only if are not at reset state do we have an actual primitive to execute
+                new_state = prev_state
                 for k in range(0, self.num_low_level_actions_per_primitive):
                     # ensure high level action is always a one hot vector!
                     assert torch.all(
@@ -106,7 +97,17 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                         dim=1,
                     )
                     a = self.world_model.primitive_model(inp)
-                    new_state = self.world_model.action_step(new_state, a)
+                    embed = self.world_model.encode(observation[:, k])
+                    new_state, _ = self.world_model.obs_step(new_state, a, embed)
+            else:
+                prev_state = self.world_model.initial(observation.shape[0])
+                high_level_action = ptu.zeros((observation.shape[0], self.action_dim))
+                embed = self.world_model.encode(observation)
+                new_state, _ = self.world_model.obs_step(
+                    prev_state,
+                    ptu.zeros((observation.shape[0], self.low_level_action_dim)),
+                    embed,
+                )
             feat = self.world_model.get_features(new_state)
             dist = self.actor(feat)
             action = dist.mode()

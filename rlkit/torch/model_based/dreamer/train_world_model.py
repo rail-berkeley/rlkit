@@ -221,7 +221,9 @@ def visualize_rollout(
                 for j in range(0, max_path_length):
                     if use_env:
                         if policy is not None:
-                            high_level_action, _ = policy.get_action(o.reshape(1, -1))
+                            high_level_action, _ = policy.get_action(
+                                np.expand_dims(o, 0)
+                            )
                         else:
                             high_level_action = np.array([env.action_space.sample()])
                             argmax = np.argmax(
@@ -284,6 +286,7 @@ def visualize_rollout(
                         hl = None
                         net = None
                         primitive_name = None
+                    o = ll_o
                     if use_separate_primitives and primitive_name == "top_x_y_grasp":
                         print(primitive_name)
                         xyzd = primitive_name_to_action_dict["top_x_y_grasp"]
