@@ -87,24 +87,18 @@ def subsample_paths(actions, observations, num_inputs, num_outputs):
     return actions, observations
 
 
-def get_state(o, a, state, world_model, forcing, new_img, first_output=False):
+def get_state(o, a, state, world_model, forcing, new_img):
     if forcing == "teacher":
         o = ptu.from_numpy(o.reshape(1, -1))
         embed = world_model.encode(o)
         state, prior = world_model.obs_step(state, a, embed)
     elif forcing == "self" and world_model.use_prior_instead_of_posterior:
-        if first_output:
-            state = world_model.action_step(state, a)
-            prior = None
-        else:
-            o = new_img.reshape(-1, o.shape[-1])
-            o = torch.clamp(o + 0.5, 0, 1) * 255.0
-            embed = world_model.encode(o)
-            state, prior = world_model.obs_step(state, a, embed)
+        o = new_img.reshape(-1, o.shape[-1])
+        o = torch.clamp(o + 0.5, 0, 1) * 255.0
+        embed = world_model.encode(o)
+        state, prior = world_model.obs_step(state, a, embed)
     else:
         state = world_model.action_step(state, a)
-        prior = None
-    if prior is None:
         prior = state
     return state, prior
 
@@ -212,16 +206,17 @@ def visualize_rollout(
                     a = actions[i, 0:1].to(ptu.device)
                     o = ptu.get_numpy(observations[i, 0])
                 obs[i, 0] = o
-                new_img = None
                 if primitive_model:
                     a = ptu.zeros((1, 9))
-                state, prior = get_state(
-                    o, a, state, world_model, forcing, new_img, first_output=True
+                state, _ = get_state(
+                    o,
+                    a,
+                    state,
+                    world_model,
+                    forcing,
+                    new_img=ptu.from_numpy(o),
                 )
-                if world_model.use_prior_instead_of_posterior:
-                    new_img = world_model.decode(world_model.get_features(prior))
-                else:
-                    new_img = world_model.decode(world_model.get_features(state))
+                new_img = world_model.decode(world_model.get_features(state))
                 reconstructions[i, 0] = new_img.unsqueeze(1)
                 for j in range(0, max_path_length):
                     if use_env:
@@ -229,14 +224,14 @@ def visualize_rollout(
                             high_level_action, _ = policy.get_action(o.reshape(1, -1))
                         else:
                             high_level_action = np.array([env.action_space.sample()])
-                        argmax = np.argmax(
-                            high_level_action[:, : env.num_primitives], axis=-1
-                        )
-                        one_hots = np.eye(env.num_primitives)[argmax]
-                        high_level_action = np.concatenate(
-                            (one_hots, high_level_action[:, env.num_primitives :]),
-                            axis=-1,
-                        )
+                            argmax = np.argmax(
+                                high_level_action[:, : env.num_primitives], axis=-1
+                            )
+                            one_hots = np.eye(env.num_primitives)[argmax]
+                            high_level_action = np.concatenate(
+                                (one_hots, high_level_action[:, env.num_primitives :]),
+                                axis=-1,
+                            )
                         o, r, d, info = env.step(
                             high_level_action[0],
                         )

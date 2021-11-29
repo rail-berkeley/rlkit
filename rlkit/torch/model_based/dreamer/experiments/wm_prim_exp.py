@@ -388,7 +388,6 @@ def experiment(variant):
                         terminals,
                         **world_model_loss_kwargs,
                     )
-
                     primitive_loss = criterion(
                         action_preds[
                             np.arange(batch_indices.shape[1]), batch_indices

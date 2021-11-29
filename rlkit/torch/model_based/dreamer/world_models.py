@@ -400,6 +400,8 @@ class LowlevelRAPSWorldModel(WorldModel):
                 action_ = action_
             else:
                 action_ = action[1][:, i]
+            if i == 0:
+                action_ = action_ * 0
             (post_params, prior_params,) = self.obs_step(
                 state,
                 action_.detach(),
@@ -409,7 +411,11 @@ class LowlevelRAPSWorldModel(WorldModel):
                 post[k].append(post_params[k].unsqueeze(1))
 
             for k in prior.keys():
-                prior[k].append(prior_params[k].unsqueeze(1))
+                if i == 0:
+                    # auto encode first action!
+                    prior[k].append(post_params[k].unsqueeze(1))
+                else:
+                    prior[k].append(prior_params[k].unsqueeze(1))
             state = post_params
         return post, prior, torch.cat(actions, dim=1)
 
