@@ -876,11 +876,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         :param: skip_statistics bool
         :returns: Tuple[DreamerLosses, LossStatistics]
         """
-        rewards = batch["rewards"] * self.reward_scale
+        rewards = batch["rewards"]
         terminals = batch["terminals"]
         obs = batch["observations"]
         high_level_actions = batch["high_level_actions"]
         low_level_actions = batch["low_level_actions"]
+
         assert torch.all(
             high_level_actions[:, 1:, : self.num_primitives].sum(dim=-1) == 1
         ).item()
@@ -960,11 +961,22 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 terminals,
             )
 
+            batch_start = np.random.randint(
+                0,
+                action_preds.shape[1] - self.batch_length,
+                size=(action_preds.shape[0]),
+            )
+            batch_indices = np.linspace(
+                batch_start,
+                batch_start + self.batch_length,
+                self.batch_length,
+                endpoint=False,
+            ).astype(int)
             primitive_loss = self.criterion(
                 action_preds[
                     np.arange(batch_indices.shape[1]), batch_indices
                 ].transpose(1, 0),
-                low_level_actions[
+                low_level_actions[:, 1:][
                     np.arange(batch_indices.shape[1]), batch_indices
                 ].transpose(1, 0),
             )

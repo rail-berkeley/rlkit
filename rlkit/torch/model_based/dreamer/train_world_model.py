@@ -82,20 +82,20 @@ def subsample_paths(actions, observations, num_inputs, num_outputs):
     a = actions.reshape(num_outputs, spacing, -1)
     a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
     actions = np.concatenate((a, actions[idxs.astype(np.int)[1:] - 1, 3:]), axis=1)
-    actions = ptu.from_numpy(actions)
+    actions = actions
     observations = observations[idxs.astype(np.int)[1:] - 1]
     return actions, observations
 
 
-def get_state(o, a, state, world_model, forcing, new_img):
-    if forcing == "teacher":
+def get_state(o, a, state, world_model, forcing, new_img, first_output=False):
+    if forcing == "teacher" or first_output:
         o = ptu.from_numpy(o.reshape(1, -1))
         embed = world_model.encode(o)
         state, prior = world_model.obs_step(state, a, embed)
     elif forcing == "self" and world_model.use_prior_instead_of_posterior:
-        o = new_img.reshape(-1, o.shape[-1])
-        o = torch.clamp(o + 0.5, 0, 1) * 255.0
-        embed = world_model.encode(o)
+        new_img = new_img.reshape(-1, o.shape[-1])
+        new_img = torch.clamp(new_img + 0.5, 0, 1) * 255.0
+        embed = world_model.encode(new_img)
         state, prior = world_model.obs_step(state, a, embed)
     else:
         state = world_model.action_step(state, a)
@@ -119,7 +119,7 @@ def forward_low_level_primitive(
     reconstructions = []
     total_err = 0
     for k in range(0, num_low_level_actions_per_primitive):
-        a = ll_a[k : k + 1]
+        a = ptu.from_numpy(ll_a[k : k + 1])
         o = ll_o[k]
         if primitive_model:
             tmp = np.array([(k + 1) / (num_low_level_actions_per_primitive)]).reshape(
@@ -215,15 +215,15 @@ def visualize_rollout(
                     world_model,
                     forcing,
                     new_img=ptu.from_numpy(o),
+                    first_output=True,
                 )
                 new_img = world_model.decode(world_model.get_features(state))
                 reconstructions[i, 0] = new_img.unsqueeze(1)
+                policy_o = (None, np.expand_dims(o, 0))
                 for j in range(0, max_path_length):
                     if use_env:
                         if policy is not None:
-                            high_level_action, _ = policy.get_action(
-                                np.expand_dims(o, 0)
-                            )
+                            high_level_action, _ = policy.get_action(policy_o)
                         else:
                             high_level_action = np.array([env.action_space.sample()])
                             argmax = np.argmax(
@@ -269,12 +269,14 @@ def visualize_rollout(
                             net = primitive_model
                             hl = high_level_action
                     else:
-                        ll_a = actions[
-                            i,
-                            1
-                            + j * num_low_level_actions_per_primitive : 1
-                            + (j + 1) * num_low_level_actions_per_primitive,
-                        ].to(ptu.device)
+                        ll_a = ptu.get_numpy(
+                            actions[
+                                i,
+                                1
+                                + j * num_low_level_actions_per_primitive : 1
+                                + (j + 1) * num_low_level_actions_per_primitive,
+                            ]
+                        )
                         ll_o = ptu.get_numpy(
                             observations[
                                 i,
@@ -286,7 +288,7 @@ def visualize_rollout(
                         hl = None
                         net = None
                         primitive_name = None
-                    o = ll_o
+                    policy_o = (np.expand_dims(ll_a, 0), np.expand_dims(ll_o, 0))
                     if use_separate_primitives and primitive_name == "top_x_y_grasp":
                         print(primitive_name)
                         xyzd = primitive_name_to_action_dict["top_x_y_grasp"]

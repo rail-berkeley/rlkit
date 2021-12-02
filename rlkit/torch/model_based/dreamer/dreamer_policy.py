@@ -75,33 +75,20 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         :param observation:
         :return: action, debug_dictionary
         """
+        ll_a, ll_o = observation
         with torch.cuda.amp.autocast():
-            observation = ptu.from_numpy(np.array(observation))
+            observation = ptu.from_numpy(ll_o)
             if self.state:
-                # only if we are not at reset state do we have an actual primitive to execute
-                prev_state, high_level_action = self.state
+                ll_a = ptu.from_numpy(ll_a)
+                prev_state, _ = self.state
                 new_state = prev_state
                 for k in range(0, self.num_low_level_actions_per_primitive):
-                    # ensure high level action is always a one hot vector!
-                    assert torch.all(
-                        high_level_action[:, : self.num_primitives].sum(dim=-1) == 1
-                    ).item()
-                    tmp = np.array(
-                        [(k + 1) / (self.num_low_level_actions_per_primitive)]
-                    ).reshape(1, -1)
-                    tmp = np.repeat(tmp, high_level_action.shape[0], axis=0)
-                    tmp = ptu.from_numpy(tmp)
-                    hl = torch.cat((high_level_action, tmp), 1)
-                    inp = torch.cat(
-                        [hl, self.world_model.get_features(new_state)],
-                        dim=1,
-                    )
-                    a = self.world_model.primitive_model(inp)
                     embed = self.world_model.encode(observation[:, k])
-                    new_state, _ = self.world_model.obs_step(new_state, a, embed)
+                    new_state, _ = self.world_model.obs_step(
+                        new_state, ll_a[:, k], embed
+                    )
             else:
                 prev_state = self.world_model.initial(observation.shape[0])
-                high_level_action = ptu.zeros((observation.shape[0], self.action_dim))
                 embed = self.world_model.encode(observation)
                 new_state, _ = self.world_model.obs_step(
                     prev_state,

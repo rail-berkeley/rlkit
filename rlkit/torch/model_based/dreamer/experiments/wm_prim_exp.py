@@ -388,11 +388,23 @@ def experiment(variant):
                         terminals,
                         **world_model_loss_kwargs,
                     )
+
+                    batch_start = np.random.randint(
+                        0,
+                        action_preds.shape[1] - batch_len,
+                        size=(action_preds.shape[0]),
+                    )
+                    batch_indices = np.linspace(
+                        batch_start,
+                        batch_start + batch_len,
+                        batch_len,
+                        endpoint=False,
+                    ).astype(int)
                     primitive_loss = criterion(
                         action_preds[
                             np.arange(batch_indices.shape[1]), batch_indices
                         ].transpose(1, 0),
-                        low_level_actions[
+                        low_level_actions[:, 1:][
                             np.arange(batch_indices.shape[1]), batch_indices
                         ].transpose(1, 0),
                     )
@@ -538,11 +550,22 @@ def experiment(variant):
                             **world_model_loss_kwargs,
                         )
 
+                        batch_start = np.random.randint(
+                            0,
+                            action_preds.shape[1] - batch_len,
+                            size=(action_preds.shape[0]),
+                        )
+                        batch_indices = np.linspace(
+                            batch_start,
+                            batch_start + batch_len,
+                            batch_len,
+                            endpoint=False,
+                        ).astype(int)
                         primitive_loss = criterion(
                             action_preds[
                                 np.arange(batch_indices.shape[1]), batch_indices
                             ].transpose(1, 0),
-                            low_level_actions[
+                            low_level_actions[:, 1:][
                                 np.arange(batch_indices.shape[1]), batch_indices
                             ].transpose(1, 0),
                         )

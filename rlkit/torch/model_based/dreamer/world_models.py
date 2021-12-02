@@ -393,15 +393,18 @@ class LowlevelRAPSWorldModel(WorldModel):
     ):
         actions = []
         for i in range(path_length):
-            inp = torch.cat([action[0][:, i], self.get_features(state).detach()], dim=1)
-            action_ = self.primitive_model(inp)
-            actions.append(action_.unsqueeze(1))
-            if use_network_action:
-                action_ = action_
-            else:
-                action_ = action[1][:, i]
             if i == 0:
-                action_ = action_ * 0
+                action_ = action[1][:, 0] * 0
+            else:
+                inp = torch.cat(
+                    [action[0][:, i], self.get_features(state).detach()], dim=1
+                )
+                action_ = self.primitive_model(inp)
+                actions.append(action_.unsqueeze(1))
+                if use_network_action:
+                    action_ = action_
+                else:
+                    action_ = action[1][:, i]
             (post_params, prior_params,) = self.obs_step(
                 state,
                 action_.detach(),

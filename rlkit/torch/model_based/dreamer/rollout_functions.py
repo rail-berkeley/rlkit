@@ -164,6 +164,7 @@ def vec_rollout_low_level_raps(
         img = env.render(mode="rgb_array", imwidth=256, imheight=256)
         cv2.imshow("img", img)
         cv2.waitKey(1)
+    o = (None, np.array(o))
     for p in range(0, max_path_length):
         ha, agent_info = agent.get_action(o, **get_action_kwargs)
         if (ha[:, : agent.num_primitives].sum(axis=-1) != 1).any():
@@ -249,7 +250,7 @@ def vec_rollout_low_level_raps(
         path_length += 1
         if d.all():
             break
-        o = lo
+        o = (np.array(la), lo)
     rewards = np.array(rewards)
     if len(rewards.shape) == 1:
         rewards = rewards.reshape(-1, 1)
