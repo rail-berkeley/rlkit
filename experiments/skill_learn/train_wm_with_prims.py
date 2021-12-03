@@ -92,8 +92,8 @@ if __name__ == "__main__":
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5",
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_sweep-into-v2.hdf5",
             "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_peg-unplug-side-v2.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_disassemble-v2.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_assembly-v2.hdf5",
+            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_disassemble-v2.hdf5",
+            # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_assembly-v2.hdf5",
         ],
         "batch_len": [100],
         "dataloader_kwargs.batch_size": [25],
@@ -101,6 +101,8 @@ if __name__ == "__main__":
         "optimizer_kwargs.eps": [1e-8],
         "loss_to_use": ["both"],
         "gradient_clip": [100],
+        "mlp_act": ["elu", "relu"],
+        "mlp_res": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

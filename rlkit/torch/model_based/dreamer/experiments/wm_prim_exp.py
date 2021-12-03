@@ -257,12 +257,17 @@ def experiment(variant):
         )
 
     if clone_primitives_and_train_world_model:
+        if variant["mlp_act"] == "elu":
+            mlp_act = nn.functional.elu
+        elif variant["mlp_act"] == "relu":
+            mlp_act = nn.functional.relu
         criterion = nn.MSELoss()
         primitive_model = Mlp(
             hidden_sizes=variant["mlp_hidden_sizes"],
             output_size=low_level_action_dim,
             input_size=250 + env.action_space.low.shape[0] + 1,
-            hidden_activation=torch.nn.functional.relu,
+            hidden_activation=mlp_act,
+            res=variant["mlp_res"],
         ).to(ptu.device)
         world_model_class = LowlevelRAPSWorldModel
         world_model = world_model_class(
@@ -274,20 +279,6 @@ def experiment(variant):
             **optimizer_kwargs,
         )
         for i in tqdm(range(num_epochs)):
-            if i % variant["plotting_period"] == 0:
-                visualize_wm(
-                    env,
-                    world_model,
-                    train_dataset.outputs,
-                    train_dataset.inputs[1],
-                    test_dataset.outputs,
-                    test_dataset.inputs[1],
-                    logdir,
-                    max_path_length,
-                    low_level_primitives,
-                    num_low_level_actions_per_primitive,
-                    primitive_model=primitive_model,
-                )
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
             total_primitive_loss = 0
@@ -604,8 +595,23 @@ def experiment(variant):
                         world_model.state_dict(),
                         logdir + "/models/world_model.pt",
                     )
+                    if i > 100:
+                        visualize_wm(
+                            env,
+                            world_model,
+                            train_dataset.outputs,
+                            train_dataset.inputs[1],
+                            test_dataset.outputs,
+                            test_dataset.inputs[1],
+                            logdir,
+                            max_path_length,
+                            low_level_primitives,
+                            num_low_level_actions_per_primitive,
+                            primitive_model=primitive_model,
+                        )
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
+
     elif clone_primitives_separately:
         world_model.load_state_dict(torch.load(variant["world_model_path"]))
         criterion = nn.MSELoss()
