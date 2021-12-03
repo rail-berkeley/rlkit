@@ -92,7 +92,7 @@ def run_experiment_here(
         variant=None,
         exp_id=0,
         seed=None,
-        use_gpu=True,
+        use_gpu=False,
         # Logger params:
         exp_prefix="default",
         snapshot_mode='last',
@@ -303,7 +303,11 @@ def setup_logger(
                     f.write(code_diff + '\n')
             if code_diff_staged is not None and len(code_diff_staged) > 0:
                 with open(osp.join(log_dir, diff_staged_file_name), "w") as f:
-                    f.write(code_diff_staged + '\n')
+                    try:
+                        f.write(code_diff_staged + '\n')
+                    except UnicodeEncodeError as e:
+                        print(e)
+                        f.write(code_diff_staged.encode('utf-8', 'surrogateescape').decode('ISO-8859-1') + '\n')
             with open(osp.join(log_dir, "git_infos.txt"), "a") as f:
                 f.write("directory: {}\n".format(directory))
                 f.write("git hash: {}\n".format(commit_hash))
@@ -590,7 +594,7 @@ def run_experiment(
                 ))
             except git.exc.InvalidGitRepositoryError:
                 pass
-    except ImportError:
+    except (ImportError, UnboundLocalError):
         git_infos = None
     run_experiment_kwargs = dict(
         exp_prefix=exp_prefix,
