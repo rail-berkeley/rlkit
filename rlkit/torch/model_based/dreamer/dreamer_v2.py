@@ -927,8 +927,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 obs[np.arange(batch_indices.shape[1]), batch_indices],
                 (int(np.prod(self.image_shape)),),
             )
-            rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
-            terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
+            rewards = rewards.reshape(-1, rewards.shape[-1])
+            terminals = terminals.reshape(-1, terminals.shape[-1])
             (
                 world_model_loss,
                 div,

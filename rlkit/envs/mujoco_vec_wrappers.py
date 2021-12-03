@@ -44,16 +44,17 @@ class DummyVecEnv(Env):
         info_ = {}
         for i in infos:
             for k, v in i.items():
+                v = np.array(v)
                 if k in info_.keys():
-                    if not np.isscalar(v) and v.shape != ():
-                        info_[k].append(np.array(v).reshape(1, *np.array(v).shape))
+                    if v.shape != ():
+                        info_[k].append(v.reshape(1, *np.array(v).shape))
                     else:
-                        info_[k].append(np.array(v).reshape(1, 1))
+                        info_[k].append(v.reshape(1, 1))
                 else:
-                    if not np.isscalar(v) and v.shape != ():
-                        info_[k] = [np.array(v).reshape(1, *np.array(v).shape)]
+                    if v.shape != ():
+                        info_[k] = [v.reshape(1, *np.array(v).shape)]
                     else:
-                        info_[k] = [np.array(v).reshape(1, 1)]
+                        info_[k] = [v.reshape(1, 1)]
         for k, v in info_.items():
             info_[k] = np.concatenate(v)
         return obs, rewards, done, info_
