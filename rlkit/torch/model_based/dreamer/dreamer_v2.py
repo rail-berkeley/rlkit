@@ -464,7 +464,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 reward_dist,
                 pred_discount_dist,
                 _,
-                _,
             ) = self.world_model(obs, actions)
             obs = self.world_model.flatten_obs(
                 obs.transpose(1, 0), (int(np.prod(self.image_shape)),)

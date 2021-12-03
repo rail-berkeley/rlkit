@@ -208,22 +208,12 @@ class WorldModel(jit.ScriptModule):
         post: Dict[str, List[Tensor]],
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
-        net: jit.ScriptModule = None,
-        use_network_action: bool = False,
     ):
         actions = []
         for i in range(path_length):
-            if net:
-                inp = torch.cat([action[0][:, i], self.get_features(state)], dim=1)
-                action_ = net(inp)
-                actions.append(action_.unsqueeze(1))
-                if not use_network_action:
-                    action_ = action[1][:, i]
-            else:
-                action_ = action[:, i]
             (post_params, prior_params,) = self.obs_step(
                 state,
-                action_,
+                action[:, i],
                 embed[:, i],
             )
             for k in post.keys():
@@ -232,18 +222,15 @@ class WorldModel(jit.ScriptModule):
             for k in prior.keys():
                 prior[k].append(prior_params[k].unsqueeze(1))
             state = post_params
-        if len(actions) > 0:
-            actions = torch.cat(actions, dim=1)
-        return post, prior, actions
+        return post, prior
 
-    def forward(self, obs, action, net=None, use_network_action=False, state=None):
+    def forward(self, obs, action):
         """
         :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
         :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
         """
         original_batch_size = obs.shape[0]
-        if state is None:
-            state = self.initial(original_batch_size)
+        state = self.initial(original_batch_size)
         path_length = obs.shape[1]
         if self.discrete_latents:
             post, prior = (
@@ -261,15 +248,13 @@ class WorldModel(jit.ScriptModule):
         embed = embed.reshape(
             path_length, original_batch_size, embedding_size
         ).transpose(1, 0)
-        post, prior, actions = self.forward_batch(
+        post, prior = self.forward_batch(
             path_length,
             action,
             embed,
             post,
             prior,
             state,
-            net,
-            use_network_action,
         )
 
         for k in post.keys():
@@ -307,7 +292,6 @@ class WorldModel(jit.ScriptModule):
             reward_dist,
             pred_discount_dist,
             embed,
-            actions,
         )
 
     def get_features(self, state: Dict[str, Tensor]):

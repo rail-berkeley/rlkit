@@ -175,7 +175,6 @@ def experiment(variant):
         action_dim,
         image_shape=(3, 64, 64),
         **variant["model_kwargs"],
-        env=eval_env,
     )
     actor = ActorModel(
         variant["model_kwargs"]["model_hidden_size"],
@@ -183,7 +182,6 @@ def experiment(variant):
         hidden_activation=torch.nn.functional.elu,
         discrete_action_dim=0,
         continuous_action_dim=eval_env.action_space.low.size,
-        env=eval_env,
         **variant["actor_kwargs"],
     )
     vf = Mlp(

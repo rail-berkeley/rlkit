@@ -45,12 +45,12 @@ class DummyVecEnv(Env):
         for i in infos:
             for k, v in i.items():
                 if k in info_.keys():
-                    if not np.isscalar(v):
+                    if not np.isscalar(v) and v.shape != ():
                         info_[k].append(np.array(v).reshape(1, *np.array(v).shape))
                     else:
                         info_[k].append(np.array(v).reshape(1, 1))
                 else:
-                    if not np.isscalar(v):
+                    if not np.isscalar(v) and v.shape != ():
                         info_[k] = [np.array(v).reshape(1, *np.array(v).shape)]
                     else:
                         info_[k] = [np.array(v).reshape(1, 1)]
