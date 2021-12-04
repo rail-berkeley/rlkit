@@ -303,6 +303,7 @@ def experiment(variant):
                     high_level_actions = high_level_actions.to(ptu.device).float()
                     rewards = rewards.to(ptu.device).float()
                     terminals = terminals.to(ptu.device).float()
+                    assert all(terminals[:, -1] == 1)
                     rt_idxs = np.arange(
                         num_low_level_actions_per_primitive,
                         obs.shape[1],
@@ -462,6 +463,7 @@ def experiment(variant):
                         high_level_actions = high_level_actions.to(ptu.device).float()
                         rewards = rewards.to(ptu.device).float()
                         terminals = terminals.to(ptu.device).float()
+                        assert all(terminals[:, -1] == 1)
                         rt_idxs = np.arange(
                             num_low_level_actions_per_primitive,
                             obs.shape[1],
