@@ -564,8 +564,7 @@ def experiment(variant):
                         total_entropy_loss += entropy_loss.item()
                         total_pred_discount_loss += pred_discount_loss.item()
                         total_reward_pred_loss += reward_pred_loss.item()
-                        loss = world_model_loss.item() + primitive_loss.item()
-                        total_loss += loss
+                        total_loss += world_model_loss.item() + primitive_loss.item()
                         total_test_steps += 1
                 eval_statistics["test/primitive_loss"] = (
                     total_primitive_loss / total_test_steps

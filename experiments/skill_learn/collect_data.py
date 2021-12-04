@@ -84,7 +84,7 @@ def collect_world_model_data_low_level_primitives(
             observations: list of H lists of H_t+1 observations
     """
     data = {}
-    data["actions"] = np.zeros(
+    data["low_level_actions"] = np.zeros(
         (
             num_trajs,
             (max_path_length * num_low_level_actions_per_primitive) + 1,
@@ -112,16 +112,14 @@ def collect_world_model_data_low_level_primitives(
     data["terminals"] = np.zeros((num_trajs, max_path_length + 1, 1))
     for k in tqdm(range(num_trajs // num_envs)):
         o = env.reset()
-        data["actions"][k * num_envs : (k + 1) * num_envs, 0] = np.zeros((num_envs, 9))
-        data["high_level_actions"][k * num_envs : (k + 1) * num_envs, 0] = np.zeros(
-            (num_envs, env.action_space.low.shape[0] + 1)
-        )
         data["observations"][k * num_envs : (k + 1) * num_envs, 0] = o
         for p in range(0, max_path_length):
             high_level_actions = [env.action_space.sample() for _ in range(num_envs)]
             o, r, d, i = env.step(high_level_actions)
-            data["rewards"][k * num_envs : (k + 1) * num_envs, p] = r.reshape(-1, 1)
-            data["terminals"][k * num_envs : (k + 1) * num_envs, p] = d.reshape(-1, 1)
+            data["rewards"][k * num_envs : (k + 1) * num_envs, p + 1] = r.reshape(-1, 1)
+            data["terminals"][k * num_envs : (k + 1) * num_envs, p + 1] = d.reshape(
+                -1, 1
+            )
             low_level_actions = i["actions"]
             low_level_obs = i["observations"]
             actions = []
@@ -143,7 +141,7 @@ def collect_world_model_data_low_level_primitives(
                 actions.append(a)
                 obs.append(o)
 
-            data["actions"][
+            data["low_level_actions"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : p * num_low_level_actions_per_primitive

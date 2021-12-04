@@ -462,7 +462,10 @@ class LowlevelRAPSWorldModel(WorldModel):
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
-        rt_feat = feat[:, rt_idxs]
+        rt_feat = self.get_features(
+            post
+        )  # rewards/transitions should always be predicted from s'
+        rt_feat = rt_feat[:, rt_idxs]
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
         batch_size = batch_indices.shape[1]
         feat = feat[

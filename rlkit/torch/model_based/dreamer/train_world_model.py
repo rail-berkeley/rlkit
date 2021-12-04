@@ -709,7 +709,7 @@ def get_dataloader_rt(
     """
     with h5py.File(filename, "r") as f:
         observations = np.array(f["observations"][:])
-        actions = np.array(f["actions"][:])
+        actions = np.array(f["low_level_actions"][:])
         high_level_actions = np.array(f["high_level_actions"][:])
         rewards = np.array(f["rewards"][:])
         terminals = np.array(f["terminals"][:])
