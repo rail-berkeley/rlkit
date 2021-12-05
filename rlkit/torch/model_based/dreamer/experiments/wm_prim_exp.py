@@ -164,7 +164,7 @@ def experiment(variant):
     import rlkit.torch.pytorch_util as ptu
     from rlkit.core import logger
     from rlkit.envs.primitives_make_env import make_env
-    from rlkit.torch.model_based.dreamer.mlp import Mlp
+    from rlkit.torch.model_based.dreamer.mlp import Mlp, MlpResidual
     from rlkit.torch.model_based.dreamer.train_world_model import (
         compute_world_model_loss,
         get_dataloader,
@@ -261,13 +261,16 @@ def experiment(variant):
             mlp_act = nn.functional.elu
         elif variant["mlp_act"] == "relu":
             mlp_act = nn.functional.relu
+        if variant["mlp_res"]:
+            mlp_class = MlpResidual
+        else:
+            mlp_class = Mlp
         criterion = nn.MSELoss()
-        primitive_model = Mlp(
+        primitive_model = mlp_class(
             hidden_sizes=variant["mlp_hidden_sizes"],
             output_size=low_level_action_dim,
             input_size=250 + env.action_space.low.shape[0] + 1,
             hidden_activation=mlp_act,
-            res=variant["mlp_res"],
         ).to(ptu.device)
         world_model_class = LowlevelRAPSWorldModel
         world_model = world_model_class(
@@ -278,6 +281,8 @@ def experiment(variant):
             world_model.parameters(),
             **optimizer_kwargs,
         )
+        best_test_loss = np.inf
+        best_plot_loss = np.inf
         for i in tqdm(range(num_epochs)):
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
@@ -361,13 +366,13 @@ def experiment(variant):
                         {
                             k: v[
                                 np.arange(batch_indices.shape[1]), batch_indices
-                            ].permute(1, 0, 2)
+                            ].reshape(-1, v.shape[-1])
                             for k, v in prior.items()
                         },
                         {
                             k: v[
                                 np.arange(batch_indices.shape[1]), batch_indices
-                            ].permute(1, 0, 2)
+                            ].reshape(-1, v.shape[-1])
                             for k, v in post.items()
                         },
                         prior_dist,
@@ -393,10 +398,10 @@ def experiment(variant):
                     primitive_loss = criterion(
                         action_preds[
                             np.arange(batch_indices.shape[1]), batch_indices
-                        ].transpose(1, 0),
+                        ].reshape(-1, action_preds.shape[-1]),
                         low_level_actions[:, 1:][
                             np.arange(batch_indices.shape[1]), batch_indices
-                        ].transpose(1, 0),
+                        ].reshape(-1, action_preds.shape[-1]),
                     )
                     total_primitive_loss += primitive_loss.item()
                     total_world_model_loss += world_model_loss.item()
@@ -438,7 +443,6 @@ def experiment(variant):
             eval_statistics["train/reward_pred_loss"] = (
                 total_reward_pred_loss / total_train_steps
             )
-            best_test_loss = np.inf
             with torch.no_grad():
                 total_primitive_loss = 0
                 total_world_model_loss = 0
@@ -521,13 +525,13 @@ def experiment(variant):
                             {
                                 k: v[
                                     np.arange(batch_indices.shape[1]), batch_indices
-                                ].permute(1, 0, 2)
+                                ].reshape(-1, v.shape[-1])
                                 for k, v in prior.items()
                             },
                             {
                                 k: v[
                                     np.arange(batch_indices.shape[1]), batch_indices
-                                ].permute(1, 0, 2)
+                                ].reshape(-1, v.shape[-1])
                                 for k, v in post.items()
                             },
                             prior_dist,
@@ -553,10 +557,10 @@ def experiment(variant):
                         primitive_loss = criterion(
                             action_preds[
                                 np.arange(batch_indices.shape[1]), batch_indices
-                            ].transpose(1, 0),
+                            ].reshape(-1, action_preds.shape[-1]),
                             low_level_actions[:, 1:][
                                 np.arange(batch_indices.shape[1]), batch_indices
-                            ].transpose(1, 0),
+                            ].reshape(-1, action_preds.shape[-1]),
                         )
                         total_primitive_loss += primitive_loss.item()
                         total_world_model_loss += world_model_loss.item()
@@ -596,20 +600,24 @@ def experiment(variant):
                         world_model.state_dict(),
                         logdir + "/models/world_model.pt",
                     )
-                    if i > 100:
-                        visualize_wm(
-                            env,
-                            world_model,
-                            train_dataset.outputs,
-                            train_dataset.inputs[1],
-                            test_dataset.outputs,
-                            test_dataset.inputs[1],
-                            logdir,
-                            max_path_length,
-                            low_level_primitives,
-                            num_low_level_actions_per_primitive,
-                            primitive_model=primitive_model,
-                        )
+                if (
+                    i % variant["plotting_period"] == 0
+                    and (total_loss / total_test_steps) <= best_plot_loss
+                ):
+                    best_plot_loss = total_loss / total_test_steps
+                    visualize_wm(
+                        env,
+                        world_model,
+                        train_dataset.outputs,
+                        train_dataset.inputs[1],
+                        test_dataset.outputs,
+                        test_dataset.inputs[1],
+                        logdir,
+                        max_path_length,
+                        low_level_primitives,
+                        num_low_level_actions_per_primitive,
+                        primitive_model=primitive_model,
+                    )
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
 

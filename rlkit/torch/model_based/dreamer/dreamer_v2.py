@@ -941,14 +941,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 image_dist,
                 reward_dist,
                 {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices].permute(
-                        1, 0, 2
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices].reshape(
+                        -1, v.shape[-1]
                     )
                     for k, v in prior.items()
                 },
                 {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices].permute(
-                        1, 0, 2
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices].reshape(
+                        -1, v.shape[-1]
                     )
                     for k, v in post.items()
                 },
@@ -972,12 +972,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 endpoint=False,
             ).astype(int)
             primitive_loss = self.criterion(
-                action_preds[
-                    np.arange(batch_indices.shape[1]), batch_indices
-                ].transpose(1, 0),
+                action_preds[np.arange(batch_indices.shape[1]), batch_indices].reshape(
+                    -1, action_preds.shape[-1]
+                ),
                 low_level_actions[:, 1:][
                     np.arange(batch_indices.shape[1]), batch_indices
-                ].transpose(1, 0),
+                ].reshape(-1, action_preds.shape[-1]),
             )
 
         self.update_network(
@@ -987,6 +987,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             self.world_model_gradient_clip,
         )
 
+        # we can also try using prior here
         state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
 
         """

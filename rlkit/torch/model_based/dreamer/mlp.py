@@ -16,7 +16,6 @@ class Mlp(jit.ScriptModule):
         output_activation=identity,
         hidden_init=torch.nn.init.xavier_uniform_,
         b_init_value=0.0,
-        res=False,
     ):
         super().__init__()
 
@@ -26,7 +25,6 @@ class Mlp(jit.ScriptModule):
         self.output_activation = output_activation
         self.fcs = torch.nn.ModuleList()
         self.layer_norms = []
-        self.res = res
         in_size = input_size
 
         for i, next_size in enumerate(hidden_sizes):
@@ -44,11 +42,23 @@ class Mlp(jit.ScriptModule):
     @jit.script_method
     def forward(self, input):
         h = input
+        for i, fc in enumerate(self.fcs):
+            h = fc(h)
+            h = self.hidden_activation(h)
+        preactivation = self.last_fc(h)
+        output = self.output_activation(preactivation)
+        return output
+
+
+class MlpResidual(Mlp):
+    @jit.script_method
+    def forward(self, input):
+        h = input
         h_prev = h
         for i, fc in enumerate(self.fcs):
             h = fc(h)
             h = self.hidden_activation(h)
-            if i == 1 and self.res:
+            if i % 2 == 1:
                 h = h + h_prev
             h_prev = h
         preactivation = self.last_fc(h)

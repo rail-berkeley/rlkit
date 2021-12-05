@@ -139,7 +139,8 @@ def forward_low_level_primitive(
         else:
             new_img = world_model.decode(world_model.get_features(state))
         reconstructions.append(new_img.unsqueeze(1))
-    print(primitive_name, total_err / num_low_level_actions_per_primitive)
+    if primitive_name is not None:
+        print(primitive_name, total_err / num_low_level_actions_per_primitive)
     return reconstructions, state, new_img
 
 
