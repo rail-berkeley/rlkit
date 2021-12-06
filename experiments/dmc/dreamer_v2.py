@@ -102,7 +102,7 @@ if __name__ == "__main__":
             # "hopper_hop",
             # "cheetah_run",
         ],
-        "model_kwargs.use_prior_instead_of_posterior": [True, False],
+        # "model_kwargs.use_prior_instead_of_posterior": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
