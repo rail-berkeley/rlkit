@@ -209,7 +209,6 @@ class WorldModel(jit.ScriptModule):
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
     ):
-        actions = []
         for i in range(path_length):
             (post_params, prior_params,) = self.obs_step(
                 state,
@@ -245,7 +244,7 @@ class WorldModel(jit.ScriptModule):
         obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(path_length, original_batch_size, embedding_size)
+        embed = embed.reshape(original_batch_size, path_length, embedding_size)
         post, prior = self.forward_batch(
             path_length,
             action,
@@ -432,12 +431,10 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
+        obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(
-            path_length, original_batch_size, embedding_size
-        ).transpose(1, 0)
+        embed = embed.reshape(original_batch_size, path_length, embedding_size)
         post, prior, actions = self.forward_batch(
             path_length,
             action,
@@ -465,9 +462,7 @@ class LowlevelRAPSWorldModel(WorldModel):
         ]  # prior features predict what s' should be (don't use post)
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
         batch_size = batch_indices.shape[1]
-        feat = feat[
-            np.arange(batch_size), batch_indices
-        ]  # no need to do transpose(1,0) in next line anymore
+        feat = feat[np.arange(batch_size), batch_indices]
         feat = feat.reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(rt_feat)

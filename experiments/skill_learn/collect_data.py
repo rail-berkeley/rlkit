@@ -144,15 +144,13 @@ def collect_world_model_data_low_level_primitives(
             data["low_level_actions"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
-                + 1 : p * num_low_level_actions_per_primitive
-                + num_low_level_actions_per_primitive
+                + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
             ] = np.array(actions)
             data["observations"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
-                + 1 : p * num_low_level_actions_per_primitive
-                + num_low_level_actions_per_primitive
+                + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
             ] = (
                 np.array(obs)
@@ -180,8 +178,7 @@ def collect_world_model_data_low_level_primitives(
             data["high_level_actions"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
-                + 1 : p * num_low_level_actions_per_primitive
-                + num_low_level_actions_per_primitive
+                + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
             ] = high_level_actions
     return data

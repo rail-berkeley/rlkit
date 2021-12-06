@@ -960,8 +960,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
 
             batch_start = np.random.randint(
                 0,
-                action_preds.shape[1] - self.batch_length,
-                size=(action_preds.shape[0]),
+                low_level_actions.shape[1] - self.batch_length,
+                size=(low_level_actions.shape[0]),
             )
             batch_indices = np.linspace(
                 batch_start,

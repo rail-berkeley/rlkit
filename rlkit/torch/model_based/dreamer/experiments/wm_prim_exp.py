@@ -386,8 +386,8 @@ def experiment(variant):
 
                     batch_start = np.random.randint(
                         0,
-                        action_preds.shape[1] - batch_len,
-                        size=(action_preds.shape[0]),
+                        low_level_actions.shape[1] - batch_len,
+                        size=(low_level_actions.shape[0]),
                     )
                     batch_indices = np.linspace(
                         batch_start,
@@ -545,8 +545,8 @@ def experiment(variant):
 
                         batch_start = np.random.randint(
                             0,
-                            action_preds.shape[1] - batch_len,
-                            size=(action_preds.shape[0]),
+                            low_level_actions.shape[1] - batch_len,
+                            size=(low_level_actions.shape[0]),
                         )
                         batch_indices = np.linspace(
                             batch_start,

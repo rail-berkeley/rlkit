@@ -107,7 +107,7 @@ if __name__ == "__main__":
             transition_loss_scale=0.8,
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=1e-3,
+            world_model_lr=3e-4,
             reward_loss_scale=2.0,
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
@@ -137,7 +137,7 @@ if __name__ == "__main__":
             "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [60],
+        "algorithm_kwargs.num_expl_steps_per_train_loop": [0],
         "algorithm_kwargs.num_pretrain_steps": [1500],
         "algorithm_kwargs.num_trains_per_train_loop": [40],
     }
@@ -158,7 +158,8 @@ if __name__ == "__main__":
         elif variant["env_name"] == "drawer-close-v2":
             variant[
                 "world_model_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_13_0000--s-1126/models/world_model.pt"
+                # ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_13_0000--s-1126/models/world_model.pt"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/12-05-train-wm-with-prims-without-transpose-bug/12-05-train_wm_with_prims_without_transpose_bug_2021_12_05_21_16_09_0000--s-72760/models/world_model.pt"
             variant[
                 "replay_buffer_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
