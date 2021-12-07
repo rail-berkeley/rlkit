@@ -431,10 +431,12 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = obs.reshape(-1, obs.shape[-1])
+        obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(original_batch_size, path_length, embedding_size)
+        embed = embed.reshape(path_length, original_batch_size, embedding_size).permute(
+            1, 0, 2
+        )
         post, prior, actions = self.forward_batch(
             path_length,
             action,
@@ -463,43 +465,43 @@ class LowlevelRAPSWorldModel(WorldModel):
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
         batch_size = batch_indices.shape[1]
         feat = feat[np.arange(batch_size), batch_indices]
-        feat = feat.reshape(-1, feat.shape[-1])
+        feat = feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(rt_feat)
         pred_discounts = self.pred_discount(rt_feat)
 
         if self.discrete_latents:
             post_dist = self.get_dist(
-                post["logits"][np.arange(batch_size), batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
-                ),
+                post["logits"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, post["logits"].shape[-1]),
                 None,
                 latent=True,
             )
             prior_dist = self.get_dist(
-                prior["logits"][np.arange(batch_size), batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
-                ),
+                prior["logits"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, post["logits"].shape[-1]),
                 None,
                 latent=True,
             )
         else:
             post_dist = self.get_dist(
-                post["mean"][np.arange(batch_size), batch_indices].reshape(
-                    -1, post["mean"].shape[-1]
-                ),
-                post["std"][np.arange(batch_size), batch_indices].reshape(
-                    -1, post["std"].shape[-1]
-                ),
+                post["mean"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, post["mean"].shape[-1]),
+                post["std"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, post["std"].shape[-1]),
                 latent=True,
             )
             prior_dist = self.get_dist(
-                prior["mean"][np.arange(batch_size), batch_indices].reshape(
-                    -1, prior["mean"].shape[-1]
-                ),
-                prior["std"][np.arange(batch_size), batch_indices].reshape(
-                    -1, prior["std"].shape[-1]
-                ),
+                prior["mean"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, prior["mean"].shape[-1]),
+                prior["std"][np.arange(batch_size), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, prior["std"].shape[-1]),
                 latent=True,
             )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)

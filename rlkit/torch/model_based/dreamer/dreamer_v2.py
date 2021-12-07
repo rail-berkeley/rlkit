@@ -922,7 +922,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 rt_idxs=rt_idxs,
             )
             obs = self.world_model.flatten_obs(
-                obs[np.arange(batch_indices.shape[1]), batch_indices],
+                obs[np.arange(batch_indices.shape[1]), batch_indices].permute(1, 0, 2),
                 (int(np.prod(self.image_shape)),),
             )
             rewards = rewards.reshape(-1, rewards.shape[-1])
@@ -939,15 +939,15 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 image_dist,
                 reward_dist,
                 {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices].reshape(
-                        -1, v.shape[-1]
-                    )
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, v.shape[-1])
                     for k, v in prior.items()
                 },
                 {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices].reshape(
-                        -1, v.shape[-1]
-                    )
+                    k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, v.shape[-1])
                     for k, v in post.items()
                 },
                 prior_dist,
@@ -970,12 +970,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 endpoint=False,
             ).astype(int)
             primitive_loss = self.criterion(
-                action_preds[np.arange(batch_indices.shape[1]), batch_indices].reshape(
-                    -1, action_preds.shape[-1]
-                ),
+                action_preds[np.arange(batch_indices.shape[1]), batch_indices]
+                .permute(1, 0, 2)
+                .reshape(-1, action_preds.shape[-1]),
                 low_level_actions[:, 1:][
                     np.arange(batch_indices.shape[1]), batch_indices
-                ].reshape(-1, action_preds.shape[-1]),
+                ]
+                .permute(1, 0, 2)
+                .reshape(-1, action_preds.shape[-1]),
             )
 
         self.update_network(
