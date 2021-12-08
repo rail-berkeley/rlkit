@@ -75,12 +75,12 @@ if __name__ == "__main__":
         ),
         dataloader_kwargs=dict(
             batch_size=25,
-            train_test_split=0.8,
+            train_test_split=0.95,
         ),
         mlp_hidden_sizes=(512, 512),
         clone_primitives=False,
         clone_primitives_separately=False,
-        plotting_period=250,
+        plotting_period=100,
         num_epochs=10000,
         visualize_wm_from_path=False,
         clone_primitives_and_train_world_model=True,
@@ -89,26 +89,23 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        # "datafile": [
-        #     "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
-        #     # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5",
-        #     # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_sweep-into-v2.hdf5",
-        #     # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_peg-unplug-side-v2.hdf5",
-        #     # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_disassemble-v2.hdf5",
-        #     # "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_assembly-v2.hdf5",
-        # ],
-        "datafile": [
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_50_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_25_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_10_raps_ll_hl_even_rt_drawer-close-v2.hdf5",
-        ],
         "batch_len": [100],
-        "dataloader_kwargs.batch_size": [25],
-        "optimizer_kwargs.lr": [3e-4, 1e-3],
+        "dataloader_kwargs.batch_size": [25, 50],
+        "optimizer_kwargs.lr": [1e-3],
         "optimizer_kwargs.eps": [1e-8],
         "loss_to_use": ["both"],
         "gradient_clip": [100],
+        "env_name": ["drawer-close-v2"],
+        "num_low_level_actions_per_primitive": [50],
+        "num_trajs": [25, 100],
+        "env_name": [
+            "assembly-v2",
+            "disassemble-v2",
+            "peg-unplug-side-v2",
+            "sweep-into-v2",
+            "soccer-v2",
+            "drawer-close-v2",
+        ]
         # "mlp_act": ["elu", "relu"],
         # "mlp_res": [True, False],
     }
@@ -117,69 +114,18 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if (
-            variant["datafile"]
-            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
-        ):
-            variant["env_name"] = "drawer-close-v2"
-            variant["batch_len"] = 100
-            variant["dataloader_kwargs"]["batch_size"] = 25
-            variant["num_low_level_actions_per_primitive"] = 100
-        elif (
-            variant["datafile"]
-            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_50_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
-        ):
-            variant["env_name"] = "drawer-close-v2"
-            variant["batch_len"] = 100
-            variant["dataloader_kwargs"]["batch_size"] = 25
-            variant["num_low_level_actions_per_primitive"] = 50
-        elif (
-            variant["datafile"]
-            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_25_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
-        ):
-            variant["env_name"] = "drawer-close-v2"
-            variant["batch_len"] = 100
-            variant["dataloader_kwargs"]["batch_size"] = 25
-            variant["num_low_level_actions_per_primitive"] = 25
-        elif (
-            variant["datafile"]
-            == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_10_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
-        ):
-            variant["env_name"] = "drawer-close-v2"
-            variant["batch_len"] = 50
-            variant["dataloader_kwargs"]["batch_size"] = 50
-            variant["num_low_level_actions_per_primitive"] = 10
-        # if (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "drawer-close-v2"
-        # elif (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "soccer-v2"
-        # elif (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_sweep-into-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "sweep-into-v2"
-        # elif (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_peg-unplug-side-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "peg-unplug-side-v2"
-        # elif (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_disassemble-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "disassemble-v2"
-        # elif (
-        #     variant["datafile"]
-        #     == "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_assembly-v2.hdf5"
-        # ):
-        #     variant["env_name"] = "assembly-v2"
-
+        variant["datafile"] = (
+            "wm_H_5_T_{}_E_50_P_{}_raps_ll_hl_even_rt_{}".format(
+                variant["num_trajs"],
+                variant["num_low_level_actions_per_primitive"],
+                variant["env_name"],
+            )
+            + ".hdf5"
+        )
+        variant["datafile"] = (
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/"
+            + variant["datafile"]
+        )
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed

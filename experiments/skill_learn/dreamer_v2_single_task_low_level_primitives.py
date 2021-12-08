@@ -47,7 +47,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(6e3),
+        replay_buffer_size=int(12e3),
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
         env_suite="metaworld",
@@ -123,7 +123,6 @@ if __name__ == "__main__":
         expl_amount=0.3,
         save_video=True,
         low_level_action_dim=9,
-        num_low_level_actions_per_primitive=100,
         mlp_hidden_sizes=[512, 512],
     )
 
@@ -139,52 +138,54 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [0],
         "algorithm_kwargs.num_pretrain_steps": [1500],
-        "algorithm_kwargs.num_trains_per_train_loop": [40],
+        "algorithm_kwargs.num_trains_per_train_loop": [400],
+        "num_low_level_actions_per_primitive": [50],
+        "num_trajs": [100],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant["replay_buffer_path"] = (
+            "wm_H_5_T_{}_E_50_P_{}_raps_ll_hl_even_rt_{}".format(
+                variant["num_trajs"],
+                variant["num_low_level_actions_per_primitive"],
+                variant["env_name"],
+            )
+            + ".hdf5"
+        )
+        variant["replay_buffer_path"] = (
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/"
+            + variant["replay_buffer_path"]
+        )
         if args.debug:
             variant["algorithm_kwargs"]["num_pretrain_steps"] = 1
         if variant["env_name"] == "soccer-v2":
             variant[
                 "world_model_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_14_0000--s-96844/models/world_model.pt"
-            variant[
-                "replay_buffer_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_soccer-v2.hdf5"
         elif variant["env_name"] == "drawer-close-v2":
             variant[
                 "world_model_path"
-                # ] = "/home/mdalal/research/skill_learn/rlkit/data/11-24-train-wm-with-prims-sweep-envs-1/11-24-train_wm_with_prims_sweep_envs_1_2021_11_24_19_23_13_0000--s-1126/models/world_model.pt"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/12-05-train-wm-with-prims-without-transpose-bug/12-05-train_wm_with_prims_without_transpose_bug_2021_12_05_21_16_09_0000--s-72760/models/world_model.pt"
-            variant[
-                "replay_buffer_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_drawer-close-v2.hdf5"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/12-07-train-wm-with-prims-sweep-drawer-subsample-more-data-sweep-1/12-07-train_wm_with_prims_sweep_drawer_subsample_more_data_sweep_1_2021_12_07_12_52_01_0000--s-75299/models/world_model.pt"
         elif variant["env_name"] == "sweep-into-v2":
             variant[
                 "world_model_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/11-27-train-wm-with-prims-sweep-envs-all-1/11-27-train_wm_with_prims_sweep_envs_all_1_2021_11_27_23_16_29_0000--s-93127/models/world_model.pt"
-            variant[
-                "replay_buffer_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_sweep-into-v2.hdf5"
         elif variant["env_name"] == "peg-unplug-side-v2":
             variant[
                 "world_model_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/11-27-train-wm-with-prims-sweep-envs-all-1/11-27-train_wm_with_prims_sweep_envs_all_1_2021_11_27_23_16_29_0000--s-44001/models/world_model.pt"
-            variant[
-                "replay_buffer_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_peg-unplug-side-v2.hdf5"
         elif variant["env_name"] == "disassemble-v2":
             variant[
                 "world_model_path"
             ] = "/home/mdalal/research/skill_learn/rlkit/data/11-27-train-wm-with-prims-sweep-envs-all-1/11-27-train_wm_with_prims_sweep_envs_all_1_2021_11_27_23_16_29_0000--s-19641/models/world_model.pt"
+        elif variant["env_name"] == "assembly-v2":
+            # TODO: fix with real path
             variant[
-                "replay_buffer_path"
-            ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even_rt_disassemble-v2.hdf5"
-
+                "world_model_path"
+            ] = "/home/mdalal/research/skill_learn/rlkit/data/11-27-train-wm-with-prims-sweep-envs-all-1/11-27-train_wm_with_prims_sweep_envs_all_1_2021_11_27_23_16_29_0000--s-19641/models/world_model.pt"
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

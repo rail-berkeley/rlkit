@@ -8,7 +8,7 @@ from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
 
 
-def save_data(data, args):
+def save_data(data, datafile):
     """
     Save world model data to a hdf5 file.
     :param: dictionary with two keys: observations and actions (numpy arrays)
@@ -17,11 +17,10 @@ def save_data(data, args):
     os.makedirs("data/world_model_data", exist_ok=True)
     import h5py
 
-    f = h5py.File(
-        "data/world_model_data/" + args.datafile + "_" + args.env_name + ".hdf5", "w"
-    )
+    f = h5py.File("data/world_model_data/" + datafile + ".hdf5", "w")
     for k, v in data.items():
         f.create_dataset(k, data=v, compression="gzip", compression_opts=9)
+    print(datafile)
 
 
 def collect_primitive_cloning_data(
@@ -248,30 +247,60 @@ if __name__ == "__main__":
         == "collect_primitive_cloning_data",
     )
     env_suite = "metaworld"
-    env_name = args.env_name
-    env_fns = [
-        lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(args.num_envs)
+    env_names = [
+        "drawer-close-v2",
+        "assembly-v2",
+        "disassemble-v2",
+        "peg-unplug-side-v2",
+        "sweep-into-v2",
+        "soccer-v2",
     ]
-    env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
-    if args.collect_data_fn == "collect_world_model_data":
-        data = collect_world_model_data(
-            env, args.num_trajs * args.num_envs, args.num_envs, args.max_path_length
-        )
-        save_data(data, args)
-    elif args.collect_data_fn == "collect_world_model_data_low_level_primitives":
-        data = collect_world_model_data_low_level_primitives(
-            env,
-            args.num_trajs * args.num_envs,
-            args.num_envs,
-            args.max_path_length,
-            args.num_low_level_actions_per_primitive,
-        )
-        save_data(data, args)
-    elif args.collect_data_fn == "collect_primitive_cloning_data":
-        data = collect_primitive_cloning_data(
-            env,
-            env_fns[0]().num_primitives,
-            args.num_trajs * args.num_envs,
-            args.num_envs,
-            datafile=args.datafile,
-        )
+    num_ts = [100]
+    num_lls = [50, 100]
+
+    # env_name = args.env_name
+    # num_trajs = args.num_trajs
+    # num_low_level_actions_per_primitive = args.num_low_level_actions_per_primitive
+    for env_name in env_names:
+        for num_trajs in num_ts:
+            for num_low_level_actions_per_primitive in num_lls:
+                datafile = "wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}".format(
+                    args.max_path_length,
+                    num_trajs,
+                    args.num_envs,
+                    num_low_level_actions_per_primitive,
+                    env_name,
+                )
+                env_fns = [
+                    lambda: make_env(env_suite, env_name, env_kwargs)
+                    for _ in range(args.num_envs)
+                ]
+                env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+                if args.collect_data_fn == "collect_world_model_data":
+                    data = collect_world_model_data(
+                        env,
+                        num_trajs * args.num_envs,
+                        args.num_envs,
+                        args.max_path_length,
+                    )
+                    save_data(data, datafile)
+                elif (
+                    args.collect_data_fn
+                    == "collect_world_model_data_low_level_primitives"
+                ):
+                    data = collect_world_model_data_low_level_primitives(
+                        env,
+                        num_trajs * args.num_envs,
+                        args.num_envs,
+                        args.max_path_length,
+                        num_low_level_actions_per_primitive,
+                    )
+                    save_data(data, datafile)
+                elif args.collect_data_fn == "collect_primitive_cloning_data":
+                    data = collect_primitive_cloning_data(
+                        env,
+                        env_fns[0]().num_primitives,
+                        num_trajs * args.num_envs,
+                        args.num_envs,
+                        datafile=datafile,
+                    )

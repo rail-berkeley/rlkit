@@ -282,7 +282,6 @@ def experiment(variant):
             **optimizer_kwargs,
         )
         best_test_loss = np.inf
-        best_plot_loss = np.inf
         for i in tqdm(range(num_epochs)):
             eval_statistics = OrderedDict()
             print("Epoch: ", i)
@@ -447,6 +446,7 @@ def experiment(variant):
             eval_statistics["train/reward_pred_loss"] = (
                 total_reward_pred_loss / total_train_steps
             )
+            latest_state_dict = world_model.state_dict().copy()
             with torch.no_grad():
                 total_primitive_loss = 0
                 total_world_model_loss = 0
@@ -606,15 +606,14 @@ def experiment(variant):
                 if (total_loss / total_test_steps) <= best_test_loss:
                     best_test_loss = total_loss / total_test_steps
                     os.makedirs(logdir + "/models/", exist_ok=True)
+                    best_wm_state_dict = world_model.state_dict().copy()
                     torch.save(
-                        world_model.state_dict(),
+                        best_wm_state_dict,
                         logdir + "/models/world_model.pt",
                     )
-                if (
-                    i % variant["plotting_period"] == 0
-                    and (total_loss / total_test_steps) <= best_plot_loss
-                ):
-                    best_plot_loss = total_loss / total_test_steps
+                if i % variant["plotting_period"] == 0:
+                    print("Best test loss", best_test_loss)
+                    world_model.load_state_dict(best_wm_state_dict)
                     visualize_wm(
                         env,
                         world_model,
@@ -628,6 +627,7 @@ def experiment(variant):
                         num_low_level_actions_per_primitive,
                         primitive_model=primitive_model,
                     )
+                    world_model.load_state_dict(latest_state_dict)
                 logger.record_dict(eval_statistics, prefix="")
                 logger.dump_tabular(with_prefix=False, with_timestamp=False)
 
