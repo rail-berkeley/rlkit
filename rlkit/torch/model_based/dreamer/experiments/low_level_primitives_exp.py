@@ -167,7 +167,8 @@ def experiment(variant):
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
     rand_policy.num_primitives = eval_env.envs[0].num_primitives
-
+    eval_env.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
+    expl_env.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
     expl_path_collector = VecMdpPathCollector(
         expl_env,
         expl_policy,

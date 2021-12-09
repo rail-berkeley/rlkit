@@ -90,7 +90,7 @@ if __name__ == "__main__":
 
     search_space = {
         "batch_len": [100],
-        "dataloader_kwargs.batch_size": [25, 50],
+        "dataloader_kwargs.batch_size": [25],
         "optimizer_kwargs.lr": [1e-3],
         "optimizer_kwargs.eps": [1e-8],
         "loss_to_use": ["both"],

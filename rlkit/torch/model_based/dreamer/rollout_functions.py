@@ -106,7 +106,6 @@ def vec_rollout_low_level_raps(
     render_kwargs=None,
     preprocess_obs_for_policy_fn=None,
     get_action_kwargs=None,
-    num_low_level_actions_per_primitive=100,
     low_level_action_dim=9,
 ):
     if render_kwargs is None:
@@ -118,7 +117,7 @@ def vec_rollout_low_level_raps(
     low_level_actions = np.zeros(
         (
             env.n_envs,
-            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            (max_path_length * env.num_low_level_actions_per_primitive) + 1,
             low_level_action_dim,
         ),
         dtype=np.float32,
@@ -126,7 +125,7 @@ def vec_rollout_low_level_raps(
     high_level_actions = np.zeros(
         (
             env.n_envs,
-            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            (max_path_length * env.num_low_level_actions_per_primitive) + 1,
             env.action_space.low.shape[0] + 1,  # includes phase variable
         ),
         dtype=np.float32,
@@ -134,7 +133,7 @@ def vec_rollout_low_level_raps(
     observations = np.zeros(
         (
             env.n_envs,
-            (max_path_length * num_low_level_actions_per_primitive) + 1,
+            (max_path_length * env.num_low_level_actions_per_primitive) + 1,
             env.observation_space.low.shape[0],
         ),
         dtype=np.uint8,
@@ -195,9 +194,9 @@ def vec_rollout_low_level_raps(
             ll_o = np.array(ll_os[e])
 
             num_ll = ll_a.shape[0]
-            idxs = np.linspace(0, num_ll, num_low_level_actions_per_primitive + 1)
-            spacing = num_ll // (num_low_level_actions_per_primitive)
-            a = ll_a.reshape(num_low_level_actions_per_primitive, spacing, -1)
+            idxs = np.linspace(0, num_ll, env.num_low_level_actions_per_primitive + 1)
+            spacing = num_ll // (env.num_low_level_actions_per_primitive)
+            a = ll_a.reshape(env.num_low_level_actions_per_primitive, spacing, -1)
             a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
             a = np.concatenate(
                 (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
@@ -208,42 +207,42 @@ def vec_rollout_low_level_raps(
         lo = (
             np.array(lo)
             .transpose(0, 1, 4, 2, 3)
-            .reshape(env.n_envs, num_low_level_actions_per_primitive, -1)
+            .reshape(env.n_envs, env.num_low_level_actions_per_primitive, -1)
         )
         low_level_actions[
             :,
-            p * num_low_level_actions_per_primitive
-            + 1 : (p + 1) * num_low_level_actions_per_primitive
+            p * env.num_low_level_actions_per_primitive
+            + 1 : (p + 1) * env.num_low_level_actions_per_primitive
             + 1,
         ] = np.array(la)
         observations[
             :,
-            p * num_low_level_actions_per_primitive
-            + 1 : p * num_low_level_actions_per_primitive
-            + num_low_level_actions_per_primitive
+            p * env.num_low_level_actions_per_primitive
+            + 1 : p * env.num_low_level_actions_per_primitive
+            + env.num_low_level_actions_per_primitive
             + 1,
         ] = lo
         ha = np.repeat(
             np.array(ha).reshape(next_o.shape[0], 1, -1),
-            num_low_level_actions_per_primitive,
+            env.num_low_level_actions_per_primitive,
             axis=1,
         )
         phases = (
             np.linspace(
                 0,
                 1,
-                num_low_level_actions_per_primitive,
+                env.num_low_level_actions_per_primitive,
                 endpoint=False,
             )
-            + 1 / (num_low_level_actions_per_primitive)
+            + 1 / (env.num_low_level_actions_per_primitive)
         )
         phases = np.repeat(phases.reshape(1, -1), next_o.shape[0], axis=0)
         ha = np.concatenate((ha, np.expand_dims(phases, -1)), axis=2)
         high_level_actions[
             :,
-            p * num_low_level_actions_per_primitive
-            + 1 : p * num_low_level_actions_per_primitive
-            + num_low_level_actions_per_primitive
+            p * env.num_low_level_actions_per_primitive
+            + 1 : p * env.num_low_level_actions_per_primitive
+            + env.num_low_level_actions_per_primitive
             + 1,
         ] = ha
 
