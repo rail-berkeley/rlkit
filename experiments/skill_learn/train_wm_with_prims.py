@@ -97,17 +97,17 @@ if __name__ == "__main__":
         "gradient_clip": [100],
         "env_name": ["drawer-close-v2"],
         "num_low_level_actions_per_primitive": [50],
-        "num_trajs": [25, 100],
+        "num_trajs": [100],
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "peg-unplug-side-v2",
-            "sweep-into-v2",
-            "soccer-v2",
+            # "assembly-v2",
+            # "disassemble-v2",
+            # "peg-unplug-side-v2",
+            # "sweep-into-v2",
+            # "soccer-v2",
             "drawer-close-v2",
-        ]
-        # "mlp_act": ["elu", "relu"],
-        # "mlp_res": [True, False],
+        ],
+        "mlp_act": ["elu", "relu"],
+        "mlp_res": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

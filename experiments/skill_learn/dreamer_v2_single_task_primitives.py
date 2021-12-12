@@ -124,7 +124,7 @@ if __name__ == "__main__":
             "peg-unplug-side-v2",
             "soccer-v2",
             "sweep-into-v2",
-            "drawer-close-v2",
+            # "drawer-close-v2",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
