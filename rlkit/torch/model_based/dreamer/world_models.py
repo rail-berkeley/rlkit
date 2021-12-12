@@ -241,10 +241,12 @@ class WorldModel(jit.ScriptModule):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = obs.reshape(-1, obs.shape[-1])
+        obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(original_batch_size, path_length, embedding_size)
+        embed = embed.reshape(
+            path_length, original_batch_size, embedding_size
+        ).transpose(1, 0)
         post, prior = self.forward_batch(
             path_length,
             action,
@@ -266,7 +268,7 @@ class WorldModel(jit.ScriptModule):
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
-        feat = feat.reshape(-1, feat.shape[-1])
+        feat = feat.transpose(1, 0).reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)

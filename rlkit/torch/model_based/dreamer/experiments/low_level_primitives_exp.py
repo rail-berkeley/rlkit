@@ -5,6 +5,7 @@ from rlkit.torch.model_based.dreamer.kitchen_video_func import video_low_level_f
 
 
 def experiment(variant):
+    import gc
     import os
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
@@ -194,6 +195,7 @@ def experiment(variant):
         replace=False,
     )
     filename = variant["replay_buffer_path"]
+    print("LOADING REPLAY BUFFER")
     with h5py.File(filename, "r") as f:
         observations = np.array(f["observations"][:])
         low_level_actions = np.array(f["low_level_actions"][:])
@@ -218,6 +220,13 @@ def experiment(variant):
     replay_buffer._terminals[:num_trajs] = terminals
     replay_buffer._top = num_trajs
     replay_buffer._size = num_trajs
+
+    del observations
+    del low_level_actions
+    del high_level_actions
+    del rewards
+    del terminals
+    gc.collect()
 
     trainer = DreamerV2LowLevelRAPSTrainer(
         eval_env,

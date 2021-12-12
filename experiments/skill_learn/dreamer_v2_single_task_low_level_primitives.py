@@ -47,7 +47,7 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
-        replay_buffer_size=int(12e3),
+        replay_buffer_size=int(1.5e4),
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
         env_suite="metaworld",
@@ -128,8 +128,8 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
+            # "assembly-v2",
+            # "disassemble-v2",
             "peg-unplug-side-v2",
             "sweep-into-v2",
             "soccer-v2",
@@ -138,7 +138,7 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [60],
         "algorithm_kwargs.num_pretrain_steps": [5000],
-        "algorithm_kwargs.num_trains_per_train_loop": [400],
+        "algorithm_kwargs.num_trains_per_train_loop": [50, 100, 200, 400],
         "num_low_level_actions_per_primitive": [50],
         "num_trajs": [100],
     }

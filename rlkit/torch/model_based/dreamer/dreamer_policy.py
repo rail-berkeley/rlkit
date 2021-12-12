@@ -80,8 +80,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
             observation = ptu.from_numpy(ll_o)
             if self.state:
                 ll_a = ptu.from_numpy(ll_a)
-                prev_state, _ = self.state
-                new_state = prev_state
+                new_state, _ = self.state
                 for k in range(0, self.num_low_level_actions_per_primitive):
                     embed = self.world_model.encode(observation[:, k])
                     new_state, _ = self.world_model.obs_step(

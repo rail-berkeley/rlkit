@@ -73,7 +73,6 @@ class VecMdpPathCollector(PathCollector):
         for i, path in enumerate(paths):
             for j in range(self._env.n_envs):
                 for k in [
-                    "observations",
                     "actions",
                     "terminals",
                     "rewards",

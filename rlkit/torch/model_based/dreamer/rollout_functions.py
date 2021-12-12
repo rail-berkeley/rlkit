@@ -1,4 +1,5 @@
 import copy
+import gc
 from functools import partial
 
 import cv2
@@ -142,6 +143,7 @@ def vec_rollout_low_level_raps(
     terminals = []
     agent_infos = []
     env_infos = []
+    actions = []
     path_length = 0
 
     o = env.reset()
@@ -155,6 +157,7 @@ def vec_rollout_low_level_raps(
     high_level_actions[:, 0] = ha
     low_level_actions[:, 0] = la
     rewards.append(r)
+    actions.append(np.zeros((env.n_envs, env.action_space.low.size)))
     terminals.append([False] * env.n_envs)
     agent_infos.append({})
     env_infos.append({})
@@ -171,11 +174,11 @@ def vec_rollout_low_level_raps(
             one_hots = np.eye(agent.num_primitives)[argmax]
             ha = np.concatenate((one_hots, ha[:, agent.num_primitives :]), axis=-1)
 
-        next_o, r, d, i = env.step(ha)
+        _, r, d, i = env.step(ha)
         rewards.append(r)
         terminals.append(d)
+        actions.append(ha)
         agent_infos.append(agent_info)
-        env_infos.append(i)
         if render:
             img = env.render(mode="rgb_array", imwidth=256, imheight=256)
             cv2.imshow("img", img)
@@ -186,6 +189,8 @@ def vec_rollout_low_level_raps(
         del i["observations"]
         del i["robot-states"]
         del i["arguments"]
+        gc.collect()
+        env_infos.append(i)
         la = []
         lo = []
         for e in range(env.n_envs):
@@ -223,7 +228,7 @@ def vec_rollout_low_level_raps(
             + 1,
         ] = lo
         ha = np.repeat(
-            np.array(ha).reshape(next_o.shape[0], 1, -1),
+            np.array(ha).reshape(r.shape[0], 1, -1),
             env.num_low_level_actions_per_primitive,
             axis=1,
         )
@@ -236,7 +241,7 @@ def vec_rollout_low_level_raps(
             )
             + 1 / (env.num_low_level_actions_per_primitive)
         )
-        phases = np.repeat(phases.reshape(1, -1), next_o.shape[0], axis=0)
+        phases = np.repeat(phases.reshape(1, -1), r.shape[0], axis=0)
         ha = np.concatenate((ha, np.expand_dims(phases, -1)), axis=2)
         high_level_actions[
             :,
@@ -251,6 +256,7 @@ def vec_rollout_low_level_raps(
             break
         o = (np.array(la), lo)
     rewards = np.array(rewards)
+    actions = np.array(actions)
     if len(rewards.shape) == 1:
         rewards = rewards.reshape(-1, 1)
     env_info_final = {}
@@ -265,7 +271,7 @@ def vec_rollout_low_level_raps(
     env_infos = env_info_final
     return dict(
         observations=observations,
-        actions=high_level_actions,
+        actions=actions,
         high_level_actions=high_level_actions,
         low_level_actions=low_level_actions,
         rewards=rewards,
