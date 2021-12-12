@@ -131,6 +131,7 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         replace=True,
         batch_length=50,
         use_batch_length=False,
+        prioritize_fraction=0,
     ):
         self.env = env
         self._ob_space = env.observation_space
@@ -171,6 +172,7 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         self.use_batch_length = use_batch_length
         self._top = 0
         self._size = 0
+        self.prioritize_fraction = prioritize_fraction
 
     def add_path(self, path):
         self._observations[self._top : self._top + self.env.n_envs] = path[
@@ -197,15 +199,29 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
             self._size += self.env.n_envs
 
     def random_batch(self, batch_size):
-        indices = np.random.choice(
-            self._size,
-            size=batch_size,
-            replace=self._replace or self._size < batch_size,
-        )
-        if not self._replace and self._size < batch_size:
-            warnings.warn(
-                "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+        mask = np.where(self._rewards[: self._size].sum(axis=1) > 0, 1, 0)[:, 0]
+        prioritized_indices = np.array(range(self._size))[mask > 0]
+        if prioritized_indices.shape[0] > 0:
+            indices = np.random.choice(
+                prioritized_indices.shape[0],
+                size=int(self.prioritize_fraction * batch_size),
+                replace=prioritized_indices.shape[0]
+                < int(self.prioritize_fraction * batch_size),
             )
+            prioritized_indices = prioritized_indices[indices]
+            indices = np.random.choice(
+                self._size,
+                size=batch_size - indices.shape[0],
+                replace=self._replace or self._size < batch_size,
+            )
+            indices = np.concatenate((indices, prioritized_indices))
+        else:
+            indices = np.random.choice(
+                self._size,
+                size=batch_size,
+                replace=self._replace or self._size < batch_size,
+            )
+
         observations = self._observations[indices]
         high_level_actions = self._high_level_actions[indices]
         low_level_actions = self._low_level_actions[indices]

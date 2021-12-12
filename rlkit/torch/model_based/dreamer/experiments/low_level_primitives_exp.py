@@ -20,49 +20,33 @@ def experiment(variant):
         ActorModel,
         ConditionalActorModel,
     )
-    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerLowLevelRAPSPolicy,
-        DreamerPolicy,
     )
-    from rlkit.torch.model_based.dreamer.dreamer_v2 import (
-        DreamerV2LowLevelRAPSTrainer,
-        DreamerV2Trainer,
-    )
+    from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2LowLevelRAPSTrainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
-        EpisodeReplayBuffer,
         EpisodeReplayBufferLowLevelRAPS,
-    )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-    from rlkit.torch.model_based.dreamer.mcts.dreamer_v2_mcts import (
-        DreamerV2MCTSTrainer,
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.rollout_functions import (
         vec_rollout_low_level_raps,
     )
-    from rlkit.torch.model_based.dreamer.world_models import (
-        LowlevelRAPSWorldModel,
-        StateConcatObsWorldModel,
-        WorldModel,
-    )
+    from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
-    )
-    from rlkit.torch.model_based.plan2explore.mcts.mcts_policy import (
-        HybridAdvancedMCTSPolicy,
     )
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     env_suite = variant.get("env_suite", "kitchen")
     env_kwargs = variant["env_kwargs"]
-    use_raw_actions = variant["use_raw_actions"]
     num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
     num_low_level_actions_per_primitive = variant["num_low_level_actions_per_primitive"]
     low_level_action_dim = variant["low_level_action_dim"]
+
+    print("MAKING ENVS")
     if variant.get("make_multi_task_env", False):
         make_env_lambda = lambda: MultiTaskEnv(
             env_suite, variant["env_names"], env_kwargs
@@ -193,6 +177,7 @@ def experiment(variant):
         action_dim,
         low_level_action_dim,
         replace=False,
+        prioritize_fraction=variant["prioritize_fraction"],
     )
     filename = variant["replay_buffer_path"]
     print("LOADING REPLAY BUFFER")

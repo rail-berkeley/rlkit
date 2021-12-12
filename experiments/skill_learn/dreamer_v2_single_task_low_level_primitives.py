@@ -124,6 +124,7 @@ if __name__ == "__main__":
         save_video=True,
         low_level_action_dim=9,
         mlp_hidden_sizes=[512, 512],
+        prioritize_fraction=0.0,
     )
 
     search_space = {
@@ -141,6 +142,7 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_trains_per_train_loop": [50, 100, 200, 400],
         "num_low_level_actions_per_primitive": [50],
         "num_trajs": [100],
+        # "prioritize_fraction": [0.0, 0.1, 0.2, 0.5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
