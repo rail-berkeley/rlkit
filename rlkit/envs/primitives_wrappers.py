@@ -413,7 +413,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         }
         self.primitive_idx_to_num_low_level_steps = {
             0: 300,
-            # 1: 1400,
             1: 1200,
             2: 300,
             3: 300,
@@ -421,7 +420,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             5: 300,
             6: 300,
             7: 300,
-            # 8: 200,
             8: 300,
             9: 300,
         }
@@ -867,8 +865,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def top_x_y_grasp(self, xyzd):
         x_dist, y_dist, z_dist, d = xyzd
         stats = self.open_gripper(1)
-        # stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
-        # stats += self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
         stats += self.move_delta_ee_pose(np.array([x_dist, y_dist, 0]))
         stats += self.drop(z_dist)
         stats += self.close_gripper(d)

@@ -96,7 +96,8 @@ def experiment(variant):
         primitive_model=primitive_model,
         **variant["model_kwargs"],
     )
-    world_model.load_state_dict(torch.load(variant["world_model_path"]))
+    if variant.get("world_model_path", None) is not None:
+        world_model.load_state_dict(torch.load(variant["world_model_path"]))
 
     actor = actor_model_class(
         variant["model_kwargs"]["model_hidden_size"],
@@ -179,39 +180,41 @@ def experiment(variant):
         replace=False,
         prioritize_fraction=variant["prioritize_fraction"],
     )
-    filename = variant["replay_buffer_path"]
-    print("LOADING REPLAY BUFFER")
-    with h5py.File(filename, "r") as f:
-        observations = np.array(f["observations"][:])
-        low_level_actions = np.array(f["low_level_actions"][:])
-        high_level_actions = np.array(f["high_level_actions"][:])
-        rewards = np.array(f["rewards"][:])
-        terminals = np.array(f["terminals"][:])
-    num_trajs = observations.shape[0]
-    replay_buffer._observations[:num_trajs] = observations
-    replay_buffer._low_level_actions[:num_trajs] = low_level_actions
-    argmax = np.argmax(
-        high_level_actions[:, :, : eval_env.envs[0].num_primitives], axis=-1
-    )
-    one_hots = np.eye(eval_env.envs[0].num_primitives)[argmax]
-    one_hots[:, 0:1, :] = np.zeros(
-        (one_hots.shape[0], 1, eval_env.envs[0].num_primitives)
-    )
-    high_level_actions = np.concatenate(
-        (one_hots, high_level_actions[:, :, eval_env.envs[0].num_primitives :]), axis=-1
-    )
-    replay_buffer._high_level_actions[:num_trajs] = high_level_actions
-    replay_buffer._rewards[:num_trajs] = rewards
-    replay_buffer._terminals[:num_trajs] = terminals
-    replay_buffer._top = num_trajs
-    replay_buffer._size = num_trajs
+    filename = variant.get("replay_buffer_path", None)
+    if filename is not None:
+        print("LOADING REPLAY BUFFER")
+        with h5py.File(filename, "r") as f:
+            observations = np.array(f["observations"][:])
+            low_level_actions = np.array(f["low_level_actions"][:])
+            high_level_actions = np.array(f["high_level_actions"][:])
+            rewards = np.array(f["rewards"][:])
+            terminals = np.array(f["terminals"][:])
+        num_trajs = observations.shape[0]
+        replay_buffer._observations[:num_trajs] = observations
+        replay_buffer._low_level_actions[:num_trajs] = low_level_actions
+        argmax = np.argmax(
+            high_level_actions[:, :, : eval_env.envs[0].num_primitives], axis=-1
+        )
+        one_hots = np.eye(eval_env.envs[0].num_primitives)[argmax]
+        one_hots[:, 0:1, :] = np.zeros(
+            (one_hots.shape[0], 1, eval_env.envs[0].num_primitives)
+        )
+        high_level_actions = np.concatenate(
+            (one_hots, high_level_actions[:, :, eval_env.envs[0].num_primitives :]),
+            axis=-1,
+        )
+        replay_buffer._high_level_actions[:num_trajs] = high_level_actions
+        replay_buffer._rewards[:num_trajs] = rewards
+        replay_buffer._terminals[:num_trajs] = terminals
+        replay_buffer._top = num_trajs
+        replay_buffer._size = num_trajs
 
-    del observations
-    del low_level_actions
-    del high_level_actions
-    del rewards
-    del terminals
-    gc.collect()
+        del observations
+        del low_level_actions
+        del high_level_actions
+        del rewards
+        del terminals
+        gc.collect()
 
     trainer = DreamerV2LowLevelRAPSTrainer(
         eval_env,
@@ -236,7 +239,6 @@ def experiment(variant):
     )
     print("NODENAME: ", os.environ["SLURMD_NODENAME"])
     print()
-    video_low_level_func(algorithm, 0)
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_low_level_func)
     print("TRAINING")

@@ -161,7 +161,7 @@ def visualize_rollout(
     use_separate_primitives=False,
     policy=None,
 ):
-    file_path = logdir + "/plots/"
+    file_path = logdir + "/"
     os.makedirs(file_path, exist_ok=True)
 
     if use_env:

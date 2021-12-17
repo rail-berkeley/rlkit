@@ -119,11 +119,11 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
+            # "assembly-v2",
+            # "disassemble-v2",
             "peg-unplug-side-v2",
-            "soccer-v2",
-            "sweep-into-v2",
+            # "soccer-v2",
+            # "sweep-into-v2",
             # "drawer-close-v2",
         ],
     }
@@ -143,7 +143,7 @@ if __name__ == "__main__":
                 mode=args.mode,
                 variant=variant,
                 use_gpu=True,
-                snapshot_mode="last",
+                snapshot_mode="none",
                 python_cmd=subprocess.check_output("which python", shell=True).decode(
                     "utf-8"
                 )[:-1],

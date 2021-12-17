@@ -1002,7 +1002,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         log_keys = Counter()
         for _ in range(self.num_imagination_iterations):
             with torch.cuda.amp.autocast():
-                with FreezeParameters(world_model_params + pred_discount_params):
+                with torch.no_grad():
                     (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
                     imagined_reward = self.world_model.reward(imagined_features)
                     if self.use_pred_discount:
@@ -1013,7 +1013,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         ).mean
                     else:
                         discount = self.discount * torch.ones_like(imagined_reward)
-                with FreezeParameters(vf_params):
                     old_imagined_value = self.vf(imagined_features).detach()
                 imagined_features_actions = (
                     imagined_features[:-1]
