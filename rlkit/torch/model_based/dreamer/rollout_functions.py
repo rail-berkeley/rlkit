@@ -194,7 +194,7 @@ def vec_rollout_low_level_raps(
         la = []
         lo = []
         for e in range(env.n_envs):
-            # a0 + a1 + ...+a_space-1 -> o_space-1, o_space-1+space
+            # a0 + a1 + ...+a_space-1 -> o_space-1, o_2*space-1...
             ll_a = np.array(ll_as[e])
             ll_o = np.array(ll_os[e])
 

@@ -234,6 +234,8 @@ def experiment(variant):
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
     )
+    print("NODENAME: ", os.environ["SLURMD_NODENAME"])
+    print()
     video_low_level_func(algorithm, 0)
     if variant.get("save_video", False):
         algorithm.post_epoch_funcs.append(video_low_level_func)
