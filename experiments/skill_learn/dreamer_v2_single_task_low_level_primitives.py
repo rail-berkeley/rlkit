@@ -35,13 +35,13 @@ if __name__ == "__main__":
         algorithm_kwargs = dict(
             num_epochs=1000,
             num_eval_steps_per_epoch=30,
-            min_num_steps_before_training=0,
+            min_num_steps_before_training=2500,
             num_pretrain_steps=1000,
             max_path_length=5,
-            batch_size=25,
-            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=20,  # 1000//(5*5)
-            num_trains_per_train_loop=20,  # 400//40
+            batch_size=100,
+            num_expl_steps_per_train_loop=30,
+            num_train_loops_per_epoch=10,
+            num_trains_per_train_loop=100,
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -129,22 +129,20 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            # "assembly-v2",
-            # "disassemble-v2",
-            # "sweep-into-v2",
+            "assembly-v2",
+            "disassemble-v2",
+            "sweep-into-v2",
             "soccer-v2",
-            # "drawer-close-v2",
+            "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000, 10000, 50000],
-        "algorithm_kwargs.num_trains_per_train_loop": [50, 100, 200],
+        "algorithm_kwargs.num_pretrain_steps": [1000],
+        "algorithm_kwargs.num_trains_per_train_loop": [100],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [25, 50, 100],
-        "num_low_level_actions_per_primitive": [10, 25, 50],
+        "algorithm_kwargs.batch_size": [100],
+        "num_low_level_actions_per_primitive": [10],
         "trainer_kwargs.batch_length": [50],
-        # "prioritize_fraction": [0, 0.25, 0.5],
-        # "num_trajs": [100],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -158,43 +156,6 @@ if __name__ == "__main__":
         variant["replay_buffer_size"] = int(
             3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
         )
-        # variant["replay_buffer_path"] = (
-        #     "wm_H_5_T_{}_E_50_P_{}_raps_ll_hl_even_rt_{}".format(
-        #         variant["num_trajs"],
-        #         variant["num_low_level_actions_per_primitive"],
-        #         variant["env_name"],
-        #     )
-        #     + ".hdf5"
-        # )
-        # variant["replay_buffer_path"] = (
-        #     "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/"
-        #     + variant["replay_buffer_path"]
-        # )
-
-        # if variant["env_name"] == "sweep-into-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-67453/models/world_model.pt"
-        # elif variant["env_name"] == "drawer-close-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-85073/models/world_model.pt"
-        # elif variant["env_name"] == "soccer-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-16796/models/world_model.pt"
-        # elif variant["env_name"] == "peg-unplug-side-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-71541/models/world_model.pt"
-        # elif variant["env_name"] == "disassemble-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-64107/models/world_model.pt"
-        # elif variant["env_name"] == "assembly-v2":
-        #     variant[
-        #         "world_model_path"
-        #     ] = "/home/mdalal/research/skill_learn/rlkit/data/12-08-train-wm-with-prims-sweep-drawer-subsample-50-sweep-envs-1/12-08-train_wm_with_prims_sweep_drawer_subsample_50_sweep_envs_1_2021_12_08_11_04_16_0000--s-22636/models/world_model.pt"
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
