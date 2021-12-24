@@ -46,7 +46,7 @@ def video_low_level_func(algorithm, epoch):
             None,
             algorithm.trainer.world_model,
             logger.get_snapshot_dir(),
-            algorithm.eval_env.envs[0].max_path_length,
+            algorithm.max_path_length,
             use_env=True,
             forcing="none",
             tag="none",
