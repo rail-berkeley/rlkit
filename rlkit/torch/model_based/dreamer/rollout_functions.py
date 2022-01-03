@@ -198,15 +198,17 @@ def vec_rollout_low_level_raps(
             ll_a = np.array(ll_as[e])
             ll_o = np.array(ll_os[e])
 
-            num_ll = ll_a.shape[0]
-            idxs = np.linspace(0, num_ll, env.num_low_level_actions_per_primitive + 1)
-            spacing = num_ll // (env.num_low_level_actions_per_primitive)
-            a = ll_a.reshape(env.num_low_level_actions_per_primitive, spacing, -1)
-            a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
-            a = np.concatenate(
-                (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
-            )  # try to get last index of each block
-            o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
+            # num_ll = ll_a.shape[0]
+            # idxs = np.linspace(0, num_ll, env.num_low_level_actions_per_primitive + 1)
+            # spacing = num_ll // (env.num_low_level_actions_per_primitive)
+            # a = ll_a.reshape(env.num_low_level_actions_per_primitive, spacing, -1)
+            # a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
+            # a = np.concatenate(
+            #     (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
+            # )  # try to get last index of each block
+            a = ll_a
+            # o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
+            o = ll_o
             la.append(a)
             lo.append(o)
         lo = (

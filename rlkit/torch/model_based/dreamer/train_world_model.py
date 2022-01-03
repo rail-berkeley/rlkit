@@ -77,13 +77,12 @@ class BatchLenRandomSampler(Sampler):
 
 
 def subsample_paths(actions, observations, num_inputs, num_outputs):
-    idxs = np.linspace(0, num_inputs, num_outputs + 1)
-    spacing = num_inputs // (num_outputs)
-    a = actions.reshape(num_outputs, spacing, -1)
-    a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
-    actions = np.concatenate((a, actions[idxs.astype(np.int)[1:] - 1, 3:]), axis=1)
-    actions = actions
-    observations = observations[idxs.astype(np.int)[1:] - 1]
+    # idxs = np.linspace(0, num_inputs, num_outputs + 1)
+    # spacing = num_inputs // (num_outputs)
+    # a = actions.reshape(num_outputs, spacing, -1)
+    # a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
+    # actions = np.concatenate((a, actions[idxs.astype(np.int)[1:] - 1, 3:]), axis=1)
+    # observations = observations[idxs.astype(np.int)[1:] - 1]
     return actions, observations
 
 

@@ -392,11 +392,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         collect_primitives_info=False,
         include_phase_variable=False,
         render_intermediate_obs_to_info=False,
+        num_low_level_actions_per_primitive=10,
     ):
         self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
         self.action_scale = action_scale
         self.render_intermediate_obs_to_info = render_intermediate_obs_to_info
+        self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
 
         # primitives
         self.primitive_idx_to_name = {
@@ -563,6 +565,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.primitives_info["observations"] = []
             self.primitive_step_counter = 0
             self._num_low_level_steps_total = 0
+            self.combined_prev_action = np.zeros(3, dtype=np.float32)
             stats = self.act(a)
 
         self.curr_path_length += 1
@@ -667,9 +670,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         pos_ctrl *= 0.05
         assert gripper_ctrl.shape == (2,)
         action = np.concatenate([pos_ctrl, rot_ctrl])
-        self.primitives_info["actions"].append(
-            np.concatenate([pos_ctrl, rot_ctrl, gripper_ctrl])
-        )
+        self.combined_prev_action += pos_ctrl
+        if (self.primitive_step_counter + 1) % (
+            self.num_low_level_steps // self.num_low_level_actions_per_primitive
+        ) == 0:
+            self.primitives_info["actions"].append(
+                np.concatenate([self.combined_prev_action, rot_ctrl, gripper_ctrl])
+            )
+            self.combined_prev_action = np.zeros(3, dtype=np.float32)
 
         # Apply action to simulation.
         self.mocap_set_action(self.sim, action)
@@ -700,6 +708,16 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             sim.data.mocap_quat[mocap_id][:] = sim.data.body_xquat[body_idx]
 
     def call_render_every_step(self):
+        if self.render_intermediate_obs_to_info:
+            if (self.primitive_step_counter + 1) % (
+                self.num_low_level_steps // self.num_low_level_actions_per_primitive
+            ) == 0:
+                obs = self.render(
+                    "rgb_array",
+                    self.render_im_shape[0],
+                    self.render_im_shape[1],
+                )
+                self.primitives_info["observations"].append(obs.astype(np.uint8))
         if self.render_every_step:
             if self.render_mode == "rgb_array":
                 self.img_array.append(
@@ -789,13 +807,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-            if self.render_intermediate_obs_to_info:
-                obs = self.render(
-                    "rgb_array",
-                    self.render_im_shape[0],
-                    self.render_im_shape[1],
-                )
-                self.primitives_info["observations"].append(obs.astype(np.uint8))
         return np.array((total_reward, total_success))
 
     def open_gripper(self, d):
@@ -819,13 +830,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-            if self.render_intermediate_obs_to_info:
-                obs = self.render(
-                    "rgb_array",
-                    self.render_im_shape[0],
-                    self.render_im_shape[1],
-                )
-                self.primitives_info["observations"].append(obs.astype(np.uint8))
         return np.array((total_reward, total_success))
 
     def goto_pose(self, pose, grasp=True):
@@ -853,13 +857,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-            if self.render_intermediate_obs_to_info:
-                obs = self.render(
-                    "rgb_array",
-                    self.render_im_shape[0],
-                    self.render_im_shape[1],
-                )
-                self.primitives_info["observations"].append(obs.astype(np.uint8))
         return np.array((total_reward, total_success))
 
     def top_x_y_grasp(self, xyzd):

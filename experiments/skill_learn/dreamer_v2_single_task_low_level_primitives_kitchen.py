@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=300,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=1000,
@@ -58,6 +58,7 @@ if __name__ == "__main__":
             action_scale=1.4,
             use_workspace_limits=True,
             control_mode="primitives",
+            num_low_level_actions_per_primitive=10,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -136,8 +137,8 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_pretrain_steps": [1000],
         "algorithm_kwargs.num_trains_per_train_loop": [100],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [100],
-        "num_low_level_actions_per_primitive": [10],
+        "algorithm_kwargs.batch_size": [200],
+        "num_low_level_actions_per_primitive": [5],
         "trainer_kwargs.batch_length": [50],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -152,6 +153,12 @@ if __name__ == "__main__":
         variant["replay_buffer_size"] = int(
             3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
         )
+        variant["trainer_kwargs"]["batch_length"] = int(
+            variant["num_low_level_actions_per_primitive"] * 5
+        )
+        variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+            "num_low_level_actions_per_primitive"
+        ]
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
