@@ -801,6 +801,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         num_primitives,
         num_low_level_actions_per_primitive=100,
         batch_length=50,
+        binarize_rewards=False,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -809,6 +810,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.batch_length = batch_length
         self.criterion = nn.MSELoss()
         self.train_wm = True
+        self.binarize_rewards = binarize_rewards
 
     def imagine_ahead(self, state, actor=None):
         if actor is None:
@@ -1004,7 +1006,16 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             with torch.cuda.amp.autocast():
                 with torch.no_grad():
                     (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
-                    imagined_reward = self.world_model.reward(imagined_features)
+                    if self.world_model.reward_classifier:
+                        imagined_reward = self.world_model.get_dist(
+                            self.world_model.reward(imagined_features),
+                            std=None,
+                            normal=False,
+                        ).mean
+                        if self.binarize_rewards:
+                            imagined_reward = (imagined_reward > 0.5).float()
+                    else:
+                        imagined_reward = self.world_model.reward(imagined_features)
                     if self.use_pred_discount:
                         discount = self.world_model.get_dist(
                             self.world_model.pred_discount(imagined_features),

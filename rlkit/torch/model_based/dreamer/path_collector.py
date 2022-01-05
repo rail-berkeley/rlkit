@@ -43,6 +43,9 @@ class VecMdpPathCollector(PathCollector):
         num_steps,
         runtime_policy=None,
     ):
+        import torch
+
+        torch.cuda.empty_cache()
         paths = []
         num_steps_collected = 0
         while num_steps_collected < num_steps:

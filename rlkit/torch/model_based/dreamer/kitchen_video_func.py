@@ -53,7 +53,6 @@ def video_low_level_func(algorithm, epoch):
             low_level_primitives=True,
             num_low_level_actions_per_primitive=algorithm.trainer.num_low_level_actions_per_primitive,
             primitive_model=algorithm.trainer.world_model.primitive_model,
-            use_separate_primitives=False,
             policy=algorithm.eval_data_collector._policy,
         )
 

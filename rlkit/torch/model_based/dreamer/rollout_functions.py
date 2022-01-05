@@ -107,7 +107,6 @@ def vec_rollout_low_level_raps(
     render_kwargs=None,
     preprocess_obs_for_policy_fn=None,
     get_action_kwargs=None,
-    low_level_action_dim=9,
 ):
     if render_kwargs is None:
         render_kwargs = {}
@@ -115,6 +114,7 @@ def vec_rollout_low_level_raps(
         get_action_kwargs = {}
     if preprocess_obs_for_policy_fn is None:
         preprocess_obs_for_policy_fn = lambda x: x
+    low_level_action_dim = env.low_level_action_dim
     low_level_actions = np.zeros(
         (
             env.n_envs,

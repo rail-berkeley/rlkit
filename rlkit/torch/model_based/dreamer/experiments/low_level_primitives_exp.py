@@ -68,6 +68,9 @@ def experiment(variant):
     eval_env = DummyVecEnv(
         eval_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
     )
+    expl_env.low_level_action_dim = low_level_action_dim
+    eval_env.low_level_action_dim = low_level_action_dim
+    eval_env.envs[0].low_level_action_dim = low_level_action_dim
     discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
     continuous_action_dim = eval_envs[0].max_arg_len
     discrete_action_dim = eval_envs[0].num_primitives
@@ -88,6 +91,10 @@ def experiment(variant):
         output_size=variant["low_level_action_dim"],
         input_size=250 + eval_env.envs[0].action_space.low.shape[0] + 1,
         hidden_activation=torch.nn.functional.relu,
+        apply_embedding=variant.get("primitive_embedding", False),
+        num_embeddings=eval_envs[0].num_primitives,
+        embedding_dim=eval_envs[0].num_primitives,
+        embedding_slice=eval_envs[0].num_primitives,
     )
     world_model_class = LowlevelRAPSWorldModel
     world_model = world_model_class(
@@ -179,6 +186,7 @@ def experiment(variant):
         low_level_action_dim,
         replace=False,
         prioritize_fraction=variant["prioritize_fraction"],
+        uniform_priorities=variant.get("uniform_priorities", True),
     )
     filename = variant.get("replay_buffer_path", None)
     if filename is not None:

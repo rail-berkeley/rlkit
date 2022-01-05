@@ -132,6 +132,7 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         batch_length=50,
         use_batch_length=False,
         prioritize_fraction=0,
+        uniform_priorities=True,
     ):
         self.env = env
         self._ob_space = env.observation_space
@@ -173,6 +174,7 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         self._top = 0
         self._size = 0
         self.prioritize_fraction = prioritize_fraction
+        self.uniform_priorities = uniform_priorities
 
     def add_path(self, path):
         self._observations[self._top : self._top + self.env.n_envs] = path[
@@ -202,11 +204,17 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         mask = np.where(self._rewards[: self._size].sum(axis=1) > 0, 1, 0)[:, 0]
         prioritized_indices = np.array(range(self._size))[mask > 0]
         if prioritized_indices.shape[0] > 0:
+            if self.uniform_priorities:
+                p = np.ones(prioritized_indices.shape[0])
+            else:
+                p = self._rewards[prioritized_indices].sum(axis=1)
+            p = p / p.sum()
             indices = np.random.choice(
                 prioritized_indices.shape[0],
                 size=int(self.prioritize_fraction * batch_size),
                 replace=prioritized_indices.shape[0]
                 < int(self.prioritize_fraction * batch_size),
+                p=p,
             )
             prioritized_indices = prioritized_indices[indices]
             indices = np.random.choice(

@@ -675,7 +675,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.num_low_level_steps // self.num_low_level_actions_per_primitive
         ) == 0:
             self.primitives_info["actions"].append(
-                np.concatenate([self.combined_prev_action, rot_ctrl, gripper_ctrl])
+                np.concatenate([self.combined_prev_action, gripper_ctrl])
             )
             self.combined_prev_action = np.zeros(3, dtype=np.float32)
 

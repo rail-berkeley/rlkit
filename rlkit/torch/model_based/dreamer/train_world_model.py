@@ -157,7 +157,6 @@ def visualize_rollout(
     low_level_primitives,
     num_low_level_actions_per_primitive,
     primitive_model=None,
-    use_separate_primitives=False,
     policy=None,
 ):
     file_path = logdir + "/"
@@ -198,7 +197,7 @@ def visualize_rollout(
             if low_level_primitives:
                 # handling reset obs manually:
                 if use_env:
-                    a = ptu.zeros((1, 9))
+                    a = ptu.zeros((1, env.low_level_action_dim))
                     o = env.reset()
                     if policy:
                         policy.reset(o.reshape(1, -1))
@@ -207,7 +206,7 @@ def visualize_rollout(
                     o = ptu.get_numpy(observations[i, 0])
                 obs[i, 0] = o
                 if primitive_model:
-                    a = ptu.zeros((1, 9))
+                    a = ptu.zeros((1, env.low_level_action_dim))
                 state, _ = get_state(
                     o,
                     a,
@@ -250,24 +249,14 @@ def visualize_rollout(
                         primitive_name_to_action_dict = env.break_apart_action(
                             primitive_args
                         )
-                        if not (
-                            use_separate_primitives
-                            and primitive_name == "top_x_y_grasp"
-                        ):
-                            ll_a, ll_o = subsample_paths(
-                                ll_a,
-                                ll_o,
-                                ll_a.shape[0],
-                                num_low_level_actions_per_primitive,
-                            )
-                        if use_separate_primitives:
-                            net = primitive_model[primitive_idx]
-                            hl = primitive_name_to_action_dict[primitive_name].reshape(
-                                1, -1
-                            )
-                        else:
-                            net = primitive_model
-                            hl = high_level_action
+                        ll_a, ll_o = subsample_paths(
+                            ll_a,
+                            ll_o,
+                            ll_a.shape[0],
+                            num_low_level_actions_per_primitive,
+                        )
+                        net = primitive_model
+                        hl = high_level_action
                     else:
                         ll_a = ptu.get_numpy(
                             actions[
@@ -289,81 +278,19 @@ def visualize_rollout(
                         net = None
                         primitive_name = None
                     policy_o = (np.expand_dims(ll_a, 0), np.expand_dims(ll_o, 0))
-                    if use_separate_primitives and primitive_name == "top_x_y_grasp":
-                        print(primitive_name)
-                        xyzd = primitive_name_to_action_dict["top_x_y_grasp"]
-                        x_dist, y_dist, z_dist, d = xyzd
-
-                        hls = [
-                            np.array([1]).reshape(1, -1),
-                            np.array([x_dist, y_dist, 0]).reshape(1, -1),
-                            np.array([z_dist]).reshape(1, -1),
-                            np.array([d]).reshape(1, -1),
-                        ]
-                        nets = [
-                            primitive_model[8],
-                            primitive_model[0],
-                            primitive_model[3],
-                            primitive_model[9],
-                        ]
-                        recons = []
-                        primitive_names = [
-                            "open_gripper",
-                            "move_delta_ee_pose",
-                            "drop",
-                            "close_gripper",
-                        ]
-                        for k, (hl, net, primitive_name) in enumerate(
-                            zip(hls, nets, primitive_names)
-                        ):
-                            ll_a_, ll_o_ = subsample_paths(
-                                ll_a[300 * k : 300 * (k + 1)],
-                                ll_o[300 * k : 300 * (k + 1)],
-                                300,
-                                num_low_level_actions_per_primitive,
-                            )
-                            recon, state, new_img = forward_low_level_primitive(
-                                ll_a_,
-                                ll_o_,
-                                world_model,
-                                num_low_level_actions_per_primitive,
-                                primitive_model,
-                                net,
-                                forcing,
-                                new_img,
-                                hl,
-                                state,
-                                primitive_name=primitive_name,
-                            )
-                            recons.extend(recon)
-                        idxs = list(
-                            range(
-                                0,
-                                len(recons),
-                                len(recons) // num_low_level_actions_per_primitive,
-                            )
-                        )
-                        recons = [recons[idx] for idx in idxs]
-                        ll_a, ll_o = subsample_paths(
-                            ll_a,
-                            ll_o,
-                            ll_a.shape[0],
-                            num_low_level_actions_per_primitive,
-                        )
-                    else:
-                        recons, state, new_img = forward_low_level_primitive(
-                            ll_a,
-                            ll_o,
-                            world_model,
-                            num_low_level_actions_per_primitive,
-                            primitive_model,
-                            net,
-                            forcing,
-                            new_img,
-                            hl,
-                            state,
-                            primitive_name=primitive_name,
-                        )
+                    recons, state, new_img = forward_low_level_primitive(
+                        ll_a,
+                        ll_o,
+                        world_model,
+                        num_low_level_actions_per_primitive,
+                        primitive_model,
+                        net,
+                        forcing,
+                        new_img,
+                        hl,
+                        state,
+                        primitive_name=primitive_name,
+                    )
                     reconstructions[
                         i,
                         1

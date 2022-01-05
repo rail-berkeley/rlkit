@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=200,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=1000,
@@ -123,16 +123,17 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
-        low_level_action_dim=9,
+        low_level_action_dim=5,
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
+        uniform_priorities=False,
     )
 
     search_space = {
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
+            # "assembly-v2",
+            # "disassemble-v2",
+            # "sweep-into-v2",
             "soccer-v2",
             # "drawer-close-v2",
         ],
@@ -141,9 +142,14 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_pretrain_steps": [1000],
         "algorithm_kwargs.num_trains_per_train_loop": [100],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [200],
-        "num_low_level_actions_per_primitive": [5],
+        "algorithm_kwargs.batch_size": [100],
+        "num_low_level_actions_per_primitive": [10],
         "trainer_kwargs.batch_length": [50],
+        "trainer_kwargs.binarize_rewards": [True, False],
+        "model_kwargs.reward_classifier": [False, True],
+        "primitive_embedding": [True, False],
+        # "prioritize_fraction":[0.0, .25, 0.5],
+        # "uniform_priorities":[True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
