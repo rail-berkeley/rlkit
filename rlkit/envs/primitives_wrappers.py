@@ -787,6 +787,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         return np.concatenate([pos_hand, qpos[8:10]])
 
     def close_gripper(self, d):
+        d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
         for _ in range(300):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
@@ -810,6 +811,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         return np.array((total_reward, total_success))
 
     def open_gripper(self, d):
+        d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
         for _ in range(300):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
@@ -832,7 +834,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self._num_low_level_steps_total += 1
         return np.array((total_reward, total_success))
 
-    def goto_pose(self, pose, grasp=True):
+    def goto_pose(self, pose, grasp=False):
         total_reward, total_success = 0, 0
         for _ in range(300):
             delta = pose - self.get_endeff_pos()
@@ -862,8 +864,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def top_x_y_grasp(self, xyzd):
         x_dist, y_dist, z_dist, d = xyzd
         stats = self.open_gripper(1)
-        stats += self.move_delta_ee_pose(np.array([x_dist, y_dist, 0]))
-        stats += self.drop(z_dist)
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
+        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, 0, z_dist]))
         stats += self.close_gripper(d)
         return stats
 
