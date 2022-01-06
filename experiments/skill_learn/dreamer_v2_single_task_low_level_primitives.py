@@ -116,17 +116,16 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
-            batch_length=100,
             weight_decay=0.0,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
-        low_level_action_dim=5,
+        low_level_action_dim=9,
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
-        uniform_priorities=False,
+        uniform_priorities=True,
     )
 
     search_space = {
@@ -145,11 +144,11 @@ if __name__ == "__main__":
         "algorithm_kwargs.batch_size": [100],
         "num_low_level_actions_per_primitive": [10],
         "trainer_kwargs.batch_length": [50],
-        "trainer_kwargs.binarize_rewards": [True, False],
-        "model_kwargs.reward_classifier": [False, True],
-        "primitive_embedding": [True, False],
-        # "prioritize_fraction":[0.0, .25, 0.5],
-        # "uniform_priorities":[True, False],
+        # "trainer_kwargs.binarize_rewards": [True, False],
+        # "model_kwargs.reward_classifier": [True, False ],
+        # "primitive_embedding": [True, False],
+        "prioritize_fraction": [0.0, 0.25, 0.5],
+        "uniform_priorities": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

@@ -203,11 +203,13 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
     def random_batch(self, batch_size):
         mask = np.where(self._rewards[: self._size].sum(axis=1) > 0, 1, 0)[:, 0]
         prioritized_indices = np.array(range(self._size))[mask > 0]
-        if prioritized_indices.shape[0] > 0:
+        if prioritized_indices.shape[0] > 0 and self.prioritize_fraction > 0:
             if self.uniform_priorities:
-                p = np.ones(prioritized_indices.shape[0])
+                p = np.ones_like(prioritized_indices)
             else:
-                p = self._rewards[prioritized_indices].sum(axis=1)
+                p = self._rewards[: self._size][:, :, 0][prioritized_indices].sum(
+                    axis=1
+                )
             p = p / p.sum()
             indices = np.random.choice(
                 prioritized_indices.shape[0],

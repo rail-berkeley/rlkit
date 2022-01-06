@@ -282,10 +282,7 @@ class WorldModel(jit.ScriptModule):
             post_dist = self.get_dist(post["mean"], post["std"], latent=True)
             prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
-        if self.reward_classifier:
-            reward_dist = self.get_dist(rewards, None, normal=False)
-        else:
-            reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
+        reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
         return (
             post,
@@ -512,7 +509,10 @@ class LowlevelRAPSWorldModel(WorldModel):
                 latent=True,
             )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
-        reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
+        if self.reward_classifier:
+            reward_dist = self.get_dist(rewards, None, normal=False)
+        else:
+            reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
         return (
             post,
