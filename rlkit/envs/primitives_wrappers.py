@@ -415,14 +415,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         }
         self.primitive_idx_to_num_low_level_steps = {
             0: 300,
-            1: 1200,
+            1: 1400,
             2: 300,
             3: 300,
             4: 300,
             5: 300,
             6: 300,
             7: 300,
-            8: 300,
+            8: 200,
             9: 300,
         }
         self.primitive_name_to_func = dict(
@@ -813,7 +813,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def open_gripper(self, d):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
-        for _ in range(300):
+        for _ in range(200):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
             state = self.get_robot_state()
             if self.include_phase_variable:
