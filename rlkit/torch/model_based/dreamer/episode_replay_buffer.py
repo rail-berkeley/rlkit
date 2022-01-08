@@ -117,6 +117,11 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         )
         return batch
 
+    def get_diagnostics(self):
+        d = super().get_diagnostics()
+        d["reward_in_buffer"] = self._rewards.sum()
+        return d
+
 
 class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
     def __init__(

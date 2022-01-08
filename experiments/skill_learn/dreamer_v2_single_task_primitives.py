@@ -127,7 +127,7 @@ if __name__ == "__main__":
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
         "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [10, 50, 100],
+        "algorithm_kwargs.num_trains_per_train_loop": [50],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

@@ -131,9 +131,9 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
-            "soccer-v2",
+            # "disassemble-v2",
+            # "sweep-into-v2",
+            # "soccer-v2",
             # "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
@@ -144,6 +144,9 @@ if __name__ == "__main__":
         "algorithm_kwargs.batch_size": [100],
         "num_low_level_actions_per_primitive": [10],
         "trainer_kwargs.batch_length": [50],
+        "replay_buffer_path": [
+            "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
+        ],
         # "trainer_kwargs.binarize_rewards": [True, False],
         # "model_kwargs.reward_classifier": [True, False ],
         # "primitive_embedding": [True, False],
