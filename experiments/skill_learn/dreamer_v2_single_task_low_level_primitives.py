@@ -138,7 +138,7 @@ if __name__ == "__main__":
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
+        "algorithm_kwargs.num_pretrain_steps": [5000],
         "algorithm_kwargs.num_trains_per_train_loop": [100],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
         "algorithm_kwargs.batch_size": [100],
@@ -150,8 +150,8 @@ if __name__ == "__main__":
         # "trainer_kwargs.binarize_rewards": [True, False],
         # "model_kwargs.reward_classifier": [True, False ],
         # "primitive_embedding": [True, False],
-        # "prioritize_fraction": [0.0, 0.25, 0.5],
-        # "uniform_priorities": [False],
+        "prioritize_fraction": [0.25],
+        "uniform_priorities": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
