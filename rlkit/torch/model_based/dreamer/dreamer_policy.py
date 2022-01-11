@@ -82,7 +82,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                 ll_a = ptu.from_numpy(ll_a)
                 assert observation.shape[1] == self.num_low_level_actions_per_primitive
                 assert ll_a.shape[1] == self.num_low_level_actions_per_primitive
-                new_state, _ = self.state
+                new_state = self.state
                 for k in range(0, self.num_low_level_actions_per_primitive):
                     embed = self.world_model.encode(observation[:, k])
                     new_state, _ = self.world_model.obs_step(
@@ -101,7 +101,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
             action = dist.mode()
             if self.exploration:
                 action = self.actor.compute_exploration_action(action, self.expl_amount)
-            self.state = (new_state, action)
+            self.state = new_state
             return ptu.get_numpy(action), {}
 
 

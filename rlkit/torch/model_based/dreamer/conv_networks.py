@@ -161,4 +161,4 @@ class DCNN(jit.ScriptModule):
             h = layer(h)
             h = self.hidden_activation(h)
         output = self.deconv_output(h)
-        return output
+        return output.to(memory_format=torch.channels_last, dtype=torch.float16)
