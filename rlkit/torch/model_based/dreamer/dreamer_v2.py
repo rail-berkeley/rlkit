@@ -802,6 +802,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         num_low_level_actions_per_primitive=100,
         batch_length=50,
         binarize_rewards=False,
+        num_world_model_training_iterations=1,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -811,6 +812,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.criterion = nn.MSELoss()
         self.train_wm = True
         self.binarize_rewards = binarize_rewards
+        self.num_world_model_training_iterations = num_world_model_training_iterations
 
     def imagine_ahead(self, state, actor=None):
         if actor is None:
@@ -877,119 +879,122 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         :param: skip_statistics bool
         :returns: Tuple[DreamerLosses, LossStatistics]
         """
-        rewards = batch["rewards"]
-        terminals = batch["terminals"]
-        obs = batch["observations"]
-        high_level_actions = batch["high_level_actions"]
-        low_level_actions = batch["low_level_actions"]
 
-        assert torch.all(
-            high_level_actions[:, 1:, : self.num_primitives].sum(dim=-1) == 1
-        ).item()
         """
         World Model Loss
         """
         with torch.cuda.amp.autocast():
-            rt_idxs = np.arange(
-                self.num_low_level_actions_per_primitive,
-                obs.shape[1],
-                self.num_low_level_actions_per_primitive,
-            )
-            rt_idxs = np.concatenate(
-                [[0], rt_idxs]
-            )  # reset obs, effect of first primitive, second primitive, so on
+            for _ in range(self.num_world_model_training_iterations):
+                rewards = batch["rewards"]
+                terminals = batch["terminals"]
+                obs = batch["observations"]
+                high_level_actions = batch["high_level_actions"]
+                low_level_actions = batch["low_level_actions"]
+                assert torch.all(
+                    high_level_actions[:, 1:, : self.num_primitives].sum(dim=-1) == 1
+                ).item()
+                rt_idxs = np.arange(
+                    self.num_low_level_actions_per_primitive,
+                    obs.shape[1],
+                    self.num_low_level_actions_per_primitive,
+                )
+                rt_idxs = np.concatenate(
+                    [[0], rt_idxs]
+                )  # reset obs, effect of first primitive, second primitive, so on
 
-            batch_start = np.random.randint(
-                0, obs.shape[1] - self.batch_length, size=(obs.shape[0])
-            )
-            batch_indices = np.linspace(
-                batch_start,
-                batch_start + self.batch_length,
-                self.batch_length,
-                endpoint=False,
-            ).astype(int)
-            (
-                post,
-                prior,
-                post_dist,
-                prior_dist,
-                image_dist,
-                reward_dist,
-                pred_discount_dist,
-                _,
-                action_preds,
-            ) = self.world_model(
-                obs,
-                (high_level_actions, low_level_actions),
-                use_network_action=False,
-                batch_indices=batch_indices,
-                rt_idxs=rt_idxs,
-            )
-            obs = self.world_model.flatten_obs(
-                obs[np.arange(batch_indices.shape[1]), batch_indices].permute(1, 0, 2),
-                (int(np.prod(self.image_shape)),),
-            )
-            rewards = rewards.reshape(-1, rewards.shape[-1])
-            terminals = terminals.reshape(-1, terminals.shape[-1])
-            (
-                world_model_loss,
-                div,
-                image_pred_loss,
-                reward_pred_loss,
-                transition_loss,
-                entropy_loss,
-                pred_discount_loss,
-            ) = self.world_model_loss(
-                image_dist,
-                reward_dist,
-                {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                batch_start = np.random.randint(
+                    0, obs.shape[1] - self.batch_length, size=(obs.shape[0])
+                )
+                batch_indices = np.linspace(
+                    batch_start,
+                    batch_start + self.batch_length,
+                    self.batch_length,
+                    endpoint=False,
+                ).astype(int)
+                (
+                    post,
+                    prior,
+                    post_dist,
+                    prior_dist,
+                    image_dist,
+                    reward_dist,
+                    pred_discount_dist,
+                    _,
+                    action_preds,
+                ) = self.world_model(
+                    obs,
+                    (high_level_actions, low_level_actions),
+                    use_network_action=False,
+                    batch_indices=batch_indices,
+                    rt_idxs=rt_idxs,
+                )
+                obs = self.world_model.flatten_obs(
+                    obs[np.arange(batch_indices.shape[1]), batch_indices].permute(
+                        1, 0, 2
+                    ),
+                    (int(np.prod(self.image_shape)),),
+                )
+                rewards = rewards.reshape(-1, rewards.shape[-1])
+                terminals = terminals.reshape(-1, terminals.shape[-1])
+                (
+                    world_model_loss,
+                    div,
+                    image_pred_loss,
+                    reward_pred_loss,
+                    transition_loss,
+                    entropy_loss,
+                    pred_discount_loss,
+                ) = self.world_model_loss(
+                    image_dist,
+                    reward_dist,
+                    {
+                        k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                        .permute(1, 0, 2)
+                        .reshape(-1, v.shape[-1])
+                        for k, v in prior.items()
+                    },
+                    {
+                        k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                        .permute(1, 0, 2)
+                        .reshape(-1, v.shape[-1])
+                        for k, v in post.items()
+                    },
+                    prior_dist,
+                    post_dist,
+                    pred_discount_dist,
+                    obs,
+                    rewards,
+                    terminals,
+                )
+
+                batch_start = np.random.randint(
+                    0,
+                    low_level_actions.shape[1] - self.batch_length,
+                    size=(low_level_actions.shape[0]),
+                )
+                batch_indices = np.linspace(
+                    batch_start,
+                    batch_start + self.batch_length,
+                    self.batch_length,
+                    endpoint=False,
+                ).astype(int)
+                primitive_loss = self.criterion(
+                    action_preds[np.arange(batch_indices.shape[1]), batch_indices]
                     .permute(1, 0, 2)
-                    .reshape(-1, v.shape[-1])
-                    for k, v in prior.items()
-                },
-                {
-                    k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                    .reshape(-1, action_preds.shape[-1]),
+                    low_level_actions[:, 1:][
+                        np.arange(batch_indices.shape[1]), batch_indices
+                    ]
                     .permute(1, 0, 2)
-                    .reshape(-1, v.shape[-1])
-                    for k, v in post.items()
-                },
-                prior_dist,
-                post_dist,
-                pred_discount_dist,
-                obs,
-                rewards,
-                terminals,
-            )
+                    .reshape(-1, action_preds.shape[-1]),
+                )
 
-            batch_start = np.random.randint(
-                0,
-                low_level_actions.shape[1] - self.batch_length,
-                size=(low_level_actions.shape[0]),
+            self.update_network(
+                self.world_model,
+                self.world_model_optimizer,
+                world_model_loss + primitive_loss,
+                self.world_model_gradient_clip,
             )
-            batch_indices = np.linspace(
-                batch_start,
-                batch_start + self.batch_length,
-                self.batch_length,
-                endpoint=False,
-            ).astype(int)
-            primitive_loss = self.criterion(
-                action_preds[np.arange(batch_indices.shape[1]), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, action_preds.shape[-1]),
-                low_level_actions[:, 1:][
-                    np.arange(batch_indices.shape[1]), batch_indices
-                ]
-                .permute(1, 0, 2)
-                .reshape(-1, action_preds.shape[-1]),
-            )
-
-        self.update_network(
-            self.world_model,
-            self.world_model_optimizer,
-            world_model_loss + primitive_loss,
-            self.world_model_gradient_clip,
-        )
 
         # we can also try using prior here
         state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
