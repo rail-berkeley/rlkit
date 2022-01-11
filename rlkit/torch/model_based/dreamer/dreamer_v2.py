@@ -836,19 +836,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             for k in states.keys():
                 states[k].append(new_state[k].unsqueeze(0))
             action_dist = actor(features.detach())
-            high_level_action = (
-                action_dist.rsample()
-            )  # this should sample a one-hot vector + args
-            assert all(
-                torch.sum(high_level_action[:, : self.num_primitives], dim=1) == 1
-            )
+            high_level_action = action_dist.rsample()
             for k in range(0, self.num_low_level_actions_per_primitive):
-                tmp = np.array(
-                    [(k + 1) / (self.num_low_level_actions_per_primitive)]
-                ).reshape(1, -1)
-                tmp = np.repeat(tmp, high_level_action.shape[0], axis=0)
-                tmp = ptu.from_numpy(tmp)
-                hl = torch.cat((high_level_action, tmp), 1)
+                phase = (
+                    ptu.ones((high_level_action.shape[0], 1))
+                    * (k + 1)
+                    / self.num_low_level_actions_per_primitive
+                )
+                hl = torch.cat((high_level_action, phase), 1)
                 inp = torch.cat(
                     [hl, self.world_model.get_features(new_state)],
                     dim=1,
@@ -890,9 +885,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 obs = batch["observations"]
                 high_level_actions = batch["high_level_actions"]
                 low_level_actions = batch["low_level_actions"]
-                assert torch.all(
-                    high_level_actions[:, 1:, : self.num_primitives].sum(dim=-1) == 1
-                ).item()
                 rt_idxs = np.arange(
                     self.num_low_level_actions_per_primitive,
                     obs.shape[1],
@@ -1046,7 +1038,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 ).detach()
             for _ in range(self.num_actor_value_updates):
                 with torch.cuda.amp.autocast():
-                    with FreezeParameters(vf_params + target_vf_params):
+                    with torch.no_grad():
                         imagined_target_value = self.target_vf(imagined_features)
                         imagined_value = self.vf(imagined_features)
                     imagined_returns = lambda_return(
@@ -1071,10 +1063,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         log_keys,
                     )
 
-                    with torch.no_grad():
-                        imagined_features_values = imagined_features.detach()
-                        target = imagined_returns.detach()
-                        weights = weights.detach()
+                    imagined_features_values = imagined_features.detach()
+                    target = imagined_returns.detach()
+                    weights = weights.detach()
 
                     vf_loss = self.value_loss(
                         imagined_features_values,
@@ -1106,7 +1097,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         vf_loss,
                         self.value_gradient_clip,
                     )
-            self.scaler.update()
+                self.scaler.update()
 
         if self.num_imagination_iterations > 0:
             for key in log_keys:
