@@ -283,7 +283,6 @@ class WorldModel(jit.ScriptModule):
             prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
-        pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
         return (
             post,
             prior,
@@ -291,7 +290,7 @@ class WorldModel(jit.ScriptModule):
             prior_dist,
             image_dist,
             reward_dist,
-            pred_discount_dist,
+            pred_discounts,
             embed,
         )
 
@@ -513,7 +512,6 @@ class LowlevelRAPSWorldModel(WorldModel):
             reward_dist = self.get_dist(rewards, None, normal=False)
         else:
             reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
-        pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
         return (
             post,
             prior,
@@ -521,10 +519,45 @@ class LowlevelRAPSWorldModel(WorldModel):
             prior_dist,
             image_dist,
             reward_dist,
-            pred_discount_dist,
+            pred_discounts,
             embed,
             actions,
         )
+
+    @jit.script_method
+    def forward_high_level_step(
+        self,
+        new_state: Dict[str, torch.Tensor],
+        observation: torch.Tensor,
+        ll_a: torch.Tensor,
+        num_low_level_actions_per_primitive: int,
+    ):
+        for k in range(0, num_low_level_actions_per_primitive):
+            embed = self.encode(observation[:, k])
+            new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+        return new_state
+
+    @jit.script_method
+    def forward_high_level_step_primitive_model(
+        self,
+        new_state: Dict[str, torch.Tensor],
+        high_level_action: torch.Tensor,
+        num_low_level_actions_per_primitive: int,
+    ) -> Dict[str, torch.Tensor]:
+        for k in range(0, num_low_level_actions_per_primitive):
+            phase = (
+                torch.ones((high_level_action.shape[0], 1), device=ptu.device)
+                * (k + 1)
+                / num_low_level_actions_per_primitive
+            )
+            hl = torch.cat((high_level_action, phase), 1)
+            inp = torch.cat(
+                [hl, self.get_features(new_state)],
+                dim=1,
+            )
+            a = self.primitive_model(inp)
+            new_state = self.action_step(new_state, a)
+        return new_state
 
 
 class StateConcatObsWorldModel(WorldModel):

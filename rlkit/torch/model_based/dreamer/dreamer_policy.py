@@ -1,6 +1,9 @@
+from typing import Dict
+
 import numpy as np
 import torch
 import torch.nn.functional as F
+from torch import jit
 from torch.distributions import Normal
 
 import rlkit.torch.pytorch_util as ptu
@@ -82,12 +85,12 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                 ll_a = ptu.from_numpy(ll_a)
                 assert observation.shape[1] == self.num_low_level_actions_per_primitive
                 assert ll_a.shape[1] == self.num_low_level_actions_per_primitive
-                new_state = self.state
-                for k in range(0, self.num_low_level_actions_per_primitive):
-                    embed = self.world_model.encode(observation[:, k])
-                    new_state, _ = self.world_model.obs_step(
-                        new_state, ll_a[:, k], embed
-                    )
+                new_state = self.world_model.forward_high_level_step(
+                    self.state,
+                    observation,
+                    ll_a,
+                    self.num_low_level_actions_per_primitive,
+                )
             else:
                 prev_state = self.world_model.initial(observation.shape[0])
                 embed = self.world_model.encode(observation)

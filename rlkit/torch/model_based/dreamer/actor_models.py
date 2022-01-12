@@ -299,6 +299,8 @@ class TanhBijector(Transform):
     def __init__(self):
         super().__init__()
         self.bijective = True
+        self.domain = torch.distributions.constraints.real
+        self.codomain = torch.distributions.constraints.interval(-1.0, 1.0)
 
     @property
     def sign(self):
