@@ -205,7 +205,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         post,
         prior_dist,
         post_dist,
-        pred_discount,
+        pred_discount_dist,
         obs,
         rewards,
         terminals,
@@ -250,8 +250,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         else:
             reward_pred_loss = -1 * reward_dist.log_prob(rewards).mean()
         pred_discount_target = self.discount * (1 - terminals.float())
-        pred_discount_loss = torch.nn.functional.cross_entropy(
-            pred_discount, pred_discount_target
+        pred_discount_loss = (
+            -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
         )
 
         post_detached_dist = self.world_model.get_detached_dist(post)
@@ -431,6 +431,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
         self.scaler.step(optimizer)
         optimizer.zero_grad(set_to_none=True)
+        self.scaler.update()
 
     def train_networks(
         self,
@@ -463,7 +464,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 prior_dist,
                 image_dist,
                 reward_dist,
-                pred_discount,
+                pred_discount_dist,
                 _,
             ) = self.world_model(obs, actions)
             obs = self.world_model.flatten_obs(
@@ -486,7 +487,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 post,
                 prior_dist,
                 post_dist,
-                pred_discount,
+                pred_discount_dist,
                 obs,
                 rewards,
                 terminals,
@@ -497,7 +498,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             world_model_loss,
             self.world_model_gradient_clip,
         )
-        self.scaler.update()
 
         """
         Actor Value Loss
@@ -599,7 +599,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                         vf_loss,
                         self.value_gradient_clip,
                     )
-                    self.scaler.update()
 
         if self.num_imagination_iterations > 0:
             for key in log_keys:
@@ -904,7 +903,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         prior_dist,
                         image_dist,
                         reward_dist,
-                        pred_discount,
+                        pred_discount_dist,
                         _,
                         action_preds,
                     ) = self.world_model(
@@ -947,7 +946,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         },
                         prior_dist,
                         post_dist,
-                        pred_discount,
+                        pred_discount_dist,
                         obs,
                         rewards,
                         terminals,
@@ -981,7 +980,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     world_model_loss + primitive_loss,
                     self.world_model_gradient_clip,
                 )
-                self.scaler.update()
 
         # we can also try using prior here
         state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
@@ -1093,7 +1091,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         vf_loss,
                         self.value_gradient_clip,
                     )
-                self.scaler.update()
 
         if self.num_imagination_iterations > 0:
             for key in log_keys:
