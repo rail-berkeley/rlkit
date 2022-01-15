@@ -1,72 +1,3 @@
-def load_data(filename, num_primitives):
-    """
-    :param filename: (str)
-    :param num_primitives: (int)
-    :param batch_size: (int)
-    :param train_test_split: (float)
-    :return: (tuple)
-    """
-    import numpy as np
-    import torch
-
-    data = np.load(filename, allow_pickle=True).item()
-    data["inputs"] = [
-        torch.Tensor(np.array(data["inputs"][i])) for i in range(num_primitives)
-    ]
-    data["inputs"] = [
-        data["inputs"][i].reshape(-1, data["inputs"][i].shape[-1])
-        for i in range(num_primitives)
-    ]
-
-    data["actions"] = [
-        torch.Tensor(np.array(data["actions"][i])) for i in range(num_primitives)
-    ]
-    data["actions"] = [
-        data["actions"][i].reshape(-1, data["actions"][i].shape[-1])
-        for i in range(num_primitives)
-    ]
-
-    return data
-
-
-def load_primitives(logdir, datafile, num_primitives, input_subselect, hidden_sizes):
-    import torch
-
-    from rlkit.torch.model_based.dreamer.mlp import Mlp
-
-    data = load_data(
-        "/home/mdalal/research/skill_learn/rlkit/data/primitive_data/"
-        + datafile
-        + ".npy",
-        num_primitives,
-    )
-    primitives = []
-    for i in range(num_primitives):
-        input_size = data["inputs"][i].shape[-1]
-        if input_subselect == "ee":
-            input_size = input_size - 20
-        primitives.append(
-            Mlp(
-                hidden_sizes=hidden_sizes,
-                output_size=data["actions"][i].shape[1],
-                input_size=input_size,
-                hidden_activation=torch.nn.functional.relu,
-            )
-        )
-
-    for i in range(num_primitives):
-        primitives[i].load_state_dict(
-            torch.load(
-                "/home/mdalal/research/skill_learn/rlkit/data/"
-                + logdir
-                + "/models/primitive_{}.pt".format(i)
-            )
-        )
-        primitives[i].eval().cpu()
-
-    return primitives
-
-
 def experiment(variant):
     import os
 
@@ -89,6 +20,7 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
+        EpisodeReplayBufferLowLevelRAPS,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mcts.dreamer_v2_mcts import (
@@ -112,9 +44,6 @@ def experiment(variant):
     num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
     load_primitives_kwargs = variant.get("load_primitives_kwargs", {})
-    if env_kwargs.get("use_learned_primitives", False):
-        primitives = load_primitives(**load_primitives_kwargs)
-        env_kwargs["learned_primitives"] = primitives
     if num_expl_envs > 1:
         env_fns = [
             lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
@@ -262,13 +191,22 @@ def experiment(variant):
         use_batch_length=use_batch_length,
         batch_length=50,
     )
-    trainer_class_name = variant.get("algorithm", "DreamerV2")
-    if trainer_class_name == "DreamerV2":
-        trainer_class = DreamerV2Trainer
-    elif trainer_class_name == "DreamerV2MCTS":
-        trainer_class = DreamerV2MCTSTrainer
+    eval_filename = variant.get("eval_buffer_path", None)
+    if eval_filename is not None:
+        eval_buffer = EpisodeReplayBufferLowLevelRAPS(
+            1000,
+            expl_env,
+            variant["algorithm_kwargs"]["max_path_length"],
+            10,
+            obs_dim,
+            action_dim,
+            9,
+            replace=False,
+        )
+        eval_buffer.load_buffer(eval_filename, eval_env.envs[0].num_primitives)
     else:
-        trainer_class = DreamerTrainer
+        eval_buffer = None
+    trainer_class = DreamerV2Trainer
     trainer = trainer_class(
         eval_env,
         actor,
@@ -286,6 +224,7 @@ def experiment(variant):
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
         pretrain_policy=rand_policy,
+        eval_buffer=eval_buffer,
         **variant["algorithm_kwargs"],
     )
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))

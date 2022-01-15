@@ -374,9 +374,11 @@ class LowlevelRAPSWorldModel(WorldModel):
         post: Dict[str, List[Tensor]],
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
+        idxs: List[int],
         use_network_action: bool = False,
     ):
         actions = []
+        ctr = 0
         for i in range(path_length):
             if i == 0:
                 action_ = action[1][:, 0] * 0
@@ -390,11 +392,17 @@ class LowlevelRAPSWorldModel(WorldModel):
                     action_ = action_
                 else:
                     action_ = action[1][:, i]
-            (post_params, prior_params,) = self.obs_step(
-                state,
-                action_.detach(),
-                embed[:, i],
-            )
+            if (embed is None and i != 0) or (i not in idxs and idxs[0] != -1):
+                prior_params = self.action_step(state, action_.detach())
+                post_params = prior_params
+            else:
+                (post_params, prior_params,) = self.obs_step(
+                    state,
+                    action_.detach(),
+                    embed[:, ctr],
+                )
+                ctr += 1
+
             for k in post.keys():
                 post[k].append(post_params[k].unsqueeze(1))
 
@@ -421,10 +429,10 @@ class LowlevelRAPSWorldModel(WorldModel):
         :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
         """
 
-        original_batch_size = obs.shape[0]
+        original_batch_size = action[1].shape[0]
         if state is None:
             state = self.initial(original_batch_size)
-        path_length = obs.shape[1]
+        path_length = action[1].shape[1]
         if self.discrete_latents:
             post, prior = (
                 dict(logits=[], stoch=[], deter=[]),
@@ -435,12 +443,25 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
-        embed = self.encode(obs)
-        embedding_size = embed.shape[1]
-        embed = embed.reshape(path_length, original_batch_size, embedding_size).permute(
-            1, 0, 2
-        )
+        if obs is None:
+            embed = None
+            idxs = [
+                -1,
+            ]
+        else:
+            obs_path = obs.shape[1]
+            obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
+            embed = self.encode(obs)
+            embedding_size = embed.shape[1]
+            embed = embed.reshape(-1, original_batch_size, embedding_size).permute(
+                1, 0, 2
+            )
+            if obs_path < path_length:
+                idxs = rt_idxs.tolist()
+            else:
+                idxs = [
+                    -1,
+                ]
         post, prior, actions = self.forward_batch(
             path_length,
             action,
@@ -448,6 +469,7 @@ class LowlevelRAPSWorldModel(WorldModel):
             post,
             prior,
             state,
+            idxs,
             use_network_action,
         )
 
@@ -467,9 +489,12 @@ class LowlevelRAPSWorldModel(WorldModel):
             :, rt_idxs
         ]  # prior features predict what s' should be (don't use post)
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
-        batch_size = batch_indices.shape[1]
-        feat = feat[np.arange(batch_size), batch_indices]
-        feat = feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
+        if len(batch_indices.shape) > 1:
+            batch_size = batch_indices.shape[1]
+            feat = feat[np.arange(batch_size), batch_indices]
+            feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
+        else:
+            feat = feat[:, batch_indices]
         images = self.decode(feat)
         rewards = self.reward(rt_feat)
         pred_discounts = self.pred_discount(rt_feat)
@@ -490,24 +515,38 @@ class LowlevelRAPSWorldModel(WorldModel):
                 latent=True,
             )
         else:
-            post_dist = self.get_dist(
-                post["mean"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, post["mean"].shape[-1]),
-                post["std"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, post["std"].shape[-1]),
-                latent=True,
-            )
-            prior_dist = self.get_dist(
-                prior["mean"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, prior["mean"].shape[-1]),
-                prior["std"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, prior["std"].shape[-1]),
-                latent=True,
-            )
+            if len(batch_indices.shape) > 1:
+                post_dist = self.get_dist(
+                    post["mean"][np.arange(batch_size), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, post["mean"].shape[-1]),
+                    post["std"][np.arange(batch_size), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, post["std"].shape[-1]),
+                    latent=True,
+                )
+                prior_dist = self.get_dist(
+                    prior["mean"][np.arange(batch_size), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, prior["mean"].shape[-1]),
+                    prior["std"][np.arange(batch_size), batch_indices]
+                    .permute(1, 0, 2)
+                    .reshape(-1, prior["std"].shape[-1]),
+                    latent=True,
+                )
+            else:
+                post_dist = self.get_dist(
+                    post["mean"][:, batch_indices].reshape(-1, post["mean"].shape[-1]),
+                    post["std"][:, batch_indices].reshape(-1, post["std"].shape[-1]),
+                    latent=True,
+                )
+                prior_dist = self.get_dist(
+                    prior["mean"][:, batch_indices].reshape(
+                        -1, prior["mean"].shape[-1]
+                    ),
+                    prior["std"][:, batch_indices].reshape(-1, prior["std"].shape[-1]),
+                    latent=True,
+                )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         if self.reward_classifier:
             reward_dist = self.get_dist(rewards, None, normal=False)

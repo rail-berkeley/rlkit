@@ -1,5 +1,7 @@
+import gc
 import warnings
 
+import h5py
 import numpy as np
 
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
@@ -250,3 +252,34 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
             terminals=terminals,
         )
         return batch
+
+    def load_buffer(self, filename, num_primitives):
+        print("LOADING REPLAY BUFFER")
+        with h5py.File(filename, "r") as f:
+            observations = np.array(f["observations"][:])
+            low_level_actions = np.array(f["low_level_actions"][:])
+            high_level_actions = np.array(f["high_level_actions"][:])
+            rewards = np.array(f["rewards"][:])
+            terminals = np.array(f["terminals"][:])
+        num_trajs = observations.shape[0]
+        self._observations[:num_trajs] = observations
+        self._low_level_actions[:num_trajs] = low_level_actions
+        argmax = np.argmax(high_level_actions[:, :, :num_primitives], axis=-1)
+        one_hots = np.eye(num_primitives)[argmax]
+        one_hots[:, 0:1, :] = np.zeros((one_hots.shape[0], 1, num_primitives))
+        high_level_actions = np.concatenate(
+            (one_hots, high_level_actions[:, :, num_primitives:]),
+            axis=-1,
+        )
+        self._high_level_actions[:num_trajs] = high_level_actions
+        self._rewards[:num_trajs] = rewards
+        self._terminals[:num_trajs] = terminals
+        self._top = num_trajs
+        self._size = num_trajs
+
+        del observations
+        del low_level_actions
+        del high_level_actions
+        del rewards
+        del terminals
+        gc.collect()

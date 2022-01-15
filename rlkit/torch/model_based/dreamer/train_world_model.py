@@ -1,4 +1,5 @@
 import os
+import os.path as osp
 
 import cv2
 import h5py
@@ -158,9 +159,13 @@ def visualize_rollout(
     num_low_level_actions_per_primitive,
     primitive_model=None,
     policy=None,
+    mode="eval",
+    img_size=64,
+    num_rollouts=4,
 ):
     file_path = logdir + "/"
     os.makedirs(file_path, exist_ok=True)
+    print("Generating Rollout Visualization: ")
 
     if use_env:
         print("Generating Imagination Reconstructions forcing {}: ".format(forcing))
@@ -179,28 +184,27 @@ def visualize_rollout(
             pl = max_path_length * num_low_level_actions_per_primitive
         reconstructions = ptu.zeros(
             (
-                4,
+                num_rollouts,
                 pl + 1,
                 *world_model.image_shape,
             ),
         )
         obs = np.zeros(
             (
-                4,
+                num_rollouts,
                 pl + 1,
                 env.observation_space.shape[0],
             ),
             dtype=np.uint8,
         )
-        for i in range(4):
+        for i in range(num_rollouts):
             state = world_model.initial(1)
             if low_level_primitives:
                 # handling reset obs manually:
                 if use_env:
                     a = ptu.zeros((1, env.low_level_action_dim))
                     o = env.reset()
-                    if policy:
-                        policy.reset(o.reshape(1, -1))
+                    policy.reset(o.reshape(1, -1))
                 else:
                     a = actions[i, 0:1].to(ptu.device)
                     o = ptu.get_numpy(observations[i, 0])
@@ -221,18 +225,7 @@ def visualize_rollout(
                 policy_o = (None, np.expand_dims(o, 0))
                 for j in range(0, max_path_length):
                     if use_env:
-                        if policy is not None:
-                            high_level_action, _ = policy.get_action(policy_o)
-                        else:
-                            high_level_action = np.array([env.action_space.sample()])
-                            argmax = np.argmax(
-                                high_level_action[:, : env.num_primitives], axis=-1
-                            )
-                            one_hots = np.eye(env.num_primitives)[argmax]
-                            high_level_action = np.concatenate(
-                                (one_hots, high_level_action[:, env.num_primitives :]),
-                                axis=-1,
-                            )
+                        high_level_action, _ = policy.get_action(policy_o)
                         o, r, d, info = env.step(
                             high_level_action[0],
                         )
@@ -246,9 +239,6 @@ def visualize_rollout(
                             high_level_action[0, env.num_primitives :],
                         )
                         primitive_name = env.primitive_idx_to_name[primitive_idx]
-                        primitive_name_to_action_dict = env.break_apart_action(
-                            primitive_args
-                        )
                         ll_a, ll_o = subsample_paths(
                             ll_a,
                             ll_o,
@@ -310,37 +300,69 @@ def visualize_rollout(
                         if j == 0:
                             a = ptu.zeros((1, env.action_space.low.shape[0]))
                             o = env.reset()
+                            new_img = ptu.from_numpy(o)
+                            policy.reset(o.reshape(1, -1))
                         else:
-                            a = ptu.from_numpy(np.array([env.action_space.sample()]))
+                            high_level_action, _ = policy.get_action(o.reshape(1, -1))
                             o, r, d, info = env.step(
-                                a[0].detach().cpu().numpy(),
+                                high_level_action[0],
+                                render_every_step=True,
+                                render_mode="rgb_array",
+                                render_im_shape=(img_size, img_size),
                             )
+
                     else:
                         a = actions[i, j : j + 1].to(ptu.device)
                         o = ptu.get_numpy(observations[i, j])
+                        new_img = ptu.from_numpy(o)
+
                     obs[i, j] = o
-                    state = get_state(
+                    state, _ = get_state(
                         o, a, state, world_model, forcing, new_img, first_output=j == 0
                     )
                     new_img = world_model.decode(world_model.get_features(state))
                     reconstructions[i, j] = new_img.unsqueeze(1)
 
     reconstructions = torch.clamp(reconstructions + 0.5, 0, 1) * 255.0
-    reconstructions = reconstructions.permute(0, 1, 3, 4, 2)
+    reconstructions = reconstructions.permute(0, 1, 3, num_rollouts, 2)
     reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
     obs = ptu.from_numpy(obs)
     obs_np = ptu.get_numpy(
-        obs.reshape(4, pl + 1, 3, 64, 64).permute(0, 1, 3, 4, 2)
+        obs.reshape(num_rollouts, pl + 1, 3, img_size, img_size).permute(
+            0, 1, 3, num_rollouts, 2
+        )
     ).astype(np.uint8)
-    im = np.zeros((128 * 4, (pl + 1) * 64, 3), dtype=np.uint8)
+    im = np.zeros((128 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
-    for i in range(4):
+    for i in range(num_rollouts):
         for j in range(pl + 1):
-            im[128 * i : 128 * i + 64, 64 * j : 64 * (j + 1)] = obs_np[i, j]
-            im[128 * i + 64 : 128 * (i + 1), 64 * j : 64 * (j + 1)] = reconstructions[
-                i, j
-            ]
+            im[
+                128 * i : 128 * i + img_size, img_size * j : img_size * (j + 1)
+            ] = obs_np[i, j]
+            im[
+                128 * i + img_size : 128 * (i + 1), img_size * j : img_size * (j + 1)
+            ] = reconstructions[i, j]
     cv2.imwrite(file_path, im)
+    print("Saved Rollout Visualization to {}".format(file_path))
+
+    file_path = osp.join(logdir, mode + "_video.avi")
+
+    fourcc = cv2.VideoWriter_fourcc(*"DIVX")
+    out = cv2.VideoWriter(file_path, fourcc, 10.0, (img_size * 2, img_size * 2))
+    for i in range(pl + 1):
+        im1 = obs_np[0, i]
+        im2 = obs_np[1, i]
+        im3 = obs_np[2, i]
+        imnum_rollouts = obs_np[3, i]
+
+        im12 = np.concatenate((im1, im2), 1)
+        im3num_rollouts = np.concatenate((im3, imnum_rollouts), 1)
+        im = np.concatenate((im12, im3num_rollouts), 0)
+
+        out.write(im)
+
+    out.release()
+    print("video saved to :", file_path)
 
 
 def compute_world_model_loss(

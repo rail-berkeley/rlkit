@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=200,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=1000,
@@ -45,7 +45,7 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="DreamerV2",
+        algorithm="LLRAPS",
         version="normal",
         replay_buffer_size=int(1.2e4),
         algorithm_kwargs=algorithm_kwargs,
@@ -131,9 +131,9 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "assembly-v2",
-            # "disassemble-v2",
-            # "sweep-into-v2",
-            # "soccer-v2",
+            "disassemble-v2",
+            "sweep-into-v2",
+            "soccer-v2",
             # "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
@@ -144,14 +144,14 @@ if __name__ == "__main__":
         "algorithm_kwargs.batch_size": [100],
         "num_low_level_actions_per_primitive": [10],
         "trainer_kwargs.batch_length": [50],
-        "replay_buffer_path": [
-            "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
-        ],
+        # "replay_buffer_path": [
+        #     "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
+        # ],
         # "trainer_kwargs.binarize_rewards": [True, False],
         # "model_kwargs.reward_classifier": [True, False ],
         # "primitive_embedding": [True, False],
-        "prioritize_fraction": [0.25],
-        "uniform_priorities": [False],
+        # "prioritize_fraction": [0.25],
+        # "uniform_priorities": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -171,6 +171,15 @@ if __name__ == "__main__":
         variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
             "num_low_level_actions_per_primitive"
         ]
+        variant[
+            "eval_buffer_path"
+        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
+            5,
+            100,
+            10,
+            variant["num_low_level_actions_per_primitive"],
+            variant["env_name"],
+        )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

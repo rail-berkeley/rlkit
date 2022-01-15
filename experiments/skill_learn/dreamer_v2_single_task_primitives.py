@@ -37,13 +37,13 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40,  # 1000//(5*5)
-            num_trains_per_train_loop=10,  # 400//40
+            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
+            num_trains_per_train_loop=10 * 2,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="DreamerV2",
+        algorithm="RAPS",
         version="normal",
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
@@ -111,7 +111,7 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=5,
+        num_expl_envs=5 * 2,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -123,18 +123,23 @@ if __name__ == "__main__":
             "disassemble-v2",
             "soccer-v2",
             "sweep-into-v2",
+            # "drawer-close-v2",
         ],
-        "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [50],
-        "algorithm_kwargs.min_num_steps_before_training": [2500],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant[
+            "eval_buffer_path"
+        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
+            5,
+            100,
+            10,
+            10,
+            variant["env_name"],
+        )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

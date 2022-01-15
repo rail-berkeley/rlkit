@@ -1,11 +1,4 @@
-import h5py
-import numpy as np
-
-from rlkit.torch.model_based.dreamer.kitchen_video_func import video_low_level_func
-
-
 def experiment(variant):
-    import gc
     import os
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
@@ -16,10 +9,7 @@ def experiment(variant):
     from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
     from rlkit.envs.multi_task_env import MultiTaskEnv
     from rlkit.envs.primitives_make_env import make_env
-    from rlkit.torch.model_based.dreamer.actor_models import (
-        ActorModel,
-        ConditionalActorModel,
-    )
+    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerLowLevelRAPSPolicy,
@@ -28,21 +18,20 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBufferLowLevelRAPS,
     )
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import (
+        visualize_policy_low_level_func,
+    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.rollout_functions import (
         vec_rollout_low_level_raps,
     )
     from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
-    from rlkit.torch.model_based.plan2explore.actor_models import (
-        ConditionalContinuousActorModel,
-    )
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     env_suite = variant.get("env_suite", "kitchen")
     env_kwargs = variant["env_kwargs"]
     num_expl_envs = variant["num_expl_envs"]
-    actor_model_class_name = variant.get("actor_model_class", "actor_model")
     num_low_level_actions_per_primitive = variant["num_low_level_actions_per_primitive"]
     low_level_action_dim = variant["low_level_action_dim"]
 
@@ -79,12 +68,7 @@ def experiment(variant):
         discrete_action_dim = 0
     action_dim = continuous_action_dim + discrete_action_dim
     obs_dim = expl_env.observation_space.low.size
-    if actor_model_class_name == "conditional_actor_model":
-        actor_model_class = ConditionalActorModel
-    elif actor_model_class_name == "continuous_conditional_actor_model":
-        actor_model_class = ConditionalContinuousActorModel
-    elif actor_model_class_name == "actor_model":
-        actor_model_class = ActorModel
+    actor_model_class = ActorModel
 
     primitive_model = Mlp(
         hidden_sizes=variant["mlp_hidden_sizes"],
@@ -190,39 +174,22 @@ def experiment(variant):
     )
     filename = variant.get("replay_buffer_path", None)
     if filename is not None:
-        print("LOADING REPLAY BUFFER")
-        with h5py.File(filename, "r") as f:
-            observations = np.array(f["observations"][:])
-            low_level_actions = np.array(f["low_level_actions"][:])
-            high_level_actions = np.array(f["high_level_actions"][:])
-            rewards = np.array(f["rewards"][:])
-            terminals = np.array(f["terminals"][:])
-        num_trajs = observations.shape[0]
-        replay_buffer._observations[:num_trajs] = observations
-        replay_buffer._low_level_actions[:num_trajs] = low_level_actions
-        argmax = np.argmax(
-            high_level_actions[:, :, : eval_env.envs[0].num_primitives], axis=-1
+        replay_buffer.load_buffer(filename, eval_env.envs[0].num_primitives)
+    eval_filename = variant.get("eval_buffer_path", None)
+    if eval_filename is not None:
+        eval_buffer = EpisodeReplayBufferLowLevelRAPS(
+            1000,
+            expl_env,
+            variant["algorithm_kwargs"]["max_path_length"],
+            num_low_level_actions_per_primitive,
+            obs_dim,
+            action_dim,
+            low_level_action_dim,
+            replace=False,
         )
-        one_hots = np.eye(eval_env.envs[0].num_primitives)[argmax]
-        one_hots[:, 0:1, :] = np.zeros(
-            (one_hots.shape[0], 1, eval_env.envs[0].num_primitives)
-        )
-        high_level_actions = np.concatenate(
-            (one_hots, high_level_actions[:, :, eval_env.envs[0].num_primitives :]),
-            axis=-1,
-        )
-        replay_buffer._high_level_actions[:num_trajs] = high_level_actions
-        replay_buffer._rewards[:num_trajs] = rewards
-        replay_buffer._terminals[:num_trajs] = terminals
-        replay_buffer._top = num_trajs
-        replay_buffer._size = num_trajs
-
-        del observations
-        del low_level_actions
-        del high_level_actions
-        del rewards
-        del terminals
-        gc.collect()
+        eval_buffer.load_buffer(eval_filename, eval_env.envs[0].num_primitives)
+    else:
+        eval_buffer = None
 
     trainer = DreamerV2LowLevelRAPSTrainer(
         eval_env,
@@ -244,13 +211,14 @@ def experiment(variant):
         replay_buffer=replay_buffer,
         pretrain_policy=rand_policy,
         **variant["algorithm_kwargs"],
+        eval_buffer=eval_buffer,
     )
     print("NODENAME: ", os.environ["SLURMD_NODENAME"])
     print()
     if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(video_low_level_func)
+        algorithm.post_epoch_funcs.append(visualize_policy_low_level_func)
     print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
     if variant.get("save_video", False):
-        video_low_level_func(algorithm, -1)
+        visualize_policy_low_level_func(algorithm, -1)

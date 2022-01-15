@@ -121,38 +121,19 @@ def collect_world_model_data_low_level_primitives(
             )
             low_level_actions = i["actions"]
             low_level_obs = i["observations"]
-            actions = []
-            obs = []
-            for e in range(num_envs):
-                # a0 + a1 + ...+a_space-1 -> o_space-1, o_space-1+space
-                ll_a = np.array(low_level_actions[e])
-                ll_o = np.array(low_level_obs[e])
-
-                num_ll = ll_a.shape[0]
-                idxs = np.linspace(0, num_ll, num_low_level_actions_per_primitive + 1)
-                spacing = num_ll // (num_low_level_actions_per_primitive)
-                a = ll_a.reshape(num_low_level_actions_per_primitive, spacing, -1)
-                a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
-                a = np.concatenate(
-                    (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
-                )  # try to get last index of each block
-                o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
-                actions.append(a)
-                obs.append(o)
-
             data["low_level_actions"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
-            ] = np.array(actions)
+            ] = np.array(low_level_actions)
             data["observations"][
                 k * num_envs : (k + 1) * num_envs,
                 p * num_low_level_actions_per_primitive
                 + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
             ] = (
-                np.array(obs)
+                np.array(low_level_obs)
                 .transpose(0, 1, 4, 2, 3)
                 .reshape(num_envs, num_low_level_actions_per_primitive, -1)
             )
@@ -222,41 +203,18 @@ def collect_world_model_data(env, num_trajs, num_envs, max_path_length):
 
 if __name__ == "__main__":
     args = get_args()
-    env_kwargs = dict(
-        control_mode=args.control_mode,
-        action_scale=1,
-        max_path_length=args.max_path_length,
-        reward_type="sparse",
-        camera_settings={
-            "distance": 0.38227044687537043,
-            "lookat": [0.21052547, 0.32329237, 0.587819],
-            "azimuth": 141.328125,
-            "elevation": -53.203125160653144,
-        },
-        usage_kwargs=dict(
-            use_dm_backend=True,
-            use_raw_action_wrappers=False,
-            use_image_obs=True,
-            max_path_length=args.max_path_length,
-            unflatten_images=False,
-        ),
-        image_kwargs=dict(imwidth=64, imheight=64),
-        collect_primitives_info=True,
-        include_phase_variable=True,
-        render_intermediate_obs_to_info=not args.collect_data_fn
-        == "collect_primitive_cloning_data",
-    )
+
     env_suite = "metaworld"
     env_names = [
-        "drawer-close-v2",
+        # "drawer-close-v2",
         "assembly-v2",
         "disassemble-v2",
-        "peg-unplug-side-v2",
+        # "peg-unplug-side-v2",
         "sweep-into-v2",
         "soccer-v2",
     ]
     num_ts = [100]
-    num_lls = [50, 100]
+    num_lls = [5, 10, 25]
 
     # env_name = args.env_name
     # num_trajs = args.num_trajs
@@ -264,6 +222,31 @@ if __name__ == "__main__":
     for env_name in env_names:
         for num_trajs in num_ts:
             for num_low_level_actions_per_primitive in num_lls:
+                env_kwargs = dict(
+                    control_mode=args.control_mode,
+                    action_scale=1,
+                    max_path_length=args.max_path_length,
+                    reward_type="sparse",
+                    camera_settings={
+                        "distance": 0.38227044687537043,
+                        "lookat": [0.21052547, 0.32329237, 0.587819],
+                        "azimuth": 141.328125,
+                        "elevation": -53.203125160653144,
+                    },
+                    usage_kwargs=dict(
+                        use_dm_backend=True,
+                        use_raw_action_wrappers=False,
+                        use_image_obs=True,
+                        max_path_length=args.max_path_length,
+                        unflatten_images=False,
+                    ),
+                    image_kwargs=dict(imwidth=64, imheight=64),
+                    collect_primitives_info=True,
+                    include_phase_variable=True,
+                    render_intermediate_obs_to_info=not args.collect_data_fn
+                    == "collect_primitive_cloning_data",
+                    num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+                )
                 datafile = "wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}".format(
                     args.max_path_length,
                     num_trajs,

@@ -233,6 +233,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         num_pretrain_steps=0,
         use_pretrain_policy_for_initial_data=True,
         use_wandb=False,
+        eval_buffer=None,
     ):
         super().__init__(
             trainer,
@@ -257,6 +258,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.pretrain_policy = None
         self.num_pretrain_steps = num_pretrain_steps
         self.total_train_expl_time = 0
+        self.eval_buffer = eval_buffer
 
     def _train(self):
         st = time.time()
@@ -300,6 +302,11 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
 
                 self.replay_buffer.add_paths(new_expl_paths)
                 gt.stamp("data storing", unique=False)
+            if self.eval_buffer:
+                eval_data = self.eval_buffer.random_batch(self.batch_size)
+                self.trainer.evaluate(eval_data, buffer_data=False)
+            eval_data = self.replay_buffer.random_batch(self.batch_size)
+            self.trainer.evaluate(eval_data, buffer_data=True)
             self.total_train_expl_time += time.time() - st
 
             self._end_epoch(epoch)
