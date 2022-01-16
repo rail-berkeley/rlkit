@@ -1,3 +1,4 @@
+import os.path as osp
 from collections import Counter, OrderedDict, namedtuple
 from typing import Dict, List, Tuple
 
@@ -675,12 +676,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         ]
 
     def get_snapshot(self):
-        return dict(
-            actor=self.actor,
-            world_model=self.world_model,
-            vf=self.vf,
-            target_vf=self.target_vf,
-        )
+        return dict()
 
     def pretrain_actor_vf(self, num_imagination_iterations):
         """
@@ -796,6 +792,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
     def compute_loss(self, batch, skip_statistics):
         pass
 
+    @torch.no_grad()
     def evaluate(self, batch, buffer_data=True):
         if buffer_data:
             rewards = ptu.from_numpy(batch["rewards"])
@@ -819,35 +816,34 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             prefix = "validation/"
             obs = ptu.from_numpy(obs)
             actions = ptu.from_numpy(actions)
-        with torch.no_grad():
-            with torch.cuda.amp.autocast():
-                (
-                    post,
-                    prior,
-                    post_dist,
-                    prior_dist,
-                    image_dist,
-                    reward_dist,
-                    pred_discount_dist,
-                    _,
-                ) = self.world_model(obs, actions)
-                ob = self.world_model.flatten_obs(
-                    obs.transpose(1, 0), (int(np.prod(self.image_shape)),)
-                )
-                rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
-                terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
-                (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                    image_dist,
-                    reward_dist,
-                    prior,
-                    post,
-                    prior_dist,
-                    post_dist,
-                    pred_discount_dist,
-                    ob,
-                    rewards,
-                    terminals,
-                )
+        with torch.cuda.amp.autocast():
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+            ) = self.world_model(obs, actions)
+            ob = self.world_model.flatten_obs(
+                obs.transpose(1, 0), (int(np.prod(self.image_shape)),)
+            )
+            rewards = rewards.transpose(1, 0).reshape(-1, rewards.shape[-1])
+            terminals = terminals.transpose(1, 0).reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                prior,
+                post,
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                ob,
+                rewards,
+                terminals,
+            )
         self.eval_statistics[prefix + "Full Obs Image Loss"] = image_pred_loss.item()
         self.eval_statistics[
             prefix + "Full Obs Primitive Model Image Loss"
@@ -856,6 +852,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.eval_statistics[
             prefix + "RAPS Obs Primitive Model Image Loss"
         ] = image_pred_loss.item()
+
+    def save(self, filepath):
+        torch.save(self.actor.state_dict(), osp.join(filepath, "actor.ptc"))
+        torch.save(self.vf.state_dict(), osp.join(filepath, "vf.ptc"))
+        torch.save(self.target_vf.state_dict(), osp.join(filepath, "target_vf.ptc"))
+        torch.save(self.world_model.state_dict(), osp.join(filepath, "world_model.ptc"))
 
 
 class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
@@ -1203,6 +1205,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         )
         return loss, eval_statistics
 
+    @torch.no_grad()
     def evaluate(self, batch, buffer_data=True):
         if buffer_data:
             prefix = "replay/"
@@ -1213,218 +1216,194 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         obs = ptu.from_numpy(batch["observations"])
         high_level_actions = ptu.from_numpy(batch["high_level_actions"])
         low_level_actions = ptu.from_numpy(batch["low_level_actions"])
-        with torch.no_grad():
-            with torch.cuda.amp.autocast():
-                rt_idxs = np.arange(
-                    self.num_low_level_actions_per_primitive,
-                    obs.shape[1],
-                    self.num_low_level_actions_per_primitive,
-                )
-                rt_idxs = np.concatenate(
-                    [[0], rt_idxs]
-                )  # reset obs, effect of first primitive, second primitive, so on
-                (
-                    post,
-                    prior,
-                    post_dist,
-                    prior_dist,
-                    image_dist,
-                    reward_dist,
-                    pred_discount_dist,
-                    _,
-                    _,
-                ) = self.world_model(
-                    obs,
-                    (high_level_actions, low_level_actions),
-                    use_network_action=False,
-                    batch_indices=rt_idxs,
-                    rt_idxs=rt_idxs,
-                )
-                ob = self.world_model.flatten_obs(
-                    obs[:, rt_idxs],
-                    (int(np.prod(self.image_shape)),),
-                )
-                r = rewards.reshape(-1, rewards.shape[-1])
-                t = terminals.reshape(-1, terminals.shape[-1])
-                (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                    image_dist,
-                    reward_dist,
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in prior.items()
-                    },
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in post.items()
-                    },
-                    prior_dist,
-                    post_dist,
-                    pred_discount_dist,
-                    ob,
-                    r,
-                    t,
-                )
+        with torch.cuda.amp.autocast():
+            rt_idxs = np.arange(
+                self.num_low_level_actions_per_primitive,
+                obs.shape[1],
+                self.num_low_level_actions_per_primitive,
+            )
+            rt_idxs = np.concatenate(
+                [[0], rt_idxs]
+            )  # reset obs, effect of first primitive, second primitive, so on
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+                _,
+            ) = self.world_model(
+                obs,
+                (high_level_actions, low_level_actions),
+                use_network_action=False,
+                batch_indices=rt_idxs,
+                rt_idxs=rt_idxs,
+                forward_batch_method="forward_batch",
+            )
+            ob = self.world_model.flatten_obs(
+                obs[:, rt_idxs],
+                (int(np.prod(self.image_shape)),),
+            )
+            r = rewards.reshape(-1, rewards.shape[-1])
+            t = terminals.reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                ob,
+                r,
+                t,
+            )
         self.eval_statistics[prefix + "Full Obs Image Loss"] = image_pred_loss.item()
 
-        with torch.no_grad():
-            with torch.cuda.amp.autocast():
-                rt_idxs = np.arange(
-                    self.num_low_level_actions_per_primitive,
-                    obs.shape[1],
-                    self.num_low_level_actions_per_primitive,
-                )
-                rt_idxs = np.concatenate(
-                    [[0], rt_idxs]
-                )  # reset obs, effect of first primitive, second primitive, so on
-                (
-                    post,
-                    prior,
-                    post_dist,
-                    prior_dist,
-                    image_dist,
-                    reward_dist,
-                    pred_discount_dist,
-                    _,
-                    _,
-                ) = self.world_model(
-                    obs,
-                    (high_level_actions, low_level_actions),
-                    use_network_action=True,
-                    batch_indices=rt_idxs,
-                    rt_idxs=rt_idxs,
-                )
-                ob = self.world_model.flatten_obs(
-                    obs[:, rt_idxs],
-                    (int(np.prod(self.image_shape)),),
-                )
-                r = rewards.reshape(-1, rewards.shape[-1])
-                t = terminals.reshape(-1, terminals.shape[-1])
-                (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                    image_dist,
-                    reward_dist,
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in prior.items()
-                    },
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in post.items()
-                    },
-                    prior_dist,
-                    post_dist,
-                    pred_discount_dist,
-                    ob,
-                    r,
-                    t,
-                )
+        with torch.cuda.amp.autocast():
+            rt_idxs = np.arange(
+                self.num_low_level_actions_per_primitive,
+                obs.shape[1],
+                self.num_low_level_actions_per_primitive,
+            )
+            rt_idxs = np.concatenate(
+                [[0], rt_idxs]
+            )  # reset obs, effect of first primitive, second primitive, so on
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+                _,
+            ) = self.world_model(
+                obs,
+                (high_level_actions, low_level_actions),
+                use_network_action=True,
+                batch_indices=rt_idxs,
+                rt_idxs=rt_idxs,
+                forward_batch_method="forward_batch",
+            )
+            ob = self.world_model.flatten_obs(
+                obs[:, rt_idxs],
+                (int(np.prod(self.image_shape)),),
+            )
+            r = rewards.reshape(-1, rewards.shape[-1])
+            t = terminals.reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                ob,
+                r,
+                t,
+            )
         self.eval_statistics[
             prefix + "Full Obs Primitive Model Image Loss"
         ] = image_pred_loss.item()
 
-        with torch.no_grad():
-            with torch.cuda.amp.autocast():
-                rt_idxs = np.arange(
-                    self.num_low_level_actions_per_primitive,
-                    obs.shape[1],
-                    self.num_low_level_actions_per_primitive,
-                )
-                rt_idxs = np.concatenate(
-                    [[0], rt_idxs]
-                )  # reset obs, effect of first primitive, second primitive, so on
-                (
-                    post,
-                    prior,
-                    post_dist,
-                    prior_dist,
-                    image_dist,
-                    reward_dist,
-                    pred_discount_dist,
-                    _,
-                    _,
-                ) = self.world_model(
-                    obs[:, rt_idxs],
-                    (high_level_actions, low_level_actions),
-                    use_network_action=False,
-                    batch_indices=rt_idxs,
-                    rt_idxs=rt_idxs,
-                )
-                ob = self.world_model.flatten_obs(
-                    obs[:, rt_idxs],
-                    (int(np.prod(self.image_shape)),),
-                )
-                rewards = rewards.reshape(-1, rewards.shape[-1])
-                terminals = terminals.reshape(-1, terminals.shape[-1])
-                (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                    image_dist,
-                    reward_dist,
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in prior.items()
-                    },
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in post.items()
-                    },
-                    prior_dist,
-                    post_dist,
-                    pred_discount_dist,
-                    ob,
-                    rewards,
-                    terminals,
-                )
+        with torch.cuda.amp.autocast():
+            rt_idxs = np.arange(
+                self.num_low_level_actions_per_primitive,
+                obs.shape[1],
+                self.num_low_level_actions_per_primitive,
+            )
+            rt_idxs = np.concatenate(
+                [[0], rt_idxs]
+            )  # reset obs, effect of first primitive, second primitive, so on
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+                _,
+            ) = self.world_model(
+                obs[:, rt_idxs],
+                (high_level_actions, low_level_actions),
+                use_network_action=False,
+                batch_indices=rt_idxs,
+                rt_idxs=rt_idxs,
+                forward_batch_method="forward_batch_raps_intermediate_obs",
+            )
+            ob = self.world_model.flatten_obs(
+                obs[:, rt_idxs],
+                (int(np.prod(self.image_shape)),),
+            )
+            rewards = rewards.reshape(-1, rewards.shape[-1])
+            terminals = terminals.reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                ob,
+                rewards,
+                terminals,
+            )
         self.eval_statistics[prefix + "RAPS Obs Image Loss"] = image_pred_loss.item()
 
-        with torch.no_grad():
-            with torch.cuda.amp.autocast():
-                rt_idxs = np.arange(
-                    self.num_low_level_actions_per_primitive,
-                    obs.shape[1],
-                    self.num_low_level_actions_per_primitive,
-                )
-                rt_idxs = np.concatenate(
-                    [[0], rt_idxs]
-                )  # reset obs, effect of first primitive, second primitive, so on
-                (
-                    post,
-                    prior,
-                    post_dist,
-                    prior_dist,
-                    image_dist,
-                    reward_dist,
-                    pred_discount_dist,
-                    _,
-                    _,
-                ) = self.world_model(
-                    obs[:, rt_idxs],
-                    (high_level_actions, low_level_actions),
-                    use_network_action=True,
-                    batch_indices=rt_idxs,
-                    rt_idxs=rt_idxs,
-                )
-                ob = self.world_model.flatten_obs(
-                    obs[:, rt_idxs],
-                    (int(np.prod(self.image_shape)),),
-                )
-                rewards = rewards.reshape(-1, rewards.shape[-1])
-                terminals = terminals.reshape(-1, terminals.shape[-1])
-                (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                    image_dist,
-                    reward_dist,
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in prior.items()
-                    },
-                    {
-                        k: v[:, rt_idxs].reshape(-1, v.shape[-1])
-                        for k, v in post.items()
-                    },
-                    prior_dist,
-                    post_dist,
-                    pred_discount_dist,
-                    ob,
-                    rewards,
-                    terminals,
-                )
+        with torch.cuda.amp.autocast():
+            rt_idxs = np.arange(
+                self.num_low_level_actions_per_primitive,
+                obs.shape[1],
+                self.num_low_level_actions_per_primitive,
+            )
+            rt_idxs = np.concatenate(
+                [[0], rt_idxs]
+            )  # reset obs, effect of first primitive, second primitive, so on
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+                _,
+            ) = self.world_model(
+                obs[:, rt_idxs],
+                (high_level_actions, low_level_actions),
+                use_network_action=True,
+                batch_indices=rt_idxs,
+                rt_idxs=rt_idxs,
+                forward_batch_method="forward_batch_raps_intermediate_obs",
+            )
+            ob = self.world_model.flatten_obs(
+                obs[:, rt_idxs],
+                (int(np.prod(self.image_shape)),),
+            )
+            rewards = rewards.reshape(-1, rewards.shape[-1])
+            terminals = terminals.reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                ob,
+                rewards,
+                terminals,
+            )
         self.eval_statistics[
             prefix + "RAPS Obs Primitive Model Image Loss"
         ] = image_pred_loss.item()

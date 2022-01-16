@@ -57,7 +57,7 @@ class DreamerPolicy(Policy):
             if self.exploration:
                 action = self.actor.compute_exploration_action(action, self.expl_amount)
             self.state = (new_state, action)
-            return ptu.get_numpy(action), {}
+            return ptu.get_numpy(action), {"state": new_state}
 
     def reset(self, o):
         self.state = None

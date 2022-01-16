@@ -303,12 +303,15 @@ def visualize_rollout(
                             new_img = ptu.from_numpy(o)
                             policy.reset(o.reshape(1, -1))
                         else:
-                            high_level_action, _ = policy.get_action(o.reshape(1, -1))
+                            high_level_action, state = policy.get_action(
+                                o.reshape(1, -1)
+                            )
+                            state = state["state"]
                             o, r, d, info = env.step(
                                 high_level_action[0],
-                                render_every_step=True,
-                                render_mode="rgb_array",
-                                render_im_shape=(img_size, img_size),
+                                # render_every_step=True,
+                                # render_mode="rgb_array",
+                                # render_im_shape=(img_size, img_size),
                             )
 
                     else:
@@ -317,9 +320,9 @@ def visualize_rollout(
                         new_img = ptu.from_numpy(o)
 
                     obs[i, j] = o
-                    state, _ = get_state(
-                        o, a, state, world_model, forcing, new_img, first_output=j == 0
-                    )
+                    # state, _ = get_state(
+                    #     o, a, state, world_model, forcing, new_img, first_output=j == 0
+                    # )
                     new_img = world_model.decode(world_model.get_features(state))
                     reconstructions[i, j] = new_img.unsqueeze(1)
 

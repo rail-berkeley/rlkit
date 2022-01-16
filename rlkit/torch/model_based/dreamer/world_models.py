@@ -378,6 +378,50 @@ class LowlevelRAPSWorldModel(WorldModel):
         use_network_action: bool = False,
     ):
         actions = []
+        for i in range(path_length):
+            if i == 0:
+                action_ = action[1][:, 0] * 0
+            else:
+                inp = torch.cat(
+                    [action[0][:, i], self.get_features(state).detach()], dim=1
+                )
+                action_ = self.primitive_model(inp)
+                actions.append(action_.unsqueeze(1))
+                if use_network_action:
+                    action_ = action_
+                else:
+                    action_ = action[1][:, i]
+            (post_params, prior_params,) = self.obs_step(
+                state,
+                action_.detach(),
+                embed[:, i],
+            )
+
+            for k in post.keys():
+                post[k].append(post_params[k].unsqueeze(1))
+
+            for k in prior.keys():
+                if i == 0:
+                    # auto encode first action!
+                    prior[k].append(post_params[k].unsqueeze(1))
+                else:
+                    prior[k].append(prior_params[k].unsqueeze(1))
+            state = post_params
+        return post, prior, torch.cat(actions, dim=1)
+
+    @jit.script_method
+    def forward_batch_raps_intermediate_obs(
+        self,
+        path_length: int,
+        action: Tuple[Tensor, Tensor],
+        embed: Tensor,
+        post: Dict[str, List[Tensor]],
+        prior: Dict[str, List[Tensor]],
+        state: Dict[str, Tensor],
+        idxs: List[int],
+        use_network_action: bool = False,
+    ):
+        actions = []
         ctr = 0
         for i in range(path_length):
             if i == 0:
@@ -392,7 +436,7 @@ class LowlevelRAPSWorldModel(WorldModel):
                     action_ = action_
                 else:
                     action_ = action[1][:, i]
-            if (embed is None and i != 0) or (i not in idxs and idxs[0] != -1):
+            if i not in idxs:
                 prior_params = self.action_step(state, action_.detach())
                 post_params = prior_params
             else:
@@ -423,6 +467,7 @@ class LowlevelRAPSWorldModel(WorldModel):
         state=None,
         batch_indices=None,
         rt_idxs=None,
+        forward_batch_method="forward_batch",
     ):
         """
         :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
@@ -443,26 +488,24 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        if obs is None:
-            embed = None
+        obs_path_len = obs.shape[1]
+        obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
+        embed = self.encode(obs)
+        embedding_size = embed.shape[1]
+        embed = embed.reshape(
+            obs_path_len, original_batch_size, embedding_size
+        ).permute(1, 0, 2)
+        if obs_path_len < path_length:
+            idxs = rt_idxs.tolist()
+        else:
             idxs = [
                 -1,
             ]
+        if forward_batch_method == "forward_batch_raps_intermediate_obs":
+            forward_batch = self.forward_batch_raps_intermediate_obs
         else:
-            obs_path = obs.shape[1]
-            obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
-            embed = self.encode(obs)
-            embedding_size = embed.shape[1]
-            embed = embed.reshape(-1, original_batch_size, embedding_size).permute(
-                1, 0, 2
-            )
-            if obs_path < path_length:
-                idxs = rt_idxs.tolist()
-            else:
-                idxs = [
-                    -1,
-                ]
-        post, prior, actions = self.forward_batch(
+            forward_batch = self.forward_batch
+        post, prior, actions = forward_batch(
             path_length,
             action,
             embed,
@@ -489,12 +532,13 @@ class LowlevelRAPSWorldModel(WorldModel):
             :, rt_idxs
         ]  # prior features predict what s' should be (don't use post)
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
-        if len(batch_indices.shape) > 1:
+        if batch_indices.shape != rt_idxs.shape:
             batch_size = batch_indices.shape[1]
             feat = feat[np.arange(batch_size), batch_indices]
-            feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
+            feat = feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
         else:
             feat = feat[:, batch_indices]
+
         images = self.decode(feat)
         rewards = self.reward(rt_feat)
         pred_discounts = self.pred_discount(rt_feat)
@@ -515,7 +559,7 @@ class LowlevelRAPSWorldModel(WorldModel):
                 latent=True,
             )
         else:
-            if len(batch_indices.shape) > 1:
+            if batch_indices.shape != rt_idxs.shape:
                 post_dist = self.get_dist(
                     post["mean"][np.arange(batch_size), batch_indices]
                     .permute(1, 0, 2)

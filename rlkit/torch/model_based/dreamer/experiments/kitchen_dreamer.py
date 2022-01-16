@@ -1,5 +1,6 @@
 def experiment(variant):
     import os
+    import os.path as osp
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
@@ -12,7 +13,6 @@ def experiment(variant):
         ActorModel,
         ConditionalActorModel,
     )
-    from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -23,9 +23,6 @@ def experiment(variant):
         EpisodeReplayBufferLowLevelRAPS,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
-    from rlkit.torch.model_based.dreamer.mcts.dreamer_v2_mcts import (
-        DreamerV2MCTSTrainer,
-    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
@@ -43,7 +40,6 @@ def experiment(variant):
     use_raw_actions = variant["use_raw_actions"]
     num_expl_envs = variant["num_expl_envs"]
     actor_model_class_name = variant.get("actor_model_class", "actor_model")
-    load_primitives_kwargs = variant.get("load_primitives_kwargs", {})
     if num_expl_envs > 1:
         env_fns = [
             lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
@@ -84,43 +80,41 @@ def experiment(variant):
         actor_model_class = ConditionalContinuousActorModel
     elif actor_model_class_name == "actor_model":
         actor_model_class = ActorModel
-    if variant.get("load_from_path", False):
-        filename = variant["models_path"] + variant["pkl_file_name"]
-        print(filename)
-        data = torch.load(filename)
-        actor = data["trainer/actor"]
-        vf = data["trainer/vf"]
-        target_vf = data["trainer/target_vf"]
-        world_model = data["trainer/world_model"]
-    else:
-        world_model = world_model_class(
-            action_dim,
-            image_shape=eval_envs[0].image_shape,
-            **variant["model_kwargs"],
-        )
-    if variant.get("retrain_actor_and_vf", True):
-        actor = actor_model_class(
-            variant["model_kwargs"]["model_hidden_size"],
-            world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            **variant["actor_kwargs"],
-        )
-        vf = Mlp(
-            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-            * variant["vf_kwargs"]["num_layers"],
-            output_size=1,
-            input_size=world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-        )
-        target_vf = Mlp(
-            hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
-            * variant["vf_kwargs"]["num_layers"],
-            output_size=1,
-            input_size=world_model.feature_size,
-            hidden_activation=torch.nn.functional.elu,
-        )
+
+    world_model = world_model_class(
+        action_dim,
+        image_shape=eval_envs[0].image_shape,
+        **variant["model_kwargs"],
+    )
+    actor = actor_model_class(
+        variant["model_kwargs"]["model_hidden_size"],
+        world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        **variant["actor_kwargs"],
+    )
+    vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+    target_vf = Mlp(
+        hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
+        * variant["vf_kwargs"]["num_layers"],
+        output_size=1,
+        input_size=world_model.feature_size,
+        hidden_activation=torch.nn.functional.elu,
+    )
+    if variant.get("models_path", None) is not None:
+        filename = variant["models_path"]
+        actor.load_state_dict(torch.load(osp.join(filename, "actor.ptc")))
+        vf.load_state_dict(torch.load(osp.join(filename, "vf.ptc")))
+        target_vf.load_state_dict(torch.load(osp.join(filename, "target_vf.ptc")))
+        world_model.load_state_dict(torch.load(osp.join(filename, "world_model.ptc")))
+        print("LOADED MODELS")
 
     if variant.get("use_mcts_policy", False):
         expl_policy = HybridAdvancedMCTSPolicy(
@@ -228,10 +222,13 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
     )
     trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
-    if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(video_post_epoch_func)
-    print("TRAINING")
-    algorithm.to(ptu.device)
-    algorithm.train()
-    if variant.get("save_video", False):
-        video_post_epoch_func(algorithm, -1)
+    if variant.get("generate_video", False):
+        video_post_epoch_func(algorithm, 0)
+    else:
+        if variant.get("save_video", False):
+            algorithm.post_epoch_funcs.append(video_post_epoch_func)
+        print("TRAINING")
+        algorithm.to(ptu.device)
+        algorithm.train()
+        if variant.get("save_video", False):
+            video_post_epoch_func(algorithm, -1)

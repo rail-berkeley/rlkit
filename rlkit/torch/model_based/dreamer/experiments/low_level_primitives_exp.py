@@ -1,5 +1,6 @@
 def experiment(variant):
     import os
+    import os.path as osp
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
@@ -87,9 +88,6 @@ def experiment(variant):
         primitive_model=primitive_model,
         **variant["model_kwargs"],
     )
-    if variant.get("world_model_path", None) is not None:
-        world_model.load_state_dict(torch.load(variant["world_model_path"]))
-
     actor = actor_model_class(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
@@ -112,6 +110,14 @@ def experiment(variant):
         input_size=world_model.feature_size,
         hidden_activation=torch.nn.functional.elu,
     )
+
+    if variant.get("models_path", None) is not None:
+        filename = variant["models_path"]
+        actor.load_state_dict(torch.load(osp.join(filename, "actor.ptc")))
+        vf.load_state_dict(torch.load(osp.join(filename, "vf.ptc")))
+        target_vf.load_state_dict(torch.load(osp.join(filename, "target_vf.ptc")))
+        world_model.load_state_dict(torch.load(osp.join(filename, "world_model.ptc")))
+        print("LOADED MODELS")
 
     expl_policy = DreamerLowLevelRAPSPolicy(
         world_model,

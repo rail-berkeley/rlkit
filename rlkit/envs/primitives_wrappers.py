@@ -393,7 +393,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         include_phase_variable=False,
         render_intermediate_obs_to_info=False,
         num_low_level_actions_per_primitive=10,
+        goto_pose_iterations=300,
+        open_gripper_iterations=200,
+        close_gripper_iterations=300,
+        pos_ctrl_action_scale=0.05,
     ):
+        self.goto_pose_iterations = goto_pose_iterations
+        self.open_gripper_iterations = open_gripper_iterations
+        self.close_gripper_iterations = close_gripper_iterations
+        self.pos_ctrl_action_scale = pos_ctrl_action_scale
         self.reset_camera(camera_settings)
         self.max_path_length = max_path_length
         self.action_scale = action_scale
@@ -667,7 +675,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         action = action.copy()
         pos_ctrl, rot_ctrl, gripper_ctrl = action[:3], action[3:7], action[7:9]
 
-        pos_ctrl *= 0.05
+        pos_ctrl *= self.pos_ctrl_action_scale
         assert gripper_ctrl.shape == (2,)
         action = np.concatenate([pos_ctrl, rot_ctrl])
         self.combined_prev_action += pos_ctrl
@@ -789,7 +797,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def close_gripper(self, d):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
-        for _ in range(300):
+        for _ in range(self.close_gripper_iterations):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
             state = self.get_robot_state()
             if self.include_phase_variable:
@@ -813,7 +821,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def open_gripper(self, d):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
-        for _ in range(200):
+        for _ in range(self.open_gripper_iterations):
             a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
             state = self.get_robot_state()
             if self.include_phase_variable:
@@ -836,7 +844,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
     def goto_pose(self, pose, grasp=False):
         total_reward, total_success = 0, 0
-        for _ in range(300):
+        for _ in range(self.goto_pose_iterations):
             delta = pose - self.get_endeff_pos()
             gripper = self.sim.data.qpos[8:10]
             if grasp:
