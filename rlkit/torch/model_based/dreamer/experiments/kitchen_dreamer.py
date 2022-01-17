@@ -221,7 +221,6 @@ def experiment(variant):
         eval_buffer=eval_buffer,
         **variant["algorithm_kwargs"],
     )
-    trainer.pretrain_actor_vf(variant.get("num_actor_vf_pretrain_iters", 0))
     if variant.get("generate_video", False):
         video_post_epoch_func(algorithm, 0)
     else:

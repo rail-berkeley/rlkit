@@ -193,7 +193,7 @@ class WorldModel(jit.ScriptModule):
             prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
         else:
             mean, std = x.split(self.stochastic_state_size, -1)
-            std = F.softplus(std) + 0.1
+            std = self.compute_std(std)
             stoch = (
                 torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
                 + mean
@@ -243,12 +243,10 @@ class WorldModel(jit.ScriptModule):
                 dict(mean=[], std=[], stoch=[], deter=[]),
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
-        obs = obs.transpose(1, 0).reshape(-1, obs.shape[-1])
+        obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(
-            path_length, original_batch_size, embedding_size
-        ).transpose(1, 0)
+        embed = embed.reshape(original_batch_size, path_length, embedding_size)
         post, prior = self.forward_batch(
             path_length,
             action,
@@ -270,7 +268,7 @@ class WorldModel(jit.ScriptModule):
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
-        feat = feat.transpose(1, 0).reshape(-1, feat.shape[-1])
+        feat = feat.reshape(-1, feat.shape[-1])
         images = self.decode(feat)
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)
@@ -354,10 +352,6 @@ class WorldModel(jit.ScriptModule):
                 deter=ptu.zeros([batch_size, self.deterministic_state_size]),
             )
         return state
-
-    def flatten_obs(self, obs, shape):
-        obs = obs.reshape(-1, *shape)
-        return obs
 
 
 class LowlevelRAPSWorldModel(WorldModel):
