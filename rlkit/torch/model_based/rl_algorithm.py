@@ -305,8 +305,8 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             if self.eval_buffer:
                 eval_data = self.eval_buffer.random_batch(self.batch_size)
                 self.trainer.evaluate(eval_data, buffer_data=False)
-            eval_data = self.replay_buffer.random_batch(self.batch_size)
-            self.trainer.evaluate(eval_data, buffer_data=True)
+                eval_data = self.replay_buffer.random_batch(self.batch_size)
+                self.trainer.evaluate(eval_data, buffer_data=True)
             self.total_train_expl_time += time.time() - st
 
             self._end_epoch(epoch)

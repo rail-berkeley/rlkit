@@ -302,6 +302,7 @@ def visualize_rollout(
                             o = env.reset()
                             new_img = ptu.from_numpy(o)
                             policy.reset(o.reshape(1, -1))
+                            r = 0
                         else:
                             high_level_action, state = policy.get_action(
                                 o.reshape(1, -1)
@@ -313,18 +314,23 @@ def visualize_rollout(
                                 # render_mode="rgb_array",
                                 # render_im_shape=(img_size, img_size),
                             )
-
                     else:
                         a = actions[i, j : j + 1].to(ptu.device)
                         o = ptu.get_numpy(observations[i, j])
                         new_img = ptu.from_numpy(o)
-
                     obs[i, j] = o
-                    # state, _ = get_state(
-                    #     o, a, state, world_model, forcing, new_img, first_output=j == 0
-                    # )
-                    new_img = world_model.decode(world_model.get_features(state))
-                    reconstructions[i, j] = new_img.unsqueeze(1)
+                    if j != 0:
+                        feat = world_model.get_features(state)
+                        feat = feat.reshape(-1, feat.shape[-1])
+                        new_img = world_model.decode(feat)
+                        reconstructions[i, j - 1] = new_img.unsqueeze(1)
+                _, state = policy.get_action(o.reshape(1, -1))
+                state = state["state"]
+                feat = world_model.get_features(state)
+                feat = feat.reshape(-1, feat.shape[-1])
+                new_img = world_model.decode(feat)
+                reconstructions[i, max_path_length] = new_img.unsqueeze(1)
+                print("Final Reward: ", r)
 
     reconstructions = torch.clamp(reconstructions + 0.5, 0, 1) * 255.0
     reconstructions = reconstructions.permute(0, 1, 3, num_rollouts, 2)

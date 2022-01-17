@@ -10,7 +10,7 @@ from rlkit.torch.model_based.dreamer.train_world_model import visualize_rollout
 
 
 def video_post_epoch_func(algorithm, epoch):
-    if epoch % 100 == 0:
+    if epoch % 10 == 0:
         print(epoch)
         # video_post_epoch_func_(
         #     algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
