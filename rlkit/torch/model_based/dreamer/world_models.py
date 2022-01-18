@@ -469,9 +469,9 @@ class LowlevelRAPSWorldModel(WorldModel):
         """
 
         original_batch_size = action[1].shape[0]
+        path_length = action[1].shape[1]
         if state is None:
             state = self.initial(original_batch_size)
-        path_length = action[1].shape[1]
         if self.discrete_latents:
             post, prior = (
                 dict(logits=[], stoch=[], deter=[]),
@@ -483,12 +483,10 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dict(mean=[], std=[], stoch=[], deter=[]),
             )
         obs_path_len = obs.shape[1]
-        obs = obs.permute(1, 0, 2).reshape(-1, obs.shape[-1])
+        obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
-        embed = embed.reshape(
-            obs_path_len, original_batch_size, embedding_size
-        ).permute(1, 0, 2)
+        embed = embed.reshape(original_batch_size, obs_path_len, embedding_size)
         if obs_path_len < path_length:
             idxs = rt_idxs.tolist()
         else:
@@ -522,14 +520,15 @@ class LowlevelRAPSWorldModel(WorldModel):
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
-        rt_feat = feat[
-            :, rt_idxs
-        ]  # prior features predict what s' should be (don't use post)
+
+        rt_feat = feat[:, rt_idxs]
         rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
+
         if batch_indices.shape != rt_idxs.shape:
-            batch_size = batch_indices.shape[1]
-            feat = feat[np.arange(batch_size), batch_indices]
-            feat = feat.permute(1, 0, 2).reshape(-1, feat.shape[-1])
+            batch_size = batch_indices.shape[0]
+            idxs = np.arange(batch_size).reshape(-1, 1)
+            feat = feat[idxs, batch_indices]
+            feat = feat.reshape(-1, feat.shape[-1])
         else:
             feat = feat[:, batch_indices]
 
@@ -539,37 +538,35 @@ class LowlevelRAPSWorldModel(WorldModel):
 
         if self.discrete_latents:
             post_dist = self.get_dist(
-                post["logits"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, post["logits"].shape[-1]),
+                post["logits"][idxs, batch_indices].reshape(
+                    -1, post["logits"].shape[-1]
+                ),
                 None,
                 latent=True,
             )
             prior_dist = self.get_dist(
-                prior["logits"][np.arange(batch_size), batch_indices]
-                .permute(1, 0, 2)
-                .reshape(-1, post["logits"].shape[-1]),
+                prior["logits"][idxs, batch_indices].reshape(
+                    -1, post["logits"].shape[-1]
+                ),
                 None,
                 latent=True,
             )
         else:
             if batch_indices.shape != rt_idxs.shape:
                 post_dist = self.get_dist(
-                    post["mean"][np.arange(batch_size), batch_indices]
-                    .permute(1, 0, 2)
-                    .reshape(-1, post["mean"].shape[-1]),
-                    post["std"][np.arange(batch_size), batch_indices]
-                    .permute(1, 0, 2)
-                    .reshape(-1, post["std"].shape[-1]),
+                    post["mean"][idxs, batch_indices].reshape(
+                        -1, post["mean"].shape[-1]
+                    ),
+                    post["std"][idxs, batch_indices].reshape(-1, post["std"].shape[-1]),
                     latent=True,
                 )
                 prior_dist = self.get_dist(
-                    prior["mean"][np.arange(batch_size), batch_indices]
-                    .permute(1, 0, 2)
-                    .reshape(-1, prior["mean"].shape[-1]),
-                    prior["std"][np.arange(batch_size), batch_indices]
-                    .permute(1, 0, 2)
-                    .reshape(-1, prior["std"].shape[-1]),
+                    prior["mean"][idxs, batch_indices].reshape(
+                        -1, prior["mean"].shape[-1]
+                    ),
+                    prior["std"][idxs, batch_indices].reshape(
+                        -1, prior["std"].shape[-1]
+                    ),
                     latent=True,
                 )
             else:

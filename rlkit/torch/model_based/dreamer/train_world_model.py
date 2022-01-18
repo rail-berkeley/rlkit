@@ -109,7 +109,6 @@ def forward_low_level_primitive(
     world_model,
     num_low_level_actions_per_primitive,
     primitive_model,
-    net,
     forcing,
     new_img,
     high_level,
@@ -121,17 +120,12 @@ def forward_low_level_primitive(
     for k in range(0, num_low_level_actions_per_primitive):
         a = ptu.from_numpy(ll_a[k : k + 1])
         o = ll_o[k]
-        if primitive_model:
-            tmp = np.array([(k + 1) / (num_low_level_actions_per_primitive)]).reshape(
-                1, -1
-            )
-            hl = np.concatenate((high_level, tmp), 1)
-            inp = torch.cat(
-                [ptu.from_numpy(hl), world_model.get_features(state)], dim=1
-            )
-            a_pred = net(inp)
-            total_err += torch.nn.functional.mse_loss(a_pred, a).item()
-            a = a_pred
+        tmp = np.array([(k + 1) / (num_low_level_actions_per_primitive)]).reshape(1, -1)
+        hl = np.concatenate((high_level, tmp), 1)
+        inp = torch.cat([ptu.from_numpy(hl), world_model.get_features(state)], dim=1)
+        a_pred = primitive_model(inp)
+        total_err += torch.nn.functional.mse_loss(a_pred, a).item()
+        a = a_pred
 
         state, prior = get_state(o, a, state, world_model, forcing, new_img)
         if world_model.use_prior_instead_of_posterior:
@@ -147,14 +141,10 @@ def forward_low_level_primitive(
 @torch.no_grad()
 def visualize_rollout(
     env,
-    actions,
-    observations,
     world_model,
     logdir,
     max_path_length,
-    use_env,
     forcing,
-    tag,
     low_level_primitives,
     num_low_level_actions_per_primitive,
     primitive_model=None,
@@ -167,21 +157,14 @@ def visualize_rollout(
     os.makedirs(file_path, exist_ok=True)
     print("Generating Rollout Visualization: ")
 
-    if use_env:
-        print("Generating Imagination Reconstructions forcing {}: ".format(forcing))
-        file_suffix = "imagination_reconstructions.png"
-    else:
-        print("Generating Dataset Reconstructions {} forcing {}: ".format(tag, forcing))
-        file_suffix = "dataset_reconstructions.png"
-        file_suffix = tag + "_" + file_suffix
+    print("Generating Imagination Reconstructions forcing {}: ".format(forcing))
+    file_suffix = "imagination_reconstructions.png"
     if forcing != "none":
         file_suffix = forcing + "_forcing_" + file_suffix
     file_path += file_suffix
 
     with torch.cuda.amp.autocast():
         pl = max_path_length
-        if low_level_primitives:
-            pl = max_path_length * num_low_level_actions_per_primitive
         reconstructions = ptu.zeros(
             (
                 num_rollouts,
@@ -198,139 +181,48 @@ def visualize_rollout(
             dtype=np.uint8,
         )
         for i in range(num_rollouts):
-            state = world_model.initial(1)
-            if low_level_primitives:
-                # handling reset obs manually:
-                if use_env:
-                    a = ptu.zeros((1, env.low_level_action_dim))
+            for j in range(0, max_path_length + 1):
+                if j == 0:
                     o = env.reset()
+                    new_img = ptu.from_numpy(o)
                     policy.reset(o.reshape(1, -1))
+                    r = 0
+                    if low_level_primitives:
+                        policy_o = (None, o.reshape(1, -1))
+                    else:
+                        policy_o = o.reshape(1, -1)
                 else:
-                    a = actions[i, 0:1].to(ptu.device)
-                    o = ptu.get_numpy(observations[i, 0])
-                obs[i, 0] = o
-                if primitive_model:
-                    a = ptu.zeros((1, env.low_level_action_dim))
-                state, _ = get_state(
-                    o,
-                    a,
-                    state,
-                    world_model,
-                    forcing,
-                    new_img=ptu.from_numpy(o),
-                    first_output=True,
-                )
-                new_img = world_model.decode(world_model.get_features(state))
-                reconstructions[i, 0] = new_img.unsqueeze(1)
-                policy_o = (None, np.expand_dims(o, 0))
-                for j in range(0, max_path_length):
-                    if use_env:
-                        high_level_action, _ = policy.get_action(policy_o)
-                        o, r, d, info = env.step(
-                            high_level_action[0],
-                        )
-
-                        ll_a = np.array(info["actions"])
-                        ll_o = np.array(info["observations"])
-                        ll_o = ll_o.transpose(0, 3, 1, 2).reshape(ll_o.shape[0], -1)
-
-                        primitive_idx, primitive_args = (
-                            np.argmax(high_level_action[0, : env.num_primitives]),
-                            high_level_action[0, env.num_primitives :],
-                        )
-                        primitive_name = env.primitive_idx_to_name[primitive_idx]
-                        ll_a, ll_o = subsample_paths(
-                            ll_a,
-                            ll_o,
-                            ll_a.shape[0],
-                            num_low_level_actions_per_primitive,
-                        )
-                        net = primitive_model
-                        hl = high_level_action
-                    else:
-                        ll_a = ptu.get_numpy(
-                            actions[
-                                i,
-                                1
-                                + j * num_low_level_actions_per_primitive : 1
-                                + (j + 1) * num_low_level_actions_per_primitive,
-                            ]
-                        )
-                        ll_o = ptu.get_numpy(
-                            observations[
-                                i,
-                                1
-                                + j * num_low_level_actions_per_primitive : 1
-                                + (j + 1) * num_low_level_actions_per_primitive,
-                            ]
-                        )
-                        hl = None
-                        net = None
-                        primitive_name = None
-                    policy_o = (np.expand_dims(ll_a, 0), np.expand_dims(ll_o, 0))
-                    recons, state, new_img = forward_low_level_primitive(
-                        ll_a,
-                        ll_o,
-                        world_model,
-                        num_low_level_actions_per_primitive,
-                        primitive_model,
-                        net,
-                        forcing,
-                        new_img,
-                        hl,
-                        state,
-                        primitive_name=primitive_name,
+                    high_level_action, state = policy.get_action(policy_o)
+                    state = state["state"]
+                    o, r, d, info = env.step(
+                        high_level_action[0],
+                        # render_every_step=True,
+                        # render_mode="rgb_array",
+                        # render_im_shape=(img_size, img_size),
                     )
-                    reconstructions[
-                        i,
-                        1
-                        + j * num_low_level_actions_per_primitive : 1
-                        + (j + 1) * num_low_level_actions_per_primitive,
-                    ] = torch.cat(recons, dim=1)[0]
-                    obs[
-                        i,
-                        1
-                        + j * num_low_level_actions_per_primitive : 1
-                        + (j + 1) * num_low_level_actions_per_primitive,
-                    ] = np.array(ll_o)
-
-            else:
-                for j in range(0, max_path_length + 1):
-                    if use_env:
-                        if j == 0:
-                            a = ptu.zeros((1, env.action_space.low.shape[0]))
-                            o = env.reset()
-                            new_img = ptu.from_numpy(o)
-                            policy.reset(o.reshape(1, -1))
-                            r = 0
-                        else:
-                            high_level_action, state = policy.get_action(
-                                o.reshape(1, -1)
-                            )
-                            state = state["state"]
-                            o, r, d, info = env.step(
-                                high_level_action[0],
-                                # render_every_step=True,
-                                # render_mode="rgb_array",
-                                # render_im_shape=(img_size, img_size),
-                            )
+                    if low_level_primitives:
+                        ll_o = np.expand_dims(np.array(info["observations"]), 0)
+                        ll_o = ll_o.transpose(0, 1, 4, 2, 3).reshape(
+                            1, num_low_level_actions_per_primitive, -1
+                        )
+                        ll_a = np.expand_dims(np.array(info["actions"]), 0)
+                        policy_o = (ll_a, ll_o)
                     else:
-                        a = actions[i, j : j + 1].to(ptu.device)
-                        o = ptu.get_numpy(observations[i, j])
-                        new_img = ptu.from_numpy(o)
-                    obs[i, j] = o
-                    if j != 0:
-                        feat = world_model.get_features(state)
-                        feat = feat.reshape(-1, feat.shape[-1])
-                        new_img = world_model.decode(feat)
-                        reconstructions[i, j - 1] = new_img.unsqueeze(1)
-                _, state = policy.get_action(o.reshape(1, -1))
-                state = state["state"]
-                feat = world_model.get_features(state)
-                feat = feat.reshape(-1, feat.shape[-1])
-                new_img = world_model.decode(feat)
-                reconstructions[i, max_path_length] = new_img.unsqueeze(1)
-                print("Final Reward: ", r)
+                        policy_o = o.reshape(1, -1)
+
+                obs[i, j] = o
+                if j != 0:
+                    feat = world_model.get_features(state)
+                    feat = feat.reshape(-1, feat.shape[-1])
+                    new_img = world_model.decode(feat)
+                    reconstructions[i, j - 1] = new_img.unsqueeze(1)
+            _, state = policy.get_action(policy_o)
+            state = state["state"]
+            feat = world_model.get_features(state)
+            feat = feat.reshape(-1, feat.shape[-1])
+            new_img = world_model.decode(feat)
+            reconstructions[i, max_path_length] = new_img.unsqueeze(1)
+            print("Final Reward: ", r)
 
     reconstructions = torch.clamp(reconstructions + 0.5, 0, 1) * 255.0
     reconstructions = reconstructions.permute(0, 1, 3, num_rollouts, 2)

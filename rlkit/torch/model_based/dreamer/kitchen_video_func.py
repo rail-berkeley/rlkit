@@ -20,14 +20,10 @@ def video_post_epoch_func(algorithm, epoch):
         # )
         visualize_rollout(
             algorithm.eval_env.envs[0],
-            None,
-            None,
             algorithm.trainer.world_model,
             logger.get_snapshot_dir(),
             algorithm.max_path_length,
-            use_env=True,
             forcing="teacher",
-            tag="none",
             low_level_primitives=False,
             policy=algorithm.eval_data_collector._policy,
             num_low_level_actions_per_primitive=0,
@@ -40,19 +36,17 @@ def visualize_policy_low_level_func(algorithm, epoch):
     if epoch % 10 == 0:
         visualize_rollout(
             algorithm.eval_env.envs[0],
-            None,
-            None,
             algorithm.trainer.world_model,
             logger.get_snapshot_dir(),
             algorithm.max_path_length,
-            use_env=True,
             forcing="none",
-            tag="none",
             low_level_primitives=True,
             num_low_level_actions_per_primitive=algorithm.trainer.num_low_level_actions_per_primitive,
             primitive_model=algorithm.trainer.world_model.primitive_model,
             policy=algorithm.eval_data_collector._policy,
         )
+        print("Saving networks: ")
+        algorithm.trainer.save(logger.get_snapshot_dir())
 
 
 @torch.no_grad()

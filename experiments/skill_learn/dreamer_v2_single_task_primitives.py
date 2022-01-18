@@ -31,7 +31,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=3000,
+            num_epochs=1000,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -115,6 +115,7 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
+        # generate_video=True,
     )
 
     search_space = {
@@ -125,6 +126,9 @@ if __name__ == "__main__":
             "sweep-into-v2",
             # "drawer-close-v2",
         ],
+        # "env_kwargs.goto_pose_iterations":[100, 175, 300, 375, 500],
+        # "env_kwargs.pos_ctrl_action_scale":[0.01, .025, .05, .075, .1],
+        # "models_path":["/home/mdalal/research/skill_learn/rlkit/data/01-14-raps-mw-debug-logging/01-14-raps_mw_debug_logging_2022_01_14_23_12_45_0000--s-67618/"]
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -145,6 +149,9 @@ if __name__ == "__main__":
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
+            python = subprocess.check_output("which python", shell=True).decode(
+                "utf-8"
+            )[:-1]
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -152,9 +159,7 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="none",
-                python_cmd=subprocess.check_output("which python", shell=True).decode(
-                    "utf-8"
-                )[:-1],
+                python_cmd=python,
                 seed=seed,
                 exp_id=exp_id,
             )

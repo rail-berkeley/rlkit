@@ -21,13 +21,13 @@ if __name__ == "__main__":
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
-            num_eval_steps_per_epoch=5,
-            num_expl_steps_per_train_loop=5,
-            min_num_steps_before_training=0,
+            num_eval_steps_per_epoch=10,
+            num_expl_steps_per_train_loop=50,
+            min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            num_trains_per_train_loop=1,
-            batch_size=25,
+            num_trains_per_train_loop=10,
+            batch_size=30,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -36,12 +36,12 @@ if __name__ == "__main__":
             num_epochs=1000,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
-            num_pretrain_steps=1000,
+            num_pretrain_steps=100,
             max_path_length=5,
             batch_size=100,
-            num_expl_steps_per_train_loop=30,
-            num_train_loops_per_epoch=10,
-            num_trains_per_train_loop=100,
+            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
+            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
+            num_trains_per_train_loop=10 * 2,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
@@ -95,10 +95,9 @@ if __name__ == "__main__":
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
-            use_prior_instead_of_posterior=True,
         ),
         trainer_kwargs=dict(
-            adam_eps=1e-8,
+            adam_eps=1e-5,
             discount=0.8,
             lam=0.95,
             forward_kl=False,
@@ -108,7 +107,7 @@ if __name__ == "__main__":
             transition_loss_scale=0.8,
             actor_lr=8e-5,
             vf_lr=8e-5,
-            world_model_lr=1e-3,
+            world_model_lr=3e-4,
             reward_loss_scale=2.0,
             use_pred_discount=True,
             policy_gradient_loss_scale=1.0,
@@ -116,9 +115,8 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
-            weight_decay=0.0,
         ),
-        num_expl_envs=5,
+        num_expl_envs=5 * 2,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -126,31 +124,17 @@ if __name__ == "__main__":
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
         uniform_priorities=True,
+        num_low_level_actions_per_primitive=10,
     )
 
     search_space = {
         "env_name": [
             "assembly-v2",
             "disassemble-v2",
-            # "sweep-into-v2",
-            # "soccer-v2",
+            "sweep-into-v2",
+            "soccer-v2",
             # "drawer-close-v2",
         ],
-        "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [100],
-        "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [100],
-        "num_low_level_actions_per_primitive": [10],
-        "trainer_kwargs.batch_length": [50],
-        # "replay_buffer_path": [
-        #     "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
-        # ],
-        # "trainer_kwargs.binarize_rewards": [True, False],
-        # "model_kwargs.reward_classifier": [True, False ],
-        # "primitive_embedding": [True, False],
-        # "prioritize_fraction": [0.25],
         # "uniform_priorities": [False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
@@ -158,10 +142,6 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if args.debug:
-            variant["algorithm_kwargs"]["num_pretrain_steps"] = 1
-            variant["algorithm_kwargs"]["min_num_steps_before_training"] = 10
-            variant["algorithm_kwargs"]["num_trains_per_train_loop"] = 1
         variant["replay_buffer_size"] = int(
             3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
         )

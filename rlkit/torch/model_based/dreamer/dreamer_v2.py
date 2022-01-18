@@ -765,15 +765,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             actor = self.actor
         new_state = {}
         for k, v in state.items():
-            with torch.no_grad():
-                if self.use_pred_discount:
-                    v = v[:, :-1]
-                if k == "stoch" and self.world_model.discrete_latents:
-                    new_state[k] = v.transpose(1, 0).reshape(
-                        -1, v.shape[-2], v.shape[-1]
-                    )
-                else:
-                    new_state[k] = v.transpose(1, 0).reshape(-1, v.shape[-1])
+            if self.use_pred_discount:
+                v = v[:, :-1]
+            if k == "stoch" and self.world_model.discrete_latents:
+                new_state[k] = v.reshape(-1, v.shape[-2], v.shape[-1]).detach()
+            else:
+                new_state[k] = v.reshape(-1, v.shape[-1]).detach()
         imagined_features = []
         imagined_actions = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
@@ -827,19 +824,22 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         obs.shape[1],
                         self.num_low_level_actions_per_primitive,
                     )
-                    rt_idxs = np.concatenate(
-                        [[0], rt_idxs]
-                    )  # reset obs, effect of first primitive, second primitive, so on
+                    # reset obs, effect of first primitive, second primitive, so on
+                    rt_idxs = np.concatenate([[0], rt_idxs])
 
                     batch_start = np.random.randint(
-                        0, obs.shape[1] - self.batch_length, size=(obs.shape[0])
+                        0, obs.shape[1] - self.batch_length + 1, size=(obs.shape[0])
                     )
-                    batch_indices = np.linspace(
-                        batch_start,
-                        batch_start + self.batch_length,
-                        self.batch_length,
-                        endpoint=False,
-                    ).astype(int)
+                    batch_indices = (
+                        np.linspace(
+                            batch_start,
+                            batch_start + self.batch_length,
+                            self.batch_length,
+                            endpoint=False,
+                        )
+                        .astype(int)
+                        .transpose(1, 0)
+                    )
                     (
                         post,
                         prior,
@@ -857,12 +857,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         batch_indices=batch_indices,
                         rt_idxs=rt_idxs,
                     )
-                    obs = self.world_model.flatten_obs(
-                        obs[np.arange(batch_indices.shape[1]), batch_indices].permute(
-                            1, 0, 2
-                        ),
-                        (int(np.prod(self.image_shape)),),
-                    )
+                    obs = obs[
+                        np.arange(batch_indices.shape[0]).reshape(-1, 1), batch_indices
+                    ].reshape(-1, *self.image_shape)
                     rewards = rewards.reshape(-1, rewards.shape[-1])
                     terminals = terminals.reshape(-1, terminals.shape[-1])
                     (
@@ -877,15 +874,17 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         image_dist,
                         reward_dist,
                         {
-                            k: v[np.arange(batch_indices.shape[1]), batch_indices]
-                            .permute(1, 0, 2)
-                            .reshape(-1, v.shape[-1])
+                            k: v[
+                                np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                                batch_indices,
+                            ].reshape(-1, v.shape[-1])
                             for k, v in prior.items()
                         },
                         {
-                            k: v[np.arange(batch_indices.shape[1]), batch_indices]
-                            .permute(1, 0, 2)
-                            .reshape(-1, v.shape[-1])
+                            k: v[
+                                np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                                batch_indices,
+                            ].reshape(-1, v.shape[-1])
                             for k, v in post.items()
                         },
                         prior_dist,
@@ -898,24 +897,28 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
 
                     batch_start = np.random.randint(
                         0,
-                        low_level_actions.shape[1] - self.batch_length,
+                        low_level_actions.shape[1] - self.batch_length + 1,
                         size=(low_level_actions.shape[0]),
                     )
-                    batch_indices = np.linspace(
-                        batch_start,
-                        batch_start + self.batch_length,
-                        self.batch_length,
-                        endpoint=False,
-                    ).astype(int)
+                    batch_indices = (
+                        np.linspace(
+                            batch_start,
+                            batch_start + self.batch_length - 1,
+                            self.batch_length - 1,
+                            endpoint=False,
+                        )
+                        .astype(int)
+                        .transpose(1, 0)
+                    )
                     primitive_loss = self.criterion(
-                        action_preds[np.arange(batch_indices.shape[1]), batch_indices]
-                        .permute(1, 0, 2)
-                        .reshape(-1, action_preds.shape[-1]),
+                        action_preds[
+                            np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                            batch_indices,
+                        ].reshape(-1, action_preds.shape[-1]),
                         low_level_actions[:, 1:][
-                            np.arange(batch_indices.shape[1]), batch_indices
-                        ]
-                        .permute(1, 0, 2)
-                        .reshape(-1, action_preds.shape[-1]),
+                            np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                            batch_indices,
+                        ].reshape(-1, action_preds.shape[-1]),
                     )
 
                 self.update_network(
@@ -931,10 +934,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         """
         Actor Value Loss
         """
-        world_model_params = list(self.world_model.parameters())
         vf_params = list(self.vf.parameters())
         target_vf_params = list(self.target_vf.parameters())
-        pred_discount_params = list(self.world_model.pred_discount.parameters())
         log_keys = Counter()
         for _ in range(self.num_imagination_iterations):
             with torch.cuda.amp.autocast():
@@ -1096,15 +1097,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         obs = ptu.from_numpy(batch["observations"])
         high_level_actions = ptu.from_numpy(batch["high_level_actions"])
         low_level_actions = ptu.from_numpy(batch["low_level_actions"])
+        rt_idxs = np.arange(
+            self.num_low_level_actions_per_primitive,
+            obs.shape[1],
+            self.num_low_level_actions_per_primitive,
+        )
+        # reset obs, effect of first primitive, second primitive, so on
+        rt_idxs = np.concatenate([[0], rt_idxs])
         with torch.cuda.amp.autocast():
-            rt_idxs = np.arange(
-                self.num_low_level_actions_per_primitive,
-                obs.shape[1],
-                self.num_low_level_actions_per_primitive,
-            )
-            rt_idxs = np.concatenate(
-                [[0], rt_idxs]
-            )  # reset obs, effect of first primitive, second primitive, so on
             (
                 post,
                 prior,
@@ -1123,10 +1123,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 rt_idxs=rt_idxs,
                 forward_batch_method="forward_batch",
             )
-            ob = self.world_model.flatten_obs(
-                obs[:, rt_idxs],
-                (int(np.prod(self.image_shape)),),
-            )
+            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
             r = rewards.reshape(-1, rewards.shape[-1])
             t = terminals.reshape(-1, terminals.shape[-1])
             (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
@@ -1144,14 +1141,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.eval_statistics[prefix + "Full Obs Image Loss"] = image_pred_loss.item()
 
         with torch.cuda.amp.autocast():
-            rt_idxs = np.arange(
-                self.num_low_level_actions_per_primitive,
-                obs.shape[1],
-                self.num_low_level_actions_per_primitive,
-            )
-            rt_idxs = np.concatenate(
-                [[0], rt_idxs]
-            )  # reset obs, effect of first primitive, second primitive, so on
             (
                 post,
                 prior,
@@ -1170,10 +1159,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 rt_idxs=rt_idxs,
                 forward_batch_method="forward_batch",
             )
-            ob = self.world_model.flatten_obs(
-                obs[:, rt_idxs],
-                (int(np.prod(self.image_shape)),),
-            )
+            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
             r = rewards.reshape(-1, rewards.shape[-1])
             t = terminals.reshape(-1, terminals.shape[-1])
             (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
@@ -1193,14 +1179,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         ] = image_pred_loss.item()
 
         with torch.cuda.amp.autocast():
-            rt_idxs = np.arange(
-                self.num_low_level_actions_per_primitive,
-                obs.shape[1],
-                self.num_low_level_actions_per_primitive,
-            )
-            rt_idxs = np.concatenate(
-                [[0], rt_idxs]
-            )  # reset obs, effect of first primitive, second primitive, so on
             (
                 post,
                 prior,
@@ -1219,10 +1197,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 rt_idxs=rt_idxs,
                 forward_batch_method="forward_batch_raps_intermediate_obs",
             )
-            ob = self.world_model.flatten_obs(
-                obs[:, rt_idxs],
-                (int(np.prod(self.image_shape)),),
-            )
+            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
             rewards = rewards.reshape(-1, rewards.shape[-1])
             terminals = terminals.reshape(-1, terminals.shape[-1])
             (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
@@ -1240,14 +1215,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.eval_statistics[prefix + "RAPS Obs Image Loss"] = image_pred_loss.item()
 
         with torch.cuda.amp.autocast():
-            rt_idxs = np.arange(
-                self.num_low_level_actions_per_primitive,
-                obs.shape[1],
-                self.num_low_level_actions_per_primitive,
-            )
-            rt_idxs = np.concatenate(
-                [[0], rt_idxs]
-            )  # reset obs, effect of first primitive, second primitive, so on
             (
                 post,
                 prior,
@@ -1266,10 +1233,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 rt_idxs=rt_idxs,
                 forward_batch_method="forward_batch_raps_intermediate_obs",
             )
-            ob = self.world_model.flatten_obs(
-                obs[:, rt_idxs],
-                (int(np.prod(self.image_shape)),),
-            )
+            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
             rewards = rewards.reshape(-1, rewards.shape[-1])
             terminals = terminals.reshape(-1, terminals.shape[-1])
             (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
