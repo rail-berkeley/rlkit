@@ -183,39 +183,14 @@ def vec_rollout_low_level_raps(
             img = env.render(mode="rgb_array", imwidth=256, imheight=256)
             cv2.imshow("img", img)
             cv2.waitKey(1)
-        ll_as = i["actions"]
-        ll_os = i["observations"]
+        la = np.array(i["actions"])
+        lo = np.array(i["observations"])
         del i["actions"]
         del i["observations"]
         del i["robot-states"]
         del i["arguments"]
         gc.collect()
         env_infos.append(i)
-        la = []
-        lo = []
-        for e in range(env.n_envs):
-            # a0 + a1 + ...+a_space-1 -> o_space-1, o_2*space-1...
-            ll_a = np.array(ll_as[e])
-            ll_o = np.array(ll_os[e])
-
-            # num_ll = ll_a.shape[0]
-            # idxs = np.linspace(0, num_ll, env.num_low_level_actions_per_primitive + 1)
-            # spacing = num_ll // (env.num_low_level_actions_per_primitive)
-            # a = ll_a.reshape(env.num_low_level_actions_per_primitive, spacing, -1)
-            # a = a.sum(axis=1)[:, :3]  # just keep sum of xyz deltas
-            # a = np.concatenate(
-            #     (a, ll_a[idxs.astype(np.int)[1:] - 1, 3:]), axis=1
-            # )  # try to get last index of each block
-            a = ll_a
-            # o = ll_o[idxs.astype(np.int)[1:] - 1]  # o[space-1, 2*space-1, ...]
-            o = ll_o
-            la.append(a)
-            lo.append(o)
-        lo = (
-            np.array(lo)
-            .transpose(0, 1, 4, 2, 3)
-            .reshape(env.n_envs, env.num_low_level_actions_per_primitive, -1)
-        )
         low_level_actions[
             :,
             p * env.num_low_level_actions_per_primitive

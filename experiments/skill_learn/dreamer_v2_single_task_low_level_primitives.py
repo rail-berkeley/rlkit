@@ -118,7 +118,7 @@ if __name__ == "__main__":
             imagination_horizon=5,
             weight_decay=0.0,
         ),
-        num_expl_envs=5,
+        num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -126,14 +126,15 @@ if __name__ == "__main__":
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
         uniform_priorities=True,
+        generate_video=True,
     )
 
     search_space = {
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
+            # "assembly-v2",
+            # "disassemble-v2",
             # "sweep-into-v2",
-            # "soccer-v2",
+            "soccer-v2",
             # "drawer-close-v2",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
@@ -152,6 +153,9 @@ if __name__ == "__main__":
         # "primitive_embedding": [True, False],
         # "prioritize_fraction": [0.25],
         # "uniform_priorities": [False],
+        "models_path": [
+            "/home/mdalal/research/skill_learn/rlkit/data/01-17-ll-raps-mw-no-transposes/01-17-ll_raps_mw_no_transposes_2022_01_17_15_49_24_0000--s-61010/"
+        ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

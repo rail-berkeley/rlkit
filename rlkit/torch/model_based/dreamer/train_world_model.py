@@ -165,18 +165,23 @@ def visualize_rollout(
 
     with torch.cuda.amp.autocast():
         pl = max_path_length
-        reconstructions = ptu.zeros(
+        reconstructions = np.zeros(
             (
                 num_rollouts,
                 pl + 1,
-                *world_model.image_shape,
+                64,
+                64,
+                3,
             ),
+            dtype=np.uint8,
         )
         obs = np.zeros(
             (
                 num_rollouts,
                 pl + 1,
-                env.observation_space.shape[0],
+                64,
+                64,
+                3,
             ),
             dtype=np.uint8,
         )
@@ -191,6 +196,18 @@ def visualize_rollout(
                         policy_o = (None, o.reshape(1, -1))
                     else:
                         policy_o = o.reshape(1, -1)
+                    vis = np.copy(o.reshape(1, 3, 64, 64).transpose(0, 2, 3, 1)[0])
+                    vis = np.ascontiguousarray(vis, dtype=np.uint8)
+                    cv2.putText(
+                        vis,
+                        "Ground Truth",
+                        (1, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.25,
+                        (0, 255, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
                 else:
                     high_level_action, state = policy.get_action(policy_o)
                     state = state["state"]
@@ -202,44 +219,81 @@ def visualize_rollout(
                     )
                     if low_level_primitives:
                         ll_o = np.expand_dims(np.array(info["observations"]), 0)
-                        ll_o = ll_o.transpose(0, 1, 4, 2, 3).reshape(
-                            1, num_low_level_actions_per_primitive, -1
-                        )
                         ll_a = np.expand_dims(np.array(info["actions"]), 0)
                         policy_o = (ll_a, ll_o)
                     else:
                         policy_o = o.reshape(1, -1)
+                    (
+                        primitive_name,
+                        primitive_args,
+                        primitive_idx,
+                    ) = env.get_primitive_info_from_high_level_action(
+                        high_level_action[0]
+                    )
+                    vis = np.copy(o.reshape(1, 3, 64, 64).transpose(0, 2, 3, 1)[0])
+                    vis = np.ascontiguousarray(vis, dtype=np.uint8)
+                    cv2.putText(
+                        vis,
+                        primitive_name,
+                        (1, 60),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.25,
+                        (0, 255, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
+                    cv2.putText(
+                        vis,
+                        "r: {}".format(r),
+                        (35, 7),
+                        cv2.FONT_HERSHEY_SIMPLEX,
+                        0.3,
+                        (0, 0, 0),
+                        1,
+                        cv2.LINE_AA,
+                    )
 
-                obs[i, j] = o
+                obs[i, j] = vis
                 if j != 0:
                     feat = world_model.get_features(state)
                     feat = feat.reshape(-1, feat.shape[-1])
-                    new_img = world_model.decode(feat)
-                    reconstructions[i, j - 1] = new_img.unsqueeze(1)
+                    new_img = (
+                        torch.clamp(world_model.decode(feat) + 0.5, 0, 1) * 255.0
+                    ).type(torch.ByteTensor)
+                    new_img = ptu.get_numpy(new_img.permute(0, 2, 3, 1)[0]).astype(
+                        np.uint8
+                    )
+                    if j == 1:
+                        new_img = np.ascontiguousarray(np.copy(new_img), dtype=np.uint8)
+                        cv2.putText(
+                            new_img,
+                            "Reconstruction",
+                            (1, 60),
+                            cv2.FONT_HERSHEY_SIMPLEX,
+                            0.25,
+                            (0, 255, 0),
+                            1,
+                            cv2.LINE_AA,
+                        )
+                    reconstructions[i, j - 1] = new_img
             _, state = policy.get_action(policy_o)
             state = state["state"]
             feat = world_model.get_features(state)
             feat = feat.reshape(-1, feat.shape[-1])
-            new_img = world_model.decode(feat)
-            reconstructions[i, max_path_length] = new_img.unsqueeze(1)
+            new_img = (torch.clamp(world_model.decode(feat) + 0.5, 0, 1) * 255.0).type(
+                torch.ByteTensor
+            )
+            new_img = ptu.get_numpy(new_img.permute(0, 2, 3, 1)[0]).astype(np.uint8)
+            reconstructions[i, max_path_length] = new_img
             print("Final Reward: ", r)
 
-    reconstructions = torch.clamp(reconstructions + 0.5, 0, 1) * 255.0
-    reconstructions = reconstructions.permute(0, 1, 3, num_rollouts, 2)
-    reconstructions = ptu.get_numpy(reconstructions).astype(np.uint8)
-    obs = ptu.from_numpy(obs)
-    obs_np = ptu.get_numpy(
-        obs.reshape(num_rollouts, pl + 1, 3, img_size, img_size).permute(
-            0, 1, 3, num_rollouts, 2
-        )
-    ).astype(np.uint8)
     im = np.zeros((128 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
     for i in range(num_rollouts):
         for j in range(pl + 1):
-            im[
-                128 * i : 128 * i + img_size, img_size * j : img_size * (j + 1)
-            ] = obs_np[i, j]
+            im[128 * i : 128 * i + img_size, img_size * j : img_size * (j + 1)] = obs[
+                i, j
+            ]
             im[
                 128 * i + img_size : 128 * (i + 1), img_size * j : img_size * (j + 1)
             ] = reconstructions[i, j]
@@ -251,10 +305,10 @@ def visualize_rollout(
     fourcc = cv2.VideoWriter_fourcc(*"DIVX")
     out = cv2.VideoWriter(file_path, fourcc, 10.0, (img_size * 2, img_size * 2))
     for i in range(pl + 1):
-        im1 = obs_np[0, i]
-        im2 = obs_np[1, i]
-        im3 = obs_np[2, i]
-        imnum_rollouts = obs_np[3, i]
+        im1 = obs[0, i]
+        im2 = obs[1, i]
+        im3 = obs[2, i]
+        imnum_rollouts = obs[3, i]
 
         im12 = np.concatenate((im1, im2), 1)
         im3num_rollouts = np.concatenate((im3, imnum_rollouts), 1)

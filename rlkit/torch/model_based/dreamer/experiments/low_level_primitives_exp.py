@@ -220,11 +220,13 @@ def experiment(variant):
         eval_buffer=eval_buffer,
     )
     print("NODENAME: ", os.environ["SLURMD_NODENAME"])
-    print()
-    if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(visualize_policy_low_level_func)
-    print("TRAINING")
-    algorithm.to(ptu.device)
-    algorithm.train()
-    if variant.get("save_video", False):
-        visualize_policy_low_level_func(algorithm, -1)
+    if variant.get("generate_video", False):
+        visualize_policy_low_level_func(algorithm, 0)
+    else:
+        if variant.get("save_video", False):
+            algorithm.post_epoch_funcs.append(visualize_policy_low_level_func)
+        print("TRAINING")
+        algorithm.to(ptu.device)
+        algorithm.train()
+        if variant.get("save_video", False):
+            visualize_policy_low_level_func(algorithm, -1)

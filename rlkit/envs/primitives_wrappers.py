@@ -410,7 +410,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
         # primitives
         self.primitive_idx_to_name = {
-            0: "move_delta_ee_pose",
+            0: "move_delta_ee",
             1: "top_x_y_grasp",
             2: "lift",
             3: "drop",
@@ -422,19 +422,21 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             9: "close_gripper",
         }
         self.primitive_idx_to_num_low_level_steps = {
-            0: 300,
-            1: 1400,
-            2: 300,
-            3: 300,
-            4: 300,
-            5: 300,
-            6: 300,
-            7: 300,
-            8: 200,
-            9: 300,
+            0: goto_pose_iterations,
+            1: goto_pose_iterations * 3
+            + open_gripper_iterations
+            + close_gripper_iterations,
+            2: goto_pose_iterations,
+            3: goto_pose_iterations,
+            4: goto_pose_iterations,
+            5: goto_pose_iterations,
+            6: goto_pose_iterations,
+            7: goto_pose_iterations,
+            8: open_gripper_iterations,
+            9: close_gripper_iterations,
         }
         self.primitive_name_to_func = dict(
-            move_delta_ee_pose=self.move_delta_ee_pose,
+            move_delta_ee=self.move_delta_ee,
             top_x_y_grasp=self.top_x_y_grasp,
             lift=self.lift,
             drop=self.drop,
@@ -446,7 +448,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             close_gripper=self.close_gripper,
         )
         self.primitive_name_to_action_idx = dict(
-            move_delta_ee_pose=[0, 1, 2],
+            move_delta_ee=[0, 1, 2],
             top_x_y_grasp=[3, 4, 5, 6],
             lift=7,
             drop=8,
@@ -682,6 +684,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         if (self.primitive_step_counter + 1) % (
             self.num_low_level_steps // self.num_low_level_actions_per_primitive
         ) == 0:
+            # print("action save", self.primitive_step_counter)
             self.primitives_info["actions"].append(
                 np.concatenate([self.combined_prev_action, rot_ctrl, gripper_ctrl])
             )
@@ -720,10 +723,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             if (self.primitive_step_counter + 1) % (
                 self.num_low_level_steps // self.num_low_level_actions_per_primitive
             ) == 0:
-                obs = self.render(
-                    "rgb_array",
-                    self.render_im_shape[0],
-                    self.render_im_shape[1],
+                # print("obs save", self.primitive_step_counter)
+                obs = (
+                    self.render(
+                        "rgb_array",
+                        self.render_im_shape[0],
+                        self.render_im_shape[1],
+                    )
+                    .transpose(2, 0, 1)
+                    .flatten()
                 )
                 self.primitives_info["observations"].append(obs.astype(np.uint8))
         if self.render_every_step:
@@ -878,7 +886,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         stats += self.close_gripper(d)
         return stats
 
-    def move_delta_ee_pose(self, pose):
+    def move_delta_ee(self, pose):
         stats = self.goto_pose(self.get_endeff_pos() + pose)
         return stats
 
@@ -930,14 +938,22 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             broken_a[k] = a[v]
         return broken_a
 
+    def get_primitive_info_from_high_level_action(self, hl):
+        primitive_idx, primitive_args = (
+            np.argmax(hl[: self.num_primitives]),
+            hl[self.num_primitives :],
+        )
+        primitive_name = self.primitive_idx_to_name[primitive_idx]
+        return primitive_name, primitive_args, primitive_idx
+
     def act(self, a):
         a = np.clip(a, self.action_space.low, self.action_space.high)
         a = a * self.action_scale
-        primitive_idx, primitive_args = (
-            np.argmax(a[: self.num_primitives]),
-            a[self.num_primitives :],
-        )
-        primitive_name = self.primitive_idx_to_name[primitive_idx]
+        (
+            primitive_name,
+            primitive_args,
+            primitive_idx,
+        ) = self.get_primitive_info_from_high_level_action(a)
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)
         primitive_action = primitive_name_to_action_dict[primitive_name]
         primitive = self.primitive_name_to_func[primitive_name]
@@ -1090,7 +1106,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
 
         # primitives
         self.primitive_idx_to_name = {
-            0: "move_delta_ee_pose",
+            0: "move_delta_ee",
             1: "top_grasp",
             2: "lift",
             3: "drop",
@@ -1102,7 +1118,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             9: "close_gripper",
         }
         self.primitive_name_to_func = dict(
-            move_delta_ee_pose=self.move_delta_ee_pose,
+            move_delta_ee=self.move_delta_ee,
             top_grasp=self.top_grasp,
             lift=self.lift,
             drop=self.drop,
@@ -1114,7 +1130,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
             close_gripper=self.close_gripper,
         )
         self.primitive_name_to_action_idx = dict(
-            move_delta_ee_pose=[0, 1, 2],
+            move_delta_ee=[0, 1, 2],
             top_grasp=3,
             lift=4,
             drop=5,
@@ -1334,7 +1350,7 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         stats += self.close_gripper()
         return stats
 
-    def move_delta_ee_pose(self, pose):
+    def move_delta_ee(self, pose):
         stats = self.goto_pose(self._eef_xpos + pose, grasp=True)
         return stats
 
