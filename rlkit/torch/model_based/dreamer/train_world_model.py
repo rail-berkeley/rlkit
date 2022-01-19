@@ -138,6 +138,17 @@ def forward_low_level_primitive(
     return reconstructions, state, new_img
 
 
+def reconstruct_from_state(state, world_model):
+    feat = world_model.get_features(state)
+    feat = feat.reshape(-1, feat.shape[-1])
+    new_img = (torch.clamp(world_model.decode(feat) + 0.5, 0, 1) * 255.0).type(
+        torch.ByteTensor
+    )
+    new_img = ptu.get_numpy(new_img.permute(0, 2, 3, 1)[0]).astype(np.uint8)
+    new_img = np.ascontiguousarray(np.copy(new_img), dtype=np.uint8)
+    return new_img
+
+
 @torch.no_grad()
 def visualize_rollout(
     env,
@@ -255,16 +266,8 @@ def visualize_rollout(
 
                 obs[i, j] = vis
                 if j != 0:
-                    feat = world_model.get_features(state)
-                    feat = feat.reshape(-1, feat.shape[-1])
-                    new_img = (
-                        torch.clamp(world_model.decode(feat) + 0.5, 0, 1) * 255.0
-                    ).type(torch.ByteTensor)
-                    new_img = ptu.get_numpy(new_img.permute(0, 2, 3, 1)[0]).astype(
-                        np.uint8
-                    )
+                    new_img = reconstruct_from_state(state, world_model)
                     if j == 1:
-                        new_img = np.ascontiguousarray(np.copy(new_img), dtype=np.uint8)
                         cv2.putText(
                             new_img,
                             "Reconstruction",
@@ -278,12 +281,7 @@ def visualize_rollout(
                     reconstructions[i, j - 1] = new_img
             _, state = policy.get_action(policy_o)
             state = state["state"]
-            feat = world_model.get_features(state)
-            feat = feat.reshape(-1, feat.shape[-1])
-            new_img = (torch.clamp(world_model.decode(feat) + 0.5, 0, 1) * 255.0).type(
-                torch.ByteTensor
-            )
-            new_img = ptu.get_numpy(new_img.permute(0, 2, 3, 1)[0]).astype(np.uint8)
+            new_img = reconstruct_from_state(state, world_model)
             reconstructions[i, max_path_length] = new_img
             print("Final Reward: ", r)
 
