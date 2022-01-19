@@ -7,6 +7,7 @@ def experiment(variant):
     import torch
 
     import rlkit.torch.pytorch_util as ptu
+    from rlkit.core import logger
     from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
     from rlkit.envs.multi_task_env import MultiTaskEnv
     from rlkit.envs.primitives_make_env import make_env
@@ -20,12 +21,15 @@ def experiment(variant):
         EpisodeReplayBufferLowLevelRAPS,
     )
     from rlkit.torch.model_based.dreamer.kitchen_video_func import (
-        visualize_policy_low_level_func,
+        post_epoch_visualize_func,
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.rollout_functions import (
         vec_rollout_low_level_raps,
+    )
+    from rlkit.torch.model_based.dreamer.train_world_model import (
+        visualize_primitive_unsubsampled_rollout,
     )
     from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
@@ -219,14 +223,27 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
         eval_buffer=eval_buffer,
     )
+    algorithm.low_level_primitives = True
     print("NODENAME: ", os.environ["SLURMD_NODENAME"])
     if variant.get("generate_video", False):
-        visualize_policy_low_level_func(algorithm, 0)
+        post_epoch_visualize_func(algorithm, 0)
+    elif variant.get("unsubsampled_rollout", False):
+        visualize_primitive_unsubsampled_rollout(
+            make_env_lambda(),
+            make_env_lambda(),
+            make_env_lambda(),
+            logger.get_snapshot_dir(),
+            algorithm.max_path_length,
+            num_low_level_actions_per_primitive,
+            policy=eval_policy,
+            img_size=64,
+            num_rollouts=4,
+        )
     else:
         if variant.get("save_video", False):
-            algorithm.post_epoch_funcs.append(visualize_policy_low_level_func)
+            algorithm.post_epoch_funcs.append(post_epoch_visualize_func)
         print("TRAINING")
         algorithm.to(ptu.device)
         algorithm.train()
         if variant.get("save_video", False):
-            visualize_policy_low_level_func(algorithm, -1)
+            post_epoch_visualize_func(algorithm, -1)

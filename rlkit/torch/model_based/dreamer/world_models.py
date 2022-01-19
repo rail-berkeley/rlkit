@@ -607,11 +607,25 @@ class LowlevelRAPSWorldModel(WorldModel):
         observation: torch.Tensor,
         ll_a: torch.Tensor,
         num_low_level_actions_per_primitive: int,
+        high_level_action: torch.Tensor,
     ):
+        ll_a_pred = []
         for k in range(0, num_low_level_actions_per_primitive):
             embed = self.encode(observation[:, k])
             new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
-        return new_state
+            phase = (
+                torch.ones((high_level_action.shape[0], 1), device=ptu.device)
+                * (k + 1)
+                / num_low_level_actions_per_primitive
+            )
+            hl = torch.cat((high_level_action, phase), 1)
+            inp = torch.cat(
+                [hl, self.get_features(new_state)],
+                dim=1,
+            )
+            a = self.primitive_model(inp)
+            ll_a_pred.append(a)
+        return new_state, ll_a_pred
 
     @jit.script_method
     def forward_high_level_step_primitive_model(

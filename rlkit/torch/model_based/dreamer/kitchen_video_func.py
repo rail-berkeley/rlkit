@@ -9,40 +9,14 @@ from rlkit.core import logger
 from rlkit.torch.model_based.dreamer.train_world_model import visualize_rollout
 
 
-def video_post_epoch_func(algorithm, epoch):
-    if epoch % 10 == 0:
-        print(epoch)
-        # video_post_epoch_func_(
-        #     algorithm, epoch, algorithm.eval_data_collector._policy, mode="eval"
-        # )
-        # video_post_epoch_func_(
-        #     algorithm, epoch, algorithm.expl_data_collector._policy, mode="expl"
-        # )
-        visualize_rollout(
-            algorithm.eval_env.envs[0],
-            algorithm.trainer.world_model,
-            logger.get_snapshot_dir(),
-            algorithm.max_path_length,
-            forcing="teacher",
-            low_level_primitives=False,
-            policy=algorithm.eval_data_collector._policy,
-            num_low_level_actions_per_primitive=0,
-        )
-        print("Saving networks: ")
-        algorithm.trainer.save(logger.get_snapshot_dir())
-
-
-def visualize_policy_low_level_func(algorithm, epoch):
+def post_epoch_visualize_func(algorithm, epoch):
     if epoch % 10 == 0:
         visualize_rollout(
             algorithm.eval_env.envs[0],
             algorithm.trainer.world_model,
             logger.get_snapshot_dir(),
             algorithm.max_path_length,
-            forcing="none",
-            low_level_primitives=True,
-            num_low_level_actions_per_primitive=algorithm.trainer.num_low_level_actions_per_primitive,
-            primitive_model=algorithm.trainer.world_model.primitive_model,
+            low_level_primitives=algorithm.low_level_primitives,
             policy=algorithm.eval_data_collector._policy,
         )
         print("Saving networks: ")

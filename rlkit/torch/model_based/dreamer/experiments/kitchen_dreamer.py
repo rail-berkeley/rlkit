@@ -22,15 +22,14 @@ def experiment(variant):
         EpisodeReplayBuffer,
         EpisodeReplayBufferLowLevelRAPS,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
+    from rlkit.torch.model_based.dreamer.kitchen_video_func import (
+        post_epoch_visualize_func,
+    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,
-    )
-    from rlkit.torch.model_based.plan2explore.mcts.mcts_policy import (
-        HybridAdvancedMCTSPolicy,
     )
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
@@ -116,50 +115,28 @@ def experiment(variant):
         world_model.load_state_dict(torch.load(osp.join(filename, "world_model.ptc")))
         print("LOADED MODELS")
 
-    if variant.get("use_mcts_policy", False):
-        expl_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            discrete_action_dim,
-            action_dim,
-            eval_envs[0].action_space,
-            actor,
-            None,
-            vf,
-            **variant["expl_policy_kwargs"],
-        )
-        eval_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            discrete_action_dim,
-            action_dim,
-            eval_envs[0].action_space,
-            actor,
-            None,
-            vf,
-            **variant["eval_policy_kwargs"],
-        )
-    else:
-        expl_policy = DreamerPolicy(
-            world_model,
-            actor,
-            obs_dim,
-            action_dim,
-            exploration=True,
-            expl_amount=variant.get("expl_amount", 0.3),
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=discrete_continuous_dist,
-        )
-        eval_policy = DreamerPolicy(
-            world_model,
-            actor,
-            obs_dim,
-            action_dim,
-            exploration=False,
-            expl_amount=0.0,
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=discrete_continuous_dist,
-        )
+    expl_policy = DreamerPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        exploration=True,
+        expl_amount=variant.get("expl_amount", 0.3),
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=discrete_continuous_dist,
+    )
+    eval_policy = DreamerPolicy(
+        world_model,
+        actor,
+        obs_dim,
+        action_dim,
+        exploration=False,
+        expl_amount=0.0,
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=discrete_continuous_dist,
+    )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
 
@@ -221,13 +198,14 @@ def experiment(variant):
         eval_buffer=eval_buffer,
         **variant["algorithm_kwargs"],
     )
+    algorithm.low_level_primitives = False
     if variant.get("generate_video", False):
-        video_post_epoch_func(algorithm, 0)
+        post_epoch_visualize_func(algorithm, 0)
     else:
         if variant.get("save_video", False):
-            algorithm.post_epoch_funcs.append(video_post_epoch_func)
+            algorithm.post_epoch_funcs.append(post_epoch_visualize_func)
         print("TRAINING")
         algorithm.to(ptu.device)
         algorithm.train()
         if variant.get("save_video", False):
-            video_post_epoch_func(algorithm, -1)
+            post_epoch_visualize_func(algorithm, -1)

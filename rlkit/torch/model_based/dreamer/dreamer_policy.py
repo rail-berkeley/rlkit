@@ -85,12 +85,14 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                 ll_a = ptu.from_numpy(ll_a)
                 assert observation.shape[1] == self.num_low_level_actions_per_primitive
                 assert ll_a.shape[1] == self.num_low_level_actions_per_primitive
-                new_state = self.world_model.forward_high_level_step(
-                    self.state,
+                new_state, ll_a_pred = self.world_model.forward_high_level_step(
+                    self.state[0],
                     observation,
                     ll_a,
                     self.num_low_level_actions_per_primitive,
+                    self.state[1],
                 )
+                ll_a_pred = torch.cat(ll_a_pred, axis=0)
             else:
                 prev_state = self.world_model.initial(observation.shape[0])
                 embed = self.world_model.encode(observation)
@@ -99,13 +101,17 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                     ptu.zeros((observation.shape[0], self.low_level_action_dim)),
                     embed,
                 )
+                ll_a_pred = ptu.zeros((observation.shape[0], self.low_level_action_dim))
             feat = self.world_model.get_features(new_state)
             dist = self.actor(feat)
             action = dist.mode()
             if self.exploration:
                 action = self.actor.compute_exploration_action(action, self.expl_amount)
-            self.state = new_state
-            return ptu.get_numpy(action), {"state": new_state}
+            self.state = (new_state, action)
+            return ptu.get_numpy(action), {
+                "state": new_state,
+                "ll_a_pred": ptu.get_numpy(ll_a_pred),
+            }
 
 
 class ActionSpaceSamplePolicy(Policy):

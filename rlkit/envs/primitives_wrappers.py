@@ -694,6 +694,23 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.mocap_set_action(self.sim, action)
         self.ctrl_set_action(self.sim, gripper_ctrl)
 
+    def low_level_step(self, action):
+        self.mocap_set_action(self.sim, action[:7])
+        self.ctrl_set_action(self.sim, action[7:])
+        self.sim.step()
+        self._last_stable_obs = self._get_obs()
+        reward, info = self.evaluate_state(self._last_stable_obs, action)
+        obs = (
+            self.render(
+                "rgb_array",
+                64,
+                64,
+            )
+            .transpose(2, 0, 1)
+            .flatten()
+        )
+        return obs, reward, False, info
+
     def reset_mocap2body_xpos(self, sim):
         if (
             sim.model.eq_type is None
