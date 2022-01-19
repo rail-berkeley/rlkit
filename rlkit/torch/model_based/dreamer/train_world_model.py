@@ -269,7 +269,16 @@ def visualize_primitive_unsubsampled_rollout(
                     o3 = env3.reset()
                     policy_o = (None, o1.reshape(1, -1))
                     policy.reset(policy_o[1])
-                    obs3[i, 0] = convert_img_to_save(o3)
+                    o1 = convert_img_to_save(o1)
+                    o2 = convert_img_to_save(o2)
+                    o3 = convert_img_to_save(o3)
+                    add_text(o1, "True", (1, 60), 0.25, (0, 255, 0))
+                    add_text(o2, "True Unsubsampled", (1, 60), 0.25, (0, 255, 0))
+                    add_text(o3, "Pred Unsubsampled", (1, 60), 0.25, (0, 255, 0))
+                    obs1[i, 0] = o1
+                    obs2[i, 0] = o2
+                    obs3[i, 0] = o3
+
                 else:
                     high_level_action, out = policy.get_action(policy_o)
                     ll_a_pred = out["ll_a_pred"]
@@ -299,15 +308,18 @@ def visualize_primitive_unsubsampled_rollout(
                         )
                         obs3[i, j - 1] = convert_img_to_save(o3)
                         print(
-                            j - 1,
+                            "Rollout: {}".format(i),
+                            "Step: {}".format(j - 1),
+                            "Primitive: ",
                             prev_primitive_name,
+                            "LL Action Pred Error: ",
                             (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
                             / num_low_level_actions_per_primitive,
                         )
                     prev_ll_a = ll_a
                     prev_primitive_name = primitive_name
-                obs1[i, j] = convert_img_to_save(o1)
-                obs2[i, j] = convert_img_to_save(o2)
+                    obs1[i, j] = convert_img_to_save(o1)
+                    obs2[i, j] = convert_img_to_save(o2)
             _, out = policy.get_action(policy_o)
             ll_a_pred = out["ll_a_pred"]
             o3, _, _, i3 = unsubsample_and_execute_ll(
@@ -315,14 +327,26 @@ def visualize_primitive_unsubsampled_rollout(
             )
             obs3[i, max_path_length] = convert_img_to_save(o3)
             print(
-                max_path_length,
+                "Rollout: {}".format(i),
+                "Step: {}".format(max_path_length),
+                "Primitive: ",
                 prev_primitive_name,
+                "LL Action Pred Error: ",
                 (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
                 / num_low_level_actions_per_primitive,
             )
-            print("Final Reward: ", i1["success"])
-            print("Final Reward 2: ", i2["success"])
-            print("Final Reward 3: ", i3["success"])
+            print("Rollout {} Final Success True Actions: ".format(i), i1["success"])
+            print(
+                "Rollout {} Final Success True Actions Unsubsampled: ".format(i),
+                i2["success"],
+            )
+            print(
+                "Rollout {} Final Success Primitive Model Actions Unsubsampled: ".format(
+                    i
+                ),
+                i3["success"],
+            )
+            print()
 
     im = np.zeros((img_size * 3 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
