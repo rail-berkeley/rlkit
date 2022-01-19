@@ -266,7 +266,7 @@ def visualize_primitive_unsubsampled_rollout(
                 if j == 0:
                     o1 = env1.reset()
                     o2 = env2.reset()
-                    o3 = env2.reset()
+                    o3 = env3.reset()
                     policy_o = (None, o1.reshape(1, -1))
                     policy.reset(policy_o[1])
                     obs3[i, 0] = convert_img_to_save(o3)
