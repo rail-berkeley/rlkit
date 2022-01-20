@@ -55,7 +55,7 @@ class Mlp(jit.ScriptModule):
             h = torch.cat([embedding, h[:, self.embedding_slice :]], dim=1)
         for i, fc in enumerate(self.fcs):
             h = fc(h)
-            h = self.hidden_activation(h)
+            h = self.hidden_activation(h, inplace=True)
         preactivation = self.last_fc(h)
         output = self.output_activation(preactivation)
         return output
@@ -68,7 +68,7 @@ class MlpResidual(Mlp):
         h_prev = h
         for i, fc in enumerate(self.fcs):
             h = fc(h)
-            h = self.hidden_activation(h)
+            h = self.hidden_activation(h, inplace=True)
             if i % 2 == 1:
                 h = h + h_prev
             h_prev = h

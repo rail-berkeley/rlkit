@@ -72,7 +72,7 @@ class CNN(jit.ScriptModule):
 
         for layer in self.conv_layers:
             h = layer(h)
-            h = self.hidden_activation(h)
+            h = self.hidden_activation(h, inplace=True)
         output = h.reshape(h.size(0), -1)
         return output
 
@@ -159,6 +159,6 @@ class DCNN(jit.ScriptModule):
         ).to(device="cuda", memory_format=torch.channels_last, dtype=torch.float16)
         for layer in self.deconv_layers:
             h = layer(h)
-            h = self.hidden_activation(h)
+            h = self.hidden_activation(h, inplace=True)
         output = self.deconv_output(h)
         return output.to(memory_format=torch.channels_last, dtype=torch.float16)

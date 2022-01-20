@@ -61,6 +61,7 @@ class WorldModel(jit.ScriptModule):
             img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
             full_stochastic_state_size = stochastic_state_size
         self.feature_size = deterministic_state_size + full_stochastic_state_size
+        embedding_size = depth * 32
 
         self.obs_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
@@ -608,11 +609,12 @@ class LowlevelRAPSWorldModel(WorldModel):
         ll_a: torch.Tensor,
         num_low_level_actions_per_primitive: int,
         high_level_action: torch.Tensor,
+        use_raps_obs: bool = False,
+        use_true_actions: bool = True,
     ):
         ll_a_pred = []
         for k in range(0, num_low_level_actions_per_primitive):
             embed = self.encode(observation[:, k])
-            new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
             phase = (
                 torch.ones((high_level_action.shape[0], 1), device=ptu.device)
                 * (k + 1)
@@ -624,6 +626,24 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dim=1,
             )
             a = self.primitive_model(inp)
+
+            if use_raps_obs:
+                if k == num_low_level_actions_per_primitive - 1:
+                    if use_true_actions:
+                        new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                    else:
+                        new_state, _ = self.obs_step(new_state, a, embed)
+                else:
+                    if use_true_actions:
+                        new_state = self.action_step(new_state, ll_a[:, k])
+                    else:
+                        new_state = self.action_step(new_state, a)
+            else:
+                if use_true_actions:
+                    new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                else:
+                    new_state, _ = self.obs_step(new_state, a, embed)
+
             ll_a_pred.append(a)
         return new_state, ll_a_pred
 

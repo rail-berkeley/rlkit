@@ -52,7 +52,7 @@ class ActorModel(Mlp):
     def forward_net(self, input):
         h = input
         for i, fc in enumerate(self.fcs):
-            h = self.hidden_activation(fc(h))
+            h = self.hidden_activation(fc(h), inplace=True)
         last = self.last_fc(h)
         return last
 
