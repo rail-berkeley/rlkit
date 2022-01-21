@@ -15,7 +15,6 @@ class ActorModel(Mlp):
         hidden_size,
         obs_dim,
         num_layers=4,
-        use_per_primitive_actor=False,
         discrete_continuous_dist=False,
         discrete_action_dim=0,
         continuous_action_dim=0,
@@ -51,10 +50,14 @@ class ActorModel(Mlp):
     @jit.script_method
     def forward_net(self, input):
         h = input
-        for i, fc in enumerate(self.fcs):
-            h = self.hidden_activation(fc(h), inplace=True)
-        last = self.last_fc(h)
-        return last
+        if self.apply_embedding:
+            embed_h = h[:, : self.embedding_slice]
+            embedding = self.embedding(embed_h.argmax(dim=1))
+            h = torch.cat([embedding, h[:, self.embedding_slice :]], dim=1)
+        h = self.fc_block_1(h)
+        preactivation = self.fc_block_2(h)
+        output = preactivation
+        return output
 
     def forward(self, input):
         last = self.forward_net(input)

@@ -5,6 +5,7 @@ def experiment(variant):
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     import torch
+    import torch.nn as nn
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.core import logger
@@ -79,7 +80,7 @@ def experiment(variant):
         hidden_sizes=variant["mlp_hidden_sizes"],
         output_size=variant["low_level_action_dim"],
         input_size=250 + eval_env.envs[0].action_space.low.shape[0] + 1,
-        hidden_activation=torch.nn.functional.relu,
+        hidden_activation=nn.ReLU,
         apply_embedding=variant.get("primitive_embedding", False),
         num_embeddings=eval_envs[0].num_primitives,
         embedding_dim=eval_envs[0].num_primitives,
@@ -95,7 +96,7 @@ def experiment(variant):
     actor = actor_model_class(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
         discrete_action_dim=discrete_action_dim,
         continuous_action_dim=continuous_action_dim,
         **variant["actor_kwargs"],
@@ -105,14 +106,14 @@ def experiment(variant):
         * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
     )
     target_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
         * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
     )
 
     if variant.get("models_path", None) is not None:

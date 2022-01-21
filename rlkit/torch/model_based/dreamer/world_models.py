@@ -13,7 +13,6 @@ from torch.nn import init
 from torch.nn.parameter import Parameter
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.core import PyTorchModule
 from rlkit.torch.model_based.dreamer.actor_models import OneHotDist
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
@@ -29,9 +28,9 @@ class WorldModel(jit.ScriptModule):
         embedding_size=1024,
         rssm_hidden_size=400,
         model_hidden_size=400,
-        model_act=F.elu,
+        model_act=nn.ELU,
         depth=32,
-        conv_act=F.relu,
+        conv_act=nn.ReLU,
         reward_num_layers=2,
         pred_discount_num_layers=3,
         gru_layer_norm=False,
@@ -45,7 +44,6 @@ class WorldModel(jit.ScriptModule):
         self.reward_classifier = reward_classifier
         self.use_prior_instead_of_posterior = use_prior_instead_of_posterior
         self.image_shape = image_shape
-        self.model_act = model_act
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
         self.discrete_latents = discrete_latents
@@ -134,6 +132,7 @@ class WorldModel(jit.ScriptModule):
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         self.std_act = std_act
+        self.model_act = model_act(inplace=True)
 
     @jit.script_method
     def compute_std(self, std):

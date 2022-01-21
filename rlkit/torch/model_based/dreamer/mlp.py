@@ -3,7 +3,6 @@ from torch import jit, nn
 from torch.nn import functional as F
 
 from rlkit.pythonplusplus import identity
-from rlkit.torch.core import PyTorchModule
 
 
 class Mlp(jit.ScriptModule):
@@ -27,21 +26,29 @@ class Mlp(jit.ScriptModule):
         self.output_size = output_size
         self.hidden_activation = hidden_activation
         self.output_activation = output_activation
-        self.fcs = torch.nn.ModuleList()
-        self.layer_norms = []
-        in_size = input_size
 
-        for i, next_size in enumerate(hidden_sizes):
+        fc = nn.Linear(input_size, hidden_sizes[0])
+        hidden_init(fc.weight)
+        fc.bias.data.fill_(b_init_value)
+        self.fc_block_1 = nn.Sequential(fc, hidden_activation(inplace=True))
+
+        fc_block_2 = []
+        in_size = hidden_sizes[0]
+
+        for i, next_size in enumerate(hidden_sizes[1:]):
             fc = nn.Linear(in_size, next_size)
             in_size = next_size
             hidden_init(fc.weight)
             fc.bias.data.fill_(b_init_value)
-            self.__setattr__("fc{}".format(i), fc)
-            self.fcs.append(fc)
+            fc_block_2.append(fc)
+            fc_block_2.append(hidden_activation(inplace=True))
 
-        self.last_fc = nn.Linear(in_size, output_size)
-        torch.nn.init.xavier_uniform_(self.last_fc.weight)
-        self.last_fc.bias.data.fill_(0)
+        last_fc = nn.Linear(in_size, output_size)
+        hidden_init(last_fc.weight)
+        last_fc.bias.data.fill_(0)
+        fc_block_2.append(last_fc)
+
+        self.fc_block_2 = nn.Sequential(*fc_block_2)
         self.apply_embedding = apply_embedding
         self.embedding_slice = embedding_slice
         self.embedding = nn.Embedding(num_embeddings, embedding_dim)
@@ -53,11 +60,9 @@ class Mlp(jit.ScriptModule):
             embed_h = h[:, : self.embedding_slice]
             embedding = self.embedding(embed_h.argmax(dim=1))
             h = torch.cat([embedding, h[:, self.embedding_slice :]], dim=1)
-        for i, fc in enumerate(self.fcs):
-            h = fc(h)
-            h = self.hidden_activation(h, inplace=True)
-        preactivation = self.last_fc(h)
-        output = self.output_activation(preactivation)
+        h = self.fc_block_1(h)
+        preactivation = self.fc_block_2(h)
+        output = preactivation
         return output
 
 
