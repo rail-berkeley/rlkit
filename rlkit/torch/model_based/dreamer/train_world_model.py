@@ -118,11 +118,19 @@ def visualize_rollout(
     mode="eval",
     img_size=64,
     num_rollouts=4,
+    use_raps_obs=False,
+    use_true_actions=True,
 ):
     file_path = logdir + "/"
     os.makedirs(file_path, exist_ok=True)
-    print("Generating Imagination Reconstructions")
-    file_suffix = "imagination_reconstructions.png"
+    print(
+        "Generating Imagination Reconstructions No Intermediate Obs: {} Actual Actions: {}".format(
+            use_raps_obs, use_true_actions
+        )
+    )
+    file_suffix = "imagination_reconstructions_raps_obs_{}_true_actions.png".format(
+        use_raps_obs, use_true_actions
+    )
     file_path += file_suffix
     pl = max_path_length
     img_shape = (img_size, img_size, 3)
@@ -149,7 +157,9 @@ def visualize_rollout(
                     vis = convert_img_to_save(o)
                     add_text(vis, "Ground Truth", (1, 60), 0.25, (0, 255, 0))
                 else:
-                    high_level_action, state = policy.get_action(policy_o)
+                    high_level_action, state = policy.get_action(
+                        policy_o, use_raps_obs, use_true_actions
+                    )
                     state = state["state"]
                     o, r, d, info = env.step(
                         high_level_action[0],
@@ -177,11 +187,55 @@ def visualize_rollout(
                     if j == 1:
                         add_text(new_img, "Reconstruction", (1, 60), 0.25, (0, 255, 0))
                     reconstructions[i, j - 1] = new_img
+                    print(
+                        "Rollout {} Step {} Predicted Reward".format(i, j - 1),
+                        world_model.reward(world_model.get_features(state))
+                        .detach()
+                        .cpu()
+                        .numpy()
+                        .item(),
+                    )
+                    print("Rollout {} Step {} Reward".format(i, j - 1), prev_r)
+                    print(
+                        "Rollout {} Step {} Predicted Discount".format(i, j - 1),
+                        world_model.get_dist(
+                            world_model.pred_discount(world_model.get_features(state)),
+                            std=None,
+                            normal=False,
+                        )
+                        .mean.detach()
+                        .cpu()
+                        .numpy()
+                        .item(),
+                    )
+                    print()
+                prev_r = r
             _, state = policy.get_action(policy_o)
             state = state["state"]
             new_img = reconstruct_from_state(state, world_model)
             reconstructions[i, max_path_length] = new_img
-            print("Final Reward: ", r)
+            print(
+                "Rollout {} Final Predicted Reward".format(i),
+                world_model.reward(world_model.get_features(state))
+                .detach()
+                .cpu()
+                .numpy()
+                .item(),
+            )
+            print("Rollout {} Final Reward: ".format(i), r)
+            print(
+                "Rollout {} Final Predicted Discount".format(i, j - 1),
+                world_model.get_dist(
+                    world_model.pred_discount(world_model.get_features(state)),
+                    std=None,
+                    normal=False,
+                )
+                .mean.detach()
+                .cpu()
+                .numpy()
+                .item(),
+            )
+            print()
 
     im = np.zeros((img_size * 2 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
@@ -198,24 +252,25 @@ def visualize_rollout(
     cv2.imwrite(file_path, im)
     print("Saved Rollout Visualization to {}".format(file_path))
 
-    file_path = osp.join(logdir, mode + "_video.avi")
+    # file_path = osp.join(logdir, mode + "_video.avi")
 
-    fourcc = cv2.VideoWriter_fourcc(*"DIVX")
-    out = cv2.VideoWriter(file_path, fourcc, 10.0, (img_size * 2, img_size * 2))
-    for i in range(pl + 1):
-        im1 = obs[0, i]
-        im2 = obs[1, i]
-        im3 = obs[2, i]
-        imnum_rollouts = obs[3, i]
+    # fourcc = cv2.VideoWriter_fourcc(*"DIVX")
+    # out = cv2.VideoWriter(file_path, fourcc, 10.0, (img_size * 2, img_size * 2))
+    # for i in range(pl + 1):
+    #     im1 = obs[0, i]
+    #     im2 = obs[1, i]
+    #     im3 = obs[2, i]
+    #     imnum_rollouts = obs[3, i]
 
-        im12 = np.concatenate((im1, im2), 1)
-        im3num_rollouts = np.concatenate((im3, imnum_rollouts), 1)
-        im = np.concatenate((im12, im3num_rollouts), 0)
+    #     im12 = np.concatenate((im1, im2), 1)
+    #     im3num_rollouts = np.concatenate((im3, imnum_rollouts), 1)
+    #     im = np.concatenate((im12, im3num_rollouts), 0)
 
-        out.write(im)
+    #     out.write(im)
 
-    out.release()
-    print("video saved to :", file_path)
+    # out.release()
+    # print("video saved to :", file_path)
+    print()
 
 
 def unsubsample_and_execute_ll(ll_a, env, num_subsample_steps):

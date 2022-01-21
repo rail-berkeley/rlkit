@@ -611,6 +611,7 @@ class LowlevelRAPSWorldModel(WorldModel):
         high_level_action: torch.Tensor,
         use_raps_obs: bool = False,
         use_true_actions: bool = True,
+        use_any_obs: bool = True,
     ):
         ll_a_pred = []
         for k in range(0, num_low_level_actions_per_primitive):
@@ -626,23 +627,28 @@ class LowlevelRAPSWorldModel(WorldModel):
                 dim=1,
             )
             a = self.primitive_model(inp)
-
-            if use_raps_obs:
-                if k == num_low_level_actions_per_primitive - 1:
+            if use_any_obs:
+                if use_raps_obs:
+                    if k == num_low_level_actions_per_primitive - 1:
+                        if use_true_actions:
+                            new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                        else:
+                            new_state, _ = self.obs_step(new_state, a, embed)
+                    else:
+                        if use_true_actions:
+                            new_state = self.action_step(new_state, ll_a[:, k])
+                        else:
+                            new_state = self.action_step(new_state, a)
+                else:
                     if use_true_actions:
                         new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
                     else:
                         new_state, _ = self.obs_step(new_state, a, embed)
-                else:
-                    if use_true_actions:
-                        new_state = self.action_step(new_state, ll_a[:, k])
-                    else:
-                        new_state = self.action_step(new_state, a)
             else:
                 if use_true_actions:
-                    new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                    new_state = self.action_step(new_state, ll_a[:, k])
                 else:
-                    new_state, _ = self.obs_step(new_state, a, embed)
+                    new_state = self.action_step(new_state, a)
 
             ll_a_pred.append(a)
         return new_state, ll_a_pred

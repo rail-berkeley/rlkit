@@ -18,7 +18,44 @@ def post_epoch_visualize_func(algorithm, epoch):
             algorithm.max_path_length,
             low_level_primitives=algorithm.low_level_primitives,
             policy=algorithm.eval_data_collector._policy,
+            use_raps_obs=False,
+            use_true_actions=True,
+            num_rollouts=2,
         )
+        if algorithm.low_level_primitives:
+            visualize_rollout(
+                algorithm.eval_env.envs[0],
+                algorithm.trainer.world_model,
+                logger.get_snapshot_dir(),
+                algorithm.max_path_length,
+                low_level_primitives=algorithm.low_level_primitives,
+                policy=algorithm.eval_data_collector._policy,
+                use_raps_obs=True,
+                use_true_actions=True,
+                num_rollouts=2,
+            )
+            visualize_rollout(
+                algorithm.eval_env.envs[0],
+                algorithm.trainer.world_model,
+                logger.get_snapshot_dir(),
+                algorithm.max_path_length,
+                low_level_primitives=algorithm.low_level_primitives,
+                policy=algorithm.eval_data_collector._policy,
+                use_raps_obs=True,
+                use_true_actions=False,
+                num_rollouts=2,
+            )
+            visualize_rollout(
+                algorithm.eval_env.envs[0],
+                algorithm.trainer.world_model,
+                logger.get_snapshot_dir(),
+                algorithm.max_path_length,
+                low_level_primitives=algorithm.low_level_primitives,
+                policy=algorithm.eval_data_collector._policy,
+                use_raps_obs=False,
+                use_true_actions=False,
+                num_rollouts=2,
+            )
         print("Saving networks: ")
         algorithm.trainer.save(logger.get_snapshot_dir())
 

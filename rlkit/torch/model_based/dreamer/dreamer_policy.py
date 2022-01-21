@@ -36,7 +36,13 @@ class DreamerPolicy(Policy):
         self.continuous_action_dim = continuous_action_dim
 
     @torch.no_grad()
-    def get_action(self, observation):
+    def get_action(
+        self,
+        observation,
+        use_raps_obs=False,
+        use_true_actions=True,
+        use_any_obs=True,
+    ):
         """
 
         :param observation:
@@ -72,7 +78,13 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         self.low_level_action_dim = low_level_action_dim
 
     @torch.no_grad()
-    def get_action(self, observation):
+    def get_action(
+        self,
+        observation,
+        use_raps_obs=False,
+        use_true_actions=True,
+        use_any_obs=True,
+    ):
         """
 
         :param observation:
@@ -91,6 +103,9 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                     ll_a,
                     self.num_low_level_actions_per_primitive,
                     self.state[1],
+                    use_raps_obs,
+                    use_true_actions,
+                    use_any_obs,
                 )
                 ll_a_pred = torch.cat(ll_a_pred, axis=0)
             else:
