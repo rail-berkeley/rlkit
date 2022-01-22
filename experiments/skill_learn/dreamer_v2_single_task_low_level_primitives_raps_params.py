@@ -27,7 +27,7 @@ if __name__ == "__main__":
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=30,
+            batch_size=100,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -95,6 +95,7 @@ if __name__ == "__main__":
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            depth=32,
         ),
         trainer_kwargs=dict(
             adam_eps=1e-5,
@@ -130,12 +131,13 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
-            "soccer-v2",
+            # "disassemble-v2",
+            # "sweep-into-v2",
+            # "soccer-v2",
             # "drawer-close-v2",
         ],
         # "uniform_priorities": [False],
+        "trainer_kwargs.wm_loss_scale": [-1, 1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -160,6 +162,13 @@ if __name__ == "__main__":
             variant["num_low_level_actions_per_primitive"],
             variant["env_name"],
         )
+        variant["trainer_kwargs"]["num_world_model_training_iterations"] = (
+            400 // variant["algorithm_kwargs"]["batch_size"]
+        )
+        if variant["trainer_kwargs"]["wm_loss_scale"] == -1:
+            variant["trainer_kwargs"]["wm_loss_scale"] = 1 / (
+                variant["trainer_kwargs"]["num_world_model_training_iterations"]
+            )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

@@ -421,7 +421,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 parameters.extend(list(net.parameters()))
         else:
             parameters = list(network.parameters())
-        self.scaler.scale(loss).backward()
         if gradient_clip > 0:
             self.scaler.unscale_(optimizer)
             torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
@@ -749,6 +748,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         batch_length=50,
         binarize_rewards=False,
         num_world_model_training_iterations=1,
+        wm_loss_scale=1,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
@@ -759,6 +759,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.train_wm = True
         self.binarize_rewards = binarize_rewards
         self.num_world_model_training_iterations = num_world_model_training_iterations
+        self.wm_loss_scale = wm_loss_scale
 
     def imagine_ahead(self, state, actor=None):
         if actor is None:
@@ -813,12 +814,13 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         """
         with torch.cuda.amp.autocast():
             for _ in range(self.num_world_model_training_iterations):
+                batch = self.buffer.random_batch(100)
+                rewards = ptu.from_numpy(batch["rewards"])
+                terminals = ptu.from_numpy(batch["terminals"])
+                obs = ptu.from_numpy(batch["observations"])
+                high_level_actions = ptu.from_numpy(batch["high_level_actions"])
+                low_level_actions = ptu.from_numpy(batch["low_level_actions"])
                 with torch.cuda.amp.autocast():
-                    rewards = batch["rewards"]
-                    terminals = batch["terminals"]
-                    obs = batch["observations"]
-                    high_level_actions = batch["high_level_actions"]
-                    low_level_actions = batch["low_level_actions"]
                     rt_idxs = np.arange(
                         self.num_low_level_actions_per_primitive,
                         obs.shape[1],
@@ -920,13 +922,15 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                             batch_indices,
                         ].reshape(-1, action_preds.shape[-1]),
                     )
-
-                self.update_network(
-                    self.world_model,
-                    self.world_model_optimizer,
-                    world_model_loss + primitive_loss,
-                    self.world_model_gradient_clip,
-                )
+                    loss = world_model_loss + primitive_loss
+                self.scaler.scale(loss * self.wm_loss_scale).backward()
+            # by taking optimizer step outside the loop we are doing gradient accumulation
+            self.update_network(
+                self.world_model,
+                self.world_model_optimizer,
+                loss,
+                self.world_model_gradient_clip,
+            )
 
         # we can also try using prior here
         state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
@@ -1023,13 +1027,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         self.actor_gradient_clip,
                     )
                 else:
+                    self.scaler.scale(actor_loss).backward()
                     self.update_network(
                         self.actor,
                         self.actor_optimizer,
                         actor_loss,
                         self.actor_gradient_clip,
                     )
-
+                    self.scaler.scale(vf_loss).backward()
                     self.update_network(
                         self.vf,
                         self.vf_optimizer,

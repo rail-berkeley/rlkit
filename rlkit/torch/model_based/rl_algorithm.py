@@ -271,7 +271,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
         self.total_train_expl_time += time.time() - st
-
+        self.trainer.buffer = self.replay_buffer
         self.training_mode(True)
         for train_step in range(self.num_pretrain_steps):
             train_data = self.replay_buffer.random_batch(self.batch_size)
