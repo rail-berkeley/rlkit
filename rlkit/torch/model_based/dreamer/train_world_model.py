@@ -128,8 +128,10 @@ def visualize_rollout(
             use_raps_obs, use_true_actions
         )
     )
-    file_suffix = "imagination_reconstructions_raps_obs_{}_true_actions.png".format(
-        use_raps_obs, use_true_actions
+    file_suffix = (
+        "imagination_reconstructions_raps_obs_{}_actual_actions_{}.png".format(
+            use_raps_obs, use_true_actions
+        )
     )
     file_path += file_suffix
     pl = max_path_length

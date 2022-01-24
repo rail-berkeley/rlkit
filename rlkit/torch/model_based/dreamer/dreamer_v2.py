@@ -485,6 +485,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 rewards,
                 terminals,
             )
+        self.scaler.scale(world_model_loss).backward()
         self.update_network(
             self.world_model,
             self.world_model_optimizer,
@@ -572,6 +573,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     )
 
                 if self.use_actor_value_optimizer:
+                    self.scaler.scale(actor_loss + vf_loss).backward()
                     self.update_network(
                         [self.actor, self.vf],
                         self.actor_value_optimizer,
@@ -579,13 +581,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                         self.actor_gradient_clip,
                     )
                 else:
+                    self.scaler.scale(actor_loss).backward()
                     self.update_network(
                         self.actor,
                         self.actor_optimizer,
                         actor_loss,
                         self.actor_gradient_clip,
                     )
-
+                    self.scaler.scale(vf_loss).backward()
                     self.update_network(
                         self.vf,
                         self.vf_optimizer,
@@ -723,14 +726,34 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 rewards,
                 terminals,
             )
+        reward_error = torch.nn.functional.mse_loss(rewards, reward_dist.mean).item()
+        discount_error = torch.nn.functional.mse_loss(
+            pred_discount_dist.mean, terminals
+        ).item()
+
         self.eval_statistics[prefix + "Full Obs Image Loss"] = image_pred_loss.item()
+        self.eval_statistics[prefix + "Full Obs Reward Error"] = reward_error
+        self.eval_statistics[prefix + "Full Obs Discount Error"] = discount_error
+
         self.eval_statistics[
             prefix + "Full Obs Primitive Model Image Loss"
         ] = image_pred_loss.item()
+        self.eval_statistics[prefix + "Full Obs Primitive Reward Error"] = reward_error
+        self.eval_statistics[
+            prefix + "Full Obs Primitive Discount Error"
+        ] = discount_error
+
         self.eval_statistics[prefix + "RAPS Obs Image Loss"] = image_pred_loss.item()
+        self.eval_statistics[prefix + "RAPS Obs Reward Error"] = reward_error
+        self.eval_statistics[prefix + "RAPS Obs Discount Error"] = discount_error
+
         self.eval_statistics[
             prefix + "RAPS Obs Primitive Model Image Loss"
         ] = image_pred_loss.item()
+        self.eval_statistics[prefix + "RAPS Obs Primitive Reward Error"] = reward_error
+        self.eval_statistics[
+            prefix + "RAPS Obs Primitive Discount Error"
+        ] = discount_error
 
     def save(self, filepath):
         torch.save(self.actor.state_dict(), osp.join(filepath, "actor.ptc"))
@@ -812,9 +835,10 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         """
         World Model Loss
         """
+
         with torch.cuda.amp.autocast():
-            for _ in range(self.num_world_model_training_iterations):
-                batch = self.buffer.random_batch(100)
+            for itr in range(self.num_world_model_training_iterations):
+                batch = self.buffer.random_batch(batch["rewards"].shape[0])
                 rewards = ptu.from_numpy(batch["rewards"])
                 terminals = ptu.from_numpy(batch["terminals"])
                 obs = ptu.from_numpy(batch["observations"])
@@ -924,6 +948,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     )
                     loss = world_model_loss + primitive_loss
                 self.scaler.scale(loss * self.wm_loss_scale).backward()
+                if itr == 0:
+                    state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
+                else:
+                    for k, v in state.items():
+                        state[k] = torch.cat([v, post[k][:, rt_idxs].detach()])
             # by taking optimizer step outside the loop we are doing gradient accumulation
             self.update_network(
                 self.world_model,
@@ -931,9 +960,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 loss,
                 self.world_model_gradient_clip,
             )
-
-        # we can also try using prior here
-        state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
 
         """
         Actor Value Loss
@@ -1092,6 +1118,88 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         return loss, eval_statistics
 
     @torch.no_grad()
+    def evaluate_helper(
+        self,
+        rewards,
+        terminals,
+        obs,
+        target_obs,
+        high_level_actions,
+        low_level_actions,
+        prefix,
+        rt_idxs,
+        use_network_action,
+        forward_batch_method,
+    ):
+        with torch.cuda.amp.autocast():
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+                action_preds,
+            ) = self.world_model(
+                obs,
+                (high_level_actions, low_level_actions),
+                use_network_action=use_network_action,
+                batch_indices=rt_idxs,
+                rt_idxs=rt_idxs,
+                forward_batch_method=forward_batch_method,
+            )
+            obs = target_obs.reshape(-1, *self.image_shape)
+            rewards = rewards.reshape(-1, rewards.shape[-1])
+            terminals = terminals.reshape(-1, terminals.shape[-1])
+            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
+                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                obs,
+                rewards,
+                terminals,
+            )
+            batch_start = np.random.randint(
+                0,
+                low_level_actions.shape[1] - self.batch_length + 1,
+                size=(low_level_actions.shape[0]),
+            )
+            batch_indices = (
+                np.linspace(
+                    batch_start,
+                    batch_start + self.batch_length - 1,
+                    self.batch_length - 1,
+                    endpoint=False,
+                )
+                .astype(int)
+                .transpose(1, 0)
+            )
+            primitive_loss = self.criterion(
+                action_preds[
+                    np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                    batch_indices,
+                ].reshape(-1, action_preds.shape[-1]),
+                low_level_actions[:, 1:][
+                    np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                    batch_indices,
+                ].reshape(-1, action_preds.shape[-1]),
+            )
+        self.eval_statistics[prefix + "Image Loss"] = image_pred_loss.item()
+        self.eval_statistics[
+            prefix + "Reward Pred Error"
+        ] = torch.nn.functional.mse_loss(rewards, reward_dist.mean).item()
+        self.eval_statistics[
+            prefix + "Pred Discount Error"
+        ] = torch.nn.functional.mse_loss(pred_discount_dist.mean, terminals).item()
+        self.eval_statistics[prefix + "Primitive Model Error"] = primitive_loss.item()
+
+    @torch.no_grad()
     def evaluate(self, batch, buffer_data=True):
         if buffer_data:
             prefix = "replay/"
@@ -1109,150 +1217,54 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         )
         # reset obs, effect of first primitive, second primitive, so on
         rt_idxs = np.concatenate([[0], rt_idxs])
-        with torch.cuda.amp.autocast():
-            (
-                post,
-                prior,
-                post_dist,
-                prior_dist,
-                image_dist,
-                reward_dist,
-                pred_discount_dist,
-                _,
-                _,
-            ) = self.world_model(
-                obs,
-                (high_level_actions, low_level_actions),
-                use_network_action=False,
-                batch_indices=rt_idxs,
-                rt_idxs=rt_idxs,
-                forward_batch_method="forward_batch",
-            )
-            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
-            r = rewards.reshape(-1, rewards.shape[-1])
-            t = terminals.reshape(-1, terminals.shape[-1])
-            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                image_dist,
-                reward_dist,
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
-                prior_dist,
-                post_dist,
-                pred_discount_dist,
-                ob,
-                r,
-                t,
-            )
-        self.eval_statistics[prefix + "Full Obs Image Loss"] = image_pred_loss.item()
+        self.evaluate_helper(
+            rewards,
+            terminals,
+            obs,
+            obs[:, rt_idxs],
+            high_level_actions,
+            low_level_actions,
+            prefix + "Full Obs ",
+            rt_idxs,
+            use_network_action=False,
+            forward_batch_method="forward_batch",
+        )
 
-        with torch.cuda.amp.autocast():
-            (
-                post,
-                prior,
-                post_dist,
-                prior_dist,
-                image_dist,
-                reward_dist,
-                pred_discount_dist,
-                _,
-                _,
-            ) = self.world_model(
-                obs,
-                (high_level_actions, low_level_actions),
-                use_network_action=True,
-                batch_indices=rt_idxs,
-                rt_idxs=rt_idxs,
-                forward_batch_method="forward_batch",
-            )
-            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
-            r = rewards.reshape(-1, rewards.shape[-1])
-            t = terminals.reshape(-1, terminals.shape[-1])
-            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                image_dist,
-                reward_dist,
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
-                prior_dist,
-                post_dist,
-                pred_discount_dist,
-                ob,
-                r,
-                t,
-            )
-        self.eval_statistics[
-            prefix + "Full Obs Primitive Model Image Loss"
-        ] = image_pred_loss.item()
+        self.evaluate_helper(
+            rewards,
+            terminals,
+            obs,
+            obs[:, rt_idxs],
+            high_level_actions,
+            low_level_actions,
+            prefix + "Full Obs Primitive Model ",
+            rt_idxs,
+            use_network_action=True,
+            forward_batch_method="forward_batch",
+        )
 
-        with torch.cuda.amp.autocast():
-            (
-                post,
-                prior,
-                post_dist,
-                prior_dist,
-                image_dist,
-                reward_dist,
-                pred_discount_dist,
-                _,
-                _,
-            ) = self.world_model(
-                obs[:, rt_idxs],
-                (high_level_actions, low_level_actions),
-                use_network_action=False,
-                batch_indices=rt_idxs,
-                rt_idxs=rt_idxs,
-                forward_batch_method="forward_batch_raps_intermediate_obs",
-            )
-            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
-            rewards = rewards.reshape(-1, rewards.shape[-1])
-            terminals = terminals.reshape(-1, terminals.shape[-1])
-            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                image_dist,
-                reward_dist,
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
-                prior_dist,
-                post_dist,
-                pred_discount_dist,
-                ob,
-                rewards,
-                terminals,
-            )
-        self.eval_statistics[prefix + "RAPS Obs Image Loss"] = image_pred_loss.item()
+        self.evaluate_helper(
+            rewards,
+            terminals,
+            obs[:, rt_idxs],
+            obs[:, rt_idxs],
+            high_level_actions,
+            low_level_actions,
+            prefix + "RAPS Obs ",
+            rt_idxs,
+            use_network_action=False,
+            forward_batch_method="forward_batch_raps_intermediate_obs",
+        )
 
-        with torch.cuda.amp.autocast():
-            (
-                post,
-                prior,
-                post_dist,
-                prior_dist,
-                image_dist,
-                reward_dist,
-                pred_discount_dist,
-                _,
-                _,
-            ) = self.world_model(
-                obs[:, rt_idxs],
-                (high_level_actions, low_level_actions),
-                use_network_action=True,
-                batch_indices=rt_idxs,
-                rt_idxs=rt_idxs,
-                forward_batch_method="forward_batch_raps_intermediate_obs",
-            )
-            ob = obs[:, rt_idxs].reshape(-1, *self.image_shape)
-            rewards = rewards.reshape(-1, rewards.shape[-1])
-            terminals = terminals.reshape(-1, terminals.shape[-1])
-            (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
-                image_dist,
-                reward_dist,
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
-                prior_dist,
-                post_dist,
-                pred_discount_dist,
-                ob,
-                rewards,
-                terminals,
-            )
-        self.eval_statistics[
-            prefix + "RAPS Obs Primitive Model Image Loss"
-        ] = image_pred_loss.item()
+        self.evaluate_helper(
+            rewards,
+            terminals,
+            obs[:, rt_idxs],
+            obs[:, rt_idxs],
+            high_level_actions,
+            low_level_actions,
+            prefix + "RAPS Obs Primitive Model ",
+            rt_idxs,
+            use_network_action=False,
+            forward_batch_method="forward_batch_raps_intermediate_obs",
+        )

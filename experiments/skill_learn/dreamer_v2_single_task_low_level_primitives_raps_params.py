@@ -33,7 +33,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=300,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -131,13 +131,12 @@ if __name__ == "__main__":
     search_space = {
         "env_name": [
             "assembly-v2",
-            # "disassemble-v2",
-            # "sweep-into-v2",
-            # "soccer-v2",
+            "disassemble-v2",
+            "sweep-into-v2",
+            "soccer-v2",
             # "drawer-close-v2",
         ],
-        # "uniform_priorities": [False],
-        "trainer_kwargs.wm_loss_scale": [-1, 1],
+        "trainer_kwargs.wm_loss_scale": [-1],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

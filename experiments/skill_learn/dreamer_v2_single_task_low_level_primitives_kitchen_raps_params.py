@@ -7,7 +7,9 @@ from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.low_level_primitives_exp import (
+    experiment,
+)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
@@ -25,42 +27,38 @@ if __name__ == "__main__":
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=30,
+            batch_size=100,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=250,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=417,  # 417*6 = 2502
+            batch_size=100,
             num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="RAPS",
+        algorithm="LLRAPS",
         version="normal",
-        replay_buffer_size=int(5e5),
+        replay_buffer_size=int(1.2e4),
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
-        env_suite="metaworld",
+        env_suite="kitchen",
         pass_render_kwargs=True,
         env_kwargs=dict(
+            dense=False,
+            image_obs=True,
+            action_scale=1.4,
+            use_workspace_limits=True,
             control_mode="primitives",
-            action_scale=1,
-            max_path_length=5,
-            reward_type="sparse",
-            camera_settings={
-                "distance": 0.38227044687537043,
-                "lookat": [0.21052547, 0.32329237, 0.587819],
-                "azimuth": 141.328125,
-                "elevation": -53.203125160653144,
-            },
+            num_low_level_actions_per_primitive=10,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -68,7 +66,9 @@ if __name__ == "__main__":
                 max_path_length=5,
                 unflatten_images=False,
             ),
-            image_kwargs=dict(imwidth=64, imheight=64),
+            image_kwargs=dict(),
+            collect_primitives_info=True,
+            render_intermediate_obs_to_info=True,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -111,49 +111,57 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=5 * 2,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
-        # generate_video=True,
+        low_level_action_dim=9,
+        mlp_hidden_sizes=[512, 512],
+        prioritize_fraction=0.0,
     )
 
     search_space = {
         "env_name": [
-            # "assembly-v2",
-            # "disassemble-v2",
-            "soccer-v2",
-            # "sweep-into-v2",
-            # "drawer-close-v2",
+            "microwave",
+            "kettle",
+            "slide_cabinet",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
-        # "env_kwargs.goto_pose_iterations":[100, 175, 300, 375, 500],
-        # "env_kwargs.pos_ctrl_action_scale":[0.01, .025, .05, .075, .1],
-        # "models_path": [
-        #     "/home/mdalal/research/skill_learn/rlkit/data/01-14-raps-mw-debug-logging/01-14-raps_mw_debug_logging_2022_01_14_23_12_45_0000--s-67618/"
-        # ],
+        "trainer_kwargs.wm_loss_scale": [-1],
+        "num_low_level_actions_per_primitive": [5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        variant[
-            "eval_buffer_path"
-        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
-            5,
-            100,
-            10,
-            10,
-            variant["env_name"],
+        if args.debug:
+            variant["algorithm_kwargs"]["num_pretrain_steps"] = 1
+            variant["algorithm_kwargs"]["min_num_steps_before_training"] = 10
+            variant["algorithm_kwargs"]["num_trains_per_train_loop"] = 1
+        variant["replay_buffer_size"] = int(
+            3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
         )
+        variant["trainer_kwargs"]["batch_length"] = int(
+            variant["num_low_level_actions_per_primitive"] * 5 + 1
+        )
+        variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+            "num_low_level_actions_per_primitive"
+        ]
+        variant["trainer_kwargs"]["num_world_model_training_iterations"] = (
+            400 // variant["algorithm_kwargs"]["batch_size"]
+        )
+        if variant["trainer_kwargs"]["wm_loss_scale"] == -1:
+            variant["trainer_kwargs"]["wm_loss_scale"] = 1 / (
+                variant["trainer_kwargs"]["num_world_model_training_iterations"]
+            )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
-            python = subprocess.check_output("which python", shell=True).decode(
-                "utf-8"
-            )[:-1]
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -161,7 +169,9 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="none",
-                python_cmd=python,
+                python_cmd=subprocess.check_output("which python", shell=True).decode(
+                    "utf-8"
+                )[:-1],
                 seed=seed,
                 exp_id=exp_id,
             )

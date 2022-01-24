@@ -605,7 +605,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
 
         reward, info = self.evaluate_state(self._last_stable_obs, action)
         if self.control_mode == "primitives":
-            reward = stats[0]
+            # reward = stats[0]
             info["success"] = float(stats[1] > 0)
             if self.collect_primitives_info:
                 info.update(self.primitives_info)

@@ -5,6 +5,7 @@ def experiment(variant):
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
 
     import torch
+    import torch.nn as nn
 
     import rlkit.envs.primitives_make_env as primitives_make_env
     import rlkit.torch.pytorch_util as ptu
@@ -88,7 +89,7 @@ def experiment(variant):
     actor = actor_model_class(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
         discrete_action_dim=discrete_action_dim,
         continuous_action_dim=continuous_action_dim,
         **variant["actor_kwargs"],
@@ -98,14 +99,14 @@ def experiment(variant):
         * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
     )
     target_vf = Mlp(
         hidden_sizes=[variant["model_kwargs"]["model_hidden_size"]]
         * variant["vf_kwargs"]["num_layers"],
         output_size=1,
         input_size=world_model.feature_size,
-        hidden_activation=torch.nn.functional.elu,
+        hidden_activation=nn.ELU,
     )
     if variant.get("models_path", None) is not None:
         filename = variant["models_path"]

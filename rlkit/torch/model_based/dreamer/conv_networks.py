@@ -3,6 +3,7 @@ import torch
 from torch import jit
 from torch import nn as nn
 
+import rlkit.torch.pytorch_util as ptu
 from rlkit.pythonplusplus import identity
 
 
@@ -76,6 +77,7 @@ class CNN(jit.ScriptModule):
             conv_block_2.append(hidden_activation(inplace=True))
             input_channels = out_channels
         self.conv_block_2 = nn.Sequential(*conv_block_2)
+        self.to(memory_format=torch.channels_last)
 
     @jit.script_method
     def forward(self, input):
@@ -87,7 +89,7 @@ class CNN(jit.ScriptModule):
             self.input_channels,
             self.input_height,
             self.input_width,
-        )
+        ).to(memory_format=torch.channels_last, device=ptu.device, dtype=torch.float16)
 
         h = self.conv_block_1(h)
         h = self.conv_block_2(h)
@@ -164,6 +166,7 @@ class DCNN(jit.ScriptModule):
         deconv_output.bias.data.fill_(0)
         deconv_layers.append(deconv_output)
         self.deconv_block = nn.Sequential(*deconv_layers)
+        self.to(memory_format=torch.channels_last)
 
     @jit.script_method
     def forward(self, input):
@@ -173,6 +176,8 @@ class DCNN(jit.ScriptModule):
             self.deconv_input_channels,
             self.deconv_input_width,
             self.deconv_input_height,
-        )
+        ).to(memory_format=torch.channels_last, device=ptu.device, dtype=torch.float16)
         output = self.deconv_block(h)
-        return output
+        return output.to(
+            memory_format=torch.channels_last, device=ptu.device, dtype=torch.float16
+        )

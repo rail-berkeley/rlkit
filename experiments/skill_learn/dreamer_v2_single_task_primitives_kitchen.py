@@ -31,7 +31,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=250,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -122,11 +122,6 @@ if __name__ == "__main__":
             "hinge_cabinet",
             "light_switch",
         ],
-        "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [50],
-        "algorithm_kwargs.min_num_steps_before_training": [2500],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
