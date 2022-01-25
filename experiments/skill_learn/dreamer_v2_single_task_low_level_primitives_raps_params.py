@@ -27,18 +27,18 @@ if __name__ == "__main__":
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=100,
+            batch_size=200,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=300,
+            num_epochs=250,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=100,
+            batch_size=200,
             num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
@@ -116,8 +116,9 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
+            wm_loss_scale=-1,
         ),
-        num_expl_envs=5 * 2,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -134,9 +135,9 @@ if __name__ == "__main__":
             "disassemble-v2",
             "sweep-into-v2",
             "soccer-v2",
-            # "drawer-close-v2",
         ],
-        "trainer_kwargs.wm_loss_scale": [-1],
+        "model_kwargs.use_prior_instead_of_posterior": [True, False],
+        "num_low_level_actions_per_primitive": [10, 5],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -152,15 +153,15 @@ if __name__ == "__main__":
         variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
             "num_low_level_actions_per_primitive"
         ]
-        variant[
-            "eval_buffer_path"
-        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
-            5,
-            100,
-            10,
-            variant["num_low_level_actions_per_primitive"],
-            variant["env_name"],
-        )
+        # variant[
+        #     "eval_buffer_path"
+        # ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
+        #     5,
+        #     100,
+        #     10,
+        #     variant["num_low_level_actions_per_primitive"],
+        #     variant["env_name"],
+        # )
         variant["trainer_kwargs"]["num_world_model_training_iterations"] = (
             400 // variant["algorithm_kwargs"]["batch_size"]
         )

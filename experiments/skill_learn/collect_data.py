@@ -132,10 +132,8 @@ def collect_world_model_data_low_level_primitives(
                 p * num_low_level_actions_per_primitive
                 + 1 : (p + 1) * num_low_level_actions_per_primitive
                 + 1,
-            ] = (
-                np.array(low_level_obs)
-                .transpose(0, 1, 4, 2, 3)
-                .reshape(num_envs, num_low_level_actions_per_primitive, -1)
+            ] = np.array(low_level_obs).reshape(
+                num_envs, num_low_level_actions_per_primitive, -1
             )
             high_level_actions = np.repeat(
                 np.array(high_level_actions).reshape(num_envs, 1, -1),
@@ -213,8 +211,8 @@ if __name__ == "__main__":
         "sweep-into-v2",
         "soccer-v2",
     ]
-    num_ts = [100]
-    num_lls = [5, 10, 25]
+    num_ts = [50]
+    num_lls = [5, 10]
 
     # env_name = args.env_name
     # num_trajs = args.num_trajs

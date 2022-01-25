@@ -27,7 +27,7 @@ if __name__ == "__main__":
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
-            batch_size=100,
+            batch_size=200,
             max_path_length=5,
         )
         exp_prefix = "test" + args.exp_prefix
@@ -38,7 +38,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=100,
+            batch_size=200,
             num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
@@ -110,8 +110,9 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
+            wm_loss_scale=-1,
         ),
-        num_expl_envs=5,
+        num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -124,13 +125,13 @@ if __name__ == "__main__":
         "env_name": [
             "microwave",
             "kettle",
-            "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",
         ],
         "trainer_kwargs.wm_loss_scale": [-1],
-        "num_low_level_actions_per_primitive": [5],
+        "num_low_level_actions_per_primitive": [10, 5],
+        "model_kwargs.use_prior_instead_of_posterior": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

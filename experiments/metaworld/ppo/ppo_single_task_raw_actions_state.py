@@ -48,19 +48,25 @@ if __name__ == "__main__":
             control_mode="end_effector",
             action_scale=1 / 100,
             max_path_length=500,
-            reward_type="dense",
+            reward_type="sparse",
+            camera_settings={
+                "distance": 0.38227044687537043,
+                "lookat": [0.21052547, 0.32329237, 0.587819],
+                "azimuth": 141.328125,
+                "elevation": -53.203125160653144,
+            },
             usage_kwargs=dict(
-                use_dm_backend=False,
+                use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 use_image_obs=False,
                 max_path_length=500,
                 unflatten_images=False,
             ),
-            image_kwargs=dict(),
+            image_kwargs=dict(imwidth=64, imheight=64),
         ),
         actor_kwargs=dict(recurrent=False, hidden_size=64, hidden_activation="tanh"),
         num_processes=10,
-        num_env_steps=int(1e6),
+        num_env_steps=int(1e7),
         num_steps=2048 // 10,
         log_interval=1,
         eval_interval=1,
@@ -71,7 +77,10 @@ if __name__ == "__main__":
 
     search_space = {
         "env_name": [
-            "plate-slide-v2",
+            "assembly-v2",
+            "disassemble-v2",
+            "soccer-v2",
+            # "sweep-into-v2",
         ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(

@@ -117,7 +117,6 @@ if __name__ == "__main__":
         "env_name": [
             "microwave",
             "kettle",
-            "slide_cabinet",
             "top_left_burner",
             "hinge_cabinet",
             "light_switch",

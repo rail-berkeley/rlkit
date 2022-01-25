@@ -31,7 +31,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=1000,
+            num_epochs=250,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -115,39 +115,39 @@ if __name__ == "__main__":
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
-        # generate_video=True,
     )
 
     search_space = {
         "env_name": [
-            # "assembly-v2",
-            # "disassemble-v2",
+            "assembly-v2",
+            "disassemble-v2",
             "soccer-v2",
-            # "sweep-into-v2",
-            # "drawer-close-v2",
+            "sweep-into-v2",
         ],
-        # "env_kwargs.goto_pose_iterations":[100, 175, 300, 375, 500],
-        # "env_kwargs.pos_ctrl_action_scale":[0.01, .025, .05, .075, .1],
-        # "models_path": [
-        #     "/home/mdalal/research/skill_learn/rlkit/data/01-14-raps-mw-debug-logging/01-14-raps_mw_debug_logging_2022_01_14_23_12_45_0000--s-67618/"
-        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        variant[
-            "eval_buffer_path"
-        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
-            5,
-            100,
-            10,
-            10,
-            variant["env_name"],
-        )
+        # variant[
+        #     "eval_buffer_path"
+        # ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
+        #     5,
+        #     100,
+        #     10,
+        #     10,
+        #     variant["env_name"],
+        # )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
+            variant["env_kwargs"]["open_gripper_iterations"] = variant["env_kwargs"][
+                "goto_pose_iterations"
+            ]
+            variant["env_kwargs"]["close_gripper_iterations"] = variant["env_kwargs"][
+                "goto_pose_iterations"
+            ]
+
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id

@@ -120,7 +120,6 @@ if __name__ == "__main__":
             "soccer-v2",
             "sweep-into-v2",
         ],
-        # "env_kwargs.reward_type":['dense'],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
