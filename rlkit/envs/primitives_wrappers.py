@@ -525,6 +525,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.sim.data.qpos[:] = self.reset_qpos
             self.sim.forward()
             self.init_tcp = self.tcp_center
+        self.prev_grasp = 1  # corresponds to open
 
     def set_render_every_step(
         self,
@@ -552,6 +553,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             "end_effector",
             "vices",
         ]:
+            self.prev_ll_a = a
             if self.control_mode == "end_effector":
                 self.set_xyz_action(a[:3])
                 self.do_simulation([a[-1], -a[-1]])
@@ -602,11 +604,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self._last_stable_obs = self._get_obs()
         if not self.isV2:
             return self._last_stable_obs
-
-        reward, info = self.evaluate_state(self._last_stable_obs, action)
+        reward, info = self.evaluate_state(self._last_stable_obs, self.prev_ll_a)
         if self.control_mode == "primitives":
-            # reward = stats[0]
-            info["success"] = float(stats[1] > 0)
             if self.collect_primitives_info:
                 info.update(self.primitives_info)
             info["num low level steps"] = (
@@ -819,6 +818,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         # return np.concatenate([qpos, qvel, pos_hand, [gripper_distance_apart]])
         return np.concatenate([pos_hand, qpos[8:10]])
 
+    def get_gripper_pos(
+        self,
+    ):
+        finger_right, finger_left = (
+            self._get_site_pos("rightEndEffector"),
+            self._get_site_pos("leftEndEffector"),
+        )
+        return (finger_right - finger_left)[:2]
+
     def close_gripper(self, d):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
@@ -836,11 +844,13 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, -d])
+            r, info = self.evaluate_state(self._get_obs(), a)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
+        self.prev_ll_a = a
+        self.prev_grasp = -d
         return np.array((total_reward, total_success))
 
     def open_gripper(self, d):
@@ -860,21 +870,23 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), [0, 0, 0, d])
+            r, info = self.evaluate_state(self._get_obs(), a)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
+        self.prev_ll_a = a
+        self.prev_grasp = d
         return np.array((total_reward, total_success))
 
-    def goto_pose(self, pose, grasp=False):
+    def goto_pose(self, pose):
         total_reward, total_success = 0, 0
         for _ in range(self.goto_pose_iterations):
             delta = pose - self.get_endeff_pos()
-            gripper = self.sim.data.qpos[8:10]
-            if grasp:
-                gripper = [1, -1]
-            a = np.array([delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper])
+            gripper_ctrl = [-self.prev_grasp, self.prev_grasp]
+            a = np.array(
+                [delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper_ctrl]
+            )
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -887,11 +899,12 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self._set_action(a)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), [*delta, 0])
+            r, info = self.evaluate_state(self._get_obs(), a)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
+        self.prev_ll_a = a
         return np.array((total_reward, total_success))
 
     def top_x_y_grasp(self, xyzd):
@@ -910,42 +923,42 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def lift(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]), grasp=True
+            self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]),
         )
         return stats
 
     def drop(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]), grasp=True
+            self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]),
         )
         return stats
 
     def move_left(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]), grasp=True
+            self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]),
         )
         return stats
 
     def move_right(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]), grasp=True
+            self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]),
         )
         return stats
 
     def move_forward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]), grasp=True
+            self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]),
         )
         return stats
 
     def move_backward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
         stats = self.goto_pose(
-            self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]), grasp=True
+            self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]),
         )
         return stats
 
@@ -1368,41 +1381,51 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         return stats
 
     def move_delta_ee(self, pose):
-        stats = self.goto_pose(self._eef_xpos + pose, grasp=True)
+        stats = self.goto_pose(
+            self._eef_xpos + pose,
+        )
         return stats
 
     def lift(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self._eef_xpos + np.array([0.0, 0.0, z_dist]), grasp=True
+            self._eef_xpos + np.array([0.0, 0.0, z_dist]),
         )
         return stats
 
     def drop(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
         stats = self.goto_pose(
-            self._eef_xpos + np.array([0.0, 0.0, -z_dist]), grasp=True
+            self._eef_xpos + np.array([0.0, 0.0, -z_dist]),
         )
         return stats
 
     def move_left(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(self._eef_xpos + np.array([0, -x_dist, 0.0]), grasp=True)
+        stats = self.goto_pose(
+            self._eef_xpos + np.array([0, -x_dist, 0.0]),
+        )
         return stats
 
     def move_right(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(self._eef_xpos + np.array([0, x_dist, 0.0]), grasp=True)
+        stats = self.goto_pose(
+            self._eef_xpos + np.array([0, x_dist, 0.0]),
+        )
         return stats
 
     def move_forward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(self._eef_xpos + np.array([y_dist, 0, 0.0]), grasp=True)
+        stats = self.goto_pose(
+            self._eef_xpos + np.array([y_dist, 0, 0.0]),
+        )
         return stats
 
     def move_backward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(self._eef_xpos + np.array([-y_dist, 0, 0.0]), grasp=True)
+        stats = self.goto_pose(
+            self._eef_xpos + np.array([-y_dist, 0, 0.0]),
+        )
         return stats
 
     def break_apart_action(self, a):
