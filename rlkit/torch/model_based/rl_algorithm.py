@@ -173,7 +173,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         pretrain_policy=None,
         num_pretrain_steps=0,
         use_pretrain_policy_for_initial_data=True,
-        use_wandb=False,
         eval_buffer=None,
     ):
         super().__init__(
