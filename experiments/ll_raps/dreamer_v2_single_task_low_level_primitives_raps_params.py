@@ -121,14 +121,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
-            "soccer-v2",
-        ],
-        "model_kwargs.use_prior_instead_of_posterior": [True, False],
-        "num_low_level_actions_per_primitive": [10, 5],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

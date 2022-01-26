@@ -23,7 +23,6 @@ if __name__ == "__main__":
             batch_size=25,
             max_path_length=5,
         )
-
     else:
         algorithm_kwargs = dict(
             num_epochs=1000,
@@ -36,7 +35,6 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=10,
             num_trains_per_train_loop=100,
         )
-
     variant = dict(
         algorithm="LLRAPS",
         version="normal",
@@ -110,6 +108,7 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
             weight_decay=0.0,
+            batch_length=50,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
@@ -119,38 +118,10 @@ if __name__ == "__main__":
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
         uniform_priorities=True,
-        # unsubsampled_rollout=True,
-        # generate_video=True,
     )
 
     search_space = {
-        "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
-            "soccer-v2",
-            # "drawer-close-v2",
-        ],
-        "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [100],
-        "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [100],
-        "num_low_level_actions_per_primitive": [10],
-        "trainer_kwargs.batch_length": [50],
-        # "replay_buffer_path": [
-        #     "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
-        # ],
-        # "trainer_kwargs.binarize_rewards": [True, False],
-        # "model_kwargs.reward_classifier": [True, False ],
-        # "primitive_embedding": [True, False],
-        # "prioritize_fraction": [0.25],
-        # "uniform_priorities": [False],
-        # "models_path": [
-        # "/home/mdalal/research/skill_learn/rlkit/data/01-17-ll-raps-mw-no-transposes/01-17-ll_raps_mw_no_transposes_2022_01_17_15_49_24_0000--s-61010/"
-        # "/home/mdalal/research/skill_learn/rlkit/data/01-18-ll-raps-mw-no-transposes/01-18-ll_raps_mw_no_transposes_2022_01_18_00_41_14_0000--s-64192/"
-        # ],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

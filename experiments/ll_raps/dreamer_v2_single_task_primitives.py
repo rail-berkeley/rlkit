@@ -35,7 +35,6 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
         )
-
     variant = dict(
         algorithm="RAPS",
         version="normal",
@@ -112,12 +111,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "soccer-v2",
-            "sweep-into-v2",
-        ],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

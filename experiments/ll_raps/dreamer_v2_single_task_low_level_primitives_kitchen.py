@@ -30,7 +30,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=1000,
             max_path_length=5,
-            batch_size=100,
+            batch_size=200,
             num_expl_steps_per_train_loop=30,
             num_train_loops_per_epoch=10,
             num_trains_per_train_loop=100,
@@ -60,6 +60,7 @@ if __name__ == "__main__":
             image_kwargs=dict(),
             collect_primitives_info=True,
             render_intermediate_obs_to_info=True,
+            num_low_level_actions_per_primitive=5,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -104,6 +105,7 @@ if __name__ == "__main__":
             imagination_horizon=5,
             batch_length=100,
             weight_decay=0.0,
+            batch_length=50,
         ),
         num_expl_envs=5,
         num_eval_envs=1,
@@ -115,22 +117,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_name": [
-            "microwave",
-            "kettle",
-            "slide_cabinet",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-        ],
-        "algorithm_kwargs.num_train_loops_per_epoch": [10],
-        "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
-        "algorithm_kwargs.num_pretrain_steps": [1000],
-        "algorithm_kwargs.num_trains_per_train_loop": [100],
-        "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [200],
-        "num_low_level_actions_per_primitive": [5],
-        "trainer_kwargs.batch_length": [50],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

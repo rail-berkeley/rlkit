@@ -23,7 +23,6 @@ if __name__ == "__main__":
             batch_size=200,
             max_path_length=5,
         )
-
     else:
         algorithm_kwargs = dict(
             num_epochs=250,
@@ -36,7 +35,6 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
             num_trains_per_train_loop=10 * 2,  # 400//40
         )
-
     variant = dict(
         algorithm="LLRAPS",
         version="normal",
@@ -113,18 +111,8 @@ if __name__ == "__main__":
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
     )
-
     search_space = {
-        "env_name": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-        ],
-        "trainer_kwargs.wm_loss_scale": [-1],
-        "num_low_level_actions_per_primitive": [10, 5],
-        "model_kwargs.use_prior_instead_of_posterior": [True, False],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,

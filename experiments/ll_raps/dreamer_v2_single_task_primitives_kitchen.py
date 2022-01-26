@@ -109,13 +109,7 @@ if __name__ == "__main__":
     )
 
     search_space = {
-        "env_name": [
-            "microwave",
-            "kettle",
-            "top_left_burner",
-            "hinge_cabinet",
-            "light_switch",
-        ],
+        key: value for key, value in zip(args.search_keys, args.search_values)
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
