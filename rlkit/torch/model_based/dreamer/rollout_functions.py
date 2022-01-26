@@ -13,44 +13,30 @@ def vec_rollout(
     rollout_function_kwargs=None,
 ):
     num_envs = env.n_envs
-    observations = []
-    actions = []
-    rewards = []
-    terminals = []
-    agent_infos = []
-    env_infos = []
-    path_length = 0
 
-    o = env.reset()
-    agent.reset(o)
-    a = np.zeros((num_envs, env.action_space.low.size))
-    r = np.zeros(num_envs)
+    policy_obs = env.reset()
+    agent.reset(policy_obs)
 
-    observations.append(o)
-    rewards.append(r)
-    terminals.append([False] * num_envs)
-    actions.append(a)
-    agent_infos.append({})
-    env_infos.append({})
+    observations = [policy_obs]
+    rewards = [np.zeros(num_envs)]
+    actions = [np.zeros((num_envs, env.action_space.low.size))]
+    terminals = [[False] * num_envs]
+    agent_infos = [{}]
+    env_infos = [{}]
 
-    while path_length < max_path_length:
-        a, agent_info = agent.get_action(o)
+    for step in range(0, max_path_length):
+        action, agent_info = agent.get_action(policy_obs)
 
-        next_o, r, d, env_info = env.step(copy.deepcopy(a))
-        if render:
-            img = env.render(mode="rgb_array", imwidth=256, imheight=256)
-            cv2.imshow("img", img)
-            cv2.waitKey(1)
-        observations.append(next_o)
-        rewards.append(r)
-        terminals.append(d)
-        actions.append(a)
+        obs, reward, done, info = env.step(copy.deepcopy(action))
+        observations.append(obs)
+        rewards.append(reward)
+        terminals.append(done)
+        actions.append(action)
         agent_infos.append(agent_info)
-        env_infos.append(env_info)
-        path_length += 1
-        if d.all():
+        env_infos.append(info)
+        if done.all():
             break
-        o = next_o
+        policy_obs = obs
     actions = np.array(actions)
     if len(actions.shape) == 1:
         actions = np.expand_dims(actions, 1)
@@ -117,13 +103,13 @@ def vec_rollout_low_level_raps(
         dtype=np.uint8,
     )
 
-    o = env.reset()
-    agent.reset(o)
+    obs = env.reset()
+    agent.reset(obs)
     high_level_action = np.zeros((num_envs, env.action_space.low.size + 1))
     low_level_action = np.zeros((num_envs, low_level_action_dim))
     reward = np.zeros(num_envs)
 
-    observations[:, 0] = o
+    observations[:, 0] = obs
     high_level_actions[:, 0] = high_level_action
     low_level_actions[:, 0] = low_level_action
     rewards = [reward]
@@ -132,7 +118,7 @@ def vec_rollout_low_level_raps(
     agent_infos = [{}]
     env_infos = [{}]
 
-    o = (None, np.array(o))
+    policy_obs = (None, np.array(obs))
     phases = (
         np.linspace(
             0,
@@ -144,7 +130,7 @@ def vec_rollout_low_level_raps(
     )
     phases = np.repeat(phases.reshape(1, -1), num_envs, axis=0)
     for step in range(0, max_path_length):
-        high_level_action, agent_info = agent.get_action(o)
+        high_level_action, agent_info = agent.get_action(policy_obs)
         argmax = np.argmax(high_level_action[:, :num_primitives], axis=-1)
         one_hots = np.eye(num_primitives)[argmax]
         high_level_action = np.concatenate(
@@ -194,7 +180,7 @@ def vec_rollout_low_level_raps(
 
         if done.all():
             break
-        o = (np.array(low_level_action), low_level_obs)
+        policy_obs = (np.array(low_level_action), low_level_obs)
     rewards = np.array(rewards)
     actions = np.array(actions)
     env_info_final = {}
