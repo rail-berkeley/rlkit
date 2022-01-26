@@ -4,9 +4,6 @@ import subprocess
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
-from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
-    preprocess_variant,
-)
 from rlkit.torch.model_based.dreamer.experiments.raps_experiment import experiment
 
 if __name__ == "__main__":
@@ -30,10 +27,10 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
-            num_trains_per_train_loop=10 * 2,  # 400//40
+            batch_size=200,
+            num_expl_steps_per_train_loop=60,
+            num_train_loops_per_epoch=20,
+            num_trains_per_train_loop=20,
         )
     variant = dict(
         algorithm="RAPS",
@@ -118,16 +115,6 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        # variant[
-        #     "eval_buffer_path"
-        # ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
-        #     5,
-        #     100,
-        #     10,
-        #     10,
-        #     variant["env_name"],
-        # )
-        variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             variant["env_kwargs"]["open_gripper_iterations"] = variant["env_kwargs"][
                 "goto_pose_iterations"

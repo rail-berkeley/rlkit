@@ -6,6 +6,7 @@ from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
+    preprocess_variant_llraps,
 )
 from rlkit.torch.model_based.dreamer.experiments.ll_raps_experiment import experiment
 
@@ -19,7 +20,7 @@ if __name__ == "__main__":
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            num_trains_per_train_loop=10,
+            num_trains_per_train_loop=1,
             batch_size=200,
             max_path_length=5,
         )
@@ -31,9 +32,9 @@ if __name__ == "__main__":
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=200,
-            num_expl_steps_per_train_loop=30 * 2,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40 // 2,  # 1000//(5*5)
-            num_trains_per_train_loop=10 * 2,  # 400//40
+            num_expl_steps_per_train_loop=60,
+            num_train_loops_per_epoch=20,
+            num_trains_per_train_loop=20,
         )
     variant = dict(
         algorithm="LLRAPS",
@@ -101,7 +102,6 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
-            wm_loss_scale=-1,
         ),
         num_expl_envs=1,
         num_eval_envs=1,
@@ -110,6 +110,7 @@ if __name__ == "__main__":
         low_level_action_dim=9,
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
+        effective_batch_size=400,
     )
     search_space = {
         key: value for key, value in zip(args.search_keys, args.search_values)
@@ -119,27 +120,7 @@ if __name__ == "__main__":
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        if args.debug:
-            variant["algorithm_kwargs"]["num_pretrain_steps"] = 1
-            variant["algorithm_kwargs"]["min_num_steps_before_training"] = 10
-            variant["algorithm_kwargs"]["num_trains_per_train_loop"] = 1
-        variant["replay_buffer_size"] = int(
-            3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
-        )
-        variant["trainer_kwargs"]["batch_length"] = int(
-            variant["num_low_level_actions_per_primitive"] * 5 + 1
-        )
-        variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
-            "num_low_level_actions_per_primitive"
-        ]
-        variant["trainer_kwargs"]["num_world_model_training_iterations"] = (
-            400 // variant["algorithm_kwargs"]["batch_size"]
-        )
-        if variant["trainer_kwargs"]["wm_loss_scale"] == -1:
-            variant["trainer_kwargs"]["wm_loss_scale"] = 1 / (
-                variant["trainer_kwargs"]["num_world_model_training_iterations"]
-            )
-        variant = preprocess_variant(variant, args.debug)
+        variant = preprocess_variant_llraps(variant)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)
             variant["seed"] = seed
