@@ -12,6 +12,7 @@ def vec_rollout(
     render=False,
     rollout_function_kwargs=None,
 ):
+    num_envs = env.n_envs
     observations = []
     actions = []
     rewards = []
@@ -22,12 +23,12 @@ def vec_rollout(
 
     o = env.reset()
     agent.reset(o)
-    a = np.zeros((env.n_envs, env.action_space.low.size))
-    r = np.zeros(env.n_envs)
+    a = np.zeros((num_envs, env.action_space.low.size))
+    r = np.zeros(num_envs)
 
     observations.append(o)
     rewards.append(r)
-    terminals.append([False] * env.n_envs)
+    terminals.append([False] * num_envs)
     actions.append(a)
     agent_infos.append({})
     env_infos.append({})
@@ -89,9 +90,11 @@ def vec_rollout_low_level_raps(
     ]
     num_primitives = rollout_function_kwargs["num_primitives"]
     low_level_action_dim = rollout_function_kwargs["low_level_action_dim"]
+    num_envs = env.n_envs
+
     low_level_actions = np.zeros(
         (
-            env.n_envs,
+            num_envs,
             (max_path_length * num_low_level_actions_per_primitive) + 1,
             low_level_action_dim,
         ),
@@ -99,117 +102,101 @@ def vec_rollout_low_level_raps(
     )
     high_level_actions = np.zeros(
         (
-            env.n_envs,
+            num_envs,
             (max_path_length * num_low_level_actions_per_primitive) + 1,
-            env.action_space.low.shape[0] + 1,  # includes phase variable
+            env.action_space.low.shape[0] + 1,  # Plus 1 includes phase variable.
         ),
         dtype=np.float32,
     )
     observations = np.zeros(
         (
-            env.n_envs,
+            num_envs,
             (max_path_length * num_low_level_actions_per_primitive) + 1,
             env.observation_space.low.shape[0],
         ),
         dtype=np.uint8,
     )
-    rewards = []
-    terminals = []
-    agent_infos = []
-    env_infos = []
-    actions = []
-    path_length = 0
 
     o = env.reset()
-
     agent.reset(o)
-    ha = np.zeros((env.n_envs, env.action_space.low.size + 1))
-    la = np.zeros((env.n_envs, low_level_action_dim))
-    r = np.zeros(env.n_envs)
+    high_level_action = np.zeros((num_envs, env.action_space.low.size + 1))
+    low_level_action = np.zeros((num_envs, low_level_action_dim))
+    reward = np.zeros(num_envs)
 
     observations[:, 0] = o
-    high_level_actions[:, 0] = ha
-    low_level_actions[:, 0] = la
-    rewards.append(r)
-    actions.append(np.zeros((env.n_envs, env.action_space.low.size)))
-    terminals.append([False] * env.n_envs)
-    agent_infos.append({})
-    env_infos.append({})
+    high_level_actions[:, 0] = high_level_action
+    low_level_actions[:, 0] = low_level_action
+    rewards = [reward]
+    actions = [np.zeros((num_envs, env.action_space.low.size))]
+    terminals = [[False] * num_envs]
+    agent_infos = [{}]
+    env_infos = [{}]
 
-    if render:
-        img = env.render(mode="rgb_array", imwidth=256, imheight=256)
-        cv2.imshow("img", img)
-        cv2.waitKey(1)
     o = (None, np.array(o))
+    phases = (
+        np.linspace(
+            0,
+            1,
+            num_low_level_actions_per_primitive,
+            endpoint=False,
+        )
+        + 1 / (num_low_level_actions_per_primitive)
+    )
+    phases = np.repeat(phases.reshape(1, -1), num_envs, axis=0)
     for step in range(0, max_path_length):
-        ha, agent_info = agent.get_action(o)
-        if (ha[:, :num_primitives].sum(axis=-1) != 1).any():
-            argmax = np.argmax(ha[:, :num_primitives], axis=-1)
-            one_hots = np.eye(num_primitives)[argmax]
-            ha = np.concatenate((one_hots, ha[:, num_primitives:]), axis=-1)
+        high_level_action, agent_info = agent.get_action(o)
+        argmax = np.argmax(high_level_action[:, :num_primitives], axis=-1)
+        one_hots = np.eye(num_primitives)[argmax]
+        high_level_action = np.concatenate(
+            (one_hots, high_level_action[:, num_primitives:]), axis=-1
+        )
 
-        _, r, d, i = env.step(ha)
-        rewards.append(r)
-        terminals.append(d)
-        actions.append(ha)
+        _, reward, done, info = env.step(high_level_action)
+        rewards.append(reward)
+        terminals.append(done)
+        actions.append(high_level_action)
         agent_infos.append(agent_info)
-        if render:
-            img = env.render(mode="rgb_array", imwidth=256, imheight=256)
-            cv2.imshow("img", img)
-            cv2.waitKey(1)
-        la = np.array(i["actions"])
-        lo = np.array(i["observations"])
-        del i["actions"]
-        del i["observations"]
-        del i["robot-states"]
-        del i["arguments"]
+        low_level_action = np.array(info["low_level_action"])
+        low_level_obs = np.array(info["low_level_obs"])
+        del info["low_level_action"]
+        del info["low_level_obs"]
         gc.collect()
-        env_infos.append(i)
+        env_infos.append(info)
         low_level_actions[
             :,
             step * num_low_level_actions_per_primitive
             + 1 : (step + 1) * num_low_level_actions_per_primitive
             + 1,
-        ] = np.array(la)
+        ] = np.array(low_level_action)
         observations[
             :,
             step * num_low_level_actions_per_primitive
             + 1 : step * num_low_level_actions_per_primitive
             + num_low_level_actions_per_primitive
             + 1,
-        ] = lo
-        ha = np.repeat(
-            np.array(ha).reshape(r.shape[0], 1, -1),
+        ] = low_level_obs
+
+        high_level_action = np.repeat(
+            np.array(high_level_action).reshape(num_envs, 1, -1),
             num_low_level_actions_per_primitive,
             axis=1,
         )
-        phases = (
-            np.linspace(
-                0,
-                1,
-                num_low_level_actions_per_primitive,
-                endpoint=False,
-            )
-            + 1 / (num_low_level_actions_per_primitive)
+        high_level_action = np.concatenate(
+            (high_level_action, np.expand_dims(phases, -1)), axis=2
         )
-        phases = np.repeat(phases.reshape(1, -1), r.shape[0], axis=0)
-        ha = np.concatenate((ha, np.expand_dims(phases, -1)), axis=2)
         high_level_actions[
             :,
             step * num_low_level_actions_per_primitive
             + 1 : step * num_low_level_actions_per_primitive
             + num_low_level_actions_per_primitive
             + 1,
-        ] = ha
+        ] = high_level_action
 
-        path_length += 1
-        if d.all():
+        if done.all():
             break
-        o = (np.array(la), lo)
+        o = (np.array(low_level_action), low_level_obs)
     rewards = np.array(rewards)
     actions = np.array(actions)
-    if len(rewards.shape) == 1:
-        rewards = rewards.reshape(-1, 1)
     env_info_final = {}
     for info in env_infos[1:]:
         for key, value in info.items():

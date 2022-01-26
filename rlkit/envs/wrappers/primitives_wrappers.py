@@ -502,17 +502,16 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             "torque",
             "end_effector",
         ]:
-            self.prev_ll_a = a
+            self.prev_ll_a = action
             if self.control_mode == "end_effector":
-                self.set_xyz_action(a[:3])
-                self.do_simulation([a[-1], -a[-1]])
+                self.set_xyz_action(action[:3])
+                self.do_simulation([action[-1], -action[-1]])
             stats = [0, 0]
         else:
             self.img_array = []
             self.primitives_info = {}
-            self.primitives_info["actions"] = []
-            self.primitives_info["robot-states"] = []
-            self.primitives_info["observations"] = []
+            self.primitives_info["low_level_action"] = []
+            self.primitives_info["low_level_obs"] = []
             self.primitive_step_counter = 0
             self._num_low_level_steps_total = 0
             self.combined_prev_action = np.zeros(3, dtype=np.float32)
@@ -573,7 +572,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def set_mocap_pos(self, name, value):
         body_id = self.sim.model.body_name2id(name)
         mocap_id = self.sim.model.body_mocapid[body_id]
-        self.sim.data.mocap_pos[mocap_id] = valuealue
+        self.sim.data.mocap_pos[mocap_id] = value
 
     def get_mocap_quat(self, name):
         body_id = self.sim.model.body_name2id(name)
@@ -583,7 +582,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def set_mocap_quat(self, name, value):
         body_id = self.sim.model.body_name2id(name)
         mocap_id = self.sim.model.body_mocapid[body_id]
-        self.sim.data.mocap_quat[mocap_id] = valuealue
+        self.sim.data.mocap_quat[mocap_id] = value
 
     def ctrl_set_action(self, sim, action):
         self.sim.data.ctrl[0] = action[0]
@@ -621,8 +620,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         if (self.primitive_step_counter + 1) % (
             self.num_low_level_steps // self.num_low_level_actions_per_primitive
         ) == 0:
-            # print("action save", self.primitive_step_counter)
-            self.primitives_info["actions"].append(
+            self.primitives_info["low_level_action"].append(
                 np.concatenate([self.combined_prev_action, rot_ctrl, gripper_ctrl])
             )
             self.combined_prev_action = np.zeros(3, dtype=np.float32)
@@ -687,7 +685,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     .transpose(2, 0, 1)
                     .flatten()
                 )
-                self.primitives_info["observations"].append(obs.astype(np.uint8))
+                self.primitives_info["low_level_obs"].append(obs.astype(np.uint8))
         if self.render_every_step:
             if self.render_mode == "rgb_array":
                 self.img_array.append(
@@ -704,22 +702,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     self.render_im_shape[1],
                 )
 
-    def get_robot_state(self):
-        pos_hand = self.get_endeff_pos()
-
-        finger_right, finger_left = (
-            self._get_site_pos("rightEndEffector"),
-            self._get_site_pos("leftEndEffector"),
-        )
-
-        gripper_distance_apart = np.linalg.norm(finger_right - finger_left)
-        gripper_distance_apart = np.clip(gripper_distance_apart / 0.1, 0.0, 1.0)
-
-        qpos = self.sim.data.qpos[:10]
-        qvel = self.sim.data.qvel[:10]
-        # return np.concatenate([qpos, qvel, pos_hand, [gripper_distance_apart]])
-        return np.concatenate([pos_hand, qpos[8:10]])
-
     def get_gripper_pos(
         self,
     ):
@@ -734,7 +716,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         total_reward, total_success = 0, 0
         for _ in range(self.close_gripper_iterations):
             action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
-            state = self.get_robot_state()
+
             if self.include_phase_variable:
                 state = np.concatenate(
                     (
@@ -742,7 +724,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            self.primitives_info["robot-states"].append(state)
             self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
@@ -760,7 +741,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         total_reward, total_success = 0, 0
         for _ in range(self.open_gripper_iterations):
             action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
-            state = self.get_robot_state()
+
             if self.include_phase_variable:
                 state = np.concatenate(
                     (
@@ -768,7 +749,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            self.primitives_info["robot-states"].append(state)
             self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
@@ -789,7 +769,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             action = np.array(
                 [delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper_ctrl]
             )
-            state = self.get_robot_state()
+
             if self.include_phase_variable:
                 state = np.concatenate(
                     (
@@ -797,7 +777,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                         [(self.primitive_step_counter + 1) / self.num_low_level_steps],
                     )
                 )
-            self.primitives_info["robot-states"].append(state)
             self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
@@ -897,9 +876,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             primitive_action,
         )
 
-        self.primitives_info["arguments"] = [
-            primitive_action for _ in range(len(self.primitives_info["robot-states"]))
-        ]
         return stats
 
     def __getstate__(self):

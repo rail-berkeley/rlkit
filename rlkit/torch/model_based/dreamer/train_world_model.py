@@ -164,8 +164,8 @@ def visualize_rollout(
                         high_level_action[0],
                     )
                     if low_level_primitives:
-                        ll_o = np.expand_dims(np.array(info["observations"]), 0)
-                        ll_a = np.expand_dims(np.array(info["actions"]), 0)
+                        ll_o = np.expand_dims(np.array(info["low_level_obs"]), 0)
+                        ll_a = np.expand_dims(np.array(info["low_level_action"]), 0)
                         policy_o = (ll_a, ll_o)
                     else:
                         policy_o = o.reshape(1, -1)
@@ -344,8 +344,8 @@ def visualize_primitive_unsubsampled_rollout(
                     o1, _, _, i1 = env1.step(
                         high_level_action[0],
                     )
-                    ll_o = np.expand_dims(np.array(i1["observations"]), 0)
-                    ll_a = np.expand_dims(np.array(i1["actions"]), 0)
+                    ll_o = np.expand_dims(np.array(i1["low_level_obs"]), 0)
+                    ll_a = np.expand_dims(np.array(i1["low_level_action"]), 0)
                     policy_o = (ll_a, ll_o)
                     (
                         primitive_name,
