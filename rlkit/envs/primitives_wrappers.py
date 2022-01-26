@@ -9,7 +9,7 @@ from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 from robosuite.wrappers.gym_wrapper import GymWrapper
 
-from rlkit.envs.dm_backend_wrappers import DMControlBackendMetaworldRobosuiteEnv
+from rlkit.envs.dm_backend_wrappers import DMControlBackendRobosuiteEnv
 from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
 
 
