@@ -1,11 +1,8 @@
 import copy
 import gc
-from functools import partial
 
 import cv2
 import numpy as np
-
-create_rollout_function = partial
 
 
 def vec_rollout(

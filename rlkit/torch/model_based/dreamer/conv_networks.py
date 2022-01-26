@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import jit
 from torch import nn as nn

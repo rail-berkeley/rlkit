@@ -1,10 +1,5 @@
-from typing import Dict
-
 import numpy as np
 import torch
-import torch.nn.functional as F
-from torch import jit
-from torch.distributions import Normal
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import Policy

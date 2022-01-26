@@ -1,11 +1,11 @@
 import os.path as osp
 from collections import Counter, OrderedDict, namedtuple
-from typing import Dict, List, Tuple
+from typing import Tuple
 
 import numpy as np
 import torch
 import torch.optim as optim
-from torch import jit, nn
+from torch import nn
 from torch.distributions import kl_divergence as kld
 
 import rlkit.torch.pytorch_util as ptu
