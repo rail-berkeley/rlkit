@@ -183,7 +183,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector,
             evaluation_data_collector,
             replay_buffer,
-            use_wandb=use_wandb,
         )
         self.batch_size = batch_size
         self.max_path_length = max_path_length

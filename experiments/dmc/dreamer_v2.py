@@ -4,7 +4,9 @@ import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.dmc_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.dmc_dreamer_experiment import (
+    experiment,
+)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()

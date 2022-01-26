@@ -7,7 +7,7 @@ from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.raps_experiment import experiment
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
