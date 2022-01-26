@@ -6,8 +6,6 @@ from rlkit.policies.base import Policy
 
 
 class DreamerPolicy(Policy):
-    """"""
-
     def __init__(
         self,
         world_model,
@@ -39,7 +37,6 @@ class DreamerPolicy(Policy):
         use_any_obs=True,
     ):
         """
-
         :param observation:
         :return: action, debug_dictionary
         """
@@ -81,7 +78,6 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         use_any_obs=True,
     ):
         """
-
         :param observation:
         :return: action, debug_dictionary
         """

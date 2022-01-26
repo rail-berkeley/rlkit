@@ -35,7 +35,7 @@ class ActorModel(Mlp):
             self.output_size = self.continuous_action_dim * 2
         super().__init__(
             [hidden_size] * num_layers,
-            input_size=obs_dim,
+            input__size=obs_dim,
             output_size=self.output_size,
             hidden_activation=hidden_activation,
             hidden_init=torch.nn.init.xavier_uniform_,
@@ -48,8 +48,8 @@ class ActorModel(Mlp):
         self._dist = dist
 
     @jit.script_method
-    def forward_net(self, input):
-        h = input
+    def forward_net(self, input_):
+        h = input_
         if self.apply_embedding:
             embed_h = h[:, : self.embedding_slice]
             embedding = self.embedding(embed_h.argmax(dim=1))
@@ -59,8 +59,8 @@ class ActorModel(Mlp):
         output = preactivation
         return output
 
-    def forward(self, input):
-        last = self.forward_net(input)
+    def forward(self, input_):
+        last = self.forward_net(input_)
         raw_init_std = torch.log(torch.exp(self._init_std) - 1)
         if self.discrete_continuous_dist:
             assert last.shape[1] == self.output_size

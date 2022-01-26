@@ -715,15 +715,15 @@ class LayerNorm(jit.ScriptModule):
         self.normalized_shape = normalized_shape
 
     @jit.script_method
-    def compute_layernorm_stats(self, input):
-        mu = input.mean(-1, keepdim=True)
-        sigma = input.std(-1, keepdim=True, unbiased=False)
+    def compute_layernorm_stats(self, input_):
+        mu = input_.mean(-1, keepdim=True)
+        sigma = input_.std(-1, keepdim=True, unbiased=False)
         return mu, sigma
 
     @jit.script_method
-    def forward(self, input):
-        mu, sigma = self.compute_layernorm_stats(input)
-        return (input - mu) / sigma * self.weight + self.bias
+    def forward(self, input_):
+        mu, sigma = self.compute_layernorm_stats(input_)
+        return (input_ - mu) / sigma * self.weight + self.bias
 
 
 class LayerNormGRUCell(jit.ScriptModule):
@@ -770,8 +770,8 @@ class LayerNormGRUCell(jit.ScriptModule):
             s += ", nonlinearity={nonlinearity}"
         return s.format(**self.__dict__)
 
-    def check_forward_input(self, input: Tensor) -> None:
-        if input.size(1) != self.input_size:
+    def check_forward_input(self, input_: Tensor) -> None:
+        if input_.size(1) != self.input_size:
             raise RuntimeError(
                 "input has inconsistent input_size: got {}, expected {}".format(
                     input.size(1), self.input_size
@@ -779,9 +779,9 @@ class LayerNormGRUCell(jit.ScriptModule):
             )
 
     def check_forward_hidden(
-        self, input: Tensor, hx: Tensor, hidden_label: str = ""
+        self, input_: Tensor, hx: Tensor, hidden_label: str = ""
     ) -> None:
-        if input.size(0) != hx.size(0):
+        if input_.size(0) != hx.size(0):
             raise RuntimeError(
                 "Input batch size {} doesn't match hidden{} batch size {}".format(
                     input.size(0), hidden_label, hx.size(0)
