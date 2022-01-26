@@ -34,7 +34,6 @@ def experiment(variant):
     env_kwargs = variant["env_kwargs"]
     use_raw_actions = variant["use_raw_actions"]
     num_expl_envs = variant["num_expl_envs"]
-    actor_model_class_name = variant.get("actor_model_class", "actor_model")
     if num_expl_envs > 1:
         env_fns = [
             lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)

@@ -2,12 +2,6 @@ def experiment(variant):
     import os
 
     import rlkit.envs.primitives_make_env as primitives_make_env
-    from rlkit.torch.model_based.plan2explore.actor_models import (
-        ConditionalContinuousActorModel,
-    )
-    from rlkit.torch.model_based.plan2explore.mcts.mcts_policy import (
-        HybridAdvancedMCTSPolicy,
-    )
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
@@ -17,10 +11,7 @@ def experiment(variant):
         DummyVecEnv,
         StableBaselinesVecEnv,
     )
-    from rlkit.torch.model_based.dreamer.actor_models import (
-        ActorModel,
-        ConditionalActorModel,
-    )
+    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -79,12 +70,7 @@ def experiment(variant):
         use_batch_length = False
     world_model_class = WorldModel
     obs_dim = expl_env.observation_space.low.size
-    if actor_model_class_name == "conditional_actor_model":
-        actor_model_class = ConditionalActorModel
-    elif actor_model_class_name == "continuous_conditional_actor_model":
-        actor_model_class = ConditionalContinuousActorModel
-    elif actor_model_class_name == "actor_model":
-        actor_model_class = ActorModel
+    actor_model_class = ActorModel
     if variant.get("load_from_path", False):
         data = torch.load(variant["models_path"])
         actor = data["trainer/actor"]
@@ -154,64 +140,36 @@ def experiment(variant):
         hidden_activation=torch.nn.functional.elu,
     )
 
-    if variant.get("use_mcts_policy", False):
-        expl_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            eval_envs[0].max_steps,
-            eval_envs[0].num_primitives,
-            eval_envs[0].action_space.low.size,
-            eval_envs[0].action_space,
-            exploration_actor,
-            one_step_ensemble,
-            exploration_vf,
-            **variant["expl_policy_kwargs"],
-        )
-        eval_policy = HybridAdvancedMCTSPolicy(
-            world_model,
-            eval_envs[0].max_steps,
-            eval_envs[0].num_primitives,
-            eval_envs[0].action_space.low.size,
-            eval_envs[0].action_space,
-            actor,
-            one_step_ensemble,
-            vf,
-            **variant["eval_policy_kwargs"],
-        )
+    if variant.get("expl_with_exploration_actor", True):
+        expl_actor = exploration_actor
     else:
-        if variant.get("expl_with_exploration_actor", True):
-            expl_actor = exploration_actor
-        else:
-            expl_actor = actor
-        expl_policy = DreamerPolicy(
-            world_model,
-            expl_actor,
-            obs_dim,
-            action_dim,
-            exploration=True,
-            expl_amount=variant.get("expl_amount", 0.3),
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"][
-                "discrete_continuous_dist"
-            ],
-        )
-        if variant.get("eval_with_exploration_actor", False):
-            eval_actor = exploration_actor
-        else:
-            eval_actor = actor
-        eval_policy = DreamerPolicy(
-            world_model,
-            eval_actor,
-            obs_dim,
-            action_dim,
-            exploration=False,
-            expl_amount=0.0,
-            discrete_action_dim=discrete_action_dim,
-            continuous_action_dim=continuous_action_dim,
-            discrete_continuous_dist=variant["actor_kwargs"][
-                "discrete_continuous_dist"
-            ],
-        )
+        expl_actor = actor
+    expl_policy = DreamerPolicy(
+        world_model,
+        expl_actor,
+        obs_dim,
+        action_dim,
+        exploration=True,
+        expl_amount=variant.get("expl_amount", 0.3),
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"],
+    )
+    if variant.get("eval_with_exploration_actor", False):
+        eval_actor = exploration_actor
+    else:
+        eval_actor = actor
+    eval_policy = DreamerPolicy(
+        world_model,
+        eval_actor,
+        obs_dim,
+        action_dim,
+        exploration=False,
+        expl_amount=0.0,
+        discrete_action_dim=discrete_action_dim,
+        continuous_action_dim=continuous_action_dim,
+        discrete_continuous_dist=variant["actor_kwargs"]["discrete_continuous_dist"],
+    )
 
     rand_policy = ActionSpaceSamplePolicy(expl_env)
 
