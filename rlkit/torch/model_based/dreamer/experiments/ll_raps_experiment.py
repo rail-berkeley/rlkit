@@ -28,11 +28,9 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.rollout_functions import (
         vec_rollout_low_level_raps,
     )
-    from rlkit.torch.model_based.dreamer.train_world_model import (
-        visualize_primitive_unsubsampled_rollout,
-    )
-    from rlkit.torch.model_based.dreamer.video_functions import (
+    from rlkit.torch.model_based.dreamer.visualization import (
         post_epoch_visualize_func,
+        visualize_primitive_unsubsampled_rollout,
     )
     from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm

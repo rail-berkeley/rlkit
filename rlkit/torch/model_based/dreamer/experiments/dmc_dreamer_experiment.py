@@ -7,7 +7,7 @@ def experiment(variant):
         NormalizeActions,
         TimeLimit,
     )
-    from rlkit.torch.model_based.dreamer.video_functions import post_epoch_video_func
+    from rlkit.torch.model_based.dreamer.visualization import post_epoch_video_func
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch

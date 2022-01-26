@@ -25,9 +25,7 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
-    from rlkit.torch.model_based.dreamer.video_functions import (
-        post_epoch_visualize_func,
-    )
+    from rlkit.torch.model_based.dreamer.visualization import post_epoch_visualize_func
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
