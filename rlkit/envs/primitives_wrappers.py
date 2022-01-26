@@ -106,13 +106,13 @@ class NormalizeActions(gym.Wrapper):
     ):
         original = (action + 1) / 2 * (self._high - self._low) + self._low
         original = np.where(self._mask, original, action)
-        o, r, d, i = self.env.step(
+        obs, reward, done, info = self.env.step(
             original,
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        return o, r, d, i
+        return obs, reward, done, i
 
     def reset(self):
         return self.env.reset()
@@ -167,7 +167,7 @@ class ImageTransposeWrapper(gym.Wrapper):
         obs = self.env.reset()
         return obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0)
 
-    def step(self, action):
+    def step(self, actionction):
         obs, reward, done, info = self.env.step(action)
         return (
             obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0),
@@ -211,19 +211,17 @@ class MetaworldWrapper(gym.Wrapper):
         render_im_shape=(64, 64),
     ):
         self.set_render_every_step(render_every_step, render_mode, render_im_shape)
-        o, r, d, i = self.env.step(
+        obs, reward, done, info = self.env.step(
             action,
         )
         self.unset_render_every_step()
-        new_i = {}
-        for k, v in i.items():
-            if v is not None:
-                new_i[k] = v
-        if self.reward_type == "dense":
-            r = r
-        elif self.reward_type == "sparse":
-            r = i["success"]
-        return o, r, d, new_i
+        new_info = {}
+        for key, value in info.items():
+            if value is not None:
+                new_info[key] = value
+        if self.reward_type == "sparse":
+            r = info["success"]
+        return obs, reward, done, new_info
 
 
 class ImageEnvMetaworld(gym.Wrapper):
@@ -269,19 +267,19 @@ class ImageEnvMetaworld(gym.Wrapper):
         render_mode="rgb_array",
         render_im_shape=(64, 64),
     ):
-        o, r, d, i = self.env.step(
+        obs, reward, done, info = self.env.step(
             action,
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        o = self._get_image()
-        r = self.reward_scale * r
-        new_i = {}
-        for k, v in i.items():
-            if v is not None:
-                new_i[k] = v
-        return o, r, d, new_i
+        obs = self._get_image()
+        reward = self.reward_scale * reward
+        new_info = {}
+        for key, value in info.items():
+            if value is not None:
+                new_info[key] = value
+        return obs, reward, done, new_info
 
     def reset(self):
         super().reset()
@@ -307,13 +305,13 @@ class DictObsWrapper(gym.Wrapper):
         render_mode="rgb_array",
         render_im_shape=(64, 64),
     ):
-        o, r, d, i = self.env.step(
+        obs, reward, done, info = self.env.step(
             action,
             render_every_step=render_every_step,
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        return {"image": o}, r, d, i
+        return {"image": obs}, reward, done, info
 
     def reset(self):
         return {"image": self.env.reset()}
@@ -469,41 +467,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
 
-        if self.control_mode == "vices":
-            self.action_space = Box(-np.ones(10), np.ones(10))
-            ctrl_ratio = 1.0
-            control_range_pos = np.ones(3)
-            kp_max = 10
-            kp_max_abs_delta = 10
-            kp_min = 0.1
-            damping_max = 2
-            damping_max_abs_delta = 1
-            damping_min = 0.1
-            use_delta_impedance = False
-            initial_impedance_pos = 1
-            initial_impedance_ori = 1
-            initial_damping = 0.25
-            control_freq = 1.0 * ctrl_ratio
-
-            self.joint_index_vel = np.arange(7)
-            self.controller = PositionController(
-                control_range_pos,
-                kp_max,
-                kp_max_abs_delta,
-                kp_min,
-                damping_max,
-                damping_max_abs_delta,
-                damping_min,
-                use_delta_impedance,
-                initial_impedance_pos,
-                initial_impedance_ori,
-                initial_damping,
-                control_freq=control_freq,
-                interpolation="linear",
-            )
-            self.controller.update_model(
-                self.sim, self.joint_index_vel, self.joint_index_vel
-            )
         self.unset_render_every_step()
         self.use_learned_primitives = use_learned_primitives
         self.learned_primitives = learned_primitives
@@ -511,12 +474,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.include_phase_variable = include_phase_variable
 
     def _reset_hand(self):
-        if self.control_mode != "vices":
-            super()._reset_hand()
-        else:
-            self.sim.data.qpos[:] = self.reset_qpos
-            self.sim.forward()
-            self.init_tcp = self.tcp_center
+        super()._reset_hand()
         self.prev_grasp = 1  # corresponds to open
 
     def set_render_every_step(
@@ -537,29 +495,17 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self,
         action,
     ):
-        a = np.clip(action, -1.0, 1.0)
+        action = np.clip(action, -1.0, 1.0)
         if self.control_mode in [
             "joint_position",
             "joint_velocity",
             "torque",
             "end_effector",
-            "vices",
         ]:
             self.prev_ll_a = a
             if self.control_mode == "end_effector":
                 self.set_xyz_action(a[:3])
                 self.do_simulation([a[-1], -a[-1]])
-            elif self.control_mode == "vices":
-                for i in range(int(self.controller.interpolation_steps)):
-                    self.controller.update_model(
-                        self.sim, self.joint_index_vel, self.joint_index_vel
-                    )
-                    a = self.controller.action_to_torques(action[:-1], i == 0)
-                    act = np.zeros(9)
-                    act[-1] = -action[-1]
-                    act[-2] = action[-1]
-                    act[:7] = a
-                    self.do_simulation(act, n_frames=1)
             stats = [0, 0]
         else:
             self.img_array = []
@@ -570,7 +516,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.primitive_step_counter = 0
             self._num_low_level_steps_total = 0
             self.combined_prev_action = np.zeros(3, dtype=np.float32)
-            stats = self.act(a)
+            stats = self.act(action)
 
         self.curr_path_length += 1
 
@@ -627,7 +573,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def set_mocap_pos(self, name, value):
         body_id = self.sim.model.body_name2id(name)
         mocap_id = self.sim.model.body_mocapid[body_id]
-        self.sim.data.mocap_pos[mocap_id] = value
+        self.sim.data.mocap_pos[mocap_id] = valuealue
 
     def get_mocap_quat(self, name):
         body_id = self.sim.model.body_name2id(name)
@@ -637,7 +583,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
     def set_mocap_quat(self, name, value):
         body_id = self.sim.model.body_name2id(name)
         mocap_id = self.sim.model.body_mocapid[body_id]
-        self.sim.data.mocap_quat[mocap_id] = value
+        self.sim.data.mocap_quat[mocap_id] = valuealue
 
     def ctrl_set_action(self, sim, action):
         self.sim.data.ctrl[0] = action[0]
@@ -685,7 +631,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.mocap_set_action(self.sim, action)
         self.ctrl_set_action(self.sim, gripper_ctrl)
 
-    def low_level_step(self, action):
+    def low_level_step(self, actionction):
         self.mocap_set_action(self.sim, action[:7])
         self.ctrl_set_action(self.sim, action[7:])
         self.sim.step()
@@ -758,42 +704,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     self.render_im_shape[1],
                 )
 
-    def execute_learned_primitive(self, arguments, primitive_idx):
-        total_reward, total_success = 0, 0
-        primitive = self.learned_primitives[primitive_idx]
-        num_low_level_steps = self.primitive_idx_to_num_low_level_steps[primitive_idx]
-        if arguments.shape == ():
-            arguments = np.array([arguments])
-        with torch.no_grad():
-            for _ in range(num_low_level_steps):
-                state = self.get_robot_state()
-                if self.include_phase_variable:
-                    state = np.concatenate(
-                        (
-                            state,
-                            [
-                                (self.primitive_step_counter + 1)
-                                / self.num_low_level_steps
-                            ],
-                        )
-                    )
-                inp = np.concatenate((state, arguments))
-                inp = torch.from_numpy(inp).float()
-                a = primitive(inp).numpy().squeeze()
-                self.primitives_info["robot-states"].append(state)
-                self.primitives_info["actions"].append(a)
-                self._set_action(a)
-                self.data.set_mocap_quat("mocap", np.array([1, 0, 1, 0]))
-                self.sim.step()
-                self.call_render_every_step()
-                delta = a[:3]
-                grip = a[-1]
-                r, info = self.evaluate_state(self._get_obs(), [*delta, grip])
-                total_reward += r
-                total_success += info["success"]
-                self.primitive_step_counter += 1
-        return np.array((total_reward, total_success))
-
     def get_robot_state(self):
         pos_hand = self.get_endeff_pos()
 
@@ -823,7 +733,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
         for _ in range(self.close_gripper_iterations):
-            a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
+            action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -833,15 +743,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
-            self._set_action(a)
+            self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), a)
+            r, info = self.evaluate_state(self._get_obs(), action)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-        self.prev_ll_a = a
+        self.prev_ll_a = action
         self.prev_grasp = -d
         return np.array((total_reward, total_success))
 
@@ -849,7 +759,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         d = np.maximum(d, 0.0)
         total_reward, total_success = 0, 0
         for _ in range(self.open_gripper_iterations):
-            a = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
+            action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
             state = self.get_robot_state()
             if self.include_phase_variable:
                 state = np.concatenate(
@@ -859,15 +769,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
-            self._set_action(a)
+            self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), a)
+            r, info = self.evaluate_state(self._get_obs(), action)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-        self.prev_ll_a = a
+        self.prev_ll_a = action
         self.prev_grasp = d
         return np.array((total_reward, total_success))
 
@@ -876,7 +786,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         for _ in range(self.goto_pose_iterations):
             delta = pose - self.get_endeff_pos()
             gripper_ctrl = [-self.prev_grasp, self.prev_grasp]
-            a = np.array(
+            action = np.array(
                 [delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper_ctrl]
             )
             state = self.get_robot_state()
@@ -888,15 +798,15 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
                     )
                 )
             self.primitives_info["robot-states"].append(state)
-            self._set_action(a)
+            self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), a)
+            r, info = self.evaluate_state(self._get_obs(), action)
             total_reward += r
             total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
-        self.prev_ll_a = a
+        self.prev_ll_a = action
         return np.array((total_reward, total_success))
 
     def top_x_y_grasp(self, xyzd):
@@ -954,10 +864,10 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         )
         return stats
 
-    def break_apart_action(self, a):
+    def break_apart_action(self, action):
         broken_a = {}
-        for k, v in self.primitive_name_to_action_idx.items():
-            broken_a[k] = a[v]
+        for key, value in self.primitive_name_to_action_idx.items():
+            broken_a[key] = action[value]
         return broken_a
 
     def get_primitive_info_from_high_level_action(self, hl):
@@ -968,14 +878,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         primitive_name = self.primitive_idx_to_name[primitive_idx]
         return primitive_name, primitive_args, primitive_idx
 
-    def act(self, a):
-        a = np.clip(a, self.action_space.low, self.action_space.high)
-        a = a * self.action_scale
+    def act(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        action = action * self.action_scale
         (
             primitive_name,
             primitive_args,
             primitive_idx,
-        ) = self.get_primitive_info_from_high_level_action(a)
+        ) = self.get_primitive_info_from_high_level_action(action)
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)
         primitive_action = primitive_name_to_action_dict[primitive_name]
         primitive = self.primitive_name_to_func[primitive_name]
@@ -983,12 +893,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             primitive_idx
         ]
 
-        if self.use_learned_primitives:
-            stats = self.execute_learned_primitive(primitive_action, primitive_idx)
-        else:
-            stats = primitive(
-                primitive_action,
-            )
+        stats = primitive(
+            primitive_action,
+        )
 
         self.primitives_info["arguments"] = [
             primitive_action for _ in range(len(self.primitives_info["robot-states"]))
@@ -1015,7 +922,7 @@ class RobosuiteWrapper(GymWrapper):
         )
         if hasattr(self.env, "reset_action_space"):
             self.env.reset_action_space(**reset_action_space_kwargs)
-            if self.control_mode == "primitives" or self.control_mode == "vices":
+            if self.control_mode == "primitives":
                 self.action_space = self.env.action_space
         self.image_shape = (3, self.imwidth, self.imheight)
         self.imlength = self.imwidth * self.imheight
@@ -1045,21 +952,21 @@ class RobosuiteWrapper(GymWrapper):
         render_im_shape=(64, 64),
     ):
         self.env.set_render_every_step(render_every_step, render_mode, render_im_shape)
-        o, r, d, i = super().step(action)
+        obs, reward, done, info = super().step(action)
         o = self.env.render(
             render_mode="rgb_array", imheight=self.imheight, imwidth=self.imwidth
         )
         self.env.unset_render_every_step()
-        new_i = {}
-        for k, v in i.items():
-            if v is not None:
-                new_i[k] = v
+        new_info = {}
+        for key, value in info.items():
+            if value is not None:
+                new_info[key] = value
         o = (
             o.reshape(self.imwidth, self.imheight, 3)[:, :, ::-1]
             .transpose(2, 0, 1)
             .flatten()
         )
-        return o, r, d, new_i
+        return obs, reward, done, new_info
 
     def __getattr__(self, name):
         return getattr(self.env, name)
@@ -1089,7 +996,7 @@ class NormalizeBoxEnvFixed(NormalizedBoxEnv):
         return next_obs, reward * self._reward_scale, done, info
 
 
-class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
+class RobosuitePrimitives(DMControlBackendRobosuiteEnv):
     def set_render_every_step(
         self,
         render_every_step=False,
@@ -1181,44 +1088,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 )
             )
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
-        elif self.control_mode == "vices":
-            self.action_space = Box(-np.ones(10), np.ones(10))
-            ctrl_ratio = 1.0
-            control_range_pos = np.ones(3)
-            kp_max = 10
-            kp_max_abs_delta = 10
-            kp_min = 0.1
-            damping_max = 2
-            damping_max_abs_delta = 1
-            damping_min = 0.1
-            use_delta_impedance = False
-            initial_impedance_pos = 1
-            initial_impedance_ori = 1
-            initial_damping = 0.25
-            control_freq = 1.0 * ctrl_ratio
-
-            self.joint_index_vel = np.arange(7)
-            self.controller = PositionController(
-                control_range_pos,
-                kp_max,
-                kp_max_abs_delta,
-                kp_min,
-                damping_max,
-                damping_max_abs_delta,
-                damping_min,
-                use_delta_impedance,
-                initial_impedance_pos,
-                initial_impedance_ori,
-                initial_damping,
-                control_freq=control_freq,
-                interpolation="linear",
-            )
-            self.controller.update_model(
-                self.sim,
-                self.joint_index_vel,
-                self.joint_index_vel,
-                id_name="robot0_right_hand",
-            )
 
     def step(self, action):
         if self.done:
@@ -1240,24 +1109,6 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
                 policy_step = False
                 if self.render_every_step:
                     self.render()
-            stats = [0, 0]
-        elif self.control_mode == "vices":
-            for i in range(int(self.controller.interpolation_steps)):
-                self.controller.update_model(
-                    self.sim,
-                    self.joint_index_vel,
-                    self.joint_index_vel,
-                    id_name="robot0_right_hand",
-                )
-                a = self.controller.action_to_torques(action[:-1], i == 0)
-                act = np.zeros(9)
-                act[-1] = -action[-1]
-                act[-2] = action[-1]
-                act[:7] = a
-                self.sim.data.ctrl[:] = act
-                self.sim.step()
-                self._update_observables()
-
             stats = [0, 0]
         else:
             self.img_array = []
@@ -1420,18 +1271,18 @@ class RobosuitePrimitives(DMControlBackendMetaworldRobosuiteEnv):
         )
         return stats
 
-    def break_apart_action(self, a):
+    def break_apart_action(self, action):
         broken_a = {}
-        for k, v in self.primitive_name_to_action_idx.items():
-            broken_a[k] = a[v]
+        for key, value in self.primitive_name_to_action_idx.items():
+            broken_a[key] = a[value]
         return broken_a
 
-    def act(self, a):
-        a = np.clip(a, self.action_space.low, self.action_space.high)
-        a = a * self.action_scale
+    def act(self, action):
+        action = np.clip(action, self.action_space.low, self.action_space.high)
+        action = action * self.action_scale
         primitive_idx, primitive_args = (
-            np.argmax(a[: self.num_primitives]),
-            a[self.num_primitives :],
+            np.argmax(action[: self.num_primitives]),
+            action[self.num_primitives :],
         )
         primitive_name = self.primitive_idx_to_name[primitive_idx]
         primitive_name_to_action_dict = self.break_apart_action(primitive_args)

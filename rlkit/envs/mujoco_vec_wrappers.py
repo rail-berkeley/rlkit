@@ -22,46 +22,46 @@ class DummyVecEnv(Env):
     ):
         if self.pass_render_kwargs:
             promises = [
-                e.step(
-                    a,
+                env.step(
+                    action,
                     render_every_step=render_every_step,
                     render_mode=render_mode,
                     render_im_shape=render_im_shape,
                 )
-                for e, a in zip(self.envs, actions)
+                for env, action in zip(self.envs, actions)
             ]
         else:
             promises = [
-                e.step(
-                    a,
+                env.step(
+                    action,
                 )
-                for e, a in zip(self.envs, actions)
+                for env, action in zip(self.envs, actions)
             ]
-        obs, rewards, done, infos = zip(*[p for p in promises])
+        obs, rewards, done, infos = zip(*[promise for promise in promises])
         obs = np.stack(obs)
         done = np.stack(done)
         rewards = np.stack(rewards)
-        info_ = {}
-        for i in infos:
-            for k, v in i.items():
-                v = np.array(v)
-                if k in info_.keys():
-                    if v.shape != ():
-                        info_[k].append(v.reshape(1, *np.array(v).shape))
+        new_info = {}
+        for info in infos:
+            for key, value in info.items():
+                value = np.array(value)
+                if key in new_info.keys():
+                    if value.shape != ():
+                        new_info[key].append(value.reshape(1, *np.array(value).shape))
                     else:
-                        info_[k].append(v.reshape(1, 1))
+                        new_info[key].append(value.reshape(1, 1))
                 else:
-                    if v.shape != ():
-                        info_[k] = [v.reshape(1, *np.array(v).shape)]
+                    if value.shape != ():
+                        new_info[key] = [value.reshape(1, *np.array(value).shape)]
                     else:
-                        info_[k] = [v.reshape(1, 1)]
-        for k, v in info_.items():
-            info_[k] = np.concatenate(v)
-        return obs, rewards, done, info_
+                        new_info[key] = [value.reshape(1, 1)]
+        for key, value in new_info.items():
+            new_info[key] = np.concatenate(value)
+        return obs, rewards, done, new_info
 
     def reset(self):
         obs = [None] * self.n_envs
-        promises = [self.envs[i].reset() for i in range(self.n_envs)]
+        promises = [self.envs[env_idx].reset() for env_idx in range(self.n_envs)]
         for index, promise in zip(range(self.n_envs), promises):
             obs[index] = promise
         return obs
@@ -143,22 +143,22 @@ class StableBaselinesVecEnv(SubprocVecEnv):
 
     def step(self, actions):
         obs, rewards, dones, infos = super(StableBaselinesVecEnv, self).step(actions)
-        info_ = {}
-        for i in infos:
-            for k, v in i.items():
-                if k in info_.keys():
-                    if np.isscalar(v):
-                        info_[k].append(np.array(v).reshape(1, 1))
+        new_info = {}
+        for info in infos:
+            for key, value in info.items():
+                if key in new_info.keys():
+                    if np.isscalar(value):
+                        new_info[key].append(np.array(value).reshape(1, 1))
                     else:
-                        info_[k].append(v)
+                        new_info[key].append(value)
                 else:
-                    if np.isscalar(v):
-                        info_[k] = [np.array(v).reshape(1, 1)]
+                    if np.isscalar(value):
+                        new_info[key] = [np.array(value).reshape(1, 1)]
                     else:
-                        info_[k] = [v]
-        for k, v in info_.items():
-            if np.array(v).shape == (1, 1):
-                info_[k] = np.concatenate(v)
+                        new_info[key] = [value]
+        for key, value in new_info.items():
+            if np.array(value).shape == (1, 1):
+                new_info[key] = np.concatenate(value)
             else:
-                info_[k] = v
-        return obs, rewards, dones, info_
+                new_info[key] = value
+        return obs, rewards, dones, new_info

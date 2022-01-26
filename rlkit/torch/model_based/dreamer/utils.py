@@ -19,7 +19,7 @@ class FreezeParameters:
         :param modules: iterable of modules. used to call .parameters() to freeze gradients.
         """
         self.params = params
-        self.param_states = [p.requires_grad for p in params]
+        self.param_states = [param.requires_grad for param in params]
 
     def __enter__(self):
         for param in self.params:

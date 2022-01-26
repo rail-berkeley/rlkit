@@ -586,7 +586,7 @@ class SawyerMocapBaseDMBackendMetaworld(
         sim.forward()
 
 
-class DMControlBackendMetaworldRobosuiteEnv(robosuite.environments.base.MujocoEnv):
+class DMControlBackendRobosuiteEnv(robosuite.environments.base.MujocoEnv):
     def _reset_internal(self):
         if self._use_dm_backend:
             if self.has_renderer and self.viewer is None:
