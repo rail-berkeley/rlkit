@@ -1,21 +1,16 @@
-import argparse
 import random
 import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
 from rlkit.torch.model_based.dreamer.experiments.ll_raps_experiment import experiment
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
+    args = get_args()
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
@@ -43,24 +38,20 @@ if __name__ == "__main__":
         )
         exp_prefix = args.exp_prefix
     variant = dict(
-        algorithm="LLRAPS",
+        algorithm="DreamerV2",
         version="normal",
         replay_buffer_size=int(1.2e4),
         algorithm_kwargs=algorithm_kwargs,
         use_raw_actions=False,
-        env_suite="metaworld",
+        env_suite="kitchen",
         pass_render_kwargs=True,
         env_kwargs=dict(
+            dense=False,
+            image_obs=True,
+            action_scale=1.4,
+            use_workspace_limits=True,
             control_mode="primitives",
-            action_scale=1,
-            max_path_length=5,
-            reward_type="sparse",
-            camera_settings={
-                "distance": 0.38227044687537043,
-                "lookat": [0.21052547, 0.32329237, 0.587819],
-                "azimuth": 141.328125,
-                "elevation": -53.203125160653144,
-            },
+            num_low_level_actions_per_primitive=10,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
@@ -68,10 +59,9 @@ if __name__ == "__main__":
                 max_path_length=5,
                 unflatten_images=False,
             ),
-            image_kwargs=dict(imwidth=64, imheight=64),
+            image_kwargs=dict(),
             collect_primitives_info=True,
             render_intermediate_obs_to_info=True,
-            num_low_level_actions_per_primitive=10,
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
@@ -114,6 +104,7 @@ if __name__ == "__main__":
             target_update_period=100,
             detach_rewards=False,
             imagination_horizon=5,
+            batch_length=100,
             weight_decay=0.0,
         ),
         num_expl_envs=5,
@@ -123,39 +114,25 @@ if __name__ == "__main__":
         low_level_action_dim=9,
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
-        uniform_priorities=True,
-        # unsubsampled_rollout=True,
-        # generate_video=True,
     )
 
     search_space = {
         "env_name": [
-            "assembly-v2",
-            "disassemble-v2",
-            "sweep-into-v2",
-            "soccer-v2",
-            # "drawer-close-v2",
+            "microwave",
+            "kettle",
+            "slide_cabinet",
+            "top_left_burner",
+            "hinge_cabinet",
+            "light_switch",
         ],
         "algorithm_kwargs.num_train_loops_per_epoch": [10],
         "algorithm_kwargs.num_expl_steps_per_train_loop": [30],
         "algorithm_kwargs.num_pretrain_steps": [1000],
         "algorithm_kwargs.num_trains_per_train_loop": [100],
         "algorithm_kwargs.min_num_steps_before_training": [2500],
-        "algorithm_kwargs.batch_size": [100],
-        "num_low_level_actions_per_primitive": [10],
+        "algorithm_kwargs.batch_size": [200],
+        "num_low_level_actions_per_primitive": [5],
         "trainer_kwargs.batch_length": [50],
-        # "replay_buffer_path": [
-        #     "/home/mdalal/research/skill_learn/hrl-exp/data/world_model_data/assembly_demo_data.hdf5"
-        # ],
-        # "trainer_kwargs.binarize_rewards": [True, False],
-        # "model_kwargs.reward_classifier": [True, False ],
-        # "primitive_embedding": [True, False],
-        # "prioritize_fraction": [0.25],
-        # "uniform_priorities": [False],
-        # "models_path": [
-        # "/home/mdalal/research/skill_learn/rlkit/data/01-17-ll-raps-mw-no-transposes/01-17-ll_raps_mw_no_transposes_2022_01_17_15_49_24_0000--s-61010/"
-        # "/home/mdalal/research/skill_learn/rlkit/data/01-18-ll-raps-mw-no-transposes/01-18-ll_raps_mw_no_transposes_2022_01_18_00_41_14_0000--s-64192/"
-        # ],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -170,20 +147,11 @@ if __name__ == "__main__":
             3e6 / (variant["num_low_level_actions_per_primitive"] * 5 + 1)
         )
         variant["trainer_kwargs"]["batch_length"] = int(
-            variant["num_low_level_actions_per_primitive"] * 5 + 1
+            variant["num_low_level_actions_per_primitive"] * 5
         )
         variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
             "num_low_level_actions_per_primitive"
         ]
-        variant[
-            "eval_buffer_path"
-        ] = "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_{}_T_{}_E_{}_P_{}_raps_ll_hl_even_rt_{}.hdf5".format(
-            5,
-            100,
-            10,
-            variant["num_low_level_actions_per_primitive"],
-            variant["env_name"],
-        )
         variant = preprocess_variant(variant, args.debug)
         for _ in range(args.num_seeds):
             seed = random.randint(0, 100000)

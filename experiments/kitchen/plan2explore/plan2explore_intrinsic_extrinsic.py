@@ -1,9 +1,9 @@
-import argparse
 import random
 import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
@@ -12,12 +12,7 @@ from rlkit.torch.model_based.plan2explore.experiments.raps_plan2explore_experime
 )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
+    args = get_args()
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,

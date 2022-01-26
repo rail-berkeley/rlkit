@@ -4,17 +4,13 @@ import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
+from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
 from rlkit.torch.model_based.dreamer.experiments.world_model_training_experiment import (
     experiment,
 )
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
+    args = get_args()
     if args.debug:
         algorithm_kwargs = dict()
         exp_prefix = "test" + args.exp_prefix
@@ -56,6 +52,9 @@ if __name__ == "__main__":
             transition_loss_scale=0.8,
             kl_loss_scale=0.0,
             image_loss_scale=1.0,
+            discount=0.8,
+            reward_loss_scale=2.0,
+            pred_discount_loss_scale=10.0,
         ),
         model_kwargs=dict(
             model_hidden_size=400,
@@ -70,47 +69,62 @@ if __name__ == "__main__":
             use_prior_instead_of_posterior=True,
         ),
         optimizer_kwargs=dict(
-            lr=1e-3,
+            weight_decay=0.0,
         ),
         dataloader_kwargs=dict(
-            batch_len=50,
-            batch_size=50,
-            train_test_split=0.8,
-            randomize_batch_len=True,
+            batch_size=25,
+            train_test_split=0.95,
         ),
         mlp_hidden_sizes=(512, 512),
-        gradient_clip=0,
-        world_model_path="/home/mdalal/research/skill_learn/rlkit/data/11-19-train-wm-even-100-1/11-19-train_wm_even_100_1_2021_11_19_21_48_13_0000--s-23958/models/world_model.pt",
         clone_primitives=False,
-        clone_primitives_separately=True,
+        clone_primitives_separately=False,
         plotting_period=100,
         num_epochs=10000,
         visualize_wm_from_path=False,
+        clone_primitives_and_train_world_model=True,
+        mlp_act="relu",
+        mlp_res=False,
     )
 
     search_space = {
-        "clone_primitives": [True],
-        "dataloader_kwargs.batch_len": [100],
-        "clone_primitives_separately": [False],
-        "mlp_hidden_sizes": [(512, 512)],
-        "datafile": [
-            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/wm_H_5_T_25_E_50_P_100_raps_ll_hl_even.hdf5",
+        "batch_len": [100],
+        "dataloader_kwargs.batch_size": [25],
+        "optimizer_kwargs.lr": [1e-3],
+        "optimizer_kwargs.eps": [1e-8],
+        "loss_to_use": ["both"],
+        "gradient_clip": [100],
+        "env_name": ["drawer-close-v2"],
+        "num_low_level_actions_per_primitive": [50],
+        "num_trajs": [100],
+        "env_name": [
+            # "assembly-v2",
+            # "disassemble-v2",
+            # "peg-unplug-side-v2",
+            # "sweep-into-v2",
+            # "soccer-v2",
+            "drawer-close-v2",
         ],
+        "mlp_act": ["elu", "relu"],
+        "mlp_res": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
         default_parameters=variant,
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant["datafile"] = (
+            "wm_H_5_T_{}_E_50_P_{}_raps_ll_hl_even_rt_{}".format(
+                variant["num_trajs"],
+                variant["num_low_level_actions_per_primitive"],
+                variant["env_name"],
+            )
+            + ".hdf5"
+        )
+        variant["datafile"] = (
+            "/home/mdalal/research/skill_learn/rlkit/data/world_model_data/"
+            + variant["datafile"]
+        )
         for _ in range(args.num_seeds):
-            if not variant["dataloader_kwargs"]["randomize_batch_len"]:
-                variant["plotting_period"] = 1
-            if variant["clone_primitives"] and variant["clone_primitives_separately"]:
-                continue
-            if not (
-                variant["clone_primitives"] or variant["clone_primitives_separately"]
-            ):
-                continue
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
