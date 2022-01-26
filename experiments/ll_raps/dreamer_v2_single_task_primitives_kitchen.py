@@ -23,7 +23,7 @@ if __name__ == "__main__":
             batch_size=30,
             max_path_length=5,
         )
-        exp_prefix = "test" + args.exp_prefix
+
     else:
         algorithm_kwargs = dict(
             num_epochs=250,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=40,  # 1000//(5*5)
             num_trains_per_train_loop=10,  # 400//40
         )
-        exp_prefix = args.exp_prefix
+
     variant = dict(
         algorithm="DreamerV2",
         version="normal",

@@ -11,6 +11,7 @@ def get_args():
 
     # parse arguments
     args = parser.parse_args()
-    args.exp_prefix = "test" + args.exp_prefix
+    if args.debug:
+        args.exp_prefix = "test" + args.exp_prefix
 
     return args

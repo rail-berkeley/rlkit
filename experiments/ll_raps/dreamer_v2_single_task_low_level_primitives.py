@@ -23,7 +23,7 @@ if __name__ == "__main__":
             batch_size=25,
             max_path_length=5,
         )
-        exp_prefix = "test" + args.exp_prefix
+
     else:
         algorithm_kwargs = dict(
             num_epochs=1000,
@@ -36,7 +36,7 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=10,
             num_trains_per_train_loop=100,
         )
-        exp_prefix = args.exp_prefix
+
     variant = dict(
         algorithm="LLRAPS",
         version="normal",

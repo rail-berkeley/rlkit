@@ -13,10 +13,10 @@ if __name__ == "__main__":
     args = get_args()
     if args.debug:
         algorithm_kwargs = dict()
-        exp_prefix = "test" + args.exp_prefix
+
     else:
         algorithm_kwargs = dict()
-        exp_prefix = args.exp_prefix
+
     variant = dict(
         plotting_period=25,
         low_level_primitives=True,
