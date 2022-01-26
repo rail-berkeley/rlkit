@@ -9,7 +9,6 @@ def experiment(variant):
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.core import logger
-    from rlkit.envs.multi_task_env import MultiTaskEnv
     from rlkit.envs.primitives_make_env import make_env
     from rlkit.envs.wrappers.mujoco_vec_wrappers import (
         DummyVecEnv,
@@ -45,14 +44,8 @@ def experiment(variant):
     low_level_action_dim = variant["low_level_action_dim"]
 
     print("MAKING ENVS")
-    if variant.get("make_multi_task_env", False):
-        make_env_lambda = lambda: MultiTaskEnv(
-            env_suite, variant["env_names"], env_kwargs
-        )
-        # TODO: make the make env lambda test have different environments
-    else:
-        env_name = variant["env_name"]
-        make_env_lambda = lambda: make_env(env_suite, env_name, env_kwargs)
+    env_name = variant["env_name"]
+    make_env_lambda = lambda: make_env(env_suite, env_name, env_kwargs)
 
     if num_expl_envs > 1:
         env_fns = [make_env_lambda for _ in range(num_expl_envs)]
@@ -66,37 +59,36 @@ def experiment(variant):
     eval_env = DummyVecEnv(
         eval_envs, pass_render_kwargs=variant.get("pass_render_kwargs", False)
     )
-    expl_env.low_level_action_dim = low_level_action_dim
-    eval_env.low_level_action_dim = low_level_action_dim
-    eval_env.envs[0].low_level_action_dim = low_level_action_dim
+
     discrete_continuous_dist = variant["actor_kwargs"]["discrete_continuous_dist"]
+    num_primitives = eval_envs[0].num_primitives
     continuous_action_dim = eval_envs[0].max_arg_len
-    discrete_action_dim = eval_envs[0].num_primitives
+    discrete_action_dim = num_primitives
     if not discrete_continuous_dist:
         continuous_action_dim = continuous_action_dim + discrete_action_dim
         discrete_action_dim = 0
     action_dim = continuous_action_dim + discrete_action_dim
     obs_dim = expl_env.observation_space.low.size
-    actor_model_class = ActorModel
 
     primitive_model = Mlp(
-        hidden_sizes=variant["mlp_hidden_sizes"],
         output_size=variant["low_level_action_dim"],
-        input_size=250 + eval_env.envs[0].action_space.low.shape[0] + 1,
+        input_size=variant["model_kwargs"]["stochastic_state_size"]
+        + variant["model_kwargs"]["deterministic_state_size"]
+        + eval_env.envs[0].action_space.low.shape[0]
+        + 1,
         hidden_activation=nn.ReLU,
-        apply_embedding=variant.get("primitive_embedding", False),
         num_embeddings=eval_envs[0].num_primitives,
         embedding_dim=eval_envs[0].num_primitives,
         embedding_slice=eval_envs[0].num_primitives,
+        **variant["primitive_model_kwargs"],
     )
-    world_model_class = LowlevelRAPSWorldModel
-    world_model = world_model_class(
+    world_model = LowlevelRAPSWorldModel(
         low_level_action_dim,
         image_shape=eval_envs[0].image_shape,
         primitive_model=primitive_model,
         **variant["model_kwargs"],
     )
-    actor = actor_model_class(
+    actor = ActorModel(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=nn.ELU,
@@ -153,18 +145,21 @@ def experiment(variant):
         continuous_action_dim=continuous_action_dim,
         discrete_continuous_dist=discrete_continuous_dist,
     )
-    expl_policy.num_primitives = eval_env.envs[0].num_primitives
-    eval_policy.num_primitives = eval_env.envs[0].num_primitives
 
-    rand_policy = ActionSpaceSamplePolicy(expl_env)
-    rand_policy.num_primitives = eval_env.envs[0].num_primitives
-    eval_env.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
-    expl_env.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
+    initial_data_collection_policy = ActionSpaceSamplePolicy(expl_env)
+
+    rollout_function_kwargs = dict(
+        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
+        low_level_action_dim=low_level_action_dim,
+        num_primitives=num_primitives,
+    )
+
     expl_path_collector = VecMdpPathCollector(
         expl_env,
         expl_policy,
         save_env_in_snapshot=False,
         rollout_fn=vec_rollout_low_level_raps,
+        rollout_function_kwargs=rollout_function_kwargs,
     )
 
     eval_path_collector = VecMdpPathCollector(
@@ -172,19 +167,11 @@ def experiment(variant):
         eval_policy,
         save_env_in_snapshot=False,
         rollout_fn=vec_rollout_low_level_raps,
+        rollout_function_kwargs=rollout_function_kwargs,
     )
 
     replay_buffer = EpisodeReplayBufferLowLevelRAPS(
-        variant["replay_buffer_size"],
-        expl_env,
-        variant["algorithm_kwargs"]["max_path_length"],
-        num_low_level_actions_per_primitive,
-        obs_dim,
-        action_dim,
-        low_level_action_dim,
-        replace=False,
-        prioritize_fraction=variant["prioritize_fraction"],
-        uniform_priorities=variant.get("uniform_priorities", True),
+        expl_env, obs_dim, action_dim, **variant["replay_buffer_kwargs"]
     )
     filename = variant.get("replay_buffer_path", None)
     if filename is not None:
@@ -212,8 +199,6 @@ def experiment(variant):
         target_vf,
         world_model,
         eval_envs[0].image_shape,
-        num_low_level_actions_per_primitive=num_low_level_actions_per_primitive,
-        num_primitives=eval_env.envs[0].num_primitives,
         **variant["trainer_kwargs"],
     )
     algorithm = TorchBatchRLAlgorithm(
@@ -223,7 +208,7 @@ def experiment(variant):
         exploration_data_collector=expl_path_collector,
         evaluation_data_collector=eval_path_collector,
         replay_buffer=replay_buffer,
-        pretrain_policy=rand_policy,
+        pretrain_policy=initial_data_collection_policy,
         **variant["algorithm_kwargs"],
         eval_buffer=eval_buffer,
     )

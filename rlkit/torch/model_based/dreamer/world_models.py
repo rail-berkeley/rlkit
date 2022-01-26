@@ -25,7 +25,6 @@ class WorldModel(jit.ScriptModule):
         image_shape,
         stochastic_state_size=32,
         deterministic_state_size=200,
-        embedding_size=32 * 48,
         rssm_hidden_size=200,
         model_hidden_size=400,
         model_act=nn.ELU,

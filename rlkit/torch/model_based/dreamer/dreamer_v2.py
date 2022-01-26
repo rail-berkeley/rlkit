@@ -766,16 +766,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
     def __init__(
         self,
         *args,
-        num_primitives,
-        num_low_level_actions_per_primitive=100,
-        batch_length=50,
+        num_low_level_actions_per_primitive,
+        batch_length,
+        num_world_model_training_iterations,
+        wm_loss_scale,
         binarize_rewards=False,
-        num_world_model_training_iterations=1,
-        wm_loss_scale=1,
         **kwargs
     ):
         super().__init__(*args, **kwargs)
-        self.num_primitives = num_primitives
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.batch_length = batch_length
         self.criterion = nn.MSELoss()

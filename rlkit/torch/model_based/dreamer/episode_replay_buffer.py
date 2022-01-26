@@ -128,12 +128,12 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
 class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
     def __init__(
         self,
-        max_replay_buffer_size,
         env,
-        max_path_length,
-        num_low_level_actions_per_primitive,
         observation_dim,
         action_dim,
+        max_replay_buffer_size,
+        max_path_length,
+        num_low_level_actions_per_primitive,
         low_level_action_dim,
         replace=True,
         batch_length=50,

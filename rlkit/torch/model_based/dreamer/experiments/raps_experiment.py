@@ -13,10 +13,7 @@ def experiment(variant):
         DummyVecEnv,
         StableBaselinesVecEnv,
     )
-    from rlkit.torch.model_based.dreamer.actor_models import (
-        ActorModel,
-        ConditionalActorModel,
-    )
+    from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,
         DreamerPolicy,
@@ -32,9 +29,6 @@ def experiment(variant):
         post_epoch_visualize_func,
     )
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
-    from rlkit.torch.model_based.plan2explore.actor_models import (
-        ConditionalContinuousActorModel,
-    )
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm
 
     env_suite = variant.get("env_suite", "kitchen")
@@ -75,21 +69,14 @@ def experiment(variant):
             discrete_action_dim = 0
         action_dim = continuous_action_dim + discrete_action_dim
         use_batch_length = False
-    world_model_class = WorldModel
     obs_dim = expl_env.observation_space.low.size
-    if actor_model_class_name == "conditional_actor_model":
-        actor_model_class = ConditionalActorModel
-    elif actor_model_class_name == "continuous_conditional_actor_model":
-        actor_model_class = ConditionalContinuousActorModel
-    elif actor_model_class_name == "actor_model":
-        actor_model_class = ActorModel
 
-    world_model = world_model_class(
+    world_model = WorldModel(
         action_dim,
         image_shape=eval_envs[0].image_shape,
         **variant["model_kwargs"],
     )
-    actor = actor_model_class(
+    actor = ActorModel(
         variant["model_kwargs"]["model_hidden_size"],
         world_model.feature_size,
         hidden_activation=nn.ELU,

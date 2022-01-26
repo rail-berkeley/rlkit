@@ -9,7 +9,8 @@ def convert_value_to_type(value, type_):
     elif type_ == "float":
         value = float(value)
     elif type_ == "str":
-        value = value  # default is just string
+        # Default type is just string so leave as is.
+        value = value
     else:
         raise NotImplementedError("type {} not implemented".format(type_))
     return value
@@ -28,10 +29,9 @@ def get_args():
     )
     parser.add_argument("-st", "--search_types", nargs="*", default=[])
 
-    # parse arguments
     args = parser.parse_args()
-    if args.debug:
-        args.exp_prefix = "test" + args.exp_prefix
+
+    # Convert search values from string to the specified types.
     updated_search_values = []
     for value, type_ in zip(args.search_values, args.search_types):
         if type(value) == list:

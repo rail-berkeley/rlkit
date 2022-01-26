@@ -74,7 +74,6 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=50,
             deterministic_state_size=200,
-            embedding_size=1024,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,
@@ -116,13 +115,6 @@ if __name__ == "__main__":
     )
     for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
         for _ in range(args.num_seeds):
-            variant["env_kwargs"]["open_gripper_iterations"] = variant["env_kwargs"][
-                "goto_pose_iterations"
-            ]
-            variant["env_kwargs"]["close_gripper_iterations"] = variant["env_kwargs"][
-                "goto_pose_iterations"
-            ]
-
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id

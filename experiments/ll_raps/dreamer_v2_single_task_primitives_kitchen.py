@@ -20,7 +20,6 @@ if __name__ == "__main__":
             batch_size=30,
             max_path_length=5,
         )
-
     else:
         algorithm_kwargs = dict(
             num_epochs=250,
@@ -28,12 +27,11 @@ if __name__ == "__main__":
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
-            batch_size=417,  # 417*6 = 2502
-            num_expl_steps_per_train_loop=30,  # 5*(5+1) one trajectory per vec env
-            num_train_loops_per_epoch=40,  # 1000//(5*5)
-            num_trains_per_train_loop=10,  # 400//40
+            batch_size=417,
+            num_expl_steps_per_train_loop=30,
+            num_train_loops_per_epoch=40,
+            num_trains_per_train_loop=10,
         )
-
     variant = dict(
         algorithm="DreamerV2",
         version="normal",
@@ -73,7 +71,6 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=50,
             deterministic_state_size=200,
-            embedding_size=1024,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,

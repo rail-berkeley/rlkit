@@ -25,26 +25,40 @@ def preprocess_variant_p2exp(variant):
 
 
 def preprocess_variant_llraps(variant):
-    variant["replay_buffer_size"] = int(
-        3e6
-        / (
-            variant["num_low_level_actions_per_primitive"]
-            * variant["algorithm_kwargs"]["max_path_length"]
-            + 1
-        )
-    )
     variant["trainer_kwargs"]["batch_length"] = int(
-        variant["num_low_level_actions_per_primitive"]
-        * variant["algorithm_kwargs"]["max_path_length"]
-        + 1
+        variant["num_low_level_actions_per_primitive"] * variant["max_path_length"] + 1
     )
-    variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
-        "num_low_level_actions_per_primitive"
-    ]
     variant["trainer_kwargs"]["num_world_model_training_iterations"] = (
         variant["effective_batch_size"] // variant["algorithm_kwargs"]["batch_size"]
     )
     variant["trainer_kwargs"]["wm_loss_scale"] = 1 / (
         variant["trainer_kwargs"]["num_world_model_training_iterations"]
     )
+    variant["trainer_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+        "num_low_level_actions_per_primitive"
+    ]
+
+    variant["replay_buffer_kwargs"]["max_replay_buffer_size"] = int(
+        3e6
+        / (
+            variant["num_low_level_actions_per_primitive"] * variant["max_path_length"]
+            + 1
+        )
+    )
+    variant["replay_buffer_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+        "num_low_level_actions_per_primitive"
+    ]
+    variant["replay_buffer_kwargs"]["low_level_action_dim"] = variant[
+        "low_level_action_dim"
+    ]
+    variant["replay_buffer_kwargs"]["max_path_length"] = variant["max_path_length"]
+
+    variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = variant[
+        "max_path_length"
+    ]
+    variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+        "num_low_level_actions_per_primitive"
+    ]
+
+    variant["algorithm_kwargs"]["max_path_length"] = variant["max_path_length"]
     return variant

@@ -21,7 +21,6 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=1,
             batch_size=200,
-            max_path_length=5,
         )
     else:
         algorithm_kwargs = dict(
@@ -29,7 +28,6 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=5,
             batch_size=200,
             num_expl_steps_per_train_loop=60,
             num_train_loops_per_epoch=20,
@@ -38,23 +36,18 @@ if __name__ == "__main__":
     variant = dict(
         algorithm="LLRAPS",
         version="normal",
-        replay_buffer_size=int(1.2e4),
         algorithm_kwargs=algorithm_kwargs,
-        use_raw_actions=False,
         env_suite="kitchen",
-        pass_render_kwargs=True,
         env_kwargs=dict(
             dense=False,
             image_obs=True,
             action_scale=1.4,
             use_workspace_limits=True,
             control_mode="primitives",
-            num_low_level_actions_per_primitive=10,
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 use_image_obs=True,
-                max_path_length=5,
                 unflatten_images=False,
             ),
             image_kwargs=dict(),
@@ -75,12 +68,12 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=50,
             deterministic_state_size=200,
-            embedding_size=1024,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            depth=32,
         ),
         trainer_kwargs=dict(
             adam_eps=1e-5,
@@ -102,15 +95,24 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
+        replay_buffer_kwargs=dict(
+            prioritize_fraction=0.0,
+            uniform_priorities=True,
+            replace=False,
+        ),
+        primitive_model_kwargs=dict(
+            hidden_sizes=[512, 512],
+            apply_embedding=False,
+        ),
         num_expl_envs=1,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
         low_level_action_dim=9,
-        mlp_hidden_sizes=[512, 512],
-        prioritize_fraction=0.0,
-        effective_batch_size=400,
         num_low_level_actions_per_primitive=10,
+        effective_batch_size=400,
+        pass_render_kwargs=True,
+        max_path_length=5,
     )
     search_space = {
         key: value for key, value in zip(args.search_keys, args.search_values)
