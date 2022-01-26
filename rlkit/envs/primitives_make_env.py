@@ -101,12 +101,8 @@ def make_base_kitchen_env(env_class, env_kwargs):
 
 
 def make_env(env_suite, env_name, env_kwargs):
-    from railrl.envs.wrappers.predictive_wrapper_env import RealNVPWrapper
-
     from rlkit.envs.primitives_wrappers import (
         ActionRepeat,
-        GetObservationWrapper,
-        IgnoreLastAction,
         ImageEnvMetaworld,
         ImageUnFlattenWrapper,
         NormalizeActions,
@@ -120,7 +116,6 @@ def make_env(env_suite, env_name, env_kwargs):
     use_raw_action_wrappers = usage_kwargs.get("use_raw_action_wrappers", False)
     use_image_obs = usage_kwargs.get("use_image_obs", True)
     unflatten_images = usage_kwargs.get("unflatten_images", False)
-    use_real_nvp_wrappers = usage_kwargs.get("use_real_nvp_wrappers", False)
 
     env_kwargs_new = env_kwargs.copy()
     if "usage_kwargs" in env_kwargs_new:
@@ -142,19 +137,11 @@ def make_env(env_suite, env_name, env_kwargs):
     if unflatten_images:
         env = ImageUnFlattenWrapper(env)
 
-    if use_real_nvp_wrappers:
-        env = GetObservationWrapper(IgnoreLastAction(env))
-        env = RealNVPWrapper(
-            env,
-            usage_kwargs.get("model_path"),
-            action_scale=1,
-        )
-
     if use_raw_action_wrappers:
         env = ActionRepeat(env, 2)
         env = NormalizeActions(env)
         env = TimeLimit(env, max_path_length // 2)
     else:
         env = TimeLimit(env, max_path_length)
-    env.reset()
+    env.reset
     return env

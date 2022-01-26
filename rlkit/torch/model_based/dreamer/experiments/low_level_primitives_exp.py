@@ -225,7 +225,6 @@ def experiment(variant):
         eval_buffer=eval_buffer,
     )
     algorithm.low_level_primitives = True
-    print("NODENAME: ", os.environ["SLURMD_NODENAME"])
     if variant.get("generate_video", False):
         post_epoch_visualize_func(algorithm, 0)
     elif variant.get("unsubsampled_rollout", False):
