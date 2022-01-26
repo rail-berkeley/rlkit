@@ -2,8 +2,8 @@ from gym.envs.mujoco import HalfCheetahEnv
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.data_management.env_replay_buffer import EnvReplayBuffer
-from rlkit.envs.mujoco_vec_wrappers import make_robosuite_env
 from rlkit.envs.wrappers import NormalizedBoxEnv
+from rlkit.envs.wrappers.mujoco_vec_wrappers import make_robosuite_env
 from rlkit.launchers.launcher_util import setup_logger
 from rlkit.samplers.data_collector import MdpPathCollector
 from rlkit.torch.networks import ConcatMlp

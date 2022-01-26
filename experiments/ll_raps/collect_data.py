@@ -4,8 +4,8 @@ import os
 import numpy as np
 from tqdm import tqdm
 
-from rlkit.envs.mujoco_vec_wrappers import StableBaselinesVecEnv
 from rlkit.envs.primitives_make_env import make_env
+from rlkit.envs.wrappers.mujoco_vec_wrappers import StableBaselinesVecEnv
 
 
 def get_args():

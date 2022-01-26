@@ -14,7 +14,7 @@ def experiment(variant):
     import torch.nn as nn
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv
+    from rlkit.envs.wrappers.mujoco_vec_wrappers import DummyVecEnv
     from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer import DreamerTrainer
     from rlkit.torch.model_based.dreamer.dreamer_policy import (

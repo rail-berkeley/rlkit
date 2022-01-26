@@ -9,9 +9,12 @@ def experiment(variant):
 
     import rlkit.torch.pytorch_util as ptu
     from rlkit.core import logger
-    from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
     from rlkit.envs.multi_task_env import MultiTaskEnv
     from rlkit.envs.primitives_make_env import make_env
+    from rlkit.envs.wrappers.mujoco_vec_wrappers import (
+        DummyVecEnv,
+        StableBaselinesVecEnv,
+    )
     from rlkit.torch.model_based.dreamer.actor_models import ActorModel
     from rlkit.torch.model_based.dreamer.dreamer_policy import (
         ActionSpaceSamplePolicy,

@@ -5,7 +5,7 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     gym.logger.setLevel(40)
     import robosuite as suite
 
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.primitives_wrappers import (
         NormalizeBoxEnvFixed,
         RobosuitePrimitives,
         RobosuiteWrapper,
@@ -49,8 +49,10 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     )
     from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 
-    from rlkit.envs.dm_backend_wrappers import SawyerMocapBaseDMBackendMetaworld
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.dm_backend_wrappers import (
+        SawyerMocapBaseDMBackendMetaworld,
+    )
+    from rlkit.envs.wrappers.primitives_wrappers import (
         MetaworldWrapper,
         SawyerXYZEnvMetaworldPrimitives,
     )
@@ -101,7 +103,7 @@ def make_base_kitchen_env(env_class, env_kwargs):
 
 
 def make_env(env_suite, env_name, env_kwargs):
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.primitives_wrappers import (
         ActionRepeat,
         ImageEnvMetaworld,
         ImageUnFlattenWrapper,

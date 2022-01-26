@@ -13,7 +13,10 @@ def experiment(variant):
     import torch
 
     import rlkit.torch.pytorch_util as ptu
-    from rlkit.envs.mujoco_vec_wrappers import DummyVecEnv, StableBaselinesVecEnv
+    from rlkit.envs.wrappers.mujoco_vec_wrappers import (
+        DummyVecEnv,
+        StableBaselinesVecEnv,
+    )
     from rlkit.torch.model_based.dreamer.actor_models import (
         ActorModel,
         ConditionalActorModel,
