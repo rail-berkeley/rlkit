@@ -19,11 +19,11 @@ class ActorModel(Mlp):
         discrete_action_dim=0,
         continuous_action_dim=0,
         hidden_activation=F.elu,
-        min_std=1e-4,
-        init_std=5.0,
+        min_std=0.1,
+        init_std=0.0,
         mean_scale=5.0,
         use_tanh_normal=True,
-        dist="tanh_normal_dreamer_v1",
+        dist="trunc_normal",
         **kwargs,
     ):
         self.discrete_continuous_dist = discrete_continuous_dist

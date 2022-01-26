@@ -53,19 +53,19 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         transition_loss_scale=0.8,
         detach_rewards=False,
         forward_kl=False,
-        policy_gradient_loss_scale=1.0,
+        policy_gradient_loss_scale=0.0,
         actor_entropy_loss_schedule="1e-4",
+        use_pred_discount=False,
+        reward_scale=1,
+        num_imagination_iterations=1,
         use_baseline=True,
         use_ppo_loss=False,
         ppo_clip_param=0.2,
         num_actor_value_updates=1,
         use_advantage_normalization=False,
-        num_imagination_iterations=1,
         use_clipped_value_loss=False,
         actor_value_lr=8e-5,
         use_actor_value_optimizer=False,
-        use_pred_discount=True,
-        reward_scale=1,
     ):
         super().__init__()
 
