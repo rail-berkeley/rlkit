@@ -5,7 +5,6 @@ import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
-    preprocess_variant,
     preprocess_variant_llraps,
 )
 from rlkit.torch.model_based.dreamer.experiments.ll_raps_experiment import experiment
@@ -111,6 +110,7 @@ if __name__ == "__main__":
         mlp_hidden_sizes=[512, 512],
         prioritize_fraction=0.0,
         effective_batch_size=400,
+        num_low_level_actions_per_primitive=10,
     )
     search_space = {
         key: value for key, value in zip(args.search_keys, args.search_values)
