@@ -78,13 +78,13 @@ def vec_rollout(
         rewards = rewards.reshape(-1, 1)
     env_info_final = {}
     for info in env_infos[1:]:
-        for k, v in info.items():
-            if k in env_info_final:
-                env_info_final[k].append(v)
+        for key, value in info.items():
+            if key in env_info_final:
+                env_info_final[key].append(value)
             else:
-                env_info_final[k] = [v]
-    for k, v in env_info_final.items():
-        env_info_final[k] = np.concatenate(v, 1)
+                env_info_final[key] = [value]
+    for key, value in env_info_final.items():
+        env_info_final[key] = np.concatenate(value, 1)
     env_infos = env_info_final
     return dict(
         observations=observations,
@@ -164,7 +164,7 @@ def vec_rollout_low_level_raps(
         cv2.imshow("img", img)
         cv2.waitKey(1)
     o = (None, np.array(o))
-    for p in range(0, max_path_length):
+    for step in range(0, max_path_length):
         ha, agent_info = agent.get_action(o, **get_action_kwargs)
         if (ha[:, : agent.num_primitives].sum(axis=-1) != 1).any():
             argmax = np.argmax(ha[:, : agent.num_primitives], axis=-1)
@@ -190,14 +190,14 @@ def vec_rollout_low_level_raps(
         env_infos.append(i)
         low_level_actions[
             :,
-            p * env.num_low_level_actions_per_primitive
-            + 1 : (p + 1) * env.num_low_level_actions_per_primitive
+            step * env.num_low_level_actions_per_primitive
+            + 1 : (step + 1) * env.num_low_level_actions_per_primitive
             + 1,
         ] = np.array(la)
         observations[
             :,
-            p * env.num_low_level_actions_per_primitive
-            + 1 : p * env.num_low_level_actions_per_primitive
+            step * env.num_low_level_actions_per_primitive
+            + 1 : step * env.num_low_level_actions_per_primitive
             + env.num_low_level_actions_per_primitive
             + 1,
         ] = lo
@@ -219,8 +219,8 @@ def vec_rollout_low_level_raps(
         ha = np.concatenate((ha, np.expand_dims(phases, -1)), axis=2)
         high_level_actions[
             :,
-            p * env.num_low_level_actions_per_primitive
-            + 1 : p * env.num_low_level_actions_per_primitive
+            step * env.num_low_level_actions_per_primitive
+            + 1 : step * env.num_low_level_actions_per_primitive
             + env.num_low_level_actions_per_primitive
             + 1,
         ] = ha
@@ -235,13 +235,13 @@ def vec_rollout_low_level_raps(
         rewards = rewards.reshape(-1, 1)
     env_info_final = {}
     for info in env_infos[1:]:
-        for k, v in info.items():
-            if k in env_info_final:
-                env_info_final[k].append(v)
+        for key, value in info.items():
+            if key in env_info_final:
+                env_info_final[key].append(value)
             else:
-                env_info_final[k] = [v]
-    for k, v in env_info_final.items():
-        env_info_final[k] = np.concatenate(v, 1)
+                env_info_final[key] = [value]
+    for key, value in env_info_final.items():
+        env_info_final[key] = np.concatenate(value, 1)
     env_infos = env_info_final
     return dict(
         observations=observations,

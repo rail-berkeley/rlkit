@@ -365,16 +365,16 @@ def experiment(variant):
                         image_dist,
                         reward_dist,
                         {
-                            k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                            key: value[np.arange(batch_indices.shape[1]), batch_indices]
                             .permute(1, 0, 2)
-                            .reshape(-1, v.shape[-1])
-                            for k, v in prior.items()
+                            .reshape(-1, value.shape[-1])
+                            for key, value in prior.items()
                         },
                         {
-                            k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                            key: value[np.arange(batch_indices.shape[1]), batch_indices]
                             .permute(1, 0, 2)
-                            .reshape(-1, v.shape[-1])
-                            for k, v in post.items()
+                            .reshape(-1, value.shape[-1])
+                            for key, value in post.items()
                         },
                         prior_dist,
                         post_dist,
@@ -529,16 +529,20 @@ def experiment(variant):
                             image_dist,
                             reward_dist,
                             {
-                                k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                                key: value[
+                                    np.arange(batch_indices.shape[1]), batch_indices
+                                ]
                                 .permute(1, 0, 2)
-                                .reshape(-1, v.shape[-1])
-                                for k, v in prior.items()
+                                .reshape(-1, value.shape[-1])
+                                for key, value in prior.items()
                             },
                             {
-                                k: v[np.arange(batch_indices.shape[1]), batch_indices]
+                                key: value[
+                                    np.arange(batch_indices.shape[1]), batch_indices
+                                ]
                                 .permute(1, 0, 2)
-                                .reshape(-1, v.shape[-1])
-                                for k, v in post.items()
+                                .reshape(-1, value.shape[-1])
+                                for key, value in post.items()
                             },
                             prior_dist,
                             post_dist,

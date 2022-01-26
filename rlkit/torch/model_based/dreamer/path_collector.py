@@ -71,22 +71,30 @@ class VecMdpPathCollector(PathCollector):
                 ].sum()
         self._num_paths_total += len(paths) * self._env.n_envs
         self._num_steps_total += num_steps_collected
-        log_paths = [{} for i in range(len(paths) * self._env.n_envs)]
+        log_paths = [{} for _ in range(len(paths) * self._env.n_envs)]
         ctr = 0
-        for i, path in enumerate(paths):
-            for j in range(self._env.n_envs):
-                for k in [
+        for path in paths:
+            for env_idx in range(self._env.n_envs):
+                for key in [
                     "actions",
                     "terminals",
                     "rewards",
                 ]:
-                    log_paths[ctr][k] = path[k][1:, j]
-                log_paths[ctr]["agent_infos"] = [{}] * path["rewards"][1:, j].shape[0]
-                k = "env_infos"
-                log_paths[ctr][k] = [{}] * path["rewards"][1:, j].shape[0]
-                for key, value in path[k].items():
-                    for z in range(value[j].shape[0]):
-                        log_paths[ctr][k][z][key] = value[j][z]
+                    log_paths[ctr][key] = path[key][
+                        1:, env_idx
+                    ]  # skip the first action as it is null
+                log_paths[ctr]["agent_infos"] = [{}] * path["rewards"][
+                    1:, env_idx
+                ].shape[0]
+                env_info_key = "env_infos"
+                log_paths[ctr][env_info_key] = [{}] * path["rewards"][
+                    1:, env_idx
+                ].shape[0]
+                for key, value in path[env_info_key].items():
+                    for value_idx in range(value[env_idx].shape[0]):
+                        log_paths[ctr][env_info_key][value_idx][key] = value[env_idx][
+                            value_idx
+                        ]
                 ctr += 1
         self._epoch_paths.extend(log_paths)  # only used for logging
         return paths

@@ -12,10 +12,6 @@ from metaworld.envs.mujoco.mujoco_env import MujocoEnv
 from metaworld.envs.mujoco.sawyer_xyz.v2.sawyer_assembly_peg_v2 import (
     SawyerNutAssemblyEnvV2,
 )
-from robosuite.utils import macros
-from robosuite.utils.mjcf_utils import IMAGE_CONVENTION_MAPPING
-from robosuite.utils.mujoco_py_renderer import MujocoPyRenderer
-from robosuite.utils.observables import sensor
 
 
 def patch_mjlib_accessors(mjlib, model, data):

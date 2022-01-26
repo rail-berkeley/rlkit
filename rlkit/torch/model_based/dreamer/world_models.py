@@ -211,17 +211,17 @@ class WorldModel(jit.ScriptModule):
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
     ):
-        for i in range(path_length):
+        for step in range(path_length):
             (post_params, prior_params,) = self.obs_step(
                 state,
-                action[:, i],
-                embed[:, i],
+                action[:, step],
+                embed[:, step],
             )
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+            for key in post.keys():
+                post[key].append(post_params[key].unsqueeze(1))
 
-            for k in prior.keys():
-                prior[k].append(prior_params[k].unsqueeze(1))
+            for key in prior.keys():
+                prior[key].append(prior_params[key].unsqueeze(1))
             state = post_params
         return post, prior
 
@@ -256,11 +256,11 @@ class WorldModel(jit.ScriptModule):
             state,
         )
 
-        for k in post.keys():
-            post[k] = torch.cat(post[k], dim=1)
+        for key in post.keys():
+            post[key] = torch.cat(post[key], dim=1)
 
-        for k in prior.keys():
-            prior[k] = torch.cat(prior[k], dim=1)
+        for key in prior.keys():
+            prior[key] = torch.cat(prior[key], dim=1)
 
         if self.use_prior_instead_of_posterior:
             # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
@@ -372,34 +372,34 @@ class LowlevelRAPSWorldModel(WorldModel):
         use_network_action: bool = False,
     ):
         actions = []
-        for i in range(path_length):
-            if i == 0:
+        for step in range(path_length):
+            if step == 0:
                 action_ = action[1][:, 0] * 0
             else:
                 inp = torch.cat(
-                    [action[0][:, i], self.get_features(state).detach()], dim=1
+                    [action[0][:, step], self.get_features(state).detach()], dim=1
                 )
                 action_ = self.primitive_model(inp)
                 actions.append(action_.unsqueeze(1))
                 if use_network_action:
                     action_ = action_
                 else:
-                    action_ = action[1][:, i]
+                    action_ = action[1][:, step]
             (post_params, prior_params,) = self.obs_step(
                 state,
                 action_.detach(),
-                embed[:, i],
+                embed[:, step],
             )
 
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+            for key in post.keys():
+                post[key].append(post_params[key].unsqueeze(1))
 
-            for k in prior.keys():
-                if i == 0:
+            for key in prior.keys():
+                if step == 0:
                     # auto encode first action!
-                    prior[k].append(post_params[k].unsqueeze(1))
+                    prior[key].append(post_params[key].unsqueeze(1))
                 else:
-                    prior[k].append(prior_params[k].unsqueeze(1))
+                    prior[key].append(prior_params[key].unsqueeze(1))
             state = post_params
         return post, prior, torch.cat(actions, dim=1)
 
@@ -417,20 +417,20 @@ class LowlevelRAPSWorldModel(WorldModel):
     ):
         actions = []
         ctr = 0
-        for i in range(path_length):
-            if i == 0:
+        for step in range(path_length):
+            if step == 0:
                 action_ = action[1][:, 0] * 0
             else:
                 inp = torch.cat(
-                    [action[0][:, i], self.get_features(state).detach()], dim=1
+                    [action[0][:, step], self.get_features(state).detach()], dim=1
                 )
                 action_ = self.primitive_model(inp)
                 actions.append(action_.unsqueeze(1))
                 if use_network_action:
                     action_ = action_
                 else:
-                    action_ = action[1][:, i]
-            if i not in idxs:
+                    action_ = action[1][:, step]
+            if step not in idxs:
                 prior_params = self.action_step(state, action_.detach())
                 post_params = prior_params
             else:
@@ -441,15 +441,15 @@ class LowlevelRAPSWorldModel(WorldModel):
                 )
                 ctr += 1
 
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+            for key in post.keys():
+                post[key].append(post_params[key].unsqueeze(1))
 
-            for k in prior.keys():
-                if i == 0:
+            for key in prior.keys():
+                if step == 0:
                     # auto encode first action!
-                    prior[k].append(post_params[k].unsqueeze(1))
+                    prior[key].append(post_params[key].unsqueeze(1))
                 else:
-                    prior[k].append(prior_params[k].unsqueeze(1))
+                    prior[key].append(prior_params[key].unsqueeze(1))
             state = post_params
         return post, prior, torch.cat(actions, dim=1)
 
@@ -508,11 +508,11 @@ class LowlevelRAPSWorldModel(WorldModel):
             use_network_action,
         )
 
-        for k in post.keys():
-            post[k] = torch.cat(post[k], dim=1)
+        for key in post.keys():
+            post[key] = torch.cat(post[key], dim=1)
 
-        for k in prior.keys():
-            prior[k] = torch.cat(prior[k], dim=1)
+        for key in prior.keys():
+            prior[key] = torch.cat(prior[key], dim=1)
 
         if self.use_prior_instead_of_posterior:
             # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
@@ -613,11 +613,11 @@ class LowlevelRAPSWorldModel(WorldModel):
         use_any_obs: bool = True,
     ):
         ll_a_pred = []
-        for k in range(0, num_low_level_actions_per_primitive):
-            embed = self.encode(observation[:, k])
+        for key in range(0, num_low_level_actions_per_primitive):
+            embed = self.encode(observation[:, key])
             phase = (
                 torch.ones((high_level_action.shape[0], 1), device=ptu.device)
-                * (k + 1)
+                * (key + 1)
                 / num_low_level_actions_per_primitive
             )
             hl = torch.cat((high_level_action, phase), 1)
@@ -628,24 +628,24 @@ class LowlevelRAPSWorldModel(WorldModel):
             a = self.primitive_model(inp)
             if use_any_obs:
                 if use_raps_obs:
-                    if k == num_low_level_actions_per_primitive - 1:
+                    if key == num_low_level_actions_per_primitive - 1:
                         if use_true_actions:
-                            new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                            new_state, _ = self.obs_step(new_state, ll_a[:, key], embed)
                         else:
                             new_state, _ = self.obs_step(new_state, a, embed)
                     else:
                         if use_true_actions:
-                            new_state = self.action_step(new_state, ll_a[:, k])
+                            new_state = self.action_step(new_state, ll_a[:, key])
                         else:
                             new_state = self.action_step(new_state, a)
                 else:
                     if use_true_actions:
-                        new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                        new_state, _ = self.obs_step(new_state, ll_a[:, key], embed)
                     else:
                         new_state, _ = self.obs_step(new_state, a, embed)
             else:
                 if use_true_actions:
-                    new_state = self.action_step(new_state, ll_a[:, k])
+                    new_state = self.action_step(new_state, ll_a[:, key])
                 else:
                     new_state = self.action_step(new_state, a)
 
@@ -659,10 +659,10 @@ class LowlevelRAPSWorldModel(WorldModel):
         high_level_action: torch.Tensor,
         num_low_level_actions_per_primitive: int,
     ) -> Dict[str, torch.Tensor]:
-        for k in range(0, num_low_level_actions_per_primitive):
+        for key in range(0, num_low_level_actions_per_primitive):
             phase = (
                 torch.ones((high_level_action.shape[0], 1), device=ptu.device)
-                * (k + 1)
+                * (key + 1)
                 / num_low_level_actions_per_primitive
             )
             hl = torch.cat((high_level_action, phase), 1)

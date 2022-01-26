@@ -9,14 +9,6 @@ from metaworld.envs.mujoco.mujoco_env import _assert_task_is_set
 from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 from robosuite.wrappers.gym_wrapper import GymWrapper
 
-import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.model_based.dreamer.mlp import Mlp
-
-try:
-    from robosuite_vices.controllers.arm_controller import PositionController
-except:
-    pass
-
 from rlkit.envs.dm_backend_wrappers import DMControlBackendMetaworldRobosuiteEnv
 from rlkit.envs.wrappers.normalized_box_env import NormalizedBoxEnv
 

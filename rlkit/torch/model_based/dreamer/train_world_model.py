@@ -114,7 +114,6 @@ def visualize_rollout(
     max_path_length,
     low_level_primitives,
     policy=None,
-    mode="eval",
     img_size=64,
     num_rollouts=4,
     use_raps_obs=False,
@@ -133,20 +132,19 @@ def visualize_rollout(
         )
     )
     file_path += file_suffix
-    pl = max_path_length
     img_shape = (img_size, img_size, 3)
     reconstructions = np.zeros(
-        (num_rollouts, pl + 1, *img_shape),
+        (num_rollouts, max_path_length + 1, *img_shape),
         dtype=np.uint8,
     )
     obs = np.zeros(
-        (num_rollouts, pl + 1, *img_shape),
+        (num_rollouts, max_path_length + 1, *img_shape),
         dtype=np.uint8,
     )
     with torch.cuda.amp.autocast():
-        for i in range(num_rollouts):
-            for j in range(0, max_path_length + 1):
-                if j == 0:
+        for rollout in range(num_rollouts):
+            for step in range(0, max_path_length + 1):
+                if step == 0:
                     o = env.reset()
                     new_img = ptu.from_numpy(o)
                     policy.reset(o.reshape(1, -1))
@@ -182,23 +180,25 @@ def visualize_rollout(
                     add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
                     add_text(vis, "r: {}".format(r), (35, 7), 0.3, (0, 0, 0))
 
-                obs[i, j] = vis
-                if j != 0:
+                obs[rollout, step] = vis
+                if step != 0:
                     new_img = reconstruct_from_state(state, world_model)
-                    if j == 1:
+                    if step == 1:
                         add_text(new_img, "Reconstruction", (1, 60), 0.25, (0, 255, 0))
-                    reconstructions[i, j - 1] = new_img
+                    reconstructions[rollout, step - 1] = new_img
                     print(
-                        "Rollout {} Step {} Predicted Reward".format(i, j - 1),
+                        "Rollout {} Step {} Predicted Reward".format(rollout, step - 1),
                         world_model.reward(world_model.get_features(state))
                         .detach()
                         .cpu()
                         .numpy()
                         .item(),
                     )
-                    print("Rollout {} Step {} Reward".format(i, j - 1), prev_r)
+                    print("Rollout {} Step {} Reward".format(rollout, step - 1), prev_r)
                     print(
-                        "Rollout {} Step {} Predicted Discount".format(i, j - 1),
+                        "Rollout {} Step {} Predicted Discount".format(
+                            rollout, step - 1
+                        ),
                         world_model.get_dist(
                             world_model.pred_discount(world_model.get_features(state)),
                             std=None,
@@ -214,18 +214,18 @@ def visualize_rollout(
             _, state = policy.get_action(policy_o)
             state = state["state"]
             new_img = reconstruct_from_state(state, world_model)
-            reconstructions[i, max_path_length] = new_img
+            reconstructions[rollout, max_path_length] = new_img
             print(
-                "Rollout {} Final Predicted Reward".format(i),
+                "Rollout {} Final Predicted Reward".format(rollout),
                 world_model.reward(world_model.get_features(state))
                 .detach()
                 .cpu()
                 .numpy()
                 .item(),
             )
-            print("Rollout {} Final Reward: ".format(i), r)
+            print("Rollout {} Final Reward: ".format(rollout), r)
             print(
-                "Rollout {} Final Predicted Discount".format(i, j - 1),
+                "Rollout {} Final Predicted Discount".format(rollout, step - 1),
                 world_model.get_dist(
                     world_model.pred_discount(world_model.get_features(state)),
                     std=None,
@@ -238,18 +238,21 @@ def visualize_rollout(
             )
             print()
 
-    im = np.zeros((img_size * 2 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
+    im = np.zeros(
+        (img_size * 2 * num_rollouts, (max_path_length + 1) * img_size, 3),
+        dtype=np.uint8,
+    )
 
-    for i in range(num_rollouts):
-        for j in range(pl + 1):
+    for rollout in range(num_rollouts):
+        for step in range(max_path_length + 1):
             im[
-                img_size * 2 * i : img_size * 2 * i + img_size,
-                img_size * j : img_size * (j + 1),
-            ] = obs[i, j]
+                img_size * 2 * rollout : img_size * 2 * rollout + img_size,
+                img_size * step : img_size * (step + 1),
+            ] = obs[rollout, step]
             im[
-                img_size * 2 * i + img_size : img_size * 2 * (i + 1),
-                img_size * j : img_size * (j + 1),
-            ] = reconstructions[i, j]
+                img_size * 2 * rollout + img_size : img_size * 2 * (rollout + 1),
+                img_size * step : img_size * (step + 1),
+            ] = reconstructions[rollout, step]
     cv2.imwrite(file_path, im)
     print("Saved Rollout Visualization to {}".format(file_path))
 
@@ -257,7 +260,7 @@ def visualize_rollout(
 
     # fourcc = cv2.VideoWriter_fourcc(*"DIVX")
     # out = cv2.VideoWriter(file_path, fourcc, 10.0, (img_size * 2, img_size * 2))
-    # for i in range(pl + 1):
+    # for i in range(max_path_length + 1):
     #     im1 = obs[0, i]
     #     im2 = obs[1, i]
     #     im3 = obs[2, i]
@@ -275,10 +278,10 @@ def visualize_rollout(
 
 
 def unsubsample_and_execute_ll(ll_a, env, num_subsample_steps):
-    for z in range(ll_a.shape[0]):
-        la = ll_a[z]
+    for idx in range(ll_a.shape[0]):
+        la = ll_a[idx]
         target = env.get_endeff_pos() + la[:3]
-        for k in range(num_subsample_steps):
+        for key in range(num_subsample_steps):
             a = (target - env.get_endeff_pos()) / num_subsample_steps
             a = np.concatenate((a, la[3:]))
             o, r, d, i = env.low_level_step(a)
@@ -317,9 +320,9 @@ def visualize_primitive_unsubsampled_rollout(
         dtype=np.uint8,
     )
     with torch.cuda.amp.autocast():
-        for i in range(num_rollouts):
-            for j in range(0, max_path_length + 1):
-                if j == 0:
+        for rollout in range(num_rollouts):
+            for step in range(0, max_path_length + 1):
+                if step == 0:
                     o1 = env1.reset()
                     o2 = env2.reset()
                     o3 = env3.reset()
@@ -331,9 +334,9 @@ def visualize_primitive_unsubsampled_rollout(
                     add_text(o1, "True", (1, 60), 0.25, (0, 255, 0))
                     add_text(o2, "True Unsubsampled", (1, 60), 0.25, (0, 255, 0))
                     add_text(o3, "Pred Unsubsampled", (1, 60), 0.25, (0, 255, 0))
-                    obs1[i, 0] = o1
-                    obs2[i, 0] = o2
-                    obs3[i, 0] = o3
+                    obs1[rollout, 0] = o1
+                    obs2[rollout, 0] = o2
+                    obs3[rollout, 0] = o3
 
                 else:
                     high_level_action, out = policy.get_action(policy_o)
@@ -358,14 +361,14 @@ def visualize_primitive_unsubsampled_rollout(
                     o2, _, _, i2 = unsubsample_and_execute_ll(
                         ll_a[0], env2, num_subsample_steps
                     )
-                    if j > 1:
+                    if step > 1:
                         o3, _, _, i3 = unsubsample_and_execute_ll(
                             ll_a_pred, env3, num_subsample_steps
                         )
-                        obs3[i, j - 1] = convert_img_to_save(o3)
+                        obs3[rollout, step - 1] = convert_img_to_save(o3)
                         print(
-                            "Rollout: {}".format(i),
-                            "Step: {}".format(j - 1),
+                            "Rollout: {}".format(rollout),
+                            "Step: {}".format(step - 1),
                             "Primitive: ",
                             prev_primitive_name,
                             "LL Action Pred Error: ",
@@ -374,16 +377,16 @@ def visualize_primitive_unsubsampled_rollout(
                         )
                     prev_ll_a = ll_a
                     prev_primitive_name = primitive_name
-                    obs1[i, j] = convert_img_to_save(o1)
-                    obs2[i, j] = convert_img_to_save(o2)
+                    obs1[rollout, step] = convert_img_to_save(o1)
+                    obs2[rollout, step] = convert_img_to_save(o2)
             _, out = policy.get_action(policy_o)
             ll_a_pred = out["ll_a_pred"]
             o3, _, _, i3 = unsubsample_and_execute_ll(
                 ll_a_pred, env3, num_subsample_steps
             )
-            obs3[i, max_path_length] = convert_img_to_save(o3)
+            obs3[rollout, max_path_length] = convert_img_to_save(o3)
             print(
-                "Rollout: {}".format(i),
+                "Rollout: {}".format(rollout),
                 "Step: {}".format(max_path_length),
                 "Primitive: ",
                 prev_primitive_name,
@@ -391,14 +394,16 @@ def visualize_primitive_unsubsampled_rollout(
                 (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
                 / num_low_level_actions_per_primitive,
             )
-            print("Rollout {} Final Success True Actions: ".format(i), i1["success"])
             print(
-                "Rollout {} Final Success True Actions Unsubsampled: ".format(i),
+                "Rollout {} Final Success True Actions: ".format(rollout), i1["success"]
+            )
+            print(
+                "Rollout {} Final Success True Actions Unsubsampled: ".format(rollout),
                 i2["success"],
             )
             print(
                 "Rollout {} Final Success Primitive Model Actions Unsubsampled: ".format(
-                    i
+                    rollout
                 ),
                 i3["success"],
             )
@@ -406,20 +411,24 @@ def visualize_primitive_unsubsampled_rollout(
 
     im = np.zeros((img_size * 3 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
-    for i in range(num_rollouts):
-        for j in range(pl + 1):
+    for rollout in range(num_rollouts):
+        for step in range(pl + 1):
             im[
-                img_size * 3 * i : img_size * 3 * i + img_size,
-                img_size * j : img_size * (j + 1),
-            ] = obs1[i, j]
+                img_size * 3 * rollout : img_size * 3 * rollout + img_size,
+                img_size * step : img_size * (step + 1),
+            ] = obs1[rollout, step]
             im[
-                img_size * 3 * i + img_size : img_size * 3 * i + 2 * img_size,
-                img_size * j : img_size * (j + 1),
-            ] = obs2[i, j]
+                img_size * 3 * rollout
+                + img_size : img_size * 3 * rollout
+                + 2 * img_size,
+                img_size * step : img_size * (step + 1),
+            ] = obs2[rollout, step]
             im[
-                img_size * 3 * i + 2 * img_size : img_size * 3 * i + 3 * img_size,
-                img_size * j : img_size * (j + 1),
-            ] = obs3[i, j]
+                img_size * 3 * rollout
+                + 2 * img_size : img_size * 3 * rollout
+                + 3 * img_size,
+                img_size * step : img_size * (step + 1),
+            ] = obs3[rollout, step]
     cv2.imwrite(file_path, im)
     print("Saved Rollout Visualization to {}".format(file_path))
 
@@ -817,9 +826,9 @@ def get_dataloader_separately(
             )
             primitive_name = env.primitive_idx_to_name[primitive_idx]
             primitive_actions = []
-            for k in range(num_low_level_actions_per_primitive):
+            for key in range(num_low_level_actions_per_primitive):
                 primitive_name_to_action_dict = env.break_apart_action(
-                    primitive_args[k]
+                    primitive_args[key]
                 )
                 primitive_action = primitive_name_to_action_dict[primitive_name]
                 primitive_actions.append(primitive_action)

@@ -169,20 +169,20 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         if actor is None:
             actor = self.actor
         new_state = {}
-        for k, v in state.items():
+        for key, value in state.items():
             if self.use_pred_discount:
-                v = v[:, :-1]
-            if k == "stoch" and self.world_model.discrete_latents:
-                new_state[k] = v.reshape(-1, v.shape[-2], v.shape[-1])
+                value = value[:, :-1]
+            if key == "stoch" and self.world_model.discrete_latents:
+                new_state[key] = value.reshape(-1, value.shape[-2], value.shape[-1])
             else:
-                new_state[k] = v.reshape(-1, v.shape[-1]).detach()
+                new_state[key] = value.reshape(-1, value.shape[-1]).detach()
         imagined_features = []
         imagined_actions = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
         for _ in range(self.imagination_horizon):
             features = self.world_model.get_features(new_state)
-            for k in states.keys():
-                states[k].append(new_state[k].unsqueeze(0))
+            for key in states.keys():
+                states[key].append(new_state[key].unsqueeze(0))
             action_dist = actor(features.detach())
             action = action_dist.rsample()
             new_state = self.world_model.action_step(new_state, action)
@@ -191,8 +191,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             imagined_actions.append(action.unsqueeze(0))
         imagined_features = torch.cat(imagined_features)
         imagined_actions = torch.cat(imagined_actions)
-        for k in states.keys():
-            states[k] = torch.cat(states[k])
+        for key in states.keys():
+            states[key] = torch.cat(states[key])
         return imagined_features, imagined_actions, states
 
     def world_model_loss(
@@ -788,20 +788,22 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         if actor is None:
             actor = self.actor
         new_state = {}
-        for k, v in state.items():
+        for key, value in state.items():
             if self.use_pred_discount:
-                v = v[:, :-1]
-            if k == "stoch" and self.world_model.discrete_latents:
-                new_state[k] = v.reshape(-1, v.shape[-2], v.shape[-1]).detach()
+                value = value[:, :-1]
+            if key == "stoch" and self.world_model.discrete_latents:
+                new_state[key] = value.reshape(
+                    -1, value.shape[-2], value.shape[-1]
+                ).detach()
             else:
-                new_state[k] = v.reshape(-1, v.shape[-1]).detach()
+                new_state[key] = value.reshape(-1, value.shape[-1]).detach()
         imagined_features = []
         imagined_actions = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
         for _ in range(self.imagination_horizon):
             features = self.world_model.get_features(new_state)
-            for k in states.keys():
-                states[k].append(new_state[k].unsqueeze(0))
+            for key in states.keys():
+                states[key].append(new_state[key].unsqueeze(0))
             action_dist = actor(features.detach())
             high_level_action = action_dist.rsample()
             new_state = self.world_model.forward_high_level_step_primitive_model(
@@ -811,8 +813,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             imagined_actions.append(high_level_action.unsqueeze(0))
         imagined_features = torch.cat(imagined_features)
         imagined_actions = torch.cat(imagined_actions)
-        for k in states.keys():
-            states[k] = torch.cat(states[k])
+        for key in states.keys():
+            states[key] = torch.cat(states[key])
         return imagined_features, imagined_actions, states
 
     def train_networks(
@@ -900,18 +902,18 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         image_dist,
                         reward_dist,
                         {
-                            k: v[
+                            key: value[
                                 np.arange(batch_indices.shape[0]).reshape(-1, 1),
                                 batch_indices,
-                            ].reshape(-1, v.shape[-1])
-                            for k, v in prior.items()
+                            ].reshape(-1, value.shape[-1])
+                            for key, value in prior.items()
                         },
                         {
-                            k: v[
+                            key: value[
                                 np.arange(batch_indices.shape[0]).reshape(-1, 1),
                                 batch_indices,
-                            ].reshape(-1, v.shape[-1])
-                            for k, v in post.items()
+                            ].reshape(-1, value.shape[-1])
+                            for key, value in post.items()
                         },
                         prior_dist,
                         post_dist,
@@ -949,10 +951,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     loss = world_model_loss + primitive_loss
                 self.scaler.scale(loss * self.wm_loss_scale).backward()
                 if itr == 0:
-                    state = {k: v[:, rt_idxs].detach() for k, v in post.items()}
+                    state = {
+                        key: value[:, rt_idxs].detach() for key, value in post.items()
+                    }
                 else:
-                    for k, v in state.items():
-                        state[k] = torch.cat([v, post[k][:, rt_idxs].detach()])
+                    for key, value in state.items():
+                        state[key] = torch.cat([value, post[key][:, rt_idxs].detach()])
             # by taking optimizer step outside the loop we are doing gradient accumulation
             self.update_network(
                 self.world_model,
@@ -1156,8 +1160,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             (_, _, image_pred_loss, _, _, _, _,) = self.world_model_loss(
                 image_dist,
                 reward_dist,
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in prior.items()},
-                {k: v[:, rt_idxs].reshape(-1, v.shape[-1]) for k, v in post.items()},
+                {
+                    key: value[:, rt_idxs].reshape(-1, value.shape[-1])
+                    for key, value in prior.items()
+                },
+                {
+                    key: value[:, rt_idxs].reshape(-1, value.shape[-1])
+                    for key, value in post.items()
+                },
                 prior_dist,
                 post_dist,
                 pred_discount_dist,

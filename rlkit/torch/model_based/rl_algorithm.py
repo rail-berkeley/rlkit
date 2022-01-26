@@ -68,14 +68,14 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
 
     def _get_snapshot(self):
         snapshot = {}
-        for k, v in self.trainer.get_snapshot().items():
-            snapshot["trainer/" + k] = v
-        for k, v in self.expl_data_collector.get_snapshot().items():
-            snapshot["exploration/" + k] = v
-        for k, v in self.eval_data_collector.get_snapshot().items():
-            snapshot["evaluation/" + k] = v
-        for k, v in self.replay_buffer.get_snapshot().items():
-            snapshot["replay_buffer/" + k] = v
+        for key, value in self.trainer.get_snapshot().items():
+            snapshot["trainer/" + key] = value
+        for key, value in self.expl_data_collector.get_snapshot().items():
+            snapshot["exploration/" + key] = value
+        for key, value in self.eval_data_collector.get_snapshot().items():
+            snapshot["evaluation/" + key] = value
+        for key, value in self.replay_buffer.get_snapshot().items():
+            snapshot["replay_buffer/" + key] = value
         return snapshot
 
     def _log_stats(self, epoch):
