@@ -61,7 +61,7 @@ def post_epoch_visualize_func(algorithm, epoch):
 
 
 @torch.no_grad()
-def video_post_epoch_func_(
+def post_epoch_video_func(
     algorithm,
     epoch,
     policy,
@@ -210,7 +210,7 @@ def video_post_epoch_func_(
             pred_discount_dist,
             embed,
         ) = algorithm.trainer.world_model(obs.detach(), actions.detach())
-        if type(image_dist) == tuple:
+        if isinstance(image_dist, tuple):
             image_dist, _ = image_dist
         image_dist_mean = image_dist.mean.detach()
         reconstructions = image_dist_mean[:, :3, :, :]

@@ -37,7 +37,7 @@ class CNN(jit.ScriptModule):
         )
 
         def init_weights(m):
-            if type(m) == nn.Conv2d:
+            if isinstance(m, nn.Conv2d):
                 hidden_init(m.weight)
                 m.bias.data.fill_(0)
 

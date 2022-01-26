@@ -25,9 +25,9 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBuffer,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.video_functions import video_post_epoch_func
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.latent_space_models import (
         OneStepEnsembleModel,

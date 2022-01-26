@@ -40,7 +40,7 @@ class ConditionalContinuousActorModel(torch.nn.Module):
                 k,
                 v,
             ) in env.primitive_name_to_action_idx.items():
-                if type(v) == int:
+                if isinstance(v, int):
                     len_v = 1
                 else:
                     len_v = len(v)
@@ -78,7 +78,7 @@ class ConditionalContinuousActorModel(torch.nn.Module):
             mean = ptu.zeros((primitive_indices.shape[0], self.continuous_action_dim))
             std = ptu.zeros((primitive_indices.shape[0], self.continuous_action_dim))
             for k, v in self.env.primitive_name_to_action_idx.items():
-                if type(v) is int:
+                if isinstance(v, int):
                     v = [v]
                 if len(v) < 1:
                     continue

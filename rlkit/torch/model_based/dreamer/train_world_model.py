@@ -531,7 +531,7 @@ def world_model_loss_rt(
 
 
 def update_network(network, optimizer, loss, gradient_clip, scaler):
-    if type(network) == list:
+    if isinstance(network, list):
         parameters = []
         for net in network:
             parameters.extend(list(net.parameters()))
@@ -577,7 +577,7 @@ class NumpyDataset(Dataset):
         :param i: (int)
         :return (tuple, np.ndarray)
         """
-        if type(self.inputs) == list or type(self.inputs) == tuple:
+        if isinstance(self.input, list) or isinstance(self.input, tuple):
             inputs = []
             batch_start = np.random.randint(0, self.max_path_length - self.batch_len)
             idxs = np.linspace(

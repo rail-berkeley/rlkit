@@ -23,11 +23,11 @@ def experiment(variant):
         EpisodeReplayBuffer,
         EpisodeReplayBufferLowLevelRAPS,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import (
-        post_epoch_visualize_func,
-    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
+    from rlkit.torch.model_based.dreamer.video_functions import (
+        post_epoch_visualize_func,
+    )
     from rlkit.torch.model_based.dreamer.world_models import WorldModel
     from rlkit.torch.model_based.plan2explore.actor_models import (
         ConditionalContinuousActorModel,

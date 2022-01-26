@@ -35,7 +35,7 @@ class ActorModel(Mlp):
             self.output_size = self.continuous_action_dim * 2
         super().__init__(
             [hidden_size] * num_layers,
-            input__size=obs_dim,
+            input_size=obs_dim,
             output_size=self.output_size,
             hidden_activation=hidden_activation,
             hidden_init=torch.nn.init.xavier_uniform_,

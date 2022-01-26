@@ -21,9 +21,6 @@ def experiment(variant):
     from rlkit.torch.model_based.dreamer.episode_replay_buffer import (
         EpisodeReplayBufferLowLevelRAPS,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import (
-        post_epoch_visualize_func,
-    )
     from rlkit.torch.model_based.dreamer.mlp import Mlp
     from rlkit.torch.model_based.dreamer.path_collector import VecMdpPathCollector
     from rlkit.torch.model_based.dreamer.rollout_functions import (
@@ -31,6 +28,9 @@ def experiment(variant):
     )
     from rlkit.torch.model_based.dreamer.train_world_model import (
         visualize_primitive_unsubsampled_rollout,
+    )
+    from rlkit.torch.model_based.dreamer.video_functions import (
+        post_epoch_visualize_func,
     )
     from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
     from rlkit.torch.model_based.rl_algorithm import TorchBatchRLAlgorithm

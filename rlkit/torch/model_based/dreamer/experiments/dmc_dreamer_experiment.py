@@ -7,9 +7,7 @@ def experiment(variant):
         NormalizeActions,
         TimeLimit,
     )
-    from rlkit.torch.model_based.dreamer.kitchen_video_func import (
-        video_post_epoch_func_,
-    )
+    from rlkit.torch.model_based.dreamer.video_functions import post_epoch_video_func
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
@@ -152,10 +150,10 @@ def experiment(variant):
     )
     algorithm.to(ptu.device)
     if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(video_post_epoch_func_)
+        algorithm.post_epoch_funcs.append(post_epoch_video_func)
     print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
     if variant.get("save_video", False):
-        video_post_epoch_func_(algorithm, -1)
+        post_epoch_video_func(algorithm, -1)
     algorithm.train()

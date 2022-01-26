@@ -415,7 +415,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         return vf_loss
 
     def update_network(self, network, optimizer, loss, gradient_clip):
-        if type(network) == list:
+        if isinstance(network, list):
             parameters = []
             for net in network:
                 parameters.extend(list(net.parameters()))
