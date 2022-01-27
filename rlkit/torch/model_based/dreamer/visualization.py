@@ -40,6 +40,7 @@ def add_text(vis, text, pos, scale, rgb):
 
 
 @torch.no_grad()
+@torch.cuda.amp.autocast()
 def visualize_rollout(
     env,
     world_model,
@@ -74,102 +75,97 @@ def visualize_rollout(
         (num_rollouts, max_path_length + 1, *img_shape),
         dtype=np.uint8,
     )
-    with torch.cuda.amp.autocast():
-        for rollout in range(num_rollouts):
-            for step in range(0, max_path_length + 1):
-                if step == 0:
-                    o = env.reset()
-                    new_img = ptu.from_numpy(o)
-                    policy.reset(o.reshape(1, -1))
-                    r = 0
-                    if low_level_primitives:
-                        policy_o = (None, o.reshape(1, -1))
-                    else:
-                        policy_o = o.reshape(1, -1)
-                    vis = convert_img_to_save(o)
-                    add_text(vis, "Ground Truth", (1, 60), 0.25, (0, 255, 0))
+    for rollout in range(num_rollouts):
+        for step in range(0, max_path_length + 1):
+            if step == 0:
+                o = env.reset()
+                new_img = ptu.from_numpy(o)
+                policy.reset(o.reshape(1, -1))
+                r = 0
+                if low_level_primitives:
+                    policy_o = (None, o.reshape(1, -1))
                 else:
-                    high_level_action, state = policy.get_action(
-                        policy_o, use_raps_obs, use_true_actions
-                    )
-                    state = state["state"]
-                    o, r, d, info = env.step(
-                        high_level_action[0],
-                    )
-                    if low_level_primitives:
-                        ll_o = np.expand_dims(np.array(info["low_level_obs"]), 0)
-                        ll_a = np.expand_dims(np.array(info["low_level_action"]), 0)
-                        policy_o = (ll_a, ll_o)
-                    else:
-                        policy_o = o.reshape(1, -1)
-                    (
-                        primitive_name,
-                        _,
-                        _,
-                    ) = env.get_primitive_info_from_high_level_action(
-                        high_level_action[0]
-                    )
-                    vis = convert_img_to_save(o)
-                    add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
-                    add_text(vis, "r: {}".format(r), (35, 7), 0.3, (0, 0, 0))
-
-                obs[rollout, step] = vis
-                if step != 0:
-                    new_img = reconstruct_from_state(state, world_model)
-                    if step == 1:
-                        add_text(new_img, "Reconstruction", (1, 60), 0.25, (0, 255, 0))
-                    reconstructions[rollout, step - 1] = new_img
-                    print(
-                        "Rollout {} Step {} Predicted Reward".format(rollout, step - 1),
-                        world_model.reward(world_model.get_features(state))
-                        .detach()
-                        .cpu()
-                        .numpy()
-                        .item(),
-                    )
-                    print("Rollout {} Step {} Reward".format(rollout, step - 1), prev_r)
-                    print(
-                        "Rollout {} Step {} Predicted Discount".format(
-                            rollout, step - 1
-                        ),
-                        world_model.get_dist(
-                            world_model.pred_discount(world_model.get_features(state)),
-                            std=None,
-                            normal=False,
-                        )
-                        .mean.detach()
-                        .cpu()
-                        .numpy()
-                        .item(),
-                    )
-                    print()
-                prev_r = r
-            _, state = policy.get_action(policy_o)
-            state = state["state"]
-            new_img = reconstruct_from_state(state, world_model)
-            reconstructions[rollout, max_path_length] = new_img
-            print(
-                "Rollout {} Final Predicted Reward".format(rollout),
-                world_model.reward(world_model.get_features(state))
-                .detach()
-                .cpu()
-                .numpy()
-                .item(),
-            )
-            print("Rollout {} Final Reward: ".format(rollout), r)
-            print(
-                "Rollout {} Final Predicted Discount".format(rollout, step - 1),
-                world_model.get_dist(
-                    world_model.pred_discount(world_model.get_features(state)),
-                    std=None,
-                    normal=False,
+                    policy_o = o.reshape(1, -1)
+                vis = convert_img_to_save(o)
+                add_text(vis, "Ground Truth", (1, 60), 0.25, (0, 255, 0))
+            else:
+                high_level_action, state = policy.get_action(
+                    policy_o, use_raps_obs, use_true_actions
                 )
-                .mean.detach()
-                .cpu()
-                .numpy()
-                .item(),
+                state = state["state"]
+                o, r, d, info = env.step(
+                    high_level_action[0],
+                )
+                if low_level_primitives:
+                    ll_o = np.expand_dims(np.array(info["low_level_obs"]), 0)
+                    ll_a = np.expand_dims(np.array(info["low_level_action"]), 0)
+                    policy_o = (ll_a, ll_o)
+                else:
+                    policy_o = o.reshape(1, -1)
+                (
+                    primitive_name,
+                    _,
+                    _,
+                ) = env.get_primitive_info_from_high_level_action(high_level_action[0])
+                vis = convert_img_to_save(o)
+                add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
+                add_text(vis, "r: {}".format(r), (35, 7), 0.3, (0, 0, 0))
+
+            obs[rollout, step] = vis
+            if step != 0:
+                new_img = reconstruct_from_state(state, world_model)
+                if step == 1:
+                    add_text(new_img, "Reconstruction", (1, 60), 0.25, (0, 255, 0))
+                reconstructions[rollout, step - 1] = new_img
+                print(
+                    "Rollout {} Step {} Predicted Reward".format(rollout, step - 1),
+                    world_model.reward(world_model.get_features(state))
+                    .detach()
+                    .cpu()
+                    .numpy()
+                    .item(),
+                )
+                print("Rollout {} Step {} Reward".format(rollout, step - 1), prev_r)
+                print(
+                    "Rollout {} Step {} Predicted Discount".format(rollout, step - 1),
+                    world_model.get_dist(
+                        world_model.pred_discount(world_model.get_features(state)),
+                        std=None,
+                        normal=False,
+                    )
+                    .mean.detach()
+                    .cpu()
+                    .numpy()
+                    .item(),
+                )
+                print()
+            prev_r = r
+        _, state = policy.get_action(policy_o)
+        state = state["state"]
+        new_img = reconstruct_from_state(state, world_model)
+        reconstructions[rollout, max_path_length] = new_img
+        print(
+            "Rollout {} Final Predicted Reward".format(rollout),
+            world_model.reward(world_model.get_features(state))
+            .detach()
+            .cpu()
+            .numpy()
+            .item(),
+        )
+        print("Rollout {} Final Reward: ".format(rollout), r)
+        print(
+            "Rollout {} Final Predicted Discount".format(rollout, step - 1),
+            world_model.get_dist(
+                world_model.pred_discount(world_model.get_features(state)),
+                std=None,
+                normal=False,
             )
-            print()
+            .mean.detach()
+            .cpu()
+            .numpy()
+            .item(),
+        )
+        print()
 
     im = np.zeros(
         (img_size * 2 * num_rollouts, (max_path_length + 1) * img_size, 3),
@@ -203,6 +199,7 @@ def unsubsample_and_execute_ll(ll_a, env, num_subsample_steps):
 
 
 @torch.no_grad()
+@torch.cuda.amp.autocast()
 def visualize_primitive_unsubsampled_rollout(
     env1,
     env2,
@@ -233,95 +230,88 @@ def visualize_primitive_unsubsampled_rollout(
         (num_rollouts, pl + 1, *img_shape),
         dtype=np.uint8,
     )
-    with torch.cuda.amp.autocast():
-        for rollout in range(num_rollouts):
-            for step in range(0, max_path_length + 1):
-                if step == 0:
-                    o1 = env1.reset()
-                    o2 = env2.reset()
-                    o3 = env3.reset()
-                    policy_o = (None, o1.reshape(1, -1))
-                    policy.reset(policy_o[1])
-                    o1 = convert_img_to_save(o1)
-                    o2 = convert_img_to_save(o2)
-                    o3 = convert_img_to_save(o3)
-                    add_text(o1, "True", (1, 60), 0.25, (0, 255, 0))
-                    add_text(o2, "True Unsubsampled", (1, 60), 0.25, (0, 255, 0))
-                    add_text(o3, "Pred Unsubsampled", (1, 60), 0.25, (0, 255, 0))
-                    obs1[rollout, 0] = o1
-                    obs2[rollout, 0] = o2
-                    obs3[rollout, 0] = o3
+    for rollout in range(num_rollouts):
+        for step in range(0, max_path_length + 1):
+            if step == 0:
+                o1 = env1.reset()
+                o2 = env2.reset()
+                o3 = env3.reset()
+                policy_o = (None, o1.reshape(1, -1))
+                policy.reset(policy_o[1])
+                o1 = convert_img_to_save(o1)
+                o2 = convert_img_to_save(o2)
+                o3 = convert_img_to_save(o3)
+                add_text(o1, "True", (1, 60), 0.25, (0, 255, 0))
+                add_text(o2, "True Unsubsampled", (1, 60), 0.25, (0, 255, 0))
+                add_text(o3, "Pred Unsubsampled", (1, 60), 0.25, (0, 255, 0))
+                obs1[rollout, 0] = o1
+                obs2[rollout, 0] = o2
+                obs3[rollout, 0] = o3
 
-                else:
-                    high_level_action, out = policy.get_action(policy_o)
-                    ll_a_pred = out["ll_a_pred"]
-                    o1, _, _, i1 = env1.step(
-                        high_level_action[0],
+            else:
+                high_level_action, out = policy.get_action(policy_o)
+                ll_a_pred = out["ll_a_pred"]
+                o1, _, _, i1 = env1.step(
+                    high_level_action[0],
+                )
+                ll_o = np.expand_dims(np.array(i1["low_level_obs"]), 0)
+                ll_a = np.expand_dims(np.array(i1["low_level_action"]), 0)
+                policy_o = (ll_a, ll_o)
+                (
+                    primitive_name,
+                    _,
+                    primitive_idx,
+                ) = env1.get_primitive_info_from_high_level_action(high_level_action[0])
+                num_subsample_steps = (
+                    env1.primitive_idx_to_num_low_level_steps[primitive_idx]
+                    // num_low_level_actions_per_primitive
+                )
+                o2, _, _, i2 = unsubsample_and_execute_ll(
+                    ll_a[0], env2, num_subsample_steps
+                )
+                if step > 1:
+                    o3, _, _, i3 = unsubsample_and_execute_ll(
+                        ll_a_pred, env3, num_subsample_steps
                     )
-                    ll_o = np.expand_dims(np.array(i1["low_level_obs"]), 0)
-                    ll_a = np.expand_dims(np.array(i1["low_level_action"]), 0)
-                    policy_o = (ll_a, ll_o)
-                    (
-                        primitive_name,
-                        _,
-                        primitive_idx,
-                    ) = env1.get_primitive_info_from_high_level_action(
-                        high_level_action[0]
+                    obs3[rollout, step - 1] = convert_img_to_save(o3)
+                    print(
+                        "Rollout: {}".format(rollout),
+                        "Step: {}".format(step - 1),
+                        "Primitive: ",
+                        prev_primitive_name,
+                        "LL Action Pred Error: ",
+                        (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
+                        / num_low_level_actions_per_primitive,
                     )
-                    num_subsample_steps = (
-                        env1.primitive_idx_to_num_low_level_steps[primitive_idx]
-                        // num_low_level_actions_per_primitive
-                    )
-                    o2, _, _, i2 = unsubsample_and_execute_ll(
-                        ll_a[0], env2, num_subsample_steps
-                    )
-                    if step > 1:
-                        o3, _, _, i3 = unsubsample_and_execute_ll(
-                            ll_a_pred, env3, num_subsample_steps
-                        )
-                        obs3[rollout, step - 1] = convert_img_to_save(o3)
-                        print(
-                            "Rollout: {}".format(rollout),
-                            "Step: {}".format(step - 1),
-                            "Primitive: ",
-                            prev_primitive_name,
-                            "LL Action Pred Error: ",
-                            (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
-                            / num_low_level_actions_per_primitive,
-                        )
-                    prev_ll_a = ll_a
-                    prev_primitive_name = primitive_name
-                    obs1[rollout, step] = convert_img_to_save(o1)
-                    obs2[rollout, step] = convert_img_to_save(o2)
-            _, out = policy.get_action(policy_o)
-            ll_a_pred = out["ll_a_pred"]
-            o3, _, _, i3 = unsubsample_and_execute_ll(
-                ll_a_pred, env3, num_subsample_steps
-            )
-            obs3[rollout, max_path_length] = convert_img_to_save(o3)
-            print(
-                "Rollout: {}".format(rollout),
-                "Step: {}".format(max_path_length),
-                "Primitive: ",
-                prev_primitive_name,
-                "LL Action Pred Error: ",
-                (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
-                / num_low_level_actions_per_primitive,
-            )
-            print(
-                "Rollout {} Final Success True Actions: ".format(rollout), i1["success"]
-            )
-            print(
-                "Rollout {} Final Success True Actions Unsubsampled: ".format(rollout),
-                i2["success"],
-            )
-            print(
-                "Rollout {} Final Success Primitive Model Actions Unsubsampled: ".format(
-                    rollout
-                ),
-                i3["success"],
-            )
-            print()
+                prev_ll_a = ll_a
+                prev_primitive_name = primitive_name
+                obs1[rollout, step] = convert_img_to_save(o1)
+                obs2[rollout, step] = convert_img_to_save(o2)
+        _, out = policy.get_action(policy_o)
+        ll_a_pred = out["ll_a_pred"]
+        o3, _, _, i3 = unsubsample_and_execute_ll(ll_a_pred, env3, num_subsample_steps)
+        obs3[rollout, max_path_length] = convert_img_to_save(o3)
+        print(
+            "Rollout: {}".format(rollout),
+            "Step: {}".format(max_path_length),
+            "Primitive: ",
+            prev_primitive_name,
+            "LL Action Pred Error: ",
+            (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
+            / num_low_level_actions_per_primitive,
+        )
+        print("Rollout {} Final Success True Actions: ".format(rollout), i1["success"])
+        print(
+            "Rollout {} Final Success True Actions Unsubsampled: ".format(rollout),
+            i2["success"],
+        )
+        print(
+            "Rollout {} Final Success Primitive Model Actions Unsubsampled: ".format(
+                rollout
+            ),
+            i3["success"],
+        )
+        print()
 
     im = np.zeros((img_size * 3 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
