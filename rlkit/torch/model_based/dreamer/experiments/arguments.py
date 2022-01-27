@@ -12,7 +12,7 @@ def convert_value_to_type(value, type_):
         # Default type is just string so leave as is.
         value = value
     else:
-        raise NotImplementedError("type {} not implemented".format(type_))
+        raise NotImplementedError(f"type {type_} not implemented")
     return value
 
 

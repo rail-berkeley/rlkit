@@ -56,15 +56,9 @@ def visualize_rollout(
     file_path = logdir + "/"
     os.makedirs(file_path, exist_ok=True)
     print(
-        "Generating Imagination Reconstructions No Intermediate Obs: {} Actual Actions: {}".format(
-            use_raps_obs, use_true_actions
-        )
+        f"Generating Imagination Reconstructions No Intermediate Obs: {use_raps_obs} Actual Actions: {use_true_actions}"
     )
-    file_suffix = (
-        "imagination_reconstructions_raps_obs_{}_actual_actions_{}.png".format(
-            use_raps_obs, use_true_actions
-        )
-    )
+    file_suffix = f"imagination_reconstructions_raps_obs_{use_raps_obs}_actual_actions_{use_true_actions}.png"
     file_path += file_suffix
     img_shape = (img_size, img_size, 3)
     reconstructions = np.zeros(
@@ -109,7 +103,7 @@ def visualize_rollout(
                 ) = env.get_primitive_info_from_high_level_action(high_level_action[0])
                 vis = convert_img_to_save(o)
                 add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
-                add_text(vis, "r: {}".format(r), (35, 7), 0.3, (0, 0, 0))
+                add_text(vis, f"r: {r}", (35, 7), 0.3, (0, 0, 0))
 
             obs[rollout, step] = vis
             if step != 0:
@@ -117,17 +111,14 @@ def visualize_rollout(
                 if step == 1:
                     add_text(new_img, "Reconstruction", (1, 60), 0.25, (0, 255, 0))
                 reconstructions[rollout, step - 1] = new_img
-                print(
-                    "Rollout {} Step {} Predicted Reward".format(rollout, step - 1),
+                reward_pred = (
                     world_model.reward(world_model.get_features(state))
                     .detach()
                     .cpu()
                     .numpy()
-                    .item(),
+                    .item()
                 )
-                print("Rollout {} Step {} Reward".format(rollout, step - 1), prev_r)
-                print(
-                    "Rollout {} Step {} Predicted Discount".format(rollout, step - 1),
+                discount_pred = (
                     world_model.get_dist(
                         world_model.pred_discount(world_model.get_features(state)),
                         std=None,
@@ -138,23 +129,28 @@ def visualize_rollout(
                     .numpy()
                     .item(),
                 )
+
+                print(
+                    f"Rollout {rollout} Step {step - 1} Predicted Reward {reward_pred}"
+                )
+                print(f"Rollout {rollout} Step {step - 1} Reward {prev_r}")
+                print(
+                    f"Rollout {rollout} Step {step - 1} Predicted Discount {discount_pred}"
+                )
                 print()
             prev_r = r
         _, state = policy.get_action(policy_o)
         state = state["state"]
         new_img = reconstruct_from_state(state, world_model)
         reconstructions[rollout, max_path_length] = new_img
-        print(
-            "Rollout {} Final Predicted Reward".format(rollout),
+        reward_pred = (
             world_model.reward(world_model.get_features(state))
             .detach()
             .cpu()
             .numpy()
-            .item(),
+            .item()
         )
-        print("Rollout {} Final Reward: ".format(rollout), r)
-        print(
-            "Rollout {} Final Predicted Discount".format(rollout, step - 1),
+        discount_pred = (
             world_model.get_dist(
                 world_model.pred_discount(world_model.get_features(state)),
                 std=None,
@@ -165,6 +161,9 @@ def visualize_rollout(
             .numpy()
             .item(),
         )
+        print(f"Rollout {rollout} Final Predicted Reward {reward_pred}")
+        print(f"Rollout {rollout} Final Reward {r}")
+        print(f"Rollout {rollout} Final Predicted Discount {discount_pred}")
         print()
 
     im = np.zeros(
@@ -183,7 +182,7 @@ def visualize_rollout(
                 img_size * step : img_size * (step + 1),
             ] = reconstructions[rollout, step]
     cv2.imwrite(file_path, im)
-    print("Saved Rollout Visualization to {}".format(file_path))
+    print(f"Saved Rollout Visualization to {file_path}")
     print()
 
 
@@ -275,13 +274,10 @@ def visualize_primitive_unsubsampled_rollout(
                     )
                     obs3[rollout, step - 1] = convert_img_to_save(o3)
                     print(
-                        "Rollout: {}".format(rollout),
-                        "Step: {}".format(step - 1),
-                        "Primitive: ",
-                        prev_primitive_name,
-                        "LL Action Pred Error: ",
-                        (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
-                        / num_low_level_actions_per_primitive,
+                        f"Rollout: {rollout}",
+                        f"Step: {step - 1}",
+                        f"Primitive: {prev_primitive_name}",
+                        f"LL Action Pred Error: {(np.linalg.norm(prev_ll_a - ll_a_pred) ** 2) / num_low_level_actions_per_primitive}",
                     )
                 prev_ll_a = ll_a
                 prev_primitive_name = primitive_name
@@ -292,26 +288,18 @@ def visualize_primitive_unsubsampled_rollout(
         o3, _, _, i3 = unsubsample_and_execute_ll(ll_a_pred, env3, num_subsample_steps)
         obs3[rollout, max_path_length] = convert_img_to_save(o3)
         print(
-            "Rollout: {}".format(rollout),
-            "Step: {}".format(max_path_length),
-            "Primitive: ",
-            prev_primitive_name,
-            "LL Action Pred Error: ",
-            (np.linalg.norm(prev_ll_a - ll_a_pred) ** 2)
-            / num_low_level_actions_per_primitive,
+            f"Rollout: {rollout}",
+            f"Step: {max_path_length}",
+            f"Primitive: {prev_primitive_name}",
+            f"LL Action Pred Error: {(np.linalg.norm(prev_ll_a - ll_a_pred) ** 2) / num_low_level_actions_per_primitive}",
         )
-        print("Rollout {} Final Success True Actions: ".format(rollout), i1["success"])
+        print(f"Rollout {rollout} Final Success True Actions: {i1['success']}")
         print(
-            "Rollout {} Final Success True Actions Unsubsampled: ".format(rollout),
-            i2["success"],
+            f"Rollout {rollout} Final Success True Actions Unsubsampled: {i2['success']}"
         )
         print(
-            "Rollout {} Final Success Primitive Model Actions Unsubsampled: ".format(
-                rollout
-            ),
-            i3["success"],
+            f"Rollout {rollout} Final Success Primitive Model Actions Unsubsampled: {i3['success']}"
         )
-        print()
 
     im = np.zeros((img_size * 3 * num_rollouts, (pl + 1) * img_size, 3), dtype=np.uint8)
 
@@ -334,7 +322,7 @@ def visualize_primitive_unsubsampled_rollout(
                 img_size * step : img_size * (step + 1),
             ] = obs3[rollout, step]
     cv2.imwrite(file_path, im)
-    print("Saved Rollout Visualization to {}".format(file_path))
+    print(f"Saved Rollout Visualization to {file_path}")
 
 
 def post_epoch_visualize_func(algorithm, epoch):

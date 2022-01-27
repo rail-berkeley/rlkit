@@ -772,9 +772,7 @@ class LayerNormGRUCell(jit.ScriptModule):
     def check_forward_input(self, input_: Tensor) -> None:
         if input_.size(1) != self.input_size:
             raise RuntimeError(
-                "input has inconsistent input_size: got {}, expected {}".format(
-                    input.size(1), self.input_size
-                )
+                f"input has inconsistent input_size: got {input.size(1)}, expected {self.input_size}"
             )
 
     def check_forward_hidden(
@@ -782,16 +780,12 @@ class LayerNormGRUCell(jit.ScriptModule):
     ) -> None:
         if input_.size(0) != hx.size(0):
             raise RuntimeError(
-                "Input batch size {} doesn't match hidden{} batch size {}".format(
-                    input.size(0), hidden_label, hx.size(0)
-                )
+                f"Input batch size {input.size(0)} doesn't match hidden {hidden_label} batch size {hx.size(0)}"
             )
 
         if hx.size(1) != self.hidden_size:
             raise RuntimeError(
-                "hidden{} has inconsistent hidden_size: got {}, expected {}".format(
-                    hidden_label, hx.size(1), self.hidden_size
-                )
+                f"hidden {hidden_label} has inconsistent hidden_size: got {hx.size(1)}, expected {self.hidden_size}"
             )
 
     def reset_parameters(self) -> None:

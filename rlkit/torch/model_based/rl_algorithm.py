@@ -16,7 +16,7 @@ def _get_epoch_timings():
     for key in sorted(times_itrs):
         time = times_itrs[key][-1]
         epoch_time += time
-        times["time/{} (s)".format(key)] = time
+        times[f"time/{key} (s)"] = time
     times["time/epoch (s)"] = epoch_time
     times["time/total (s)"] = gt.get_times().total
     return times
@@ -79,7 +79,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         return snapshot
 
     def _log_stats(self, epoch):
-        logger.log("Epoch {} finished".format(epoch), with_timestamp=True)
+        logger.log(f"Epoch {epoch} finished", with_timestamp=True)
 
         """
         Replay Buffer
