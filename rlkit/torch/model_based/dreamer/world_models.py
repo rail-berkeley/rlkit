@@ -395,7 +395,7 @@ class LowlevelRAPSWorldModel(WorldModel):
 
             for key in prior.keys():
                 if step == 0:
-                    # auto encode first action!
+                    # Auto encode first action.
                     prior[key].append(post_params[key].unsqueeze(1))
                 else:
                     prior[key].append(prior_params[key].unsqueeze(1))
@@ -459,7 +459,7 @@ class LowlevelRAPSWorldModel(WorldModel):
         use_network_action=False,
         state=None,
         batch_indices=None,
-        rt_idxs=None,
+        raps_obs_indices=None,
         forward_batch_method="forward_batch",
     ):
         """
@@ -487,7 +487,7 @@ class LowlevelRAPSWorldModel(WorldModel):
         embedding_size = embed.shape[1]
         embed = embed.reshape(original_batch_size, obs_path_len, embedding_size)
         if obs_path_len < path_length:
-            idxs = rt_idxs.tolist()
+            idxs = raps_obs_indices.tolist()
         else:
             idxs = [
                 -1,
@@ -520,10 +520,10 @@ class LowlevelRAPSWorldModel(WorldModel):
         else:
             feat = self.get_features(post)
 
-        rt_feat = feat[:, rt_idxs]
-        rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
+        raps_obs_feat = feat[:, raps_obs_indices]
+        raps_obs_feat = raps_obs_feat.reshape(-1, raps_obs_feat.shape[-1])
 
-        if batch_indices.shape != rt_idxs.shape:
+        if batch_indices.shape != raps_obs_indices.shape:
             batch_size = batch_indices.shape[0]
             idxs = np.arange(batch_size).reshape(-1, 1)
             feat = feat[idxs, batch_indices]
@@ -532,8 +532,8 @@ class LowlevelRAPSWorldModel(WorldModel):
             feat = feat[:, batch_indices]
 
         images = self.decode(feat)
-        rewards = self.reward(rt_feat)
-        pred_discounts = self.pred_discount(rt_feat)
+        rewards = self.reward(raps_obs_feat)
+        pred_discounts = self.pred_discount(raps_obs_feat)
 
         if self.discrete_latents:
             post_dist = self.get_dist(
@@ -551,7 +551,7 @@ class LowlevelRAPSWorldModel(WorldModel):
                 latent=True,
             )
         else:
-            if batch_indices.shape != rt_idxs.shape:
+            if batch_indices.shape != raps_obs_indices.shape:
                 post_dist = self.get_dist(
                     post["mean"][idxs, batch_indices].reshape(
                         -1, post["mean"].shape[-1]

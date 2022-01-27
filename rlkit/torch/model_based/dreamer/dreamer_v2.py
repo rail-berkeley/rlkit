@@ -689,14 +689,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             terminals = ptu.from_numpy(batch["terminals"])
             obs = batch["observations"]
             actions = batch["high_level_actions"][:, :, :-1]
-            rt_idxs = np.arange(
+            raps_obs_indices = np.arange(
                 10,
                 obs.shape[1],
                 10,
             )
-            rt_idxs = np.concatenate([[0], rt_idxs])
-            obs = obs[:, rt_idxs]
-            actions = actions[:, rt_idxs]
+            raps_obs_indices = np.concatenate([[0], raps_obs_indices])
+            obs = obs[:, raps_obs_indices]
+            actions = actions[:, raps_obs_indices]
             prefix = "validation/"
             obs = ptu.from_numpy(obs)
             actions = ptu.from_numpy(actions)
@@ -776,8 +776,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         super().__init__(*args, **kwargs)
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.batch_length = batch_length
-        self.criterion = nn.MSELoss()
-        self.train_wm = True
+        self.primitive_model_loss_function = nn.MSELoss()
         self.binarize_rewards = binarize_rewards
         self.num_world_model_training_iterations = num_world_model_training_iterations
         self.wm_loss_scale = wm_loss_scale
@@ -815,6 +814,15 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             states[key] = torch.cat(states[key])
         return imagined_features, imagined_actions, states
 
+    def sample_from_buffer(self, batch_size):
+        batch = self.buffer.random_batch(batch_size)
+        rewards = ptu.from_numpy(batch["rewards"])
+        terminals = ptu.from_numpy(batch["terminals"])
+        obs = ptu.from_numpy(batch["observations"])
+        high_level_actions = ptu.from_numpy(batch["high_level_actions"])
+        low_level_actions = ptu.from_numpy(batch["low_level_actions"])
+        return rewards, terminals, obs, high_level_actions, low_level_actions
+
     def train_networks(
         self,
         batch,
@@ -824,9 +832,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         :param: batch dict[
             "rewards": (batch_size, path_length+1, 1),
             "terminals": (batch_size, path_length+1, 1),
-            "observations": (batch_size, path_length*num_low_level_actions_per_primitive+1, obs_dim),
-            "high_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, act_dim),
-            "low_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, low_level_act_dim),
+            "observations": (batch_size, path_length*num_low_level_actions_per_primitive+1, observation_dim),
+            "high_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, action_dim),
+            "low_level_actions": (batch_size, path_length*num_low_level_actions_per_primitive+1, low_level_action_dim),
             ]
         :param: skip_statistics bool
         :returns: Tuple[DreamerLosses, LossStatistics]
@@ -836,132 +844,135 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         World Model Loss
         """
 
-        with torch.cuda.amp.autocast():
-            for itr in range(self.num_world_model_training_iterations):
-                batch = self.buffer.random_batch(batch["rewards"].shape[0])
-                rewards = ptu.from_numpy(batch["rewards"])
-                terminals = ptu.from_numpy(batch["terminals"])
-                obs = ptu.from_numpy(batch["observations"])
-                high_level_actions = ptu.from_numpy(batch["high_level_actions"])
-                low_level_actions = ptu.from_numpy(batch["low_level_actions"])
-                with torch.cuda.amp.autocast():
-                    rt_idxs = np.arange(
-                        self.num_low_level_actions_per_primitive,
-                        obs.shape[1],
-                        self.num_low_level_actions_per_primitive,
+        max_path_length = batch["observations"].shape[1]
+        batch_size = batch["observations"].shape[0]
+        raps_obs_indices = np.arange(
+            self.num_low_level_actions_per_primitive,
+            max_path_length,
+            self.num_low_level_actions_per_primitive,
+        )
+        indices = np.arange(batch_size).reshape(-1, 1)
+        raps_obs_indices = np.concatenate([[0], raps_obs_indices])
+        low_level_action_dim = batch["low_level_actions"].shape[-1]
+        for itr in range(self.num_world_model_training_iterations):
+            (
+                rewards,
+                terminals,
+                obs,
+                high_level_actions,
+                low_level_actions,
+            ) = self.sample_from_buffer(batch_size)
+            with torch.cuda.amp.autocast():
+                batch_start = np.random.randint(
+                    0, max_path_length - self.batch_length + 1, size=(batch_size)
+                )
+                batch_indices = (
+                    np.linspace(
+                        batch_start,
+                        batch_start + self.batch_length,
+                        self.batch_length,
+                        endpoint=False,
                     )
-                    # reset obs, effect of first primitive, second primitive, so on
-                    rt_idxs = np.concatenate([[0], rt_idxs])
-
-                    batch_start = np.random.randint(
-                        0, obs.shape[1] - self.batch_length + 1, size=(obs.shape[0])
-                    )
-                    batch_indices = (
-                        np.linspace(
-                            batch_start,
-                            batch_start + self.batch_length,
-                            self.batch_length,
-                            endpoint=False,
-                        )
-                        .astype(int)
-                        .transpose(1, 0)
-                    )
-                    (
-                        post,
-                        prior,
-                        post_dist,
-                        prior_dist,
-                        image_dist,
-                        reward_dist,
-                        pred_discount_dist,
-                        _,
-                        action_preds,
-                    ) = self.world_model(
-                        obs,
-                        (high_level_actions, low_level_actions),
-                        use_network_action=False,
-                        batch_indices=batch_indices,
-                        rt_idxs=rt_idxs,
-                    )
-                    obs = obs[
-                        np.arange(batch_indices.shape[0]).reshape(-1, 1), batch_indices
-                    ].reshape(-1, *self.image_shape)
-                    rewards = rewards.reshape(-1, rewards.shape[-1])
-                    terminals = terminals.reshape(-1, terminals.shape[-1])
-                    (
-                        world_model_loss,
-                        div,
-                        image_pred_loss,
-                        reward_pred_loss,
-                        transition_loss,
-                        entropy_loss,
-                        pred_discount_loss,
-                    ) = self.world_model_loss(
-                        image_dist,
-                        reward_dist,
-                        {
-                            key: value[
-                                np.arange(batch_indices.shape[0]).reshape(-1, 1),
-                                batch_indices,
-                            ].reshape(-1, value.shape[-1])
-                            for key, value in prior.items()
-                        },
-                        {
-                            key: value[
-                                np.arange(batch_indices.shape[0]).reshape(-1, 1),
-                                batch_indices,
-                            ].reshape(-1, value.shape[-1])
-                            for key, value in post.items()
-                        },
-                        prior_dist,
-                        post_dist,
-                        pred_discount_dist,
-                        obs,
-                        rewards,
-                        terminals,
-                    )
-
-                    batch_start = np.random.randint(
-                        0,
-                        low_level_actions.shape[1] - self.batch_length + 1,
-                        size=(low_level_actions.shape[0]),
-                    )
-                    batch_indices = (
-                        np.linspace(
-                            batch_start,
-                            batch_start + self.batch_length - 1,
-                            self.batch_length - 1,
-                            endpoint=False,
-                        )
-                        .astype(int)
-                        .transpose(1, 0)
-                    )
-                    primitive_loss = self.criterion(
-                        action_preds[
-                            np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                    .astype(int)
+                    .transpose(1, 0)
+                )
+                (
+                    post,
+                    prior,
+                    post_dist,
+                    prior_dist,
+                    image_dist,
+                    reward_dist,
+                    pred_discount_dist,
+                    _,
+                    action_preds,
+                ) = self.world_model(
+                    obs,
+                    (high_level_actions, low_level_actions),
+                    use_network_action=False,
+                    batch_indices=batch_indices,
+                    raps_obs_indices=raps_obs_indices,
+                )
+                obs = obs[indices, batch_indices].reshape(-1, *self.image_shape)
+                rewards = rewards.reshape(-1, rewards.shape[-1])
+                terminals = terminals.reshape(-1, terminals.shape[-1])
+                (
+                    world_model_loss,
+                    div,
+                    image_pred_loss,
+                    reward_pred_loss,
+                    transition_loss,
+                    entropy_loss,
+                    pred_discount_loss,
+                ) = self.world_model_loss(
+                    image_dist,
+                    reward_dist,
+                    {
+                        key: value[
+                            indices,
                             batch_indices,
-                        ].reshape(-1, action_preds.shape[-1]),
-                        low_level_actions[:, 1:][
-                            np.arange(batch_indices.shape[0]).reshape(-1, 1),
+                        ].reshape(-1, value.shape[-1])
+                        for key, value in prior.items()
+                    },
+                    {
+                        key: value[
+                            indices,
                             batch_indices,
-                        ].reshape(-1, action_preds.shape[-1]),
+                        ].reshape(-1, value.shape[-1])
+                        for key, value in post.items()
+                    },
+                    prior_dist,
+                    post_dist,
+                    pred_discount_dist,
+                    obs,
+                    rewards,
+                    terminals,
+                )
+
+                batch_start_primitives = np.random.randint(
+                    0,
+                    low_level_actions.shape[1] - self.batch_length + 1,
+                    size=(low_level_actions.shape[0]),
+                )
+                batch_indices_primitives = (
+                    np.linspace(
+                        batch_start_primitives,
+                        batch_start_primitives + self.batch_length - 1,
+                        self.batch_length - 1,
+                        endpoint=False,
                     )
-                    loss = world_model_loss + primitive_loss
-                self.scaler.scale(loss * self.wm_loss_scale).backward()
-                if itr == 0:
-                    state = {
-                        key: value[:, rt_idxs].detach() for key, value in post.items()
-                    }
-                else:
-                    for key, value in state.items():
-                        state[key] = torch.cat([value, post[key][:, rt_idxs].detach()])
-            # by taking optimizer step outside the loop we are doing gradient accumulation
-            self.update_network(
-                self.world_model,
-                self.world_model_optimizer,
-                loss,
-                self.world_model_gradient_clip,
-            )
+                    .astype(int)
+                    .transpose(1, 0)
+                )
+                primitive_loss = self.primitive_model_loss_function(
+                    action_preds[
+                        indices,
+                        batch_indices_primitives,
+                    ].reshape(-1, low_level_action_dim),
+                    low_level_actions[:, 1:][
+                        indices,
+                        batch_indices_primitives,
+                    ].reshape(-1, low_level_action_dim),
+                )
+                loss = world_model_loss + primitive_loss
+            self.scaler.scale(loss * self.wm_loss_scale).backward()
+            if itr == 0:
+                state = {
+                    key: value[:, raps_obs_indices].detach()
+                    for key, value in post.items()
+                }
+            else:
+                for key, value in state.items():
+                    state[key] = torch.cat(
+                        [value, post[key][:, raps_obs_indices].detach()]
+                    )
+        # By taking optimizer step outside the loop we are doing gradient accumulation.
+        self.update_network(
+            self.world_model,
+            self.world_model_optimizer,
+            loss,
+            self.world_model_gradient_clip,
+        )
 
         """
         Actor Value Loss
@@ -1129,7 +1140,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         high_level_actions,
         low_level_actions,
         prefix,
-        rt_idxs,
+        raps_obs_indices,
         use_network_action,
         forward_batch_method,
     ):
@@ -1148,8 +1159,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 obs,
                 (high_level_actions, low_level_actions),
                 use_network_action=use_network_action,
-                batch_indices=rt_idxs,
-                rt_idxs=rt_idxs,
+                batch_indices=raps_obs_indices,
+                raps_obs_indices=raps_obs_indices,
                 forward_batch_method=forward_batch_method,
             )
             obs = target_obs.reshape(-1, *self.image_shape)
@@ -1159,11 +1170,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 image_dist,
                 reward_dist,
                 {
-                    key: value[:, rt_idxs].reshape(-1, value.shape[-1])
+                    key: value[:, raps_obs_indices].reshape(-1, value.shape[-1])
                     for key, value in prior.items()
                 },
                 {
-                    key: value[:, rt_idxs].reshape(-1, value.shape[-1])
+                    key: value[:, raps_obs_indices].reshape(-1, value.shape[-1])
                     for key, value in post.items()
                 },
                 prior_dist,
@@ -1188,7 +1199,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 .astype(int)
                 .transpose(1, 0)
             )
-            primitive_loss = self.criterion(
+            primitive_loss = self.primitive_model_loss_function(
                 action_preds[
                     np.arange(batch_indices.shape[0]).reshape(-1, 1),
                     batch_indices,
@@ -1218,22 +1229,22 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         obs = ptu.from_numpy(batch["observations"])
         high_level_actions = ptu.from_numpy(batch["high_level_actions"])
         low_level_actions = ptu.from_numpy(batch["low_level_actions"])
-        rt_idxs = np.arange(
+        raps_obs_indices = np.arange(
             self.num_low_level_actions_per_primitive,
             obs.shape[1],
             self.num_low_level_actions_per_primitive,
         )
         # reset obs, effect of first primitive, second primitive, so on
-        rt_idxs = np.concatenate([[0], rt_idxs])
+        raps_obs_indices = np.concatenate([[0], raps_obs_indices])
         self.evaluate_helper(
             rewards,
             terminals,
             obs,
-            obs[:, rt_idxs],
+            obs[:, raps_obs_indices],
             high_level_actions,
             low_level_actions,
             prefix + "Full Obs ",
-            rt_idxs,
+            raps_obs_indices,
             use_network_action=False,
             forward_batch_method="forward_batch",
         )
@@ -1242,11 +1253,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             rewards,
             terminals,
             obs,
-            obs[:, rt_idxs],
+            obs[:, raps_obs_indices],
             high_level_actions,
             low_level_actions,
             prefix + "Full Obs Primitive Model ",
-            rt_idxs,
+            raps_obs_indices,
             use_network_action=True,
             forward_batch_method="forward_batch",
         )
@@ -1254,12 +1265,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.evaluate_helper(
             rewards,
             terminals,
-            obs[:, rt_idxs],
-            obs[:, rt_idxs],
+            obs[:, raps_obs_indices],
+            obs[:, raps_obs_indices],
             high_level_actions,
             low_level_actions,
             prefix + "RAPS Obs ",
-            rt_idxs,
+            raps_obs_indices,
             use_network_action=False,
             forward_batch_method="forward_batch_raps_intermediate_obs",
         )
@@ -1267,12 +1278,12 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.evaluate_helper(
             rewards,
             terminals,
-            obs[:, rt_idxs],
-            obs[:, rt_idxs],
+            obs[:, raps_obs_indices],
+            obs[:, raps_obs_indices],
             high_level_actions,
             low_level_actions,
             prefix + "RAPS Obs Primitive Model ",
-            rt_idxs,
+            raps_obs_indices,
             use_network_action=False,
             forward_batch_method="forward_batch_raps_intermediate_obs",
         )
