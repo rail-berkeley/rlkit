@@ -22,7 +22,7 @@ def _get_epoch_timings():
     return times
 
 
-class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
+class BaseRLAlgorithm(metaclass=abc.ABCMeta):
     def __init__(
         self,
         trainer,
