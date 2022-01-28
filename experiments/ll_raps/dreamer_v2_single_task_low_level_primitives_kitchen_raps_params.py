@@ -47,7 +47,6 @@ if __name__ == "__main__":
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=True,
                 unflatten_images=False,
             ),
             image_kwargs=dict(),

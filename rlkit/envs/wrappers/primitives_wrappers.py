@@ -1,7 +1,6 @@
 import gym
 import mujoco_py
 import numpy as np
-import torch
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
 from gym import spaces
 from gym.spaces.box import Box
@@ -112,7 +111,7 @@ class NormalizeActions(gym.Wrapper):
             render_mode=render_mode,
             render_im_shape=render_im_shape,
         )
-        return obs, reward, done, i
+        return obs, reward, done, info
 
     def reset(self):
         return self.env.reset()
@@ -153,34 +152,28 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         )
 
 
-class ImageTransposeWrapper(gym.Wrapper):
-    def __init__(self, env):
-        gym.Wrapper.__init__(self, env)
-        self.observation_space = Box(
-            0, 255, (self.env.imwidth, self.env.imheight, 3), dtype=np.uint8
-        )
-
-    def __getattr__(self, name):
-        return getattr(self.env, name)
-
-    def reset(self):
-        obs = self.env.reset()
-        return obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0)
-
-    def step(self, actionction):
-        obs, reward, done, info = self.env.step(action)
-        return (
-            obs.reshape(-1, self.env.imwidth, self.env.imheight).transpose(1, 2, 0),
-            reward,
-            done,
-            info,
-        )
-
-
 class MetaworldWrapper(gym.Wrapper):
-    def __init__(self, env, reward_type="dense"):
+    def __init__(
+        self,
+        env,
+        reward_type="dense",
+        imwidth=84,
+        imheight=84,
+        reward_scale=1.0,
+        use_image_obs=False,
+    ):
         super().__init__(env)
         self.reward_type = reward_type
+        self.env.imwdith = imwidth
+        self.env.imheight = imheight
+        self.imwidth = imwidth
+        self.imheight = imheight
+        self.observation_space = Box(
+            0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
+        )
+        self.image_shape = (3, self.imwidth, self.imheight)
+        self.reward_scale = reward_scale
+        self.use_image_obs = use_image_obs
 
     def _get_image(self):
         if hasattr(self.env, "_use_dm_backend"):
@@ -201,7 +194,10 @@ class MetaworldWrapper(gym.Wrapper):
 
     def reset(self):
         obs = super().reset()
-        return obs
+        if self.use_image_obs:
+            return self._get_image()
+        else:
+            return obs
 
     def step(
         self,
@@ -215,6 +211,9 @@ class MetaworldWrapper(gym.Wrapper):
             action,
         )
         self.unset_render_every_step()
+        if self.use_image_obs:
+            obs = self._get_image()
+        reward = self.reward_scale * reward
         new_info = {}
         for key, value in info.items():
             if value is not None:
@@ -222,147 +221,6 @@ class MetaworldWrapper(gym.Wrapper):
         if self.reward_type == "sparse":
             reward = info["success"]
         return obs, reward, done, new_info
-
-
-class ImageEnvMetaworld(gym.Wrapper):
-    def __init__(
-        self,
-        env,
-        imwidth=84,
-        imheight=84,
-        reward_scale=1.0,
-    ):
-        gym.Wrapper.__init__(self, env)
-        self.env.imwdith = imwidth
-        self.env.imheight = imheight
-        self.imwidth = imwidth
-        self.imheight = imheight
-        self.observation_space = Box(
-            0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
-        )
-        self.image_shape = (3, self.imwidth, self.imheight)
-        self.reward_scale = reward_scale
-
-    def _get_image(self):
-        if hasattr(self.env, "_use_dm_backend"):
-            img = self.env.render(
-                mode="rgb_array", imwidth=self.imwidth, imheight=self.imheight
-            )
-        else:
-            img = self.env.sim.render(
-                imwidth=self.imwidth,
-                imheight=self.imheight,
-            )
-
-        img = img.transpose(2, 0, 1).flatten()
-        return img
-
-    def __getattr__(self, name):
-        return getattr(self.env, name)
-
-    def step(
-        self,
-        action,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(64, 64),
-    ):
-        obs, reward, done, info = self.env.step(
-            action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        obs = self._get_image()
-        reward = self.reward_scale * reward
-        new_info = {}
-        for key, value in info.items():
-            if value is not None:
-                new_info[key] = value
-        return obs, reward, done, new_info
-
-    def reset(self):
-        super().reset()
-        return self._get_image()
-
-
-class DictObsWrapper(gym.Wrapper):
-    def __init__(self, env):
-        super().__init__(env)
-        spaces = {}
-        spaces["image"] = gym.spaces.Box(
-            0, 255, (env.imwidth, env.imwidth, 3), dtype=np.uint8
-        )
-        self.observation_space = gym.spaces.Dict(spaces)
-
-    def __getattr__(self, name):
-        return getattr(self.env, name)
-
-    def step(
-        self,
-        action,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(64, 64),
-    ):
-        obs, reward, done, info = self.env.step(
-            action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-        return {"image": obs}, reward, done, info
-
-    def reset(self):
-        return {"image": self.env.reset()}
-
-
-class IgnoreLastAction(gym.Wrapper):
-    def __init__(self, env):
-        super().__init__(env)
-        self.action_space = gym.spaces.Box(
-            np.concatenate((self.env.action_space.low, [0])),
-            np.concatenate((self.env.action_space.high, [0])),
-        )
-
-    def __getattr__(self, name):
-        return getattr(self.env, name)
-
-    def step(
-        self,
-        action,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(64, 64),
-    ):
-        return self.env.step(
-            action[:-1],
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
-
-
-class GetObservationWrapper(gym.Wrapper):
-    def __getattr__(self, name):
-        return getattr(self.env, name)
-
-    def get_observation(self):
-        return self._get_obs()
-
-    def step(
-        self,
-        action,
-        render_every_step=False,
-        render_mode="rgb_array",
-        render_im_shape=(64, 64),
-    ):
-        return self.env.step(
-            action,
-            render_every_step=render_every_step,
-            render_mode=render_mode,
-            render_im_shape=render_im_shape,
-        )
 
 
 class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
@@ -375,12 +233,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self,
         control_mode="end_effector",
         action_scale=1 / 100,
-        max_path_length=500,
         camera_settings=None,
-        use_learned_primitives=False,
-        learned_primitives=None,
         collect_primitives_info=False,
-        include_phase_variable=False,
         render_intermediate_obs_to_info=False,
         num_low_level_actions_per_primitive=10,
         goto_pose_iterations=300,
@@ -393,7 +247,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.close_gripper_iterations = close_gripper_iterations
         self.pos_ctrl_action_scale = pos_ctrl_action_scale
         self.reset_camera(camera_settings)
-        self.max_path_length = max_path_length
         self.action_scale = action_scale
         self.render_intermediate_obs_to_info = render_intermediate_obs_to_info
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
@@ -468,10 +321,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.action_space = Box(act_lower, act_upper, dtype=np.float32)
 
         self.unset_render_every_step()
-        self.use_learned_primitives = use_learned_primitives
-        self.learned_primitives = learned_primitives
         self.collect_primitives_info = collect_primitives_info
-        self.include_phase_variable = include_phase_variable
 
     def _reset_hand(self):
         super()._reset_hand()
@@ -506,7 +356,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             if self.control_mode == "end_effector":
                 self.set_xyz_action(action[:3])
                 self.do_simulation([action[-1], -action[-1]])
-            stats = [0, 0]
         else:
             self.img_array = []
             self.primitives_info = {}
@@ -515,7 +364,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             self.primitive_step_counter = 0
             self._num_low_level_steps_total = 0
             self.combined_prev_action = np.zeros(3, dtype=np.float32)
-            stats = self.act(action)
+            self.act(action)
 
         self.curr_path_length += 1
 
@@ -539,8 +388,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             )
 
         self._last_stable_obs = self._get_obs()
-        if not self.isV2:
-            return self._last_stable_obs
         reward, info = self.evaluate_state(self._last_stable_obs, self.prev_ll_a)
         if self.control_mode == "primitives":
             if self.collect_primitives_info:
@@ -675,7 +522,6 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             if (self.primitive_step_counter + 1) % (
                 self.num_low_level_steps // self.num_low_level_actions_per_primitive
             ) == 0:
-                # print("obs save", self.primitive_step_counter)
                 obs = (
                     self.render(
                         "rgb_array",
@@ -711,137 +557,88 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         )
         return (finger_right - finger_left)[:2]
 
-    def close_gripper(self, d):
-        d = np.maximum(d, 0.0)
-        total_reward, total_success = 0, 0
-        for _ in range(self.close_gripper_iterations):
-            action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
-
-            if self.include_phase_variable:
-                state = np.concatenate(
-                    (
-                        state,
-                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
-                    )
-                )
+    def execute_primitive(self, compute_action, num_iterations):
+        for _ in range(num_iterations):
+            action = compute_action()
             self._set_action(action)
             self.sim.step()
             self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), action)
-            total_reward += r
-            total_success += info["success"]
             self.primitive_step_counter += 1
             self._num_low_level_steps_total += 1
+        return action
+
+    def close_gripper(self, d):
+        d = np.maximum(d, 0.0)
+        compute_action = lambda: np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
+        action = self.execute_primitive(compute_action, self.close_gripper_iterations)
         self.prev_ll_a = action
         self.prev_grasp = -d
-        return np.array((total_reward, total_success))
 
     def open_gripper(self, d):
         d = np.maximum(d, 0.0)
-        total_reward, total_success = 0, 0
-        for _ in range(self.open_gripper_iterations):
-            action = np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
-
-            if self.include_phase_variable:
-                state = np.concatenate(
-                    (
-                        state,
-                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
-                    )
-                )
-            self._set_action(action)
-            self.sim.step()
-            self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), action)
-            total_reward += r
-            total_success += info["success"]
-            self.primitive_step_counter += 1
-            self._num_low_level_steps_total += 1
+        compute_action = lambda: np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
+        action = self.execute_primitive(compute_action, self.open_gripper_iterations)
         self.prev_ll_a = action
         self.prev_grasp = d
-        return np.array((total_reward, total_success))
 
     def goto_pose(self, pose):
-        total_reward, total_success = 0, 0
-        for _ in range(self.goto_pose_iterations):
+        def compute_action():
             delta = pose - self.get_endeff_pos()
             gripper_ctrl = [-self.prev_grasp, self.prev_grasp]
             action = np.array(
                 [delta[0], delta[1], delta[2], 1.0, 0.0, 1.0, 0.0, *gripper_ctrl]
             )
+            return action
 
-            if self.include_phase_variable:
-                state = np.concatenate(
-                    (
-                        state,
-                        [(self.primitive_step_counter + 1) / self.num_low_level_steps],
-                    )
-                )
-            self._set_action(action)
-            self.sim.step()
-            self.call_render_every_step()
-            r, info = self.evaluate_state(self._get_obs(), action)
-            total_reward += r
-            total_success += info["success"]
-            self.primitive_step_counter += 1
-            self._num_low_level_steps_total += 1
+        action = self.execute_primitive(compute_action, self.goto_pose_iterations)
         self.prev_ll_a = action
-        return np.array((total_reward, total_success))
 
     def top_x_y_grasp(self, xyzd):
         x_dist, y_dist, z_dist, d = xyzd
-        stats = self.open_gripper(1)
-        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
-        stats += self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
-        stats += self.goto_pose(self.get_endeff_pos() + np.array([0.0, 0, z_dist]))
-        stats += self.close_gripper(d)
-        return stats
+        self.open_gripper(1)
+        self.goto_pose(self.get_endeff_pos() + np.array([0.0, y_dist, 0]))
+        self.goto_pose(self.get_endeff_pos() + np.array([x_dist, 0.0, 0]))
+        self.goto_pose(self.get_endeff_pos() + np.array([0.0, 0, z_dist]))
+        self.close_gripper(d)
 
     def move_delta_ee(self, pose):
-        stats = self.goto_pose(self.get_endeff_pos() + pose)
-        return stats
+        self.goto_pose(self.get_endeff_pos() + pose)
 
     def lift(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, 0.0, z_dist]),
         )
-        return stats
 
     def drop(self, z_dist):
         z_dist = np.maximum(z_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, 0.0, -z_dist]),
         )
-        return stats
 
     def move_left(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([-x_dist, 0.0, 0.0]),
         )
-        return stats
 
     def move_right(self, x_dist):
         x_dist = np.maximum(x_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([x_dist, 0.0, 0.0]),
         )
-        return stats
 
     def move_forward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, y_dist, 0.0]),
         )
-        return stats
 
     def move_backward(self, y_dist):
         y_dist = np.maximum(y_dist, 0.0)
-        stats = self.goto_pose(
+        self.goto_pose(
             self.get_endeff_pos() + np.array([0.0, -y_dist, 0.0]),
         )
-        return stats
 
     def break_apart_action(self, action):
         broken_a = {}
@@ -872,11 +669,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             primitive_idx
         ]
 
-        stats = primitive(
+        primitive(
             primitive_action,
         )
-
-        return stats
 
     def __getstate__(self):
         return {}

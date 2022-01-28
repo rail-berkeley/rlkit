@@ -33,10 +33,10 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
 
 
 def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
-    reward_type = env_kwargs["reward_type"]
+    action_space_kwargs = env_kwargs["action_space_kwargs"]
     env_kwargs_new = env_kwargs.copy()
-    if "reward_type" in env_kwargs_new:
-        del env_kwargs_new["reward_type"]
+    if "action_space_kwargs" in env_kwargs_new:
+        del env_kwargs_new["action_space_kwargs"]
     import gym
 
     gym.logger.setLevel(40)
@@ -69,8 +69,8 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
             parent.__bases__ = (SawyerXYZEnvMetaworldPrimitives,)
         if use_dm_backend:
             SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
-    SawyerXYZEnvMetaworldPrimitives.control_mode = env_kwargs["control_mode"]
-    SawyerMocapBaseDMBackendMetaworld.control_mode = env_kwargs["control_mode"]
+    SawyerXYZEnvMetaworldPrimitives.control_mode = action_space_kwargs["control_mode"]
+    SawyerMocapBaseDMBackendMetaworld.control_mode = action_space_kwargs["control_mode"]
     if env_name in ALL_V1_ENVIRONMENTS:
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
@@ -89,9 +89,9 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
         env._set_task_called = True
     else:
         env = env_cls(seed=42)
-    env.reset_action_space(**env_kwargs_new)
+    env.reset_action_space(**action_space_kwargs)
     env.reset()
-    env = MetaworldWrapper(env, reward_type=reward_type)
+    env = MetaworldWrapper(env, **env_kwargs_new)
     return env
 
 
@@ -105,18 +105,15 @@ def make_base_kitchen_env(env_class, env_kwargs):
 def make_env(env_suite, env_name, env_kwargs):
     from rlkit.envs.wrappers.primitives_wrappers import (
         ActionRepeat,
-        ImageEnvMetaworld,
         ImageUnFlattenWrapper,
         NormalizeActions,
         TimeLimit,
     )
 
     usage_kwargs = env_kwargs["usage_kwargs"]
-    image_kwargs = env_kwargs["image_kwargs"]
     max_path_length = usage_kwargs["max_path_length"]
     use_dm_backend = usage_kwargs.get("use_dm_backend", True)
     use_raw_action_wrappers = usage_kwargs.get("use_raw_action_wrappers", False)
-    use_image_obs = usage_kwargs.get("use_image_obs", True)
     unflatten_images = usage_kwargs.get("unflatten_images", False)
 
     env_kwargs_new = env_kwargs.copy()
@@ -129,11 +126,6 @@ def make_env(env_suite, env_name, env_kwargs):
         env = make_base_kitchen_env(env_name, env_kwargs_new)
     elif env_suite == "metaworld":
         env = make_base_metaworld_env(env_name, env_kwargs_new, use_dm_backend)
-        if use_image_obs:
-            env = ImageEnvMetaworld(
-                env,
-                **image_kwargs,
-            )
     elif env_suite == "robosuite":
         env = make_base_robosuite_env(env_name, env_kwargs_new, use_dm_backend)
     if unflatten_images:

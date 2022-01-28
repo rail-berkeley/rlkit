@@ -56,9 +56,9 @@ def preprocess_variant_llraps(variant):
     variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = variant[
         "max_path_length"
     ]
-    variant["env_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+    variant["env_kwargs"]["action_space_kwargs"][
         "num_low_level_actions_per_primitive"
-    ]
+    ] = variant["num_low_level_actions_per_primitive"]
 
     variant["algorithm_kwargs"]["max_path_length"] = variant["max_path_length"]
     return variant

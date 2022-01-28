@@ -41,24 +41,25 @@ if __name__ == "__main__":
         env_suite="metaworld",
         pass_render_kwargs=True,
         env_kwargs=dict(
-            control_mode="primitives",
-            action_scale=1,
-            max_path_length=5,
+            use_image_obs=True,
+            imwidth=64,
+            imheight=64,
             reward_type="sparse",
-            camera_settings={
-                "distance": 0.38227044687537043,
-                "lookat": [0.21052547, 0.32329237, 0.587819],
-                "azimuth": 141.328125,
-                "elevation": -53.203125160653144,
-            },
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=True,
-                max_path_length=5,
                 unflatten_images=False,
             ),
-            image_kwargs=dict(imwidth=64, imheight=64),
+            action_space_kwargs=dict(
+                control_mode="primitives",
+                action_scale=1,
+                camera_settings={
+                    "distance": 0.38227044687537043,
+                    "lookat": [0.21052547, 0.32329237, 0.587819],
+                    "azimuth": 141.328125,
+                    "elevation": -53.203125160653144,
+                },
+            ),
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
