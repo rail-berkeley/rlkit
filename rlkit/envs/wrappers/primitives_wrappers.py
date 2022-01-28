@@ -220,7 +220,7 @@ class MetaworldWrapper(gym.Wrapper):
             if value is not None:
                 new_info[key] = value
         if self.reward_type == "sparse":
-            r = info["success"]
+            reward = info["success"]
         return obs, reward, done, new_info
 
 
@@ -585,8 +585,8 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.sim.data.mocap_quat[mocap_id] = value
 
     def ctrl_set_action(self, sim, action):
-        self.sim.data.ctrl[0] = action[0]
-        self.sim.data.ctrl[1] = action[1]
+        sim.data.ctrl[0] = action[0]
+        sim.data.ctrl[1] = action[1]
 
     def mocap_set_action(self, sim, action):
         if sim.model.nmocap > 0:
@@ -629,7 +629,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         self.mocap_set_action(self.sim, action)
         self.ctrl_set_action(self.sim, gripper_ctrl)
 
-    def low_level_step(self, actionction):
+    def low_level_step(self, action):
         self.mocap_set_action(self.sim, action[:7])
         self.ctrl_set_action(self.sim, action[7:])
         self.sim.step()
