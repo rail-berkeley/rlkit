@@ -73,7 +73,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             )
             if not self._replace and self._size < batch_size:
                 warnings.warn(
-                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                    "Replace was set to false, but is temporarily set to true \
+                    because batch size is larger than current size of replay."
                 )
             batch_start = np.random.randint(
                 0, self.max_path_length - self.batch_length, size=(batch_size)
@@ -105,7 +106,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             )
             if not self._replace and self._size < batch_size:
                 warnings.warn(
-                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                    "Replace was set to false, but is temporarily set to true \
+                    because batch size is larger than current size of replay."
                 )
             observations = self._observations[indices]
             actions = self._actions[indices]

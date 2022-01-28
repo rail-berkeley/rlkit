@@ -10,7 +10,8 @@ class FreezeParameters:
     def __init__(self, params):
         """
         Context manager to locally freeze gradients.
-        In some cases with can speed up computation because gradients aren't calculated for these listed modules.
+        In some cases with can speed up computation because
+        gradients aren't calculated for these listed modules.
         example:
         ```
         with FreezeParameters([module]):
