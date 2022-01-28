@@ -43,19 +43,17 @@ if __name__ == "__main__":
         pass_render_kwargs=True,
         save_video=True,
         env_kwargs=dict(
-            dense=False,
-            image_obs=True,
+            reward_type="sparse",
+            use_image_obs=True,
             action_scale=1.4,
             use_workspace_limits=True,
             control_mode="primitives",
             usage_kwargs=dict(
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
-                use_image_obs=True,
-                max_path_length=5,
                 unflatten_images=False,
             ),
-            image_kwargs=dict(),
+            action_space_kwargs=dict(),
         ),
         actor_kwargs=dict(
             discrete_continuous_dist=True,
