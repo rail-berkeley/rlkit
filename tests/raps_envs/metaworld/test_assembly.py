@@ -2,7 +2,8 @@ import numpy as np
 
 from rlkit.envs.primitives_make_env import make_env
 
-if __name__ == "__main__":
+
+def test_run_assembly_success():
     env_suite = "metaworld"
     V2_keys = [
         "assembly-v2",
@@ -48,13 +49,6 @@ if __name__ == "__main__":
         observations = []
         d = True
         for i in range(5):
-            if d:
-                rewards_traj = [0]
-                terminals_traj = [0]
-                low_level_actions_traj = [np.zeros((1, 9))]
-                high_level_actions_traj = [np.zeros((1, env.action_space.low.size + 1))]
-                observations_traj = [o.reshape(1, *o.shape)]
-
             a = env.action_space.sample()
             a = np.zeros_like(a)
             if i % 5 == 0:
@@ -101,22 +95,5 @@ if __name__ == "__main__":
                 render_mode=render_mode,
                 render_im_shape=render_im_shape,
             )
-            # cv2.imwrite(
-            #     "assembly_{}.png".format(i),
-            #     env.render(mode="rgb_array", imwidth=480, imheight=480),
-            # )
-            print(
-                i % 5,
-                r,
-                "near_object",
-                info["near_object"],  # reward quat
-                "grasp_success",
-                info["grasp_success"],
-                "grasp_reward",
-                info["grasp_reward"],
-                "in_place_reward",
-                info["in_place_reward"],  # reward success
-                "unscaled_reward",
-                info["unscaled_reward"],
-            )
-            print()
+            if d:
+                assert r == 1.0
