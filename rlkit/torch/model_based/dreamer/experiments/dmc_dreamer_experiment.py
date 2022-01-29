@@ -7,7 +7,7 @@ def experiment(variant):
         NormalizeActions,
         TimeLimit,
     )
-    from rlkit.torch.model_based.dreamer.visualization import post_epoch_video_func
+    from rlkit.torch.model_based.dreamer.visualization import post_epoch_visualize_func
 
     os.environ["D4RL_SUPPRESS_IMPORT_ERROR"] = "1"
     import torch
@@ -149,11 +149,11 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
     )
     algorithm.to(ptu.device)
-    if variant.get("save_video", False):
-        algorithm.post_epoch_funcs.append(post_epoch_video_func)
+    # if variant.get("save_video", False):
+    #     algorithm.post_epoch_funcs.append(post_epoch_visualize_func)
     print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
-    if variant.get("save_video", False):
-        post_epoch_video_func(algorithm, -1)
+    # if variant.get("save_video", False):
+    #     post_epoch_visualize_func(algorithm, -1)
     algorithm.train()

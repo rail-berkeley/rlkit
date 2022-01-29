@@ -38,10 +38,19 @@ def lambda_return(reward, value, discount, bootstrap, lambda_: float = 0.95):
     # Setting lambda=0 gives a fixed 1-step return.
     """
     Compute the discounted reward for a batch of data.
-    reward, value, and discount are all shape [horizon - 1, batch, 1] (last element is cut off)
-    Bootstrap is [batch, 1]
+    arguments:
+        reward: [horizon - 1, batch, 1]
+        value: [horizon - 1, batch, 1]
+        discount: [horizon - 1, batch, 1]
+        bootstrap: [batch, 1]
+    returns:
+        returns: [horizon - 1, batch, 1]
     """
-    next_values = torch.cat([value[1:], bootstrap[None]], 0)
+    assert reward.shape[0] == value.shape[0] == discount.shape[0]
+    assert reward.shape[1] == value.shape[1] == discount.shape[1]
+    assert reward.shape[1] == bootstrap.shape[0]
+    assert reward.shape[0] > 0
+    next_values = torch.cat([value[1:], bootstrap.unsqueeze(0)], 0)
     target = reward + discount * next_values * (1 - lambda_)
     outputs = []
     accumulated_reward = bootstrap
@@ -52,11 +61,6 @@ def lambda_return(reward, value, discount, bootstrap, lambda_: float = 0.95):
         outputs.append(accumulated_reward)
     returns = torch.flip(torch.stack(outputs), [0])
     return returns
-
-
-def zero_grad(model):
-    for param in model.parameters():
-        param.grad = None
 
 
 # from dreamer_v2 repo

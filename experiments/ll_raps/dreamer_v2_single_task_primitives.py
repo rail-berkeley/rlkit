@@ -49,6 +49,7 @@ if __name__ == "__main__":
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 unflatten_images=False,
+                max_path_length=5,
             ),
             action_space_kwargs=dict(
                 control_mode="primitives",
