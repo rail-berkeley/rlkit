@@ -1,6 +1,5 @@
 import os.path as osp
-from collections import Counter, OrderedDict, namedtuple
-from typing import Tuple
+from collections import Counter, OrderedDict
 
 import numpy as np
 import torch
@@ -317,15 +316,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-5)
         advantages = advantages.reshape(-1).detach()
 
-        imagined_features_actions = (
+        imagined_actor_dist = actor(
             imagined_features[:-1].reshape(-1, imagined_features.shape[-1]).detach()
         )
-        imagined_actions = (
+        imagined_log_probs = imagined_actor_dist.log_prob(
             imagined_actions[:-1].reshape(-1, imagined_actions.shape[-1]).detach()
         )
-
-        imagined_actor_dist = actor(imagined_features_actions)
-        imagined_log_probs = imagined_actor_dist.log_prob(imagined_actions)
         if self.use_ppo_loss:
             ratio = torch.exp(imagined_log_probs - old_imagined_log_probs)
             surr1 = ratio * advantages
@@ -343,23 +339,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         weights = weights.reshape(-1)
         actor_entropy_loss_scale = self.actor_entropy_loss_scale()
         dynamics_backprop_loss_scale = 1 - self.policy_gradient_loss_scale
-        if self.num_actor_value_updates > 1:
-            actor_loss = (
-                (
-                    self.policy_gradient_loss_scale * policy_gradient_loss
-                    + actor_entropy_loss_scale * actor_entropy_loss
-                )
-                * weights
-            ).mean()
-        else:
-            actor_loss = (
-                (
-                    dynamics_backprop_loss_scale * dynamics_backprop_loss
-                    + self.policy_gradient_loss_scale * policy_gradient_loss
-                    + actor_entropy_loss_scale * actor_entropy_loss
-                )
-                * weights
-            ).mean()
+        actor_loss = (
+            (
+                dynamics_backprop_loss_scale * dynamics_backprop_loss
+                + self.policy_gradient_loss_scale * policy_gradient_loss
+                + actor_entropy_loss_scale * actor_entropy_loss
+            )
+            * weights
+        ).mean()
         log_keys[prefix + "Actor Loss"] += actor_loss.item()
         log_keys[
             prefix + "Actor Dynamics Backprop Loss"
