@@ -450,9 +450,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
     @torch.cuda.amp.autocast()
     def collect_imagination_data(self, state):
         world_model_params = list(self.world_model.parameters())
-        vf_params = list(self.vf.parameters())
-        pred_discount_params = list(self.world_model.pred_discount.parameters())
-        with FreezeParameters(world_model_params + pred_discount_params + vf_params):
+        with FreezeParameters(world_model_params):
             (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
             imagined_reward = self.world_model.reward(imagined_features)
             if self.use_pred_discount:
