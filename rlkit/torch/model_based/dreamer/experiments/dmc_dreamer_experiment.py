@@ -156,4 +156,3 @@ def experiment(variant):
     algorithm.train()
     # if variant.get("save_video", False):
     #     post_epoch_visualize_func(algorithm, -1)
-    algorithm.train()

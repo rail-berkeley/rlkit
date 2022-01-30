@@ -46,6 +46,7 @@ class ActorModel(Mlp):
         self._mean_scale = mean_scale
         self.use_tanh_normal = use_tanh_normal
         self._dist = dist
+        self.raw_init_std = torch.log(torch.exp(self._init_std) - 1)
 
     @jit.script_method
     def forward_net(self, input_):
@@ -59,9 +60,24 @@ class ActorModel(Mlp):
         output = preactivation
         return output
 
+    def get_continuous_dist(self, mean, std):
+        if self._dist == "tanh_normal_dreamer_v1":
+            mean = self._mean_scale * torch.tanh(mean / self._mean_scale)
+            std = F.softplus(std + self.raw_init_std) + self._min_std
+
+            dist = Normal(mean, std)
+            dist = TransformedDistribution(dist, TanhBijector())
+            dist = Independent(dist, 1)
+            dist = SampleDist(dist)
+        elif self._dist == "trunc_normal":
+            mean = torch.tanh(mean)
+            std = 2 * torch.sigmoid(std / 2) + self._min_std
+            dist = SafeTruncatedNormal(mean, std, -1, 1)
+            dist = Independent(dist, 1)
+        return dist
+
     def forward(self, input_):
         last = self.forward_net(input_)
-        raw_init_std = torch.log(torch.exp(self._init_std) - 1)
         if self.discrete_continuous_dist:
             assert last.shape[1] == self.output_size
             mean, continuous_action_std = (
@@ -75,112 +91,49 @@ class ActorModel(Mlp):
                 discrete_logits, continuous_action_mean, extra = split
                 continuous_action_mean = torch.cat((continuous_action_mean, extra), -1)
             dist1 = OneHotDist(logits=discrete_logits)
-
-            if self._dist == "tanh_normal_dreamer_v1":
-                continuous_action_mean = self._mean_scale * torch.tanh(
-                    continuous_action_mean / self._mean_scale
-                )
-                continuous_action_std = (
-                    F.softplus(continuous_action_std + raw_init_std) + self._min_std
-                )
-
-                dist2 = Normal(continuous_action_mean, continuous_action_std)
-                dist2 = TransformedDistribution(dist2, TanhBijector())
-                dist2 = Independent(dist2, 1)
-                dist2 = SampleDist(dist2)
-            elif self._dist == "tanh_normal":
-                continuous_action_mean = torch.tanh(continuous_action_mean)
-                continuous_action_std = (
-                    F.softplus(continuous_action_std + self._init_std) + self._min_std
-                )
-                dist2 = Normal(continuous_action_mean, continuous_action_std)
-                dist2 = TransformedDistribution(dist2, TanhBijector())
-                dist2 = Independent(dist2, 1)
-                dist2 = SampleDist(dist2)
-            elif self._dist == "tanh_normal_5":
-                continuous_action_mean = 5 * torch.tanh(continuous_action_mean / 5)
-                continuous_action_std = F.softplus(continuous_action_std + 5) + 5
-
-                dist2 = Normal(continuous_action_mean, continuous_action_std)
-                dist2 = TransformedDistribution(dist2, TanhBijector())
-                dist2 = Independent(dist2, 1)
-                dist2 = SampleDist(dist2)
-            elif self._dist == "trunc_normal":
-                continuous_action_mean = torch.tanh(continuous_action_mean)
-                continuous_action_std = (
-                    2 * torch.sigmoid(continuous_action_std / 2) + self._min_std
-                )
-                dist2 = SafeTruncatedNormal(
-                    continuous_action_mean, continuous_action_std, -1, 1
-                )
-                dist2 = Independent(dist2, 1)
+            dist2 = self.get_continuous_dist(
+                continuous_action_mean, continuous_action_std
+            )
             dist = SplitDist(dist1, dist2, self.discrete_action_dim)
         else:
             action_mean, action_std = last.split(self.continuous_action_dim, -1)
-            if self._dist == "tanh_normal_dreamer_v1":
-                action_mean = self._mean_scale * torch.tanh(
-                    action_mean / self._mean_scale
-                )
-                action_std = F.softplus(action_std + raw_init_std) + self._min_std
-
-                dist = Normal(action_mean, action_std)
-                dist = TransformedDistribution(dist, TanhBijector())
-                dist = Independent(dist, 1)
-                dist = SampleDist(dist)
-            elif self._dist == "tanh_normal":
-                action_mean = torch.tanh(action_mean)
-                action_std = F.softplus(action_std + self._init_std) + self._min_std
-                dist = Normal(action_mean, action_std)
-                dist = TransformedDistribution(dist, TanhBijector())
-                dist = Independent(dist, 1)
-                dist = SampleDist(dist)
-            elif self._dist == "tanh_normal_5":
-                action_mean = 5 * torch.tanh(action_mean / 5)
-                action_std = F.softplus(action_std + 5) + 5
-
-                dist = Normal(action_mean, action_std)
-                dist = TransformedDistribution(dist, TanhBijector())
-                dist = Independent(dist, 1)
-                dist = SampleDist(dist)
-            elif self._dist == "trunc_normal":
-                action_mean = torch.tanh(action_mean)
-                action_std = 2 * torch.sigmoid(action_std / 2) + self._min_std
-                dist = SafeTruncatedNormal(action_mean, action_std, -1, 1)
-                dist = Independent(dist, 1)
+            dist = self.get_continuous_dist(action_mean, action_std)
         return dist
 
     @jit.script_method
     def compute_exploration_action(self, action, expl_amount: float):
-        if self.discrete_continuous_dist:
-            discrete, continuous = (
-                action[:, : self.discrete_action_dim],
-                action[:, self.discrete_action_dim :],
-            )
-            indices = torch.randint(
-                0, discrete.shape[-1], discrete.shape[0:-1], device=ptu.device
-            ).long()
-            rand_action = F.one_hot(indices, discrete.shape[-1])
-            probs = torch.rand(discrete.shape[:1], device=ptu.device)
-            discrete = torch.where(
-                probs.reshape(-1, 1) < expl_amount,
-                rand_action.int(),
-                discrete.int(),
-            )
-            if expl_amount > 0:
-                continuous = torch.normal(continuous, expl_amount)
-            if self.use_tanh_normal:
-                continuous = torch.clamp(continuous, -1, 1)
-            action = torch.cat((discrete, continuous), -1)
+        if expl_amount == 0:
+            return action
         else:
-            if expl_amount > 0:
+            if self.discrete_continuous_dist:
+                discrete, continuous = (
+                    action[:, : self.discrete_action_dim],
+                    action[:, self.discrete_action_dim :],
+                )
+                indices = torch.randint(
+                    0, discrete.shape[-1], discrete.shape[0:-1], device=ptu.device
+                ).long()
+                rand_action = F.one_hot(indices, discrete.shape[-1])
+                probs = torch.rand(discrete.shape[:1], device=ptu.device)
+                discrete = torch.where(
+                    probs.reshape(-1, 1) < expl_amount,
+                    rand_action.int(),
+                    discrete.int(),
+                )
+                continuous = torch.normal(continuous, expl_amount)
+                if self.use_tanh_normal:
+                    continuous = torch.clamp(continuous, -1, 1)
+                action = torch.cat((discrete, continuous), -1)
+            else:
                 action = torch.normal(action, expl_amount)
                 if self.use_tanh_normal:
                     action = torch.clamp(action, -1, 1)
-        return action
+            return action
 
 
 # "atanh", "TanhBijector" and "SampleDist" are from the following repo
 # https://github.com/juliusfrost/dreamer-pytorch
+@torch.jit.script
 def atanh(x):
     return 0.5 * torch.log((1 + x) / (1 - x))
 

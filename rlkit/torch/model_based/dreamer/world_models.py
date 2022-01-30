@@ -33,8 +33,6 @@ class WorldModel(jit.ScriptModule):
         reward_num_layers=2,
         pred_discount_num_layers=3,
         gru_layer_norm=True,
-        discrete_latents=False,
-        discrete_latent_size=32,
         std_act="sigmoid2",
         use_prior_instead_of_posterior=False,
         reward_classifier=False,
@@ -45,18 +43,10 @@ class WorldModel(jit.ScriptModule):
         self.image_shape = image_shape
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
-        self.discrete_latents = discrete_latents
-        self.discrete_latent_size = discrete_latent_size
         self.depth = depth
         self.conv_act = conv_act
-        if discrete_latents:
-            img_and_obs_step_mlp_output_size = (
-                stochastic_state_size * discrete_latent_size
-            )
-            full_stochastic_state_size = img_and_obs_step_mlp_output_size
-        else:
-            img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
-            full_stochastic_state_size = stochastic_state_size
+        img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
+        full_stochastic_state_size = stochastic_state_size
         self.feature_size = deterministic_state_size + full_stochastic_state_size
         embedding_size = depth * 32
 
@@ -141,11 +131,6 @@ class WorldModel(jit.ScriptModule):
             std = 2 * torch.sigmoid(std / 2)
         return std + 0.1
 
-    @jit.ignore
-    def get_discrete_stochastic_state(self, logits):
-        stoch = self.get_dist(logits, logits, latent=True).rsample()
-        return stoch
-
     @jit.script_method
     def obs_step(
         self, prev_state: Dict[str, Tensor], prev_action: Tensor, embed: Tensor
@@ -153,51 +138,27 @@ class WorldModel(jit.ScriptModule):
         prior = self.action_step(prev_state, prev_action)
         x = torch.cat([prior["deter"], embed], -1)
         x = self.obs_step_mlp(x)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_discrete_stochastic_state(logits)
-            post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = self.compute_std(std)
-            stoch = (
-                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
-                + mean
-            )
-            post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = self.compute_std(std)
+        stoch = (
+            torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std + mean
+        )
+        post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
 
     @jit.script_method
     def action_step(self, prev_state: Dict[str, Tensor], prev_action: Tensor):
         prev_stoch = prev_state["stoch"]
-        if self.discrete_latents:
-            shape = list(prev_stoch.shape[:-2]) + [
-                self.stochastic_state_size * self.discrete_latent_size
-            ]
-            prev_stoch = prev_stoch.reshape(shape)
-
         x = torch.cat([prev_stoch, prev_action], -1)
         x = self.model_act(self.action_step_feature_extractor(x))
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.action_step_mlp(deter_new)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_discrete_stochastic_state(logits)
-            prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = self.compute_std(std)
-            stoch = (
-                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
-                + mean
-            )
-            prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = self.compute_std(std)
+        stoch = (
+            torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std + mean
+        )
+        prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
     @jit.script_method
@@ -232,16 +193,10 @@ class WorldModel(jit.ScriptModule):
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]
-        if self.discrete_latents:
-            post, prior = (
-                dict(logits=[], stoch=[], deter=[]),
-                dict(logits=[], stoch=[], deter=[]),
-            )
-        else:
-            post, prior = (
-                dict(mean=[], std=[], stoch=[], deter=[]),
-                dict(mean=[], std=[], stoch=[], deter=[]),
-            )
+        post, prior = (
+            dict(mean=[], std=[], stoch=[], deter=[]),
+            dict(mean=[], std=[], stoch=[], deter=[]),
+        )
         obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
@@ -262,8 +217,8 @@ class WorldModel(jit.ScriptModule):
             prior[key] = torch.cat(prior[key], dim=1)
 
         if self.use_prior_instead_of_posterior:
-            # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
-            # only works when first state is reset obs and never changes
+            # In this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action.
+            # This only works when first state is reset obs and never changes.
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
@@ -272,12 +227,14 @@ class WorldModel(jit.ScriptModule):
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)
 
-        if self.discrete_latents:
-            post_dist = self.get_dist(post["logits"], None, latent=True)
-            prior_dist = self.get_dist(prior["logits"], None, latent=True)
-        else:
-            post_dist = self.get_dist(post["mean"], post["std"], latent=True)
-            prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
+        post_dist = self.get_dist(
+            post["mean"],
+            post["std"],
+        )
+        prior_dist = self.get_dist(
+            prior["mean"],
+            prior["std"],
+        )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
@@ -294,30 +251,18 @@ class WorldModel(jit.ScriptModule):
 
     def get_features(self, state: Dict[str, Tensor]):
         stoch = state["stoch"]
-        if self.discrete_latents:
-            shape = list(stoch.shape[:-2]) + [
-                self.stochastic_state_size * self.discrete_latent_size
-            ]
-            stoch = stoch.reshape(shape)
         return torch.cat([state["deter"], stoch], -1)
 
-    def get_dist(self, mean, std, dims=1, normal=True, latent=False):
+    def get_dist(self, mean, std, dims=1, normal=True):
         if normal:
-            if latent and self.discrete_latents:
-                dist = Independent(OneHotDist(logits=mean), dims)
-                return dist
             return Independent(Normal(mean, std), dims)
         else:
             return Independent(Bernoulli(logits=mean), dims)
 
-    def get_detached_dist(self, params, dims=1, normal=True, latent=False):
-        if self.discrete_latents:
-            mean = params["logits"]
-            std = params["logits"]
-        else:
-            mean = params["mean"]
-            std = params["std"]
-        return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)
+    def get_detached_dist(self, params, dims=1, normal=True):
+        mean = params["mean"]
+        std = params["std"]
+        return self.get_dist(mean.detach(), std.detach(), dims, normal)
 
     @jit.script_method
     def encode(self, obs):
@@ -333,23 +278,12 @@ class WorldModel(jit.ScriptModule):
         return obs
 
     def initial(self, batch_size):
-        if self.discrete_latents:
-            state = dict(
-                logits=ptu.zeros(
-                    [batch_size, self.stochastic_state_size, self.discrete_latent_size],
-                ),
-                stoch=ptu.zeros(
-                    [batch_size, self.stochastic_state_size, self.discrete_latent_size]
-                ),
-                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
-            )
-        else:
-            state = dict(
-                mean=ptu.zeros([batch_size, self.stochastic_state_size]),
-                std=ptu.zeros([batch_size, self.stochastic_state_size]),
-                stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
-                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
-            )
+        state = dict(
+            mean=ptu.zeros([batch_size, self.stochastic_state_size]),
+            std=ptu.zeros([batch_size, self.stochastic_state_size]),
+            stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
+            deter=ptu.zeros([batch_size, self.deterministic_state_size]),
+        )
         return state
 
 
@@ -373,20 +307,19 @@ class LowlevelRAPSWorldModel(WorldModel):
         actions = []
         for step in range(path_length):
             if step == 0:
-                action_ = action[1][:, 0] * 0
+                action_to_apply = action[1][:, 0] * 0
             else:
-                inp = torch.cat(
-                    [action[0][:, step], self.get_features(state).detach()], dim=1
-                )
-                action_ = self.primitive_model(inp)
-                actions.append(action_.unsqueeze(1))
                 if use_network_action:
-                    action_ = action_
+                    inp = torch.cat(
+                        [action[0][:, step], self.get_features(state).detach()], dim=1
+                    )
+                    action_to_apply = self.primitive_model(inp)
                 else:
-                    action_ = action[1][:, step]
+                    action_to_apply = action[1][:, step]
+            actions.append(action_to_apply.unsqueeze(1))
             (post_params, prior_params,) = self.obs_step(
                 state,
-                action_.detach(),
+                action_to_apply.detach(),
                 embed[:, step],
             )
 
@@ -418,24 +351,23 @@ class LowlevelRAPSWorldModel(WorldModel):
         ctr = 0
         for step in range(path_length):
             if step == 0:
-                action_ = action[1][:, 0] * 0
+                action_to_apply = action[1][:, 0] * 0
             else:
-                inp = torch.cat(
-                    [action[0][:, step], self.get_features(state).detach()], dim=1
-                )
-                action_ = self.primitive_model(inp)
-                actions.append(action_.unsqueeze(1))
                 if use_network_action:
-                    action_ = action_
+                    inp = torch.cat(
+                        [action[0][:, step], self.get_features(state).detach()], dim=1
+                    )
+                    action_to_apply = self.primitive_model(inp)
+                    actions.append(action_to_apply.unsqueeze(1))
                 else:
-                    action_ = action[1][:, step]
+                    action_to_apply = action[1][:, step]
             if step not in idxs:
-                prior_params = self.action_step(state, action_.detach())
+                prior_params = self.action_step(state, action_to_apply.detach())
                 post_params = prior_params
             else:
                 (post_params, prior_params,) = self.obs_step(
                     state,
-                    action_.detach(),
+                    action_to_apply.detach(),
                     embed[:, ctr],
                 )
                 ctr += 1
@@ -471,16 +403,10 @@ class LowlevelRAPSWorldModel(WorldModel):
         path_length = action[1].shape[1]
         if state is None:
             state = self.initial(original_batch_size)
-        if self.discrete_latents:
-            post, prior = (
-                dict(logits=[], stoch=[], deter=[]),
-                dict(logits=[], stoch=[], deter=[]),
-            )
-        else:
-            post, prior = (
-                dict(mean=[], std=[], stoch=[], deter=[]),
-                dict(mean=[], std=[], stoch=[], deter=[]),
-            )
+        post, prior = (
+            dict(mean=[], std=[], stoch=[], deter=[]),
+            dict(mean=[], std=[], stoch=[], deter=[]),
+        )
         obs_path_len = obs.shape[1]
         obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
@@ -535,52 +461,24 @@ class LowlevelRAPSWorldModel(WorldModel):
         rewards = self.reward(raps_obs_feat)
         pred_discounts = self.pred_discount(raps_obs_feat)
 
-        if self.discrete_latents:
+        if batch_indices.shape != raps_obs_indices.shape:
             post_dist = self.get_dist(
-                post["logits"][idxs, batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
-                ),
-                None,
-                latent=True,
+                post["mean"][idxs, batch_indices].reshape(-1, post["mean"].shape[-1]),
+                post["std"][idxs, batch_indices].reshape(-1, post["std"].shape[-1]),
             )
             prior_dist = self.get_dist(
-                prior["logits"][idxs, batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
-                ),
-                None,
-                latent=True,
+                prior["mean"][idxs, batch_indices].reshape(-1, prior["mean"].shape[-1]),
+                prior["std"][idxs, batch_indices].reshape(-1, prior["std"].shape[-1]),
             )
         else:
-            if batch_indices.shape != raps_obs_indices.shape:
-                post_dist = self.get_dist(
-                    post["mean"][idxs, batch_indices].reshape(
-                        -1, post["mean"].shape[-1]
-                    ),
-                    post["std"][idxs, batch_indices].reshape(-1, post["std"].shape[-1]),
-                    latent=True,
-                )
-                prior_dist = self.get_dist(
-                    prior["mean"][idxs, batch_indices].reshape(
-                        -1, prior["mean"].shape[-1]
-                    ),
-                    prior["std"][idxs, batch_indices].reshape(
-                        -1, prior["std"].shape[-1]
-                    ),
-                    latent=True,
-                )
-            else:
-                post_dist = self.get_dist(
-                    post["mean"][:, batch_indices].reshape(-1, post["mean"].shape[-1]),
-                    post["std"][:, batch_indices].reshape(-1, post["std"].shape[-1]),
-                    latent=True,
-                )
-                prior_dist = self.get_dist(
-                    prior["mean"][:, batch_indices].reshape(
-                        -1, prior["mean"].shape[-1]
-                    ),
-                    prior["std"][:, batch_indices].reshape(-1, prior["std"].shape[-1]),
-                    latent=True,
-                )
+            post_dist = self.get_dist(
+                post["mean"][:, batch_indices].reshape(-1, post["mean"].shape[-1]),
+                post["std"][:, batch_indices].reshape(-1, post["std"].shape[-1]),
+            )
+            prior_dist = self.get_dist(
+                prior["mean"][:, batch_indices].reshape(-1, prior["mean"].shape[-1]),
+                prior["std"][:, batch_indices].reshape(-1, prior["std"].shape[-1]),
+            )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         if self.reward_classifier:
             reward_dist = self.get_dist(rewards, None, normal=False)
@@ -685,21 +583,6 @@ class StateConcatObsWorldModel(WorldModel):
         obs_state = obs[:, -self.vec_obs_size :]
         encoded_im = self.conv_encoder(self.preprocess(obs_im))
         return torch.cat((encoded_im, obs_state), dim=1)
-
-    def flatten_obs(self, obs, shape):
-        if (
-            len(obs.shape) == 2
-            and obs.shape[-1] == np.prod(self.image_shape) + self.vec_obs_size
-        ):
-            obs = obs[:, : -self.vec_obs_size].reshape(-1, *shape)
-        elif (
-            len(obs.shape) == 2
-            and obs.shape[-1] != np.prod(self.image_shape) + self.vec_obs_size
-        ):
-            obs = obs.reshape(-1, *shape)
-        else:
-            obs = obs[:, :, : -self.vec_obs_size].reshape(-1, *shape)
-        return obs
 
 
 class LayerNorm(jit.ScriptModule):

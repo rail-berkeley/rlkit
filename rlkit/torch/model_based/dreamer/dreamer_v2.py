@@ -166,10 +166,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         for key, value in state.items():
             if self.use_pred_discount:
                 value = value[:, :-1]
-            if key == "stoch" and self.world_model.discrete_latents:
-                new_state[key] = value.reshape(-1, value.shape[-2], value.shape[-1])
-            else:
-                new_state[key] = value.reshape(-1, value.shape[-1]).detach()
+            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
         imagined_features = []
         imagined_actions = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
@@ -333,7 +330,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         else:
             policy_gradient_loss = -1 * imagined_log_probs * advantages
         actor_entropy_loss = -1 * imagined_actor_dist.entropy()
-
         dynamics_backprop_loss = -(imagined_returns)
         dynamics_backprop_loss = dynamics_backprop_loss.reshape(-1)
         weights = weights.reshape(-1)
@@ -453,7 +449,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
     @torch.cuda.amp.autocast()
     def collect_imagination_data(self, state):
-        with FreezeParameters(list(self.world_model.parameters())):
+        world_model_params = list(self.world_model.parameters())
+        vf_params = list(self.vf.parameters())
+        pred_discount_params = list(self.world_model.pred_discount.parameters())
+        with FreezeParameters(world_model_params + pred_discount_params + vf_params):
             (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
             imagined_reward = self.world_model.reward(imagined_features)
             if self.use_pred_discount:
@@ -461,11 +460,9 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                     self.world_model.pred_discount(imagined_features),
                     std=None,
                     normal=False,
-                ).mean.detach()
+                ).mean
             else:
-                imagined_discount = (
-                    self.discount * torch.ones_like(imagined_reward).detach()
-                )
+                imagined_discount = self.discount * torch.ones_like(imagined_reward)
         old_imagined_value = self.vf(imagined_features).detach()
         return (
             imagined_features,
@@ -492,8 +489,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
     def compute_values_for_training_actor_and_value(
         self, imagined_features, imagined_reward, imagined_discount
     ):
-        imagined_target_value = self.target_vf(imagined_features).detach()
-        imagined_value = self.vf(imagined_features).detach()
+        vf_params = list(self.vf.parameters())
+        target_vf_params = list(self.target_vf.parameters())
+        with FreezeParameters(vf_params + target_vf_params):
+            imagined_target_value = self.target_vf(imagined_features)
+            imagined_value = self.vf(imagined_features)
         imagined_returns = lambda_return(
             imagined_reward[:-1],
             imagined_target_value[:-1],
@@ -506,7 +506,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             imagined_value,
             imagined_returns,
             weights,
-            imagined_features.detach(),
+            imagined_features,
         )
 
     def train_networks(
@@ -576,8 +576,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 )
 
                 vf_loss = self.value_loss(
-                    imagined_features_values,
-                    weights,
+                    imagined_features_values.detach(),
+                    weights.detach(),
                     imagined_returns.detach(),
                     self.vf,
                     log_keys,
@@ -760,12 +760,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         for key, value in state.items():
             if self.use_pred_discount:
                 value = value[:, :-1]
-            if key == "stoch" and self.world_model.discrete_latents:
-                new_state[key] = value.reshape(
-                    -1, value.shape[-2], value.shape[-1]
-                ).detach()
-            else:
-                new_state[key] = value.reshape(-1, value.shape[-1]).detach()
+            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
         imagined_features = []
         imagined_actions = []
         states = dict(mean=[], std=[], stoch=[], deter=[])
