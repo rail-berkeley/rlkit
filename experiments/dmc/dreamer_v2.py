@@ -122,6 +122,7 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
+                skip_wait=False,
             )
             num_exps_launched += 1
     print("Num exps launched: ", num_exps_launched)

@@ -64,7 +64,6 @@ class ActorModel(Mlp):
         if self._dist == "tanh_normal_dreamer_v1":
             mean = self._mean_scale * torch.tanh(mean / self._mean_scale)
             std = F.softplus(std + self.raw_init_std) + self._min_std
-
             dist = Normal(mean, std)
             dist = TransformedDistribution(dist, TanhBijector())
             dist = Independent(dist, 1)

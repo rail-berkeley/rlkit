@@ -11,8 +11,10 @@ import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
 from rlkit.torch.model_based.dreamer.utils import (
     FreezeParameters,
+    compute_weights_from_discount,
     lambda_return,
     schedule,
+    update_network,
 )
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
@@ -60,6 +62,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         use_clipped_value_loss=False,
         actor_value_lr=8e-5,
         use_actor_value_optimizer=False,
+        binarize_rewards=False,
     ):
         super().__init__()
 
@@ -139,6 +142,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self._n_train_steps_total = 0
         self._need_to_update_eval_statistics = True
         self.eval_statistics = OrderedDict()
+        self.use_dynamics_backprop = self.policy_gradient_loss_scale < 1.0
+        self.binarize_rewards = binarize_rewards
 
     def try_update_target_networks(self):
         if self._n_train_steps_total % self.target_update_period == 0:
@@ -159,32 +164,55 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.eval_statistics = stats
             self._need_to_update_eval_statistics = False
 
-    def imagine_ahead(self, state, actor=None):
-        if actor is None:
-            actor = self.actor
-        new_state = {}
-        for key, value in state.items():
-            if self.use_pred_discount:
-                value = value[:, :-1]
-            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
-        imagined_features = []
-        imagined_actions = []
-        states = dict(mean=[], std=[], stoch=[], deter=[])
-        for _ in range(self.imagination_horizon):
-            features = self.world_model.get_features(new_state)
-            for key in states.keys():
-                states[key].append(new_state[key].unsqueeze(0))
-            action_dist = actor(features.detach())
-            action = action_dist.rsample()
-            new_state = self.world_model.action_step(new_state, action)
+    @torch.cuda.amp.autocast()
+    def compute_world_model_loss_and_state(self, batch, log_keys):
+        """
+        :param batch: Dict
+            rewards: (batch_size, path_length+1, 1)
+            terminals: (batch_size, path_length+1, 1)
+            observations: (batch_size, path_length+1, obs_dim)
+            actions: (batch_size, path_length+1, act_dim)
+        :log_keys: Counter
 
-            imagined_features.append(features.unsqueeze(0))
-            imagined_actions.append(action.unsqueeze(0))
-        imagined_features = torch.cat(imagined_features)
-        imagined_actions = torch.cat(imagined_actions)
-        for key in states.keys():
-            states[key] = torch.cat(states[key])
-        return imagined_features, imagined_actions, states
+        :return state: Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+        """
+        rewards = batch["rewards"] * self.reward_scale
+        terminals = batch["terminals"]
+        obs = batch["observations"]
+        actions = batch["actions"]
+        (
+            post,
+            prior,
+            post_dist,
+            prior_dist,
+            image_dist,
+            reward_dist,
+            pred_discount_dist,
+            _,
+        ) = self.world_model(obs, actions)
+        obs = obs.reshape(-1, *self.image_shape)
+        rewards = rewards.reshape(-1, rewards.shape[-1])
+        terminals = terminals.reshape(-1, terminals.shape[-1])
+        world_model_loss = self.world_model_loss(
+            image_dist,
+            reward_dist,
+            prior,
+            post,
+            prior_dist,
+            post_dist,
+            pred_discount_dist,
+            obs,
+            rewards,
+            terminals,
+            log_keys,
+        )
+        state = post
+        self.scaler.scale(world_model_loss).backward()
+        return state
 
     @torch.cuda.amp.autocast()
     def world_model_loss(
@@ -202,36 +230,61 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys,
     ):
         """
-        :param image_dist: Normal(mu, 1)
+        :param image_dist: Normal(mean, 1)
             mu: torch.Tensor (batch_size*(path_length+1), image_shape)
-        :param reward_dist: Normal(mu, 1)
+        :param reward_dist: Normal(mean, 1)
             mu: torch.Tensor (batch_size*(path_length+1), 1)
-        :param prior: dict
-            stoch: torch.Tensor (batch_size*(path_length+1), latent_size)
-            deter: torch.Tensor (batch_size*(path_length+1), latent_size)
-            mean: torch.Tensor (batch_size*(path_length+1), latent_size)
-            std: torch.Tensor (batch_size*(path_length+1), latent_size)
-        :param post: dict
-            stoch: torch.Tensor (batch_size*(path_length+1), latent_size)
-            deter: torch.Tensor (batch_size*(path_length+1), latent_size)
-            mean: torch.Tensor (batch_size*(path_length+1), latent_size)
-            std: torch.Tensor (batch_size*(path_length+1), latent_size)
-        :param prior_dist: Normal(prior['mean'], prior['std'])
-        :param post_dist: Normal(post['mean'], post['std'])
+        :param prior: Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+        :param post: Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+        :param prior_dist: Normal(mean, std)
+            mean: torch.Tensor (batch_size*(path_length+1), stoch_size)
+            std: torch.Tensor (batch_size*(path_length+1), stoch_size)
+        :param post_dist: Normal(mean, std)
+            mean: torch.Tensor (batch_size*(path_length+1), stoch_size)
+            std: torch.Tensor (batch_size*(path_length+1), stoch_size)
         :param pred_discount_dist: Bernoulli(logits, 1)
             logits: torch.Tensor (batch_size*(path_length+1), 1)
         :param obs: torch.Tensor (batch_size*(path_length+1), image_shape)
         :param rewards: torch.Tensor (batch_size*(path_length+1), 1)
         :param terminals: torch.Tensor (batch_size*(path_length+1), 1)
-        :return losses (list):
-            world_model_loss,
-            div,
-            image_pred_loss,
-            reward_pred_loss,
-            transition_loss,
-            entropy_loss,
-            pred_discount_loss,
+
+        :return world_model_loss:
         """
+        assert (
+            image_dist.mean.shape[0]
+            == prior_dist.mean.shape[0]
+            == post_dist.mean.shape[0]
+            == obs.shape[0]
+        ), f"Batch dimension should be the same. Got {image_dist.shape, prior_dist.shape, post_dist.shape, obs.shape}."
+        assert (
+            reward_dist.mean.shape[0]
+            == pred_discount_dist.mean.shape[0]
+            == rewards.shape[0]
+            == terminals.shape[0]
+        ), f"Batch dimension should be the same. Got {reward_dist.shape, pred_discount_dist.shape, rewards.shape, terminals.shape}."
+        assert obs.max() > 1, f"Obs should not be preprocessed yet. Got {obs.max()}."
+        reshaped_post = {}
+        reshaped_prior = {}
+        for k, v in post.items():
+            assert (
+                len(v.shape) == 3
+            ), f"{k} should be of shape (batch_size, path_length+1, ...). Got {v.shape}."
+            reshaped_post[k] = v.reshape(-1, v.shape[-1])
+
+        for k, v in prior.items():
+            assert (
+                len(v.shape) == 3
+            ), f"{k} should be of shape (batch_size, path_length+1, ...). Got {v.shape}."
+            reshaped_prior[k] = v.reshape(-1, v.shape[-1])
+
         preprocessed_obs = self.world_model.preprocess(obs)
         image_pred_loss = -1 * image_dist.log_prob(preprocessed_obs).mean()
         if self.detach_rewards:
@@ -243,8 +296,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             -1 * pred_discount_dist.log_prob(pred_discount_target).mean()
         )
 
-        post_detached_dist = self.world_model.get_detached_dist(post)
-        prior_detached_dist = self.world_model.get_detached_dist(prior)
+        post_detached_dist = self.world_model.get_detached_dist(reshaped_post)
+        prior_detached_dist = self.world_model.get_detached_dist(reshaped_prior)
         if self.forward_kl:
             div = kld(post_dist, prior_dist).mean()
             div = torch.max(div, self.free_nats)
@@ -277,7 +330,165 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys["World Model Entropy Loss"] += entropy_loss.item()
         log_keys["World Model Pred Discount Loss"] += pred_discount_loss.item()
         log_keys["World Model Divergence Loss"] += div.item()
+
+        assert (
+            world_model_loss.requires_grad == True
+        ), "World model loss should require gradients."
         return world_model_loss
+
+    def imagine_ahead(self, state, actor=None):
+        """
+        Imagine forward using actor and world model (no observations provided).
+
+        :param state Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+        :param actor: torch.nn.Module
+
+        :return imagined_features: torch.Tensor(imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :return imagined_actions: torch.Tensor(imagination_horizon, batch_size*path_length, action_size)
+        """
+        for k, v in state.items():
+            assert (
+                len(v.shape) == 3
+            ), f"{k} should be of shape (batch_size, path_length+1, size). Got {v.shape}."
+        torch.set_grad_enabled(self.use_dynamics_backprop)
+        if actor is None:
+            actor = self.actor
+        new_state = {}
+        for key, value in state.items():
+            if self.use_pred_discount:
+                value = value[:, :-1]
+            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
+        imagined_features = []
+        imagined_actions = []
+        new_states = dict(mean=[], std=[], stoch=[], deter=[])
+        for _ in range(self.imagination_horizon):
+            features = self.world_model.get_features(new_state)
+            for key in new_states.keys():
+                new_states[key].append(new_state[key].unsqueeze(0))
+            action_dist = actor(features.detach())
+            action = action_dist.rsample()
+            new_state = self.world_model.action_step(new_state, action)
+
+            imagined_features.append(features.unsqueeze(0))
+            imagined_actions.append(action.unsqueeze(0))
+        imagined_features = torch.cat(imagined_features)
+        imagined_actions = torch.cat(imagined_actions)
+        for key in new_states.keys():
+            new_states[key] = torch.cat(new_states[key])
+        torch.set_grad_enabled(True)
+        assert (
+            imagined_features.shape[:2] == imagined_actions.shape[:2]
+        ), "Imagined features and actions should have the same first two dimensions."
+        assert (
+            imagined_features.shape[0]
+            == imagined_actions.shape[0]
+            == self.imagination_horizon
+        ), "Imagined dim 0 should be horizon."
+        return imagined_features, imagined_actions, new_states
+
+    @torch.cuda.amp.autocast()
+    def collect_imagination_data(self, state):
+        """
+        Run imagination for a single batch of data. Compute rewards, discounts and values.
+        :param state Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+
+        :return imagined_features: torch.Tensor(imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :return imagined_actions: torch.Tensor(imagination_horizon, batch_size*path_length, action_size)
+        :return imagined_discount: torch.Tensor (imagine_horizon, batch_size*path_length, 1)
+        :return imagined_reward: torch.Tensor (imagination_horizon, batch_size*path_length, 1)
+        :return imagined_value: torch.Tensor (imagination_horizon, batch_size*path_length, 1)
+        """
+        torch.set_grad_enabled(self.use_dynamics_backprop)
+        # Standard dreamer (with dynamics backprop) breaks if you remove this.
+        # TODO (mdalal): write a test to figure out why and avoid this issue
+        with FreezeParameters(list(self.world_model.parameters())):
+            (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
+            if self.world_model.reward_classifier:
+                imagined_reward = self.world_model.get_dist(
+                    self.world_model.reward(imagined_features),
+                    std=None,
+                    normal=False,
+                ).mean
+                if self.binarize_rewards:
+                    imagined_reward = (imagined_reward > 0.5).float()
+            else:
+                imagined_reward = self.world_model.reward(imagined_features)
+            if self.use_pred_discount:
+                imagined_discount = self.world_model.get_dist(
+                    self.world_model.pred_discount(imagined_features),
+                    std=None,
+                    normal=False,
+                ).mean
+            else:
+                imagined_discount = self.discount * torch.ones_like(imagined_reward)
+        imagined_value = self.vf(imagined_features).detach()
+        torch.set_grad_enabled(True)
+        assert (
+            imagined_features.shape[:2]
+            == imagined_actions.shape[:2]
+            == imagined_discount.shape[:2]
+            == imagined_reward.shape[:2]
+            == imagined_value.shape[:2]
+        ), "First two dimensions of all return values should be equal."
+        return (
+            imagined_features,
+            imagined_actions,
+            imagined_discount,
+            imagined_reward,
+            imagined_value,
+        )
+
+    @torch.cuda.amp.autocast()
+    def compute_values_for_training_actor_and_value(
+        self, imagined_features, imagined_reward, imagined_discount
+    ):
+        """
+        Compute imagined returns and associated quantities.
+
+        :param imagined_features: torch.Tensor (imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :param imagined_reward: torch.Tensor (imagination_horizon, batch_size*path_length, 1)
+        :param imagined_discount: torch.Tensor (imagination_horizon, batch_size*path_length, 1)
+
+        :return imagined_value: torch.Tensor (imagination_horizon, batch_size*path_length, 1)
+        :return imagined_return: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :return weights: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :return imagined_features: torch.Tensor(imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        """
+        torch.set_grad_enabled(self.use_dynamics_backprop)
+        with FreezeParameters(
+            list(self.vf.parameters()) + list(self.target_vf.parameters())
+        ):
+            imagined_target_value = self.target_vf(imagined_features)
+            imagined_value = self.vf(imagined_features)
+        imagined_return = lambda_return(
+            imagined_reward[:-1],
+            imagined_target_value[:-1],
+            imagined_discount[:-1],
+            bootstrap=imagined_target_value[-1],
+            lambda_=self.lam,
+        )
+        weights = compute_weights_from_discount(imagined_discount)
+        torch.set_grad_enabled(True)
+        assert (
+            imagined_return.shape == weights.shape
+        ), "Imagined return and weights should have same shape."
+        assert (
+            imagined_value.shape[:2] == imagined_features.shape[:2]
+        ), "Imagined value and features should have the same first two dimensions."
+        return (
+            imagined_value,
+            imagined_return,
+            weights,
+            imagined_features,
+        )
 
     @torch.cuda.amp.autocast()
     def actor_loss(
@@ -289,19 +500,19 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         weights,
         old_imagined_log_probs,
         actor,
-        log_keys,
-        prefix="",
+        log_keys: Counter,
+        prefix: str = "",
     ):
         """
-        :param imagined_returns:
-        :param value:
-        :param imagined_features:
-        :param imagined_actions:
-        :param weights:
-        :param old_imagined_log_probs:
-        :param actor:
+        :param imagined_returns: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param value: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param imagined_features: torch.Tensor(imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :param imagined_actions: torch.Tensor (imagination_horizon, batch_size*path_length, action_size)
+        :param weights: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param old_imagined_log_probs: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param actor: torch.nn.Module
         :param log_keys:
-        :param prefix:
+        :param prefix: str
 
         :return actor_loss:
         """
@@ -343,6 +554,12 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             )
             * weights
         ).mean()
+
+        assert actor_loss.requires_grad == True, "Actor loss should require gradients."
+        assert (
+            dynamics_backprop_loss.requires_grad == self.use_dynamics_backprop
+        ), "Dynamics backprop loss should require gradients if True."
+
         log_keys[prefix + "Actor Loss"] += actor_loss.item()
         log_keys[
             prefix + "Actor Dynamics Backprop Loss"
@@ -354,6 +571,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             prefix + "Actor Policy Gradient Loss"
         ] += policy_gradient_loss.mean().item()
         log_keys[prefix + "Actor Log Probs"] += imagined_log_probs.mean().item()
+
         return actor_loss
 
     @torch.cuda.amp.autocast()
@@ -363,18 +581,18 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         weights,
         imagined_returns,
         vf,
-        log_keys,
+        log_keys: Counter,
         old_imagined_value=None,
-        prefix="",
+        prefix: str = "",
     ):
         """
-        :param imagined_features_v:
-        :param weights:
-        :param imagined_returns:
-        :param vf:
-        :param log_keys:
-        :param old_imagined_value:
-        :param prefix:
+        :param imagined_features_v: torch.Tensor (imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :param weights: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param imagined_returns: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param vf: torch.nn.Module
+        :param log_keys: Counter
+        :param old_imagined_value: torch.Tensor (imagination_horizon-1, batch_size*path_length, 1)
+        :param prefix:str
 
         :return vf_loss:
         """
@@ -395,117 +613,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             vf_loss = -(weights * log_probs).mean()
         log_keys[prefix + "Value Loss"] += vf_loss.item()
         log_keys[prefix + "Imagined Value Mean"] += value_dist.mean.mean().item()
+        assert vf_loss.requires_grad, "Value loss should require gradients."
         return vf_loss
-
-    def update_network(self, network, optimizer, gradient_clip):
-        if isinstance(network, list):
-            parameters = []
-            for net in network:
-                parameters.extend(list(net.parameters()))
-        else:
-            parameters = list(network.parameters())
-        if gradient_clip > 0:
-            self.scaler.unscale_(optimizer)
-            torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
-        self.scaler.step(optimizer)
-        optimizer.zero_grad(set_to_none=True)
-        self.scaler.update()
-
-    @torch.cuda.amp.autocast()
-    def compute_world_model_loss_and_state(self, batch, log_keys):
-        rewards = batch["rewards"] * self.reward_scale
-        terminals = batch["terminals"]
-        obs = batch["observations"]
-        actions = batch["actions"]
-        (
-            post,
-            prior,
-            post_dist,
-            prior_dist,
-            image_dist,
-            reward_dist,
-            pred_discount_dist,
-            _,
-        ) = self.world_model(obs, actions)
-        obs = obs.reshape(-1, *self.image_shape)
-        rewards = rewards.reshape(-1, rewards.shape[-1])
-        terminals = terminals.reshape(-1, terminals.shape[-1])
-        world_model_loss = self.world_model_loss(
-            image_dist,
-            reward_dist,
-            prior,
-            post,
-            prior_dist,
-            post_dist,
-            pred_discount_dist,
-            obs,
-            rewards,
-            terminals,
-            log_keys,
-        )
-        state = post
-        self.scaler.scale(world_model_loss).backward()
-        return state
-
-    @torch.cuda.amp.autocast()
-    def collect_imagination_data(self, state):
-        world_model_params = list(self.world_model.parameters())
-        with FreezeParameters(world_model_params):
-            (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
-            imagined_reward = self.world_model.reward(imagined_features)
-            if self.use_pred_discount:
-                imagined_discount = self.world_model.get_dist(
-                    self.world_model.pred_discount(imagined_features),
-                    std=None,
-                    normal=False,
-                ).mean
-            else:
-                imagined_discount = self.discount * torch.ones_like(imagined_reward)
-        old_imagined_value = self.vf(imagined_features).detach()
-        return (
-            imagined_features,
-            imagined_actions,
-            imagined_discount,
-            imagined_reward,
-            old_imagined_value,
-        )
-
-    def compute_weights_from_discount(self, discount):
-        weights = torch.cumprod(
-            torch.cat(
-                [
-                    torch.ones_like(discount[:1]),
-                    discount[:-1],
-                ],
-                0,
-            ),
-            0,
-        )[:-1]
-        return weights.detach()
-
-    @torch.cuda.amp.autocast()
-    def compute_values_for_training_actor_and_value(
-        self, imagined_features, imagined_reward, imagined_discount
-    ):
-        vf_params = list(self.vf.parameters())
-        target_vf_params = list(self.target_vf.parameters())
-        with FreezeParameters(vf_params + target_vf_params):
-            imagined_target_value = self.target_vf(imagined_features)
-            imagined_value = self.vf(imagined_features)
-        imagined_returns = lambda_return(
-            imagined_reward[:-1],
-            imagined_target_value[:-1],
-            imagined_discount[:-1],
-            bootstrap=imagined_target_value[-1],
-            lambda_=self.lam,
-        )
-        weights = self.compute_weights_from_discount(imagined_discount)
-        return (
-            imagined_value,
-            imagined_returns,
-            weights,
-            imagined_features,
-        )
 
     def train_networks(
         self,
@@ -513,14 +622,14 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         skip_statistics=False,
     ) -> LossStatistics:
         """
-        :param: batch dict[
-            "rewards": (batch_size, path_length+1, 1),
-            "terminals": (batch_size, path_length+1, 1),
-            "observations": (batch_size, path_length+1, obs_dim),
-            "actions": (batch_size, path_length+1, act_dim),
-            ]
-        :param: skip_statistics bool
-        :returns: Tuple[DreamerLosses, LossStatistics]
+        :param batch: dict
+            rewards: (batch_size, path_length+1, 1)
+            terminals: (batch_size, path_length+1, 1)
+            observations: (batch_size, path_length+1, obs_dim)
+            actions: (batch_size, path_length+1, act_dim)
+        :param skip_statistics: bool
+
+        :return eval_statistics: LossStatistics
         """
 
         """
@@ -529,10 +638,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys = Counter()
 
         state = self.compute_world_model_loss_and_state(batch, log_keys)
-        self.update_network(
+        update_network(
             self.world_model,
             self.world_model_optimizer,
             self.world_model_gradient_clip,
+            self.scaler,
         )
 
         """
@@ -584,24 +694,26 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
 
                 if self.use_actor_value_optimizer:
                     self.scaler.scale(actor_loss + vf_loss).backward()
-                    self.update_network(
+                    update_network(
                         [self.actor, self.vf],
                         self.actor_value_optimizer,
-                        actor_loss + vf_loss,
                         self.actor_gradient_clip,
+                        self.scaler,
                     )
                 else:
                     self.scaler.scale(actor_loss).backward()
-                    self.update_network(
+                    update_network(
                         self.actor,
                         self.actor_optimizer,
                         self.actor_gradient_clip,
+                        self.scaler,
                     )
                     self.scaler.scale(vf_loss).backward()
-                    self.update_network(
+                    update_network(
                         self.vf,
                         self.vf_optimizer,
                         self.value_gradient_clip,
+                        self.scaler,
                     )
 
         if self.num_imagination_iterations > 0:
@@ -680,10 +792,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         obs = ptu.from_numpy(obs)
         actions = ptu.from_numpy(actions)
         (
-            post,
-            prior,
-            post_dist,
-            prior_dist,
+            _,
+            _,
+            _,
+            _,
             image_dist,
             reward_dist,
             pred_discount_dist,
@@ -739,48 +851,31 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         batch_length,
         effective_batch_size_iterations,
         wm_loss_scale,
-        binarize_rewards=False,
-        **kwargs
+        **kwargs,
     ):
         super().__init__(*args, **kwargs)
         self.num_low_level_actions_per_primitive = num_low_level_actions_per_primitive
         self.batch_length = batch_length
         self.primitive_model_loss_function = nn.MSELoss()
-        self.binarize_rewards = binarize_rewards
         self.effective_batch_size_iterations = effective_batch_size_iterations
         self.wm_loss_scale = wm_loss_scale
 
-    @torch.no_grad()
-    def imagine_ahead(self, state, actor=None):
-        if actor is None:
-            actor = self.actor
-        new_state = {}
-        for key, value in state.items():
-            if self.use_pred_discount:
-                value = value[:, :-1]
-            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
-        imagined_features = []
-        imagined_actions = []
-        states = dict(mean=[], std=[], stoch=[], deter=[])
-        for _ in range(self.imagination_horizon):
-            features = self.world_model.get_features(new_state)
-            for key in states.keys():
-                states[key].append(new_state[key].unsqueeze(0))
-            action_dist = actor(features.detach())
-            high_level_action = action_dist.rsample()
-            new_state = self.world_model.forward_high_level_step_primitive_model(
-                new_state, high_level_action, self.num_low_level_actions_per_primitive
-            )
-            imagined_features.append(features.unsqueeze(0))
-            imagined_actions.append(high_level_action.unsqueeze(0))
-        imagined_features = torch.cat(imagined_features)
-        imagined_actions = torch.cat(imagined_actions)
-        for key in states.keys():
-            states[key] = torch.cat(states[key])
-        return imagined_features, imagined_actions, states
-
     @torch.cuda.amp.autocast()
     def compute_world_model_loss_and_state(self, batch, log_keys):
+        """
+        :param batch: Dict
+            rewards: (batch_size, path_length+1, 1)
+            terminals: (batch_size, path_length+1, 1)
+            observations: (batch_size, path_length+1, obs_dim)
+            actions: (batch_size, path_length+1, act_dim)
+        :log_keys: Counter
+
+        :return state: Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+        """
         max_path_length = batch["observations"].shape[1]
         batch_size = batch["observations"].shape[0]
         raps_obs_indices = np.arange(
@@ -839,14 +934,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         key: value[
                             indices,
                             batch_indices,
-                        ].reshape(-1, value.shape[-1])
+                        ]
                         for key, value in prior.items()
                     },
                     {
                         key: value[
                             indices,
                             batch_indices,
-                        ].reshape(-1, value.shape[-1])
+                        ]
                         for key, value in post.items()
                     },
                     prior_dist,
@@ -900,44 +995,66 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             log_keys[key] *= self.wm_loss_scale
         return state
 
-    @torch.no_grad()
-    @torch.cuda.amp.autocast()
-    def collect_imagination_data(self, state):
-        (imagined_features, imagined_actions, _) = self.imagine_ahead(state)
-        if self.world_model.reward_classifier:
-            imagined_reward = self.world_model.get_dist(
-                self.world_model.reward(imagined_features),
-                std=None,
-                normal=False,
-            ).mean
-            if self.binarize_rewards:
-                imagined_reward = (imagined_reward > 0.5).float()
-        else:
-            imagined_reward = self.world_model.reward(imagined_features)
-        if self.use_pred_discount:
-            imagined_discount = self.world_model.get_dist(
-                self.world_model.pred_discount(imagined_features),
-                std=None,
-                normal=False,
-            ).mean
-        else:
-            imagined_discount = self.discount * torch.ones_like(imagined_reward)
-        old_imagined_value = self.vf(imagined_features).detach()
-        return (
-            imagined_features,
-            imagined_actions,
-            imagined_discount,
-            imagined_reward,
-            old_imagined_value,
-        )
+    def imagine_ahead(self, state, actor=None):
+        """
+        Imagine forward using actor and world model (no observations provided).
 
-    @torch.no_grad()
-    def compute_values_for_training_actor_and_value(
-        self, imagined_features, imagined_reward, imagined_discount
-    ):
-        return super().compute_values_for_training_actor_and_value(
-            imagined_features, imagined_reward, imagined_discount
-        )
+        :param state Dict
+            stoch: torch.Tensor (batch_size, path_length+1, stoch_size)
+            mean: torch.Tensor (batch_size, path_length+1, stoch_size)
+            std: torch.Tensor (batch_size, path_length+1, stoch_size)
+            deter: torch.Tensor (batch_size, path_length+1, deter_size)
+        :param actor: torch.nn.Module
+
+        :return imagined_features: torch.Tensor(imagination_horizon, batch_size*path_length, stoch_size + deter_size)
+        :return imagined_actions: torch.Tensor(imagination_horizon, batch_size*path_length, action_size)
+        """
+        for k, v in state.items():
+            assert (
+                len(v.shape) == 3
+            ), f"{k} should be of shape (batch_size, path_length+1, size). Got {v.shape}."
+        torch.set_grad_enabled(self.use_dynamics_backprop)
+        if actor is None:
+            actor = self.actor
+        new_state = {}
+        for key, value in state.items():
+            if self.use_pred_discount:
+                value = value[:, :-1]
+            new_state[key] = value.reshape(-1, value.shape[-1]).detach()
+        imagined_features = []
+        imagined_actions = []
+        new_states = dict(mean=[], std=[], stoch=[], deter=[])
+        for _ in range(self.imagination_horizon):
+            features = self.world_model.get_features(new_state)
+            for key in new_states.keys():
+                new_states[key].append(new_state[key].unsqueeze(0))
+            action_dist = actor(features.detach())
+            high_level_action = action_dist.rsample()
+            new_state, _ = self.world_model.forward_high_level_step(
+                new_state,
+                torch.empty(1),  # Dummy just to run function.
+                torch.empty(1),  # Dummy just to run function.
+                self.num_low_level_actions_per_primitive,
+                high_level_action,
+                use_obs=False,
+                use_true_actions=False,
+            )
+            imagined_features.append(features.unsqueeze(0))
+            imagined_actions.append(high_level_action.unsqueeze(0))
+        imagined_features = torch.cat(imagined_features)
+        imagined_actions = torch.cat(imagined_actions)
+        for key in new_states.keys():
+            new_states[key] = torch.cat(new_states[key])
+        torch.set_grad_enabled(True)
+        assert (
+            imagined_features.shape[:2] == imagined_actions.shape[:2]
+        ), "Imagined features and actions should have the same first two dimensions."
+        assert (
+            imagined_features.shape[0]
+            == imagined_actions.shape[0]
+            == self.imagination_horizon
+        ), "Imagined dim 0 should be horizon."
+        return imagined_features, imagined_actions, new_states
 
     @torch.no_grad()
     @torch.cuda.amp.autocast()
@@ -952,7 +1069,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         prefix,
         raps_obs_indices,
         use_network_action,
-        forward_batch_method,
     ):
         (
             _,
@@ -970,7 +1086,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             use_network_action=use_network_action,
             batch_indices=raps_obs_indices,
             raps_obs_indices=raps_obs_indices,
-            forward_batch_method=forward_batch_method,
         )
         obs = target_obs.reshape(-1, *self.image_shape)
         rewards = rewards.reshape(-1, rewards.shape[-1])
@@ -1017,7 +1132,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             prefix + "Full Obs ",
             raps_obs_indices,
             use_network_action=False,
-            forward_batch_method="forward_batch",
         )
 
         self.evaluate_helper(
@@ -1030,7 +1144,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             prefix + "Full Obs Primitive Model ",
             raps_obs_indices,
             use_network_action=True,
-            forward_batch_method="forward_batch",
         )
 
         self.evaluate_helper(
@@ -1043,7 +1156,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             prefix + "RAPS Obs ",
             raps_obs_indices,
             use_network_action=False,
-            forward_batch_method="forward_batch_raps_intermediate_obs",
         )
 
         self.evaluate_helper(
@@ -1056,5 +1168,4 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             prefix + "RAPS Obs Primitive Model ",
             raps_obs_indices,
             use_network_action=False,
-            forward_batch_method="forward_batch_raps_intermediate_obs",
         )

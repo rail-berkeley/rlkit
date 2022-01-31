@@ -212,7 +212,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.total_train_expl_time += time.time() - st
         self.trainer.buffer = self.replay_buffer
         self.training_mode(True)
-        for train_step in range(self.num_pretrain_steps):
+        for _ in range(self.num_pretrain_steps):
             train_data = self.replay_buffer.random_batch(self.batch_size)
             self.trainer.train(train_data)
         self.training_mode(False)
@@ -227,7 +227,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             gt.stamp("evaluation sampling")
             st = time.time()
-            for train_loop in range(self.num_train_loops_per_epoch):
+            for _ in range(self.num_train_loops_per_epoch):
                 new_expl_paths = self.expl_data_collector.collect_new_paths(
                     self.max_path_length,
                     self.num_expl_steps_per_train_loop,

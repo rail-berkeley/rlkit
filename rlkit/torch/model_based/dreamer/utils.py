@@ -63,6 +63,40 @@ def lambda_return(reward, value, discount, bootstrap, lambda_: float = 0.95):
     return returns
 
 
+@torch.jit.script
+def compute_weights_from_discount(discount):
+    weights = torch.cumprod(
+        torch.cat(
+            [
+                torch.ones_like(discount[:1]),
+                discount[:-1],
+            ],
+            0,
+        ),
+        0,
+    )[:-1]
+    return weights.detach()
+
+
+def update_network(network, optimizer, gradient_clip, scaler):
+    """
+    Update the network parameters.
+    Assume that loss.backward has already been called.
+    """
+    if isinstance(network, list):
+        parameters = []
+        for net in network:
+            parameters.extend(list(net.parameters()))
+    else:
+        parameters = list(network.parameters())
+    if gradient_clip > 0:
+        scaler.unscale_(optimizer)
+        torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
+    scaler.step(optimizer)
+    optimizer.zero_grad(set_to_none=True)
+    scaler.update()
+
+
 # from dreamer_v2 repo
 def schedule(string, step):
     try:

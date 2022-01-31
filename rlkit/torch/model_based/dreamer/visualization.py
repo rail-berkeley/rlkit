@@ -72,36 +72,38 @@ def visualize_rollout(
     for rollout in range(num_rollouts):
         for step in range(0, max_path_length + 1):
             if step == 0:
-                o = env.reset()
-                new_img = ptu.from_numpy(o)
-                policy.reset(o.reshape(1, -1))
-                r = 0
+                observation = env.reset()
+                new_img = ptu.from_numpy(observation)
+                policy.reset(observation.reshape(1, -1))
+                reward = 0
                 if low_level_primitives:
-                    policy_o = (None, o.reshape(1, -1))
+                    policy_o = (None, observation.reshape(1, -1))
                 else:
-                    policy_o = o.reshape(1, -1)
-                vis = convert_img_to_save(o)
+                    policy_o = observation.reshape(1, -1)
+                vis = convert_img_to_save(observation)
                 add_text(vis, "Ground Truth", (1, 60), 0.25, (0, 255, 0))
             else:
                 high_level_action, state = policy.get_action(
                     policy_o, use_raps_obs, use_true_actions
                 )
                 state = state["state"]
-                o, r, d, info = env.step(
+                observation, reward, done, info = env.step(
                     high_level_action[0],
                 )
                 if low_level_primitives:
-                    ll_o = np.expand_dims(np.array(info["low_level_obs"]), 0)
-                    ll_a = np.expand_dims(np.array(info["low_level_action"]), 0)
-                    policy_o = (ll_a, ll_o)
+                    low_level_obs = np.expand_dims(np.array(info["low_level_obs"]), 0)
+                    low_level_action = np.expand_dims(
+                        np.array(info["low_level_action"]), 0
+                    )
+                    policy_o = (low_level_action, low_level_obs)
                 else:
-                    policy_o = o.reshape(1, -1)
+                    policy_o = observation.reshape(1, -1)
                 (
                     primitive_name,
                     _,
                     _,
                 ) = env.get_primitive_info_from_high_level_action(high_level_action[0])
-                vis = convert_img_to_save(o)
+                vis = convert_img_to_save(observation)
                 add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
                 add_text(vis, f"r: {r}", (35, 7), 0.3, (0, 0, 0))
 
@@ -138,7 +140,7 @@ def visualize_rollout(
                     f"Rollout {rollout} Step {step - 1} Predicted Discount {discount_pred}"
                 )
                 print()
-            prev_r = r
+            prev_r = reward
         _, state = policy.get_action(policy_o)
         state = state["state"]
         new_img = reconstruct_from_state(state, world_model)
@@ -186,15 +188,15 @@ def visualize_rollout(
     print()
 
 
-def unsubsample_and_execute_ll(ll_a, env, num_subsample_steps):
-    for idx in range(ll_a.shape[0]):
-        la = ll_a[idx]
+def unsubsample_and_execute_ll(low_level_action, env, num_subsample_steps):
+    for idx in range(low_level_action.shape[0]):
+        la = low_level_action[idx]
         target = env.get_endeff_pos() + la[:3]
-        for key in range(num_subsample_steps):
+        for _ in range(num_subsample_steps):
             a = (target - env.get_endeff_pos()) / num_subsample_steps
             a = np.concatenate((a, la[3:]))
-            o, r, d, i = env.low_level_step(a)
-    return o, r, d, i
+            observation, reward, done, info = env.low_level_step(a)
+    return observation, reward, done, info
 
 
 @torch.no_grad()
@@ -249,13 +251,13 @@ def visualize_primitive_unsubsampled_rollout(
 
             else:
                 high_level_action, out = policy.get_action(policy_o)
-                ll_a_pred = out["ll_a_pred"]
+                low_level_action_pred = out["low_level_action_pred"]
                 o1, _, _, i1 = env1.step(
                     high_level_action[0],
                 )
-                ll_o = np.expand_dims(np.array(i1["low_level_obs"]), 0)
-                ll_a = np.expand_dims(np.array(i1["low_level_action"]), 0)
-                policy_o = (ll_a, ll_o)
+                low_level_obs = np.expand_dims(np.array(i1["low_level_obs"]), 0)
+                low_level_action = np.expand_dims(np.array(i1["low_level_action"]), 0)
+                policy_o = (low_level_action, low_level_obs)
                 (
                     primitive_name,
                     _,
@@ -266,32 +268,34 @@ def visualize_primitive_unsubsampled_rollout(
                     // num_low_level_actions_per_primitive
                 )
                 o2, _, _, i2 = unsubsample_and_execute_ll(
-                    ll_a[0], env2, num_subsample_steps
+                    low_level_action[0], env2, num_subsample_steps
                 )
                 if step > 1:
                     o3, _, _, i3 = unsubsample_and_execute_ll(
-                        ll_a_pred, env3, num_subsample_steps
+                        low_level_action_pred, env3, num_subsample_steps
                     )
                     obs3[rollout, step - 1] = convert_img_to_save(o3)
                     print(
                         f"Rollout: {rollout}",
                         f"Step: {step - 1}",
                         f"Primitive: {prev_primitive_name}",
-                        f"LL Action Pred Error: {(np.linalg.norm(prev_ll_a - ll_a_pred) ** 2) / num_low_level_actions_per_primitive}",
+                        f"LL Action Pred Error: {(np.linalg.norm(prev_low_level_action- low_level_action_pred) ** 2) / num_low_level_actions_per_primitive}",
                     )
-                prev_ll_a = ll_a
+                prev_low_level_action = low_level_action
                 prev_primitive_name = primitive_name
                 obs1[rollout, step] = convert_img_to_save(o1)
                 obs2[rollout, step] = convert_img_to_save(o2)
         _, out = policy.get_action(policy_o)
-        ll_a_pred = out["ll_a_pred"]
-        o3, _, _, i3 = unsubsample_and_execute_ll(ll_a_pred, env3, num_subsample_steps)
+        low_level_action_pred = out["low_level_action_pred"]
+        o3, _, _, i3 = unsubsample_and_execute_ll(
+            low_level_action_pred, env3, num_subsample_steps
+        )
         obs3[rollout, max_path_length] = convert_img_to_save(o3)
         print(
             f"Rollout: {rollout}",
             f"Step: {max_path_length}",
             f"Primitive: {prev_primitive_name}",
-            f"LL Action Pred Error: {(np.linalg.norm(prev_ll_a - ll_a_pred) ** 2) / num_low_level_actions_per_primitive}",
+            f"LL Action Pred Error: {(np.linalg.norm(prev_low_level_action- low_level_action_pred) ** 2) / num_low_level_actions_per_primitive}",
         )
         print(f"Rollout {rollout} Final Success True Actions: {i1['success']}")
         print(
@@ -394,83 +398,83 @@ def post_epoch_video_func(
 
         img_array1 = []
         path_length = 0
-        o = env.reset()
-        policy.reset(o)
+        observation = env.reset()
+        policy.reset(observation)
         obs = np.zeros(
             (4, algorithm.max_path_length, env.observation_space.shape[0]),
             dtype=np.uint8,
         )
         actions = np.zeros((4, algorithm.max_path_length, env.action_space.shape[0]))
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(
-                o,
+            action, agent_info = policy.get_action(
+                observation,
             )
-            o, r, d, i = env.step(
-                a,
+            observation, reward, done, info = env.step(
+                action,
                 render_every_step=True,
                 render_mode="rgb_array",
                 render_im_shape=(img_size, img_size),
             )
             img_array1.extend(env.envs[0].img_array)
-            obs[0, path_length] = o
-            actions[0, path_length] = a
+            obs[0, path_length] = observation
+            actions[0, path_length] = action
             path_length += 1
 
         img_array2 = []
         path_length = 0
-        o = env.reset()
-        policy.reset(o)
+        observation = env.reset()
+        policy.reset(observation)
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(
-                o,
+            action, agent_info = policy.get_action(
+                observation,
             )
-            o, r, d, i = env.step(
-                a,
+            observation, reward, done, info = env.step(
+                action,
                 render_every_step=True,
                 render_mode="rgb_array",
                 render_im_shape=(img_size, img_size),
             )
             img_array2.extend(env.envs[0].img_array)
             obs[1, path_length] = o
-            actions[1, path_length] = a
+            actions[1, path_length] = action
             path_length += 1
 
         img_array3 = []
         path_length = 0
-        o = env.reset()
-        policy.reset(o)
+        observation = env.reset()
+        policy.reset(observation)
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(
-                o,
+            action, agent_info = policy.get_action(
+                observationo,
             )
-            o, r, d, i = env.step(
-                a,
+            observation, r, d, i = env.step(
+                action,
                 render_every_step=True,
                 render_mode="rgb_array",
                 render_im_shape=(img_size, img_size),
             )
             img_array3.extend(env.envs[0].img_array)
-            obs[2, path_length] = o
-            actions[2, path_length] = a
+            obs[2, path_length] = observation
+            actions[2, path_length] = action
             path_length += 1
 
         img_array4 = []
         path_length = 0
-        o = env.reset()
-        policy.reset(o)
+        observation = env.reset()
+        policy.reset(observation)
         while path_length < algorithm.max_path_length:
-            a, agent_info = policy.get_action(
-                o,
+            action, agent_info = policy.get_action(
+                observation,
             )
-            o, r, d, i = env.step(
-                a,
+            observation, reward, done, info = env.step(
+                action,
                 render_every_step=True,
                 render_mode="rgb_array",
                 render_im_shape=(img_size, img_size),
             )
             img_array4.extend(env.envs[0].img_array)
-            obs[3, path_length] = o
-            actions[3, path_length] = a
+            obs[3, path_length] = observation
+            actions[3, path_length] = action
             path_length += 1
 
         fourcc = cv2.VideoWriter_fourcc(*"DIVX")

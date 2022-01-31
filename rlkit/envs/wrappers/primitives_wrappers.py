@@ -352,7 +352,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             "torque",
             "end_effector",
         ]:
-            self.prev_ll_a = action
+            self.prev_low_level_action = action
             if self.control_mode == "end_effector":
                 self.set_xyz_action(action[:3])
                 self.do_simulation([action[-1], -action[-1]])
@@ -571,14 +571,14 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
         d = np.maximum(d, 0.0)
         compute_action = lambda: np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, d, -d])
         action = self.execute_primitive(compute_action, self.close_gripper_iterations)
-        self.prev_ll_a = action
+        self.prev_low_level_action = action
         self.prev_grasp = -d
 
     def open_gripper(self, d):
         d = np.maximum(d, 0.0)
         compute_action = lambda: np.array([0.0, 0.0, 0.0, 1.0, 0.0, 1.0, 0.0, -d, d])
         action = self.execute_primitive(compute_action, self.open_gripper_iterations)
-        self.prev_ll_a = action
+        self.prev_low_level_action = action
         self.prev_grasp = d
 
     def goto_pose(self, pose):
@@ -591,7 +591,7 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             return action
 
         action = self.execute_primitive(compute_action, self.goto_pose_iterations)
-        self.prev_ll_a = action
+        self.prev_low_level_action = action
 
     def top_x_y_grasp(self, xyzd):
         x_dist, y_dist, z_dist, d = xyzd

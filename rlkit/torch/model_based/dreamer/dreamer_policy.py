@@ -35,7 +35,7 @@ class DreamerPolicy(Policy):
         observation,
         use_raps_obs=False,
         use_true_actions=True,
-        use_any_obs=True,
+        use_obs=True,
     ):
         """
         :param observation:
@@ -76,7 +76,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         observation,
         use_raps_obs=False,
         use_true_actions=True,
-        use_any_obs=True,
+        use_obs=True,
     ):
         """
         :param observation:
@@ -96,7 +96,7 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
                 self.state[1],
                 use_raps_obs,
                 use_true_actions,
-                use_any_obs,
+                use_obs,
             )
             low_level_action_pred = torch.cat(low_level_action_pred, axis=0)
         else:

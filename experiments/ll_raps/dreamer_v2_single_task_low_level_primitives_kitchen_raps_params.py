@@ -73,6 +73,7 @@ if __name__ == "__main__":
             gru_layer_norm=True,
             std_act="sigmoid2",
             depth=32,
+            use_prior_instead_of_posterior=True,
         ),
         trainer_kwargs=dict(
             adam_eps=1e-5,
@@ -108,7 +109,7 @@ if __name__ == "__main__":
         expl_amount=0.3,
         save_video=True,
         low_level_action_dim=9,
-        num_low_level_actions_per_primitive=10,
+        num_low_level_actions_per_primitive=5,
         effective_batch_size=400,
         pass_render_kwargs=True,
         max_path_length=5,
