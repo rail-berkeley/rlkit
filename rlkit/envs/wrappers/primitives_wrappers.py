@@ -388,7 +388,9 @@ class SawyerXYZEnvMetaworldPrimitives(SawyerXYZEnv):
             )
 
         self._last_stable_obs = self._get_obs()
-        reward, info = self.evaluate_state(self._last_stable_obs, self.prev_ll_a)
+        reward, info = self.evaluate_state(
+            self._last_stable_obs, self.prev_low_level_action
+        )
         if self.control_mode == "primitives":
             if self.collect_primitives_info:
                 info.update(self.primitives_info)

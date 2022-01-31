@@ -25,7 +25,7 @@ if __name__ == "__main__":
         exp_prefix = "test" + args.exp_prefix
     else:
         algorithm_kwargs = dict(
-            num_epochs=10,
+            num_epochs=50,
             num_eval_steps_per_epoch=2500,
             min_num_steps_before_training=5000,
             num_pretrain_steps=100,
@@ -91,11 +91,11 @@ if __name__ == "__main__":
             # "cartpole_swingup_sparse",
             # "cartpole_swingup",
             # "cartpole_balance",
-            "cartpole_balance_sparse",
+            # "cartpole_balance_sparse",
             # "hopper_stand",
             # "walker_run",
             # "quadruped_walk",
-            # "acrobot_swingup",
+            "acrobot_swingup",
             # "hopper_hop",
             # "cheetah_run",
         ],
