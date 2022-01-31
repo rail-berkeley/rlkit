@@ -212,6 +212,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         )
         state = post
         self.scaler.scale(world_model_loss).backward()
+        log_keys["Reward in Batch"] = rewards.sum().item()
         return state
 
     @torch.cuda.amp.autocast()
@@ -330,7 +331,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         log_keys["World Model Entropy Loss"] += entropy_loss.item()
         log_keys["World Model Pred Discount Loss"] += pred_discount_loss.item()
         log_keys["World Model Divergence Loss"] += div.item()
-
         assert (
             world_model_loss.requires_grad == True
         ), "World model loss should require gradients."
@@ -894,6 +894,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             obs = ptu.from_numpy(batch["observations"])
             high_level_actions = ptu.from_numpy(batch["high_level_actions"])
             low_level_actions = ptu.from_numpy(batch["low_level_actions"])
+            log_keys["Reward in Batch"] += rewards.sum().item()
             with torch.cuda.amp.autocast():
                 batch_start = np.random.randint(
                     0, max_path_length - self.batch_length + 1, size=(batch_size)
