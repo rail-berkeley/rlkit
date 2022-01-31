@@ -75,6 +75,7 @@ if __name__ == "__main__":
             pred_discount_num_layers=3,
             gru_layer_norm=True,
             std_act="sigmoid2",
+            use_prior_instead_of_posterior=False,
         ),
         trainer_kwargs=dict(
             adam_eps=1e-5,

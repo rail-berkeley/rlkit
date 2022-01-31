@@ -555,10 +555,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             * weights
         ).mean()
 
-        assert actor_loss.requires_grad == True, "Actor loss should require gradients."
-        assert (
-            dynamics_backprop_loss.requires_grad == self.use_dynamics_backprop
-        ), "Dynamics backprop loss should require gradients if True."
+        assert actor_loss.requires_grad is True, "Actor loss should require gradients."
+        if self.use_dynamics_backprop:
+            assert (
+                dynamics_backprop_loss.requires_grad is True
+            ), "Dynamics backprop loss should require gradients if True."
 
         log_keys[prefix + "Actor Loss"] += actor_loss.item()
         log_keys[
