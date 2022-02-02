@@ -12,6 +12,7 @@ from rlkit.core.loss import LossFunction, LossStatistics
 from rlkit.torch.model_based.dreamer.utils import (
     FreezeParameters,
     compute_weights_from_discount,
+    get_batch_indices,
     lambda_return,
     schedule,
     update_network,
@@ -884,8 +885,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             max_path_length,
             self.num_low_level_actions_per_primitive,
         )
-        indices = np.arange(batch_size).reshape(-1, 1)
         raps_obs_indices = np.concatenate([[0], raps_obs_indices])
+        first_dim_indices = np.arange(batch_size).reshape(-1, 1)
         low_level_action_dim = batch["low_level_actions"].shape[-1]
         for itr in range(self.effective_batch_size_iterations):
             batch = self.buffer.random_batch(batch_size)
@@ -896,18 +897,8 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             low_level_actions = ptu.from_numpy(batch["low_level_actions"])
             log_keys["Reward in Batch"] += rewards.sum().item()
             with torch.cuda.amp.autocast():
-                batch_start = np.random.randint(
-                    0, max_path_length - self.batch_length + 1, size=(batch_size)
-                )
-                batch_indices = (
-                    np.linspace(
-                        batch_start,
-                        batch_start + self.batch_length,
-                        self.batch_length,
-                        endpoint=False,
-                    )
-                    .astype(int)
-                    .transpose(1, 0)
+                batch_indices = get_batch_indices(
+                    max_path_length, self.batch_length, batch_size
                 )
                 (
                     post,
@@ -926,7 +917,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     batch_indices=batch_indices,
                     raps_obs_indices=raps_obs_indices,
                 )
-                obs = obs[indices, batch_indices].reshape(-1, *self.image_shape)
+                obs = obs[first_dim_indices, batch_indices].reshape(
+                    -1, *self.image_shape
+                )
                 rewards = rewards.reshape(-1, rewards.shape[-1])
                 terminals = terminals.reshape(-1, terminals.shape[-1])
                 world_model_loss = self.world_model_loss(
@@ -934,14 +927,14 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     reward_dist,
                     {
                         key: value[
-                            indices,
+                            first_dim_indices,
                             batch_indices,
                         ]
                         for key, value in prior.items()
                     },
                     {
                         key: value[
-                            indices,
+                            first_dim_indices,
                             batch_indices,
                         ]
                         for key, value in post.items()
@@ -955,30 +948,23 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     log_keys,
                 )
 
-                batch_start_primitives = np.random.randint(
-                    0,
-                    low_level_actions.shape[1] - self.batch_length + 1,
-                    size=(low_level_actions.shape[0]),
+                batch_indices_primitives = get_batch_indices(
+                    action_preds.shape[1], action_preds.shape[1], batch_size
                 )
-                batch_indices_primitives = (
-                    np.linspace(
-                        batch_start_primitives,
-                        batch_start_primitives + self.batch_length - 1,
-                        self.batch_length - 1,
-                        endpoint=False,
-                    )
-                    .astype(int)
-                    .transpose(1, 0)
-                )
+
+                action_preds = action_preds[
+                    first_dim_indices,
+                    batch_indices_primitives,
+                ].reshape(-1, low_level_action_dim)
+                low_level_actions = low_level_actions[:, 1:][
+                    first_dim_indices,
+                    batch_indices_primitives,
+                ].reshape(-1, low_level_action_dim)
+                assert (
+                    action_preds.shape == low_level_actions.shape
+                ), f"Action Preds Shape: {action_preds.shape} != Low Level actions: {low_level_actions.shape}"
                 primitive_loss = self.primitive_model_loss_function(
-                    action_preds[
-                        indices,
-                        batch_indices_primitives,
-                    ].reshape(-1, low_level_action_dim),
-                    low_level_actions[:, 1:][
-                        indices,
-                        batch_indices_primitives,
-                    ].reshape(-1, low_level_action_dim),
+                    action_preds, low_level_actions
                 )
                 loss = world_model_loss + primitive_loss
                 log_keys["Primitive Model Loss"] += primitive_loss.item()

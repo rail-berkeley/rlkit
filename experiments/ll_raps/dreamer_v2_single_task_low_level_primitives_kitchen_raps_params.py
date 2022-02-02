@@ -104,7 +104,7 @@ if __name__ == "__main__":
             hidden_sizes=[512, 512],
             apply_embedding=False,
         ),
-        num_expl_envs=1,
+        num_expl_envs=5,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,

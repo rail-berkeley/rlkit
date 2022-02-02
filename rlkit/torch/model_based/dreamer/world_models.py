@@ -445,14 +445,15 @@ class LowlevelRAPSWorldModel(WorldModel):
                 # action corresponding to reset obs should always be 0.
                 action_to_apply = action[1][:, 0] * 0
             else:
+                inp = torch.cat(
+                    [action[0][:, step], self.get_features(state).detach()], dim=1
+                )
+                action_pred = self.primitive_model(inp)
+                actions.append(action_pred.unsqueeze(1))
                 if use_network_action:
-                    inp = torch.cat(
-                        [action[0][:, step], self.get_features(state).detach()], dim=1
-                    )
-                    action_to_apply = self.primitive_model(inp)
+                    action_to_apply = action_pred
                 else:
                     action_to_apply = action[1][:, step]
-            actions.append(action_to_apply.unsqueeze(1))
             if step not in idxs:
                 prior_params = self.action_step(state, action_to_apply.detach())
                 post_params = prior_params

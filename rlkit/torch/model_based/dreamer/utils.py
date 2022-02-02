@@ -117,3 +117,20 @@ def schedule(string, step):
             initial, final, halflife = [float(group) for group in match.groups()]
             return (initial - final) * 0.5 ** (step / halflife) + final
         raise NotImplementedError(string)
+
+
+def get_batch_indices(max_path_length, batch_length, batch_size):
+    batch_start = np.random.randint(
+        0, max_path_length - batch_length + 1, size=(batch_size)
+    )
+    batch_indices = (
+        np.linspace(
+            batch_start,
+            batch_start + batch_length,
+            batch_length,
+            endpoint=False,
+        )
+        .astype(int)
+        .transpose(1, 0)
+    )
+    return batch_indices
