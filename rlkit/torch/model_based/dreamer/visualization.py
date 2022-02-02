@@ -105,7 +105,7 @@ def visualize_rollout(
                 ) = env.get_primitive_info_from_high_level_action(high_level_action[0])
                 vis = convert_img_to_save(observation)
                 add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
-                add_text(vis, f"reward: {reward}", (35, 7), 0.3, (0, 0, 0))
+                add_text(vis, f"r: {reward}", (35, 7), 0.3, (0, 0, 0))
 
             obs[rollout, step] = vis
             if step != 0:
