@@ -19,3 +19,4 @@ black==21.10b0
 isort==5.10.1
 pytest==6.2.5
 ipdb
+pre-commit
