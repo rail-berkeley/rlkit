@@ -6,6 +6,7 @@ import numpy as np
 
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
 from rlkit.envs.env_utils import get_dim
+from rlkit.torch.model_based.dreamer.utils import get_batch_indices
 
 
 class EpisodeReplayBuffer(SimpleReplayBuffer):
@@ -44,6 +45,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._size = 0
 
     def add_path(self, path):
+        # transpose to change from path collector format (path_length, batch) or buffer format (batch, path_length)
         self._observations[self._top : self._top + self.env.n_envs] = path[
             "observations"
         ].transpose(1, 0, 2)
@@ -76,28 +78,16 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
                     "Replace was set to false, but is temporarily set to true \
                     because batch size is larger than current size of replay."
                 )
-            batch_start = np.random.randint(
-                0, self.max_path_length - self.batch_length, size=(batch_size)
+            batch_indices = get_batch_indices(
+                self.max_path_length, self.batch_length, batch_size
             )
-            batch_indices = np.linspace(
-                batch_start,
-                batch_start + self.batch_length,
-                self.batch_length,
-                endpoint=False,
-            ).astype(int)
 
             observations = self._observations[indices][
                 np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            actions = self._actions[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            rewards = self._rewards[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            terminals = self._terminals[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
+            ]
+            actions = self._actions[indices][np.arange(batch_size), batch_indices]
+            rewards = self._rewards[indices][np.arange(batch_size), batch_indices]
+            terminals = self._terminals[indices][np.arange(batch_size), batch_indices]
         else:
             indices = np.random.choice(
                 self._size,
