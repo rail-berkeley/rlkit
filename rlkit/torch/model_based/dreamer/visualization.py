@@ -130,7 +130,7 @@ def visualize_rollout(
                     .cpu()
                     .numpy()
                     .item(),
-                )
+                )[0]
 
                 print(
                     f"Rollout {rollout} Step {step - 1} Predicted Reward {reward_pred}"
@@ -162,7 +162,7 @@ def visualize_rollout(
             .cpu()
             .numpy()
             .item(),
-        )
+        )[0]
         print(f"Rollout {rollout} Final Predicted Reward {reward_pred}")
         print(f"Rollout {rollout} Final Reward {reward}")
         print(f"Rollout {rollout} Final Predicted Discount {discount_pred}")

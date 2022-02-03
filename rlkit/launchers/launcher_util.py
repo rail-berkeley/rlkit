@@ -11,6 +11,7 @@ from collections import namedtuple
 import __main__ as main
 import dateutil.tz
 import numpy as np
+import torch
 from doodad.slurm.slurm_util import SlurmConfig, SlurmConfigMatrix
 
 import rlkit.pythonplusplus as ppp
@@ -350,6 +351,7 @@ def set_seed(seed):
     seed = int(seed)
     random.seed(seed)
     np.random.seed(seed)
+    torch.manual_seed(seed)
 
 
 def reset_execution_environment():

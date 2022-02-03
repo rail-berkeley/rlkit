@@ -46,7 +46,7 @@ class ActorModel(Mlp):
         self._mean_scale = mean_scale
         self.use_tanh_normal = use_tanh_normal
         self._dist = dist
-        self.raw_init_std = torch.log(torch.exp(self._init_std) - 1)
+        self.raw_init_std = torch.log(torch.exp(self._init_std) - 1).item()
 
     @jit.script_method
     def forward_net(self, input_):

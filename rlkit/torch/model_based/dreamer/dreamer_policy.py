@@ -86,8 +86,12 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         observation = ptu.from_numpy(low_level_obs)
         if self.state:
             low_level_action = ptu.from_numpy(low_level_action)
-            assert observation.shape[1] == self.num_low_level_actions_per_primitive
-            assert low_level_action.shape[1] == self.num_low_level_actions_per_primitive
+            assert (
+                observation.shape[1] == self.num_low_level_actions_per_primitive
+            ), f"{observation.shape}, {self.num_low_level_actions_per_primitive}"
+            assert (
+                low_level_action.shape[1] == self.num_low_level_actions_per_primitive
+            ), f"{low_level_action.shape}, {self.num_low_level_actions_per_primitive}"
             new_state, low_level_action_pred = self.world_model.forward_high_level_step(
                 self.state[0],
                 observation,
