@@ -94,7 +94,6 @@ def update_network(network, optimizer, gradient_clip, scaler):
         torch.nn.utils.clip_grad_norm_(parameters, gradient_clip, norm_type=2)
     scaler.step(optimizer)
     optimizer.zero_grad(set_to_none=True)
-    scaler.update()
 
 
 # from dreamer_v2 repo

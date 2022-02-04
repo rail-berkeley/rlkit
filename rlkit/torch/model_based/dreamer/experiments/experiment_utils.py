@@ -31,9 +31,6 @@ def preprocess_variant_llraps(variant):
     variant["trainer_kwargs"]["effective_batch_size_iterations"] = (
         variant["effective_batch_size"] // variant["algorithm_kwargs"]["batch_size"]
     )
-    variant["trainer_kwargs"]["wm_loss_scale"] = 1 / (
-        variant["trainer_kwargs"]["effective_batch_size_iterations"]
-    )
     variant["trainer_kwargs"]["num_low_level_actions_per_primitive"] = variant[
         "num_low_level_actions_per_primitive"
     ]

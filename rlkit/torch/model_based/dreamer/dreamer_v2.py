@@ -165,7 +165,6 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             self.eval_statistics = stats
             self._need_to_update_eval_statistics = False
 
-    @torch.cuda.amp.autocast()
     def compute_world_model_loss_and_state(self, batch, log_keys):
         """
         :param batch: Dict
@@ -185,32 +184,33 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         terminals = batch["terminals"]
         obs = batch["observations"]
         actions = batch["actions"]
-        (
-            post,
-            prior,
-            post_dist,
-            prior_dist,
-            image_dist,
-            reward_dist,
-            pred_discount_dist,
-            _,
-        ) = self.world_model(obs, actions)
-        obs = obs.reshape(-1, *self.image_shape)
-        rewards = rewards.reshape(-1, rewards.shape[-1])
-        terminals = terminals.reshape(-1, terminals.shape[-1])
-        world_model_loss = self.world_model_loss(
-            image_dist,
-            reward_dist,
-            prior,
-            post,
-            prior_dist,
-            post_dist,
-            pred_discount_dist,
-            obs,
-            rewards,
-            terminals,
-            log_keys,
-        )
+        with torch.cuda.amp.autocast():
+            (
+                post,
+                prior,
+                post_dist,
+                prior_dist,
+                image_dist,
+                reward_dist,
+                pred_discount_dist,
+                _,
+            ) = self.world_model(obs, actions)
+            obs = obs.reshape(-1, *self.image_shape)
+            rewards = rewards.reshape(-1, rewards.shape[-1])
+            terminals = terminals.reshape(-1, terminals.shape[-1])
+            world_model_loss = self.world_model_loss(
+                image_dist,
+                reward_dist,
+                prior,
+                post,
+                prior_dist,
+                post_dist,
+                pred_discount_dist,
+                obs,
+                rewards,
+                terminals,
+                log_keys,
+            )
         state = post
         self.scaler.scale(world_model_loss).backward()
         log_keys["Reward in Batch"] = rewards.sum().item()
@@ -717,6 +717,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                         self.value_gradient_clip,
                         self.scaler,
                     )
+        self.scaler.update()
 
         if self.num_imagination_iterations > 0:
             for key in log_keys:
@@ -852,7 +853,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         num_low_level_actions_per_primitive,
         batch_length,
         effective_batch_size_iterations,
-        wm_loss_scale,
         **kwargs,
     ):
         super().__init__(*args, **kwargs)
@@ -860,9 +860,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         self.batch_length = batch_length
         self.primitive_model_loss_function = nn.MSELoss()
         self.effective_batch_size_iterations = effective_batch_size_iterations
-        self.wm_loss_scale = wm_loss_scale
 
-    @torch.cuda.amp.autocast()
     def compute_world_model_loss_and_state(self, batch, log_keys):
         """
         :param batch: Dict
@@ -888,6 +886,9 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
         raps_obs_indices = np.concatenate([[0], raps_obs_indices])
         first_dim_indices = np.arange(batch_size).reshape(-1, 1)
         low_level_action_dim = batch["low_level_actions"].shape[-1]
+        batch_indices = get_batch_indices(
+            max_path_length, self.batch_length, batch_size
+        )
         for itr in range(self.effective_batch_size_iterations):
             batch = self.buffer.random_batch(batch_size)
             rewards = ptu.from_numpy(batch["rewards"])
@@ -897,9 +898,6 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             low_level_actions = ptu.from_numpy(batch["low_level_actions"])
             log_keys["Reward in Batch"] += rewards.sum().item()
             with torch.cuda.amp.autocast():
-                batch_indices = get_batch_indices(
-                    max_path_length, self.batch_length, batch_size
-                )
                 (
                     post,
                     prior,
@@ -966,9 +964,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                 primitive_loss = self.primitive_model_loss_function(
                     action_preds, low_level_actions
                 )
-                loss = world_model_loss + primitive_loss
+                loss = (
+                    world_model_loss + primitive_loss
+                ) / self.effective_batch_size_iterations
                 log_keys["Primitive Model Loss"] += primitive_loss.item()
-            self.scaler.scale(loss * self.wm_loss_scale).backward()
+            self.scaler.scale(loss).backward()
             if itr == 0:
                 state = {
                     key: value[:, raps_obs_indices].detach()
@@ -980,7 +980,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                         [value, post[key][:, raps_obs_indices].detach()]
                     )
         for key in log_keys:
-            log_keys[key] *= self.wm_loss_scale
+            log_keys[key] /= self.effective_batch_size_iterations
         return state
 
     def imagine_ahead(self, state, actor=None):

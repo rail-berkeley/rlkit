@@ -33,7 +33,7 @@ if __name__ == "__main__":
             num_trains_per_train_loop=10,
         )
     variant = dict(
-        algorithm="DreamerV2",
+        algorithm="RAPS",
         version="normal",
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
