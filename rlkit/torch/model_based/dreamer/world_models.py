@@ -13,9 +13,9 @@ from torch.nn import init
 from torch.nn.parameter import Parameter
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.model_based.dreamer.actor_models import OneHotDist
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
+from rlkit.torch.model_based.dreamer.utils import get_indexed_arr_from_batch_indices
 
 
 class WorldModel(jit.ScriptModule):
@@ -575,10 +575,9 @@ class LowlevelRAPSWorldModel(WorldModel):
         raps_obs_feat = raps_obs_feat.reshape(-1, raps_obs_feat.shape[-1])
 
         if batch_indices.shape != raps_obs_indices.shape:
-            batch_size = batch_indices.shape[0]
-            idxs = np.arange(batch_size).reshape(-1, 1)
-            feat = feat[idxs, batch_indices]
-            feat = feat.reshape(-1, feat.shape[-1])
+            feat = get_indexed_arr_from_batch_indices(feat, batch_indices).reshape(
+                -1, feat.shape[-1]
+            )
         else:
             feat = feat[:, batch_indices]
 
@@ -588,12 +587,20 @@ class LowlevelRAPSWorldModel(WorldModel):
 
         if batch_indices.shape != raps_obs_indices.shape:
             post_dist = self.get_dist(
-                post["mean"][idxs, batch_indices].reshape(-1, post["mean"].shape[-1]),
-                post["std"][idxs, batch_indices].reshape(-1, post["std"].shape[-1]),
+                get_indexed_arr_from_batch_indices(post["mean"], batch_indices).reshape(
+                    -1, post["mean"].shape[-1]
+                ),
+                get_indexed_arr_from_batch_indices(post["std"], batch_indices).reshape(
+                    -1, post["std"].shape[-1]
+                ),
             )
             prior_dist = self.get_dist(
-                prior["mean"][idxs, batch_indices].reshape(-1, prior["mean"].shape[-1]),
-                prior["std"][idxs, batch_indices].reshape(-1, prior["std"].shape[-1]),
+                get_indexed_arr_from_batch_indices(
+                    prior["mean"], batch_indices
+                ).reshape(-1, prior["mean"].shape[-1]),
+                get_indexed_arr_from_batch_indices(prior["std"], batch_indices).reshape(
+                    -1, prior["std"].shape[-1]
+                ),
             )
         else:
             post_dist = self.get_dist(

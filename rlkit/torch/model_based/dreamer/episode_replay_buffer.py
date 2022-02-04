@@ -6,7 +6,10 @@ import numpy as np
 
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
 from rlkit.envs.env_utils import get_dim
-from rlkit.torch.model_based.dreamer.utils import get_batch_indices
+from rlkit.torch.model_based.dreamer.utils import (
+    get_batch_length_indices,
+    get_indexed_arr_from_batch_indices,
+)
 
 
 class EpisodeReplayBuffer(SimpleReplayBuffer):
@@ -71,23 +74,28 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             indices = np.random.choice(
                 self._size,
                 size=batch_size,
-                replace=True,
+                replace=self._replace or self._size < batch_size,
             )
             if not self._replace and self._size < batch_size:
                 warnings.warn(
                     "Replace was set to false, but is temporarily set to true \
                     because batch size is larger than current size of replay."
                 )
-            batch_indices = get_batch_indices(
+            batch_indices = get_batch_length_indices(
                 self.max_path_length, self.batch_length, batch_size
             )
-
-            observations = self._observations[indices][
-                np.arange(batch_size), batch_indices
-            ]
-            actions = self._actions[indices][np.arange(batch_size), batch_indices]
-            rewards = self._rewards[indices][np.arange(batch_size), batch_indices]
-            terminals = self._terminals[indices][np.arange(batch_size), batch_indices]
+            observations = get_indexed_arr_from_batch_indices(
+                self._observations[indices], batch_indices
+            )
+            actions = get_indexed_arr_from_batch_indices(
+                self._actions[indices], batch_indices
+            )
+            rewards = get_indexed_arr_from_batch_indices(
+                self._rewards[indices], batch_indices
+            )
+            terminals = get_indexed_arr_from_batch_indices(
+                self._terminals[indices], batch_indices
+            )
         else:
             indices = np.random.choice(
                 self._size,
@@ -103,6 +111,13 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             actions = self._actions[indices]
             rewards = self._rewards[indices]
             terminals = self._terminals[indices]
+        assert (
+            observations.shape[0]
+            == actions.shape[0]
+            == rewards.shape[0]
+            == terminals.shape[0]
+            == batch_size
+        )
         batch = dict(
             observations=observations,
             actions=actions,

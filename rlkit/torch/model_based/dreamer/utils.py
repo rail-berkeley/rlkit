@@ -118,18 +118,46 @@ def schedule(string, step):
         raise NotImplementedError(string)
 
 
-def get_batch_indices(max_path_length, batch_length, batch_size):
+def get_batch_length_indices(max_path_length, batch_length, batch_size):
     batch_start = np.random.randint(
         0, max_path_length - batch_length + 1, size=(batch_size)
     )
-    batch_indices = (
-        np.linspace(
-            batch_start,
-            batch_start + batch_length,
-            batch_length,
-            endpoint=False,
-        )
-        .astype(int)
-        .transpose(1, 0)
-    )
+    batch_indices = np.linspace(
+        batch_start,
+        batch_start + batch_length,
+        batch_length,
+        endpoint=False,
+    ).astype(int)
     return batch_indices
+
+
+def get_indexed_arr_from_batch_indices(arr, batch_indices):
+    """
+    Faster alternative to:
+    indexed_arr = np.take_along_axis(
+                    arr,
+                    np.expand_dims(batch_indices, -1),
+                    axis=1,
+                )
+    2x speedup over take_along_axis.
+    """
+    batch_size = batch_indices.shape[1]
+    if isinstance(arr, torch.Tensor):
+        indexed_arr = arr[np.arange(batch_size), batch_indices].permute(1, 0, 2)
+    else:
+        indexed_arr = arr[np.arange(batch_size), batch_indices].transpose(1, 0, 2)
+    return indexed_arr
+
+
+def subsample_array_across_batch_length(
+    arr, max_path_length, batch_length, batch_size, return_batch_indices=False
+):
+    """
+    For each batch index, sample a subsequence of the second dimension.
+    """
+    batch_indices = get_batch_length_indices(max_path_length, batch_length, batch_size)
+    indexed_arr = get_indexed_arr_from_batch_indices(arr, batch_indices)
+    if return_batch_indices:
+        return indexed_arr, batch_indices
+    else:
+        return indexed_arr

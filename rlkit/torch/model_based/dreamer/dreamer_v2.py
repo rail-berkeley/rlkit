@@ -9,14 +9,7 @@ from torch.distributions import kl_divergence as kld
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.core.loss import LossFunction, LossStatistics
-from rlkit.torch.model_based.dreamer.utils import (
-    FreezeParameters,
-    compute_weights_from_discount,
-    get_batch_indices,
-    lambda_return,
-    schedule,
-    update_network,
-)
+from rlkit.torch.model_based.dreamer.utils import *
 from rlkit.torch.torch_rl_algorithm import TorchTrainer
 
 
@@ -265,13 +258,13 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             == prior_dist.mean.shape[0]
             == post_dist.mean.shape[0]
             == obs.shape[0]
-        ), f"Batch dimension should be the same. Got {image_dist.shape, prior_dist.shape, post_dist.shape, obs.shape}."
+        ), f"Batch dimension should be the same. Got {image_dist.mean.shape, prior_dist.mean.shape, post_dist.mean.shape, obs.shape}."
         assert (
             reward_dist.mean.shape[0]
             == pred_discount_dist.mean.shape[0]
             == rewards.shape[0]
             == terminals.shape[0]
-        ), f"Batch dimension should be the same. Got {reward_dist.shape, pred_discount_dist.shape, rewards.shape, terminals.shape}."
+        ), f"Batch dimension should be the same. Got {reward_dist.mean.shape, pred_discount_dist.mean.shape, rewards.shape, terminals.shape}."
         assert obs.max() > 1, f"Obs should not be preprocessed yet. Got {obs.max()}."
         reshaped_post = {}
         reshaped_prior = {}
@@ -884,12 +877,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
             self.num_low_level_actions_per_primitive,
         )
         raps_obs_indices = np.concatenate([[0], raps_obs_indices])
-        first_dim_indices = np.arange(batch_size).reshape(-1, 1)
         low_level_action_dim = batch["low_level_actions"].shape[-1]
-        batch_indices = get_batch_indices(
-            max_path_length, self.batch_length, batch_size
-        )
         for itr in range(self.effective_batch_size_iterations):
+            batch_indices = get_batch_length_indices(
+                max_path_length, self.batch_length, batch_size
+            )
             batch = self.buffer.random_batch(batch_size)
             rewards = ptu.from_numpy(batch["rewards"])
             terminals = ptu.from_numpy(batch["terminals"])
@@ -915,7 +907,7 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     batch_indices=batch_indices,
                     raps_obs_indices=raps_obs_indices,
                 )
-                obs = obs[first_dim_indices, batch_indices].reshape(
+                obs = get_indexed_arr_from_batch_indices(obs, batch_indices).reshape(
                     -1, *self.image_shape
                 )
                 rewards = rewards.reshape(-1, rewards.shape[-1])
@@ -924,17 +916,11 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     image_dist,
                     reward_dist,
                     {
-                        key: value[
-                            first_dim_indices,
-                            batch_indices,
-                        ]
+                        key: get_indexed_arr_from_batch_indices(value, batch_indices)
                         for key, value in prior.items()
                     },
                     {
-                        key: value[
-                            first_dim_indices,
-                            batch_indices,
-                        ]
+                        key: get_indexed_arr_from_batch_indices(value, batch_indices)
                         for key, value in post.items()
                     },
                     prior_dist,
@@ -946,18 +932,16 @@ class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):
                     log_keys,
                 )
 
-                batch_indices_primitives = get_batch_indices(
+                batch_indices_primitive_model = get_batch_length_indices(
                     action_preds.shape[1], action_preds.shape[1], batch_size
                 )
 
-                action_preds = action_preds[
-                    first_dim_indices,
-                    batch_indices_primitives,
-                ].reshape(-1, low_level_action_dim)
-                low_level_actions = low_level_actions[:, 1:][
-                    first_dim_indices,
-                    batch_indices_primitives,
-                ].reshape(-1, low_level_action_dim)
+                action_preds = get_indexed_arr_from_batch_indices(
+                    action_preds, batch_indices_primitive_model
+                ).reshape(-1, low_level_action_dim)
+                low_level_actions = get_indexed_arr_from_batch_indices(
+                    low_level_actions[:, 1:], batch_indices_primitive_model
+                ).reshape(-1, low_level_action_dim)
                 assert (
                     action_preds.shape == low_level_actions.shape
                 ), f"Action Preds Shape: {action_preds.shape} != Low Level actions: {low_level_actions.shape}"

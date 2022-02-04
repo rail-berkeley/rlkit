@@ -38,6 +38,7 @@ if __name__ == "__main__":
         version="normal",
         algorithm_kwargs=algorithm_kwargs,
         env_suite="metaworld",
+        env_name="disassemble-v2",
         env_kwargs=dict(
             use_image_obs=True,
             imwidth=64,
