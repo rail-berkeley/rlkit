@@ -22,15 +22,15 @@ if __name__ == "__main__":
         )
     else:
         algorithm_kwargs = dict(
-            num_epochs=250,
+            num_epochs=100,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
             max_path_length=5,
             batch_size=417,
-            num_expl_steps_per_train_loop=30,
-            num_train_loops_per_epoch=40,
-            num_trains_per_train_loop=10,
+            num_expl_steps_per_train_loop=60,
+            num_train_loops_per_epoch=20,
+            num_trains_per_train_loop=20,
         )
     variant = dict(
         algorithm="RAPS",
@@ -41,7 +41,6 @@ if __name__ == "__main__":
         use_raw_actions=False,
         env_suite="kitchen",
         pass_render_kwargs=True,
-        save_video=True,
         env_kwargs=dict(
             reward_type="sparse",
             use_image_obs=True,
@@ -97,9 +96,10 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
-        num_expl_envs=5,
+        num_expl_envs=10,
         num_eval_envs=1,
         expl_amount=0.3,
+        save_video=True,
     )
 
     search_space = {
@@ -114,6 +114,9 @@ if __name__ == "__main__":
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
+            python_cmd = subprocess.check_output("which python", shell=True).decode(
+                "utf-8"
+            )[:-1]
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -121,9 +124,7 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="none",
-                python_cmd=subprocess.check_output("which python", shell=True).decode(
-                    "utf-8"
-                )[:-1],
+                python_cmd=python_cmd,
                 seed=seed,
                 exp_id=exp_id,
             )

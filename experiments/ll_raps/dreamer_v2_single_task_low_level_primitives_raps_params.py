@@ -19,12 +19,12 @@ if __name__ == "__main__":
             min_num_steps_before_training=10,
             num_pretrain_steps=10,
             num_train_loops_per_epoch=1,
-            num_trains_per_train_loop=10,
+            num_trains_per_train_loop=1,
             batch_size=200,
         )
     else:
         algorithm_kwargs = dict(
-            num_epochs=250,
+            num_epochs=500,
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
@@ -113,7 +113,7 @@ if __name__ == "__main__":
             hidden_sizes=[512, 512],
             apply_embedding=False,
         ),
-        num_expl_envs=5,
+        num_expl_envs=10,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
@@ -137,6 +137,9 @@ if __name__ == "__main__":
             seed = random.randint(0, 100000)
             variant["seed"] = seed
             variant["exp_id"] = exp_id
+            python_cmd = subprocess.check_output("which python", shell=True).decode(
+                "utf-8"
+            )[:-1]
             run_experiment(
                 experiment,
                 exp_prefix=args.exp_prefix,
@@ -144,9 +147,7 @@ if __name__ == "__main__":
                 variant=variant,
                 use_gpu=True,
                 snapshot_mode="none",
-                python_cmd=subprocess.check_output("which python", shell=True).decode(
-                    "utf-8"
-                )[:-1],
+                python_cmd=python_cmd,
                 seed=seed,
                 exp_id=exp_id,
             )
