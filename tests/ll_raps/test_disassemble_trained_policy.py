@@ -8,6 +8,7 @@ import torch.nn as nn
 import rlkit.torch.pytorch_util as ptu
 from rlkit.envs.primitives_make_env import make_env
 from rlkit.envs.wrappers.mujoco_vec_wrappers import DummyVecEnv
+from rlkit.launchers.launcher_util import set_seed
 from rlkit.torch.model_based.dreamer.actor_models import ActorModel
 from rlkit.torch.model_based.dreamer.dreamer_policy import DreamerLowLevelRAPSPolicy
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
@@ -20,107 +21,8 @@ from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
 
 def run_trained_policy(path):
     ptu.set_gpu_mode(True)
-    # # variant = json.load(open(osp.join(path, "variant.json"), "r")
-    algorithm_kwargs = dict(
-        num_epochs=250,
-        num_eval_steps_per_epoch=30,
-        min_num_steps_before_training=2500,
-        num_pretrain_steps=100,
-        batch_size=200,
-        num_expl_steps_per_train_loop=60,
-        num_train_loops_per_epoch=20,
-        num_trains_per_train_loop=20,
-    )
-    variant = dict(
-        algorithm="LLRAPS",
-        version="normal",
-        algorithm_kwargs=algorithm_kwargs,
-        env_suite="metaworld",
-        env_name="disassemble-v2",
-        env_kwargs=dict(
-            use_image_obs=True,
-            imwidth=64,
-            imheight=64,
-            reward_type="sparse",
-            usage_kwargs=dict(
-                use_dm_backend=True,
-                use_raw_action_wrappers=False,
-                unflatten_images=False,
-            ),
-            action_space_kwargs=dict(
-                collect_primitives_info=True,
-                render_intermediate_obs_to_info=True,
-                control_mode="primitives",
-                action_scale=1,
-                camera_settings={
-                    "distance": 0.38227044687537043,
-                    "lookat": [0.21052547, 0.32329237, 0.587819],
-                    "azimuth": 141.328125,
-                    "elevation": -53.203125160653144,
-                },
-            ),
-        ),
-        actor_kwargs=dict(
-            discrete_continuous_dist=True,
-            init_std=0.0,
-            num_layers=4,
-            min_std=0.1,
-            dist="tanh_normal_dreamer_v1",
-        ),
-        vf_kwargs=dict(
-            num_layers=3,
-        ),
-        model_kwargs=dict(
-            model_hidden_size=400,
-            stochastic_state_size=50,
-            deterministic_state_size=200,
-            rssm_hidden_size=200,
-            reward_num_layers=2,
-            pred_discount_num_layers=3,
-            gru_layer_norm=True,
-            std_act="sigmoid2",
-            depth=32,
-            use_prior_instead_of_posterior=True,
-        ),
-        trainer_kwargs=dict(
-            adam_eps=1e-5,
-            discount=0.8,
-            lam=0.95,
-            forward_kl=False,
-            free_nats=1.0,
-            pred_discount_loss_scale=10.0,
-            kl_loss_scale=0.0,
-            transition_loss_scale=0.8,
-            actor_lr=8e-5,
-            vf_lr=8e-5,
-            world_model_lr=3e-4,
-            reward_loss_scale=2.0,
-            use_pred_discount=True,
-            policy_gradient_loss_scale=1.0,
-            actor_entropy_loss_schedule="1e-4",
-            target_update_period=100,
-            detach_rewards=False,
-            imagination_horizon=5,
-        ),
-        replay_buffer_kwargs=dict(
-            prioritize_fraction=0.0,
-            uniform_priorities=True,
-            replace=False,
-        ),
-        primitive_model_kwargs=dict(
-            hidden_sizes=[512, 512],
-            apply_embedding=False,
-        ),
-        num_expl_envs=5,
-        num_eval_envs=1,
-        expl_amount=0.3,
-        save_video=True,
-        low_level_action_dim=9,
-        num_low_level_actions_per_primitive=5,
-        effective_batch_size=400,
-        pass_render_kwargs=True,
-        max_path_length=5,
-    )
+    variant = json.load(open(osp.join(path, "variant.json"), "r"))
+    set_seed(variant["seed"])
     variant = preprocess_variant_llraps(variant)
     env_suite = variant.get("env_suite", "kitchen")
     env_kwargs = variant["env_kwargs"]
@@ -215,6 +117,13 @@ def run_trained_policy(path):
 
 
 def test_disassemble_trained_policy_success():
-    path = "/home/mdalal/research/skill_learn/rlkit/data/01-25-ll-raps-mw-raps-params-sweep-1/01-25-ll_raps_mw_raps_params_sweep_1_2022_01_25_15_28_37_0000--s-35924"
+    # path = "/home/mdalal/research/skill_learn/rlkit/data/02-05-ll-raps-mw-refactor-replicate/02-05-ll_raps_mw_refactor_replicate_2022_02_05_00_17_28_0000--s-93433"
+    import os
+
+    directory = os.getcwd()
+    path = os.path.join(
+        directory,
+        "tests/ll_raps/02-05-ll_raps_mw_refactor_replicate_2022_02_05_00_17_28_0000--s-93433",
+    )
     final_reward = run_trained_policy(path)
     assert final_reward == 1.0
