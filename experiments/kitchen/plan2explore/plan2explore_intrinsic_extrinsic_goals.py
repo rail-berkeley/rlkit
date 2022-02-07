@@ -1,4 +1,3 @@
-import argparse
 import random
 import subprocess
 
@@ -7,7 +6,7 @@ from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant,
 )
-from rlkit.torch.model_based.plan2explore.experiments.kitchen_plan2explore import (
+from rlkit.torch.model_based.plan2explore.experiments.raps_plan2explore_experiment import (
     experiment,
 )
 

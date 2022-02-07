@@ -32,7 +32,7 @@ class OneStepEnsembleModel(jit.ScriptModule):
         self.targets = targets
         self.input_size = self.size[inputs]
         self.output_size = self.size[targets]
-        for i in range(num_models):
+        for _ in range(num_models):
             self.ensemble.append(
                 Mlp(
                     hidden_sizes=[hidden_size] * num_layers,

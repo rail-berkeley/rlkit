@@ -1,68 +1,13 @@
-def preprocess_variant(variant, debug):
-    if (
-        "proprioception" in variant["env_kwargs"]
-        and variant["env_kwargs"]["proprioception"]
-    ):
-        variant["model_kwargs"]["state_output_size"] = 16
-
-    if variant.get("use_image_goals", False):
-        d = dict(
-            slide_cabinet="/home/mdalal/research/hrl-exp/goals/slide_cabinet_goals.npy",
-            hinge_cabinet="/home/mdalal/research/hrl-exp/goals/hinge_cabinet_goals.npy",
-            microwave="/home/mdalal/research/hrl-exp/goals/microwave_goals.npy",
-            top_left_burner="/home/mdalal/research/hrl-exp/goals/top_left_burner_goals.npy",
-            kettle="/home/mdalal/research/hrl-exp/goals/kettle_goals.npy",
-            light_switch="/home/mdalal/research/hrl-exp/goals/light_switch_goals.npy",
-        )
-        variant["trainer_kwargs"]["image_goals_path"] = d[variant["env_class"]]
-    if variant.get("use_mcts_policy", False):
-        # randomly_sample_discrete_actions = variant["randomly_sample_discrete_actions"]
-
-        # variant["expl_policy_kwargs"][
-        #     "randomly_sample_discrete_actions"
-        # ] = randomly_sample_discrete_actions
-
-        variant["expl_policy_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"].copy()
-        variant["eval_policy_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"].copy()
-
-        variant["expl_policy_kwargs"]["mcts_kwargs"]["evaluation"] = False
-        variant["eval_policy_kwargs"]["mcts_kwargs"]["evaluation"] = True
-        if variant["mcts_algorithm"]:
-            # variant["trainer_kwargs"]["randomly_sample_discrete_actions"] = variant[
-            # "randomly_sample_discrete_actions"
-            # ]
-            variant["trainer_kwargs"]["mcts_kwargs"] = variant["mcts_kwargs"]
-            variant["trainer_kwargs"]["mcts_kwargs"]["evaluation"] = False
-
-    if variant["algorithm"] == "Plan2Explore" and variant["reward_type"] == "intrinsic":
+def preprocess_variant_p2exp(variant):
+    variant = variant.copy()
+    if variant["reward_type"] == "intrinsic":
         variant["algorithm"] = variant["algorithm"] + "Intrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 0.0
-
         variant["trainer_kwargs"]["evaluation_intrinsic_reward_scale"] = 0.0
         variant["trainer_kwargs"]["evaluation_extrinsic_reward_scale"] = 1.0
-
         variant["trainer_kwargs"]["detach_rewards"] = True
-
-        if variant.get("use_mcts_policy", False):
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 0.0
-
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
-
-            if variant["mcts_algorithm"]:
-                variant["trainer_kwargs"][
-                    "exploration_actor_intrinsic_reward_scale"
-                ] = 1.0
-                variant["trainer_kwargs"][
-                    "exploration_actor_extrinsic_reward_scale"
-                ] = 0.0
-                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
-    elif (
-        variant["algorithm"] == "Plan2Explore"
-        and variant["reward_type"] == "intrinsic+extrinsic"
-    ):
+    elif variant["reward_type"] == "intrinsic+extrinsic":
         variant["algorithm"] = variant["algorithm"] + "IntrinsicExtrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 1.0
@@ -70,42 +15,93 @@ def preprocess_variant(variant, debug):
         variant["trainer_kwargs"]["evaluation_intrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["evaluation_extrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["detach_rewards"] = False
-
-        if variant.get("use_mcts_policy", False):
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
-            if variant["mcts_algorithm"]:
-                variant["trainer_kwargs"][
-                    "exploration_actor_intrinsic_reward_scale"
-                ] = 1.0
-                variant["trainer_kwargs"][
-                    "exploration_actor_extrinsic_reward_scale"
-                ] = 1.0
-                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 1.0
-    elif (
-        variant["algorithm"] == "Plan2Explore" and variant["reward_type"] == "extrinsic"
-    ):
+    elif variant["reward_type"] == "extrinsic":
         variant["algorithm"] = variant["algorithm"] + "Extrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 0.0
         variant["trainer_kwargs"]["exploration_extrinsic_reward_scale"] = 1.0
-
         variant["trainer_kwargs"]["evaluation_intrinsic_reward_scale"] = 0.0
         variant["trainer_kwargs"]["evaluation_extrinsic_reward_scale"] = 1.0
         variant["trainer_kwargs"]["detach_rewards"] = False
-
-        if variant.get("use_mcts_policy", False):
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["expl_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["intrinsic_reward_scale"] = 0.0
-            variant["eval_policy_kwargs"]["mcts_kwargs"]["extrinsic_reward_scale"] = 1.0
-            if variant["mcts_algorithm"]:
-                variant["trainer_kwargs"][
-                    "exploration_actor_intrinsic_reward_scale"
-                ] = 0.0
-                variant["trainer_kwargs"][
-                    "exploration_actor_extrinsic_reward_scale"
-                ] = 1.0
-                variant["trainer_kwargs"]["actor_intrinsic_reward_scale"] = 0.0
     return variant
+
+
+def preprocess_variant_raps(variant):
+    variant = variant.copy()
+    variant["algorithm_kwargs"]["max_path_length"] = variant["max_path_length"]
+    variant["replay_buffer_kwargs"]["max_path_length"] = variant["max_path_length"]
+
+    variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = variant[
+        "max_path_length"
+    ]
+    return variant
+
+
+def preprocess_variant_llraps(variant):
+    variant = variant.copy()
+    variant["trainer_kwargs"]["batch_length"] = int(
+        variant["num_low_level_actions_per_primitive"] * variant["max_path_length"] + 1
+    )
+    variant["trainer_kwargs"]["effective_batch_size_iterations"] = (
+        variant["effective_batch_size"] // variant["algorithm_kwargs"]["batch_size"]
+    )
+    variant["trainer_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+        "num_low_level_actions_per_primitive"
+    ]
+
+    variant["replay_buffer_kwargs"]["max_replay_buffer_size"] = int(
+        3e6
+        / (
+            variant["num_low_level_actions_per_primitive"] * variant["max_path_length"]
+            + 1
+        )
+    )
+    variant["replay_buffer_kwargs"]["num_low_level_actions_per_primitive"] = variant[
+        "num_low_level_actions_per_primitive"
+    ]
+    variant["replay_buffer_kwargs"]["low_level_action_dim"] = variant[
+        "low_level_action_dim"
+    ]
+
+    variant["env_kwargs"]["action_space_kwargs"][
+        "num_low_level_actions_per_primitive"
+    ] = variant["num_low_level_actions_per_primitive"]
+
+    variant = preprocess_variant_raps(variant)
+
+    return variant
+
+
+def setup_sweep_and_launch_exp(preprocess_variant_fn, variant, experiment_fn, args):
+    import random
+    import subprocess
+
+    import rlkit.util.hyperparameter as hyp
+    from rlkit.launchers.launcher_util import run_experiment
+
+    search_space = {
+        key: value for key, value in zip(args.search_keys, args.search_values)
+    }
+    sweeper = hyp.DeterministicHyperparameterSweeper(
+        search_space,
+        default_parameters=variant,
+    )
+    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant = preprocess_variant_fn(variant)
+        for _ in range(args.num_seeds):
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
+            python_cmd = subprocess.check_output("which python", shell=True).decode(
+                "utf-8"
+            )[:-1]
+            run_experiment(
+                experiment_fn,
+                exp_prefix=args.exp_prefix,
+                mode=args.mode,
+                variant=variant,
+                use_gpu=args.use_gpu,
+                snapshot_mode="none",
+                python_cmd=python_cmd,
+                seed=seed,
+                exp_id=exp_id,
+            )

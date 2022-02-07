@@ -88,7 +88,6 @@ if __name__ == "__main__":
             max_path_length=5,
             unflatten_images=False,
         ),
-        image_kwargs=dict(imwidth=64, imheight=64),
     )
     env_names = [
         "assembly-v2",

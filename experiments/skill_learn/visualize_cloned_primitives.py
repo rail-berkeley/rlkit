@@ -7,7 +7,7 @@ import torch
 from arguments import get_args
 
 from rlkit.envs.primitives_make_env import make_env
-from rlkit.torch.model_based.dreamer.experiments.kitchen_dreamer import load_primitives
+from rlkit.torch.model_based.dreamer.experiments.raps_experiment import load_primitives
 
 matplotlib.use("Agg")
 from matplotlib import pyplot as plt

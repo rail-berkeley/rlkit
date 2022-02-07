@@ -1,4 +1,4 @@
-from collections import OrderedDict, namedtuple
+from collections import namedtuple
 
 from rlkit.torch.model_based.dreamer.dreamer_v2 import DreamerV2Trainer
 

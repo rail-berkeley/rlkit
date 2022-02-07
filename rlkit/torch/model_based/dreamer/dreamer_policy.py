@@ -1,18 +1,11 @@
-from typing import Dict
-
 import numpy as np
 import torch
-import torch.nn.functional as F
-from torch import jit
-from torch.distributions import Normal
 
 import rlkit.torch.pytorch_util as ptu
 from rlkit.policies.base import Policy
 
 
 class DreamerPolicy(Policy):
-    """"""
-
     def __init__(
         self,
         world_model,
@@ -36,34 +29,33 @@ class DreamerPolicy(Policy):
         self.continuous_action_dim = continuous_action_dim
 
     @torch.no_grad()
+    @torch.cuda.amp.autocast()
     def get_action(
         self,
         observation,
         use_raps_obs=False,
         use_true_actions=True,
-        use_any_obs=True,
+        use_obs=True,
     ):
         """
-
         :param observation:
         :return: action, debug_dictionary
         """
-        with torch.cuda.amp.autocast():
-            observation = ptu.from_numpy(np.array(observation))
-            if self.state:
-                prev_state, action = self.state
-            else:
-                prev_state = self.world_model.initial(observation.shape[0])
-                action = ptu.zeros((observation.shape[0], self.action_dim))
-            embed = self.world_model.encode(observation)
-            new_state, _ = self.world_model.obs_step(prev_state, action, embed)
-            feat = self.world_model.get_features(new_state)
-            dist = self.actor(feat)
-            action = dist.mode()
-            if self.exploration:
-                action = self.actor.compute_exploration_action(action, self.expl_amount)
-            self.state = (new_state, action)
-            return ptu.get_numpy(action), {"state": new_state}
+        observation = ptu.from_numpy(np.array(observation))
+        if self.state:
+            prev_state, action = self.state
+        else:
+            prev_state = self.world_model.initial(observation.shape[0])
+            action = ptu.zeros((observation.shape[0], self.action_dim))
+        embed = self.world_model.encode(observation)
+        new_state, _ = self.world_model.obs_step(prev_state, action, embed)
+        feat = self.world_model.get_features(new_state)
+        dist = self.actor(feat)
+        action = dist.mode()
+        if self.exploration:
+            action = self.actor.compute_exploration_action(action, self.expl_amount)
+        self.state = (new_state, action)
+        return ptu.get_numpy(action), {"state": new_state}
 
     def reset(self, o):
         self.state = None
@@ -78,55 +70,60 @@ class DreamerLowLevelRAPSPolicy(DreamerPolicy):
         self.low_level_action_dim = low_level_action_dim
 
     @torch.no_grad()
+    @torch.cuda.amp.autocast()
     def get_action(
         self,
         observation,
         use_raps_obs=False,
         use_true_actions=True,
-        use_any_obs=True,
+        use_obs=True,
     ):
         """
-
         :param observation:
         :return: action, debug_dictionary
         """
-        ll_a, ll_o = observation
-        with torch.cuda.amp.autocast():
-            observation = ptu.from_numpy(ll_o)
-            if self.state:
-                ll_a = ptu.from_numpy(ll_a)
-                assert observation.shape[1] == self.num_low_level_actions_per_primitive
-                assert ll_a.shape[1] == self.num_low_level_actions_per_primitive
-                new_state, ll_a_pred = self.world_model.forward_high_level_step(
-                    self.state[0],
-                    observation,
-                    ll_a,
-                    self.num_low_level_actions_per_primitive,
-                    self.state[1],
-                    use_raps_obs,
-                    use_true_actions,
-                    use_any_obs,
-                )
-                ll_a_pred = torch.cat(ll_a_pred, axis=0)
-            else:
-                prev_state = self.world_model.initial(observation.shape[0])
-                embed = self.world_model.encode(observation)
-                new_state, _ = self.world_model.obs_step(
-                    prev_state,
-                    ptu.zeros((observation.shape[0], self.low_level_action_dim)),
-                    embed,
-                )
-                ll_a_pred = ptu.zeros((observation.shape[0], self.low_level_action_dim))
-            feat = self.world_model.get_features(new_state)
-            dist = self.actor(feat)
-            action = dist.mode()
-            if self.exploration:
-                action = self.actor.compute_exploration_action(action, self.expl_amount)
-            self.state = (new_state, action)
-            return ptu.get_numpy(action), {
-                "state": new_state,
-                "ll_a_pred": ptu.get_numpy(ll_a_pred),
-            }
+        low_level_action, low_level_obs = observation
+        observation = ptu.from_numpy(low_level_obs)
+        if self.state:
+            low_level_action = ptu.from_numpy(low_level_action)
+            assert (
+                observation.shape[1] == self.num_low_level_actions_per_primitive
+            ), f"{observation.shape}, {self.num_low_level_actions_per_primitive}"
+            assert (
+                low_level_action.shape[1] == self.num_low_level_actions_per_primitive
+            ), f"{low_level_action.shape}, {self.num_low_level_actions_per_primitive}"
+            new_state, low_level_action_pred = self.world_model.forward_high_level_step(
+                self.state[0],
+                observation,
+                low_level_action,
+                self.num_low_level_actions_per_primitive,
+                self.state[1],
+                use_raps_obs,
+                use_true_actions,
+                use_obs,
+            )
+            low_level_action_pred = torch.cat(low_level_action_pred, axis=0)
+        else:
+            prev_state = self.world_model.initial(observation.shape[0])
+            embed = self.world_model.encode(observation)
+            new_state, _ = self.world_model.obs_step(
+                prev_state,
+                ptu.zeros((observation.shape[0], self.low_level_action_dim)),
+                embed,
+            )
+            low_level_action_pred = ptu.zeros(
+                (observation.shape[0], self.low_level_action_dim)
+            )
+        feat = self.world_model.get_features(new_state)
+        dist = self.actor(feat)
+        action = dist.mode()
+        if self.exploration:
+            action = self.actor.compute_exploration_action(action, self.expl_amount)
+        self.state = (new_state, action)
+        return ptu.get_numpy(action), {
+            "state": new_state,
+            "low_level_action_pred": ptu.get_numpy(low_level_action_pred),
+        }
 
 
 class ActionSpaceSamplePolicy(Policy):

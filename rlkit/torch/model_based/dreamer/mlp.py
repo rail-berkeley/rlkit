@@ -54,8 +54,8 @@ class Mlp(jit.ScriptModule):
         self.embedding = nn.Embedding(num_embeddings, embedding_dim)
 
     @jit.script_method
-    def forward(self, input):
-        h = input
+    def forward(self, input_):
+        h = input_
         if self.apply_embedding:
             embed_h = h[:, : self.embedding_slice]
             embedding = self.embedding(embed_h.argmax(dim=1))
@@ -68,8 +68,8 @@ class Mlp(jit.ScriptModule):
 
 class MlpResidual(Mlp):
     @jit.script_method
-    def forward(self, input):
-        h = input
+    def forward(self, input_):
+        h = input_
         h_prev = h
         for i, fc in enumerate(self.fcs):
             h = fc(h)

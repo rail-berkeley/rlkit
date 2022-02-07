@@ -13,9 +13,9 @@ from torch.nn import init
 from torch.nn.parameter import Parameter
 
 import rlkit.torch.pytorch_util as ptu
-from rlkit.torch.model_based.dreamer.actor_models import OneHotDist
 from rlkit.torch.model_based.dreamer.conv_networks import CNN, DCNN
 from rlkit.torch.model_based.dreamer.mlp import Mlp
+from rlkit.torch.model_based.dreamer.utils import get_indexed_arr_from_batch_indices
 
 
 class WorldModel(jit.ScriptModule):
@@ -23,20 +23,17 @@ class WorldModel(jit.ScriptModule):
         self,
         action_dim,
         image_shape,
-        stochastic_state_size=60,
-        deterministic_state_size=400,
-        embedding_size=1024,
-        rssm_hidden_size=400,
+        stochastic_state_size=32,
+        deterministic_state_size=200,
+        rssm_hidden_size=200,
         model_hidden_size=400,
         model_act=nn.ELU,
-        depth=32,
+        depth=48,
         conv_act=nn.ReLU,
         reward_num_layers=2,
         pred_discount_num_layers=3,
-        gru_layer_norm=False,
-        discrete_latents=False,
-        discrete_latent_size=32,
-        std_act="softplus",
+        gru_layer_norm=True,
+        std_act="sigmoid2",
         use_prior_instead_of_posterior=False,
         reward_classifier=False,
     ):
@@ -46,18 +43,10 @@ class WorldModel(jit.ScriptModule):
         self.image_shape = image_shape
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
-        self.discrete_latents = discrete_latents
-        self.discrete_latent_size = discrete_latent_size
         self.depth = depth
         self.conv_act = conv_act
-        if discrete_latents:
-            img_and_obs_step_mlp_output_size = (
-                stochastic_state_size * discrete_latent_size
-            )
-            full_stochastic_state_size = img_and_obs_step_mlp_output_size
-        else:
-            img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
-            full_stochastic_state_size = stochastic_state_size
+        img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
+        full_stochastic_state_size = stochastic_state_size
         self.feature_size = deterministic_state_size + full_stochastic_state_size
         embedding_size = depth * 32
 
@@ -135,70 +124,77 @@ class WorldModel(jit.ScriptModule):
         self.model_act = model_act(inplace=True)
 
     @jit.script_method
-    def compute_std(self, std):
+    def transform_std(self, std):
+        """
+        Transform the world model standard deviation using an activation.
+        """
         if self.std_act == "softplus":
             std = F.softplus(std)
         elif self.std_act == "sigmoid2":
             std = 2 * torch.sigmoid(std / 2)
         return std + 0.1
 
-    @jit.ignore
-    def get_discrete_stochastic_state(self, logits):
-        stoch = self.get_dist(logits, logits, latent=True).rsample()
-        return stoch
-
     @jit.script_method
     def obs_step(
         self, prev_state: Dict[str, Tensor], prev_action: Tensor, embed: Tensor
     ):
+        """
+        Forward model dynamics (prior) then update using observation (posterior).
+
+        :param prev_state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        :param prev_action: (batch_size, action_dim)
+        :param embed: (batch_size, embedding_size)
+
+        :return: List[Dict]
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        """
         prior = self.action_step(prev_state, prev_action)
         x = torch.cat([prior["deter"], embed], -1)
         x = self.obs_step_mlp(x)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_discrete_stochastic_state(logits)
-            post = {"logits": logits, "stoch": stoch, "deter": prior["deter"]}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = self.compute_std(std)
-            stoch = (
-                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
-                + mean
-            )
-            post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = self.transform_std(std)
+        stoch = (
+            torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std + mean
+        )
+        post = {"mean": mean, "std": std, "stoch": stoch, "deter": prior["deter"]}
         return post, prior
 
     @jit.script_method
     def action_step(self, prev_state: Dict[str, Tensor], prev_action: Tensor):
-        prev_stoch = prev_state["stoch"]
-        if self.discrete_latents:
-            shape = list(prev_stoch.shape[:-2]) + [
-                self.stochastic_state_size * self.discrete_latent_size
-            ]
-            prev_stoch = prev_stoch.reshape(shape)
+        """
+        Forward model dynamics (compute prior).
 
+        :param prev_state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        :param prev_action: (batch_size, action_dim)
+
+        :return: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        """
+        prev_stoch = prev_state["stoch"]
         x = torch.cat([prev_stoch, prev_action], -1)
         x = self.model_act(self.action_step_feature_extractor(x))
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.action_step_mlp(deter_new)
-        if self.discrete_latents:
-            logits = x.reshape(
-                list(x.shape[:-1])
-                + [self.stochastic_state_size, self.discrete_latent_size]
-            )
-            stoch = self.get_discrete_stochastic_state(logits)
-            prior = {"logits": logits, "stoch": stoch, "deter": deter_new}
-        else:
-            mean, std = x.split(self.stochastic_state_size, -1)
-            std = self.compute_std(std)
-            stoch = (
-                torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std
-                + mean
-            )
-            prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
+        mean, std = x.split(self.stochastic_state_size, -1)
+        std = self.transform_std(std)
+        stoch = (
+            torch.randn(mean.shape, device=ptu.device, dtype=mean.dtype) * std + mean
+        )
+        prior = {"mean": mean, "std": std, "stoch": stoch, "deter": deter_new}
         return prior
 
     @jit.script_method
@@ -211,38 +207,86 @@ class WorldModel(jit.ScriptModule):
         prior: Dict[str, List[Tensor]],
         state: Dict[str, Tensor],
     ):
-        for i in range(path_length):
+        """
+        Forward world model on batch of data using observation steps.
+
+        :param path_length: int
+        :param action: (batch_size, path_length, action_dim)
+        :param embed: (batch_size, path_length, embedding_size)
+        :param post: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :param prior: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :param state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+
+        :return: List[Dict]
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        """
+        for step in range(path_length):
             (post_params, prior_params,) = self.obs_step(
                 state,
-                action[:, i],
-                embed[:, i],
+                action[:, step],
+                embed[:, step],
             )
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+            for key in post.keys():
+                post[key].append(post_params[key].unsqueeze(1))
 
-            for k in prior.keys():
-                prior[k].append(prior_params[k].unsqueeze(1))
+            for key in prior.keys():
+                prior[key].append(prior_params[key].unsqueeze(1))
             state = post_params
         return post, prior
 
     def forward(self, obs, action):
         """
-        :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
-        :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
+        Forward world model on trajectory.
+
+        :param obs: (batch_size, path_length, obs_dim)
+        :param action: (batch_size, path_length, action_dim)
+
+        :return post: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :return prior:
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :return post_dist:
+            mean: (batch_size*(path_length), stoch_size)
+            std: (batch_size*(path_length), stoch_size)
+        :return prior_dist:
+            mean: (batch_size*(path_length), stoch_size)
+            std: (batch_size*(path_length), stoch_size)
+        :return image_dist:
+            mean: (batch_size*(path_length), obs_dim)
+        :return reward_dist:
+            mean: (batch_size*(raps_path_length), 1)
+        :return pred_discount_dist
+            logits: (batch_size*(raps_path_length), 1)
+        :return embed: (batch_size, path_length, embed_dim)
         """
         original_batch_size = obs.shape[0]
         state = self.initial(original_batch_size)
         path_length = obs.shape[1]
-        if self.discrete_latents:
-            post, prior = (
-                dict(logits=[], stoch=[], deter=[]),
-                dict(logits=[], stoch=[], deter=[]),
-            )
-        else:
-            post, prior = (
-                dict(mean=[], std=[], stoch=[], deter=[]),
-                dict(mean=[], std=[], stoch=[], deter=[]),
-            )
+        post, prior = (
+            dict(mean=[], std=[], stoch=[], deter=[]),
+            dict(mean=[], std=[], stoch=[], deter=[]),
+        )
         obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
@@ -256,15 +300,15 @@ class WorldModel(jit.ScriptModule):
             state,
         )
 
-        for k in post.keys():
-            post[k] = torch.cat(post[k], dim=1)
+        for key in post.keys():
+            post[key] = torch.cat(post[key], dim=1)
 
-        for k in prior.keys():
-            prior[k] = torch.cat(prior[k], dim=1)
+        for key in prior.keys():
+            prior[key] = torch.cat(prior[key], dim=1)
 
         if self.use_prior_instead_of_posterior:
-            # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
-            # only works when first state is reset obs and never changes
+            # In this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action.
+            # This only works when first state is reset obs and never changes.
             feat = self.get_features(prior)
         else:
             feat = self.get_features(post)
@@ -272,13 +316,14 @@ class WorldModel(jit.ScriptModule):
         images = self.decode(feat)
         rewards = self.reward(feat)
         pred_discounts = self.pred_discount(feat)
-
-        if self.discrete_latents:
-            post_dist = self.get_dist(post["logits"], None, latent=True)
-            prior_dist = self.get_dist(prior["logits"], None, latent=True)
-        else:
-            post_dist = self.get_dist(post["mean"], post["std"], latent=True)
-            prior_dist = self.get_dist(prior["mean"], prior["std"], latent=True)
+        post_dist = self.get_dist(
+            post["mean"].reshape(-1, post["mean"].shape[-1]),
+            post["std"].reshape(-1, post["std"].shape[-1]),
+        )
+        prior_dist = self.get_dist(
+            prior["mean"].reshape(-1, prior["mean"].shape[-1]),
+            prior["std"].reshape(-1, prior["std"].shape[-1]),
+        )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         reward_dist = self.get_dist(rewards, ptu.ones_like(rewards))
         pred_discount_dist = self.get_dist(pred_discounts, None, normal=False)
@@ -295,37 +340,31 @@ class WorldModel(jit.ScriptModule):
 
     def get_features(self, state: Dict[str, Tensor]):
         stoch = state["stoch"]
-        if self.discrete_latents:
-            shape = list(stoch.shape[:-2]) + [
-                self.stochastic_state_size * self.discrete_latent_size
-            ]
-            stoch = stoch.reshape(shape)
         return torch.cat([state["deter"], stoch], -1)
 
-    def get_dist(self, mean, std, dims=1, normal=True, latent=False):
+    def get_dist(self, mean, std, dims=1, normal=True):
         if normal:
-            if latent and self.discrete_latents:
-                dist = Independent(OneHotDist(logits=mean), dims)
-                return dist
             return Independent(Normal(mean, std), dims)
         else:
             return Independent(Bernoulli(logits=mean), dims)
 
-    def get_detached_dist(self, params, dims=1, normal=True, latent=False):
-        if self.discrete_latents:
-            mean = params["logits"]
-            std = params["logits"]
-        else:
-            mean = params["mean"]
-            std = params["std"]
-        return self.get_dist(mean.detach(), std.detach(), dims, normal, latent)
+    def get_detached_dist(self, params, dims=1, normal=True):
+        mean = params["mean"]
+        std = params["std"]
+        return self.get_dist(mean.detach(), std.detach(), dims, normal)
 
     @jit.script_method
     def encode(self, obs):
+        assert (
+            len(obs.shape) == 2
+        ), f"Input to encoder should only have two dimensions. Got {obs.shape}"
         return self.conv_encoder(self.preprocess(obs))
 
     @jit.script_method
     def decode(self, feat):
+        assert (
+            len(feat.shape) == 2
+        ), f"Input to decoder should only have two dimensions. Got {feat.shape}"
         return self.conv_decoder(feat)
 
     @jit.script_method
@@ -334,23 +373,21 @@ class WorldModel(jit.ScriptModule):
         return obs
 
     def initial(self, batch_size):
-        if self.discrete_latents:
-            state = dict(
-                logits=ptu.zeros(
-                    [batch_size, self.stochastic_state_size, self.discrete_latent_size],
-                ),
-                stoch=ptu.zeros(
-                    [batch_size, self.stochastic_state_size, self.discrete_latent_size]
-                ),
-                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
-            )
-        else:
-            state = dict(
-                mean=ptu.zeros([batch_size, self.stochastic_state_size]),
-                std=ptu.zeros([batch_size, self.stochastic_state_size]),
-                stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
-                deter=ptu.zeros([batch_size, self.deterministic_state_size]),
-            )
+        """
+        :param batch_size: int
+
+        :return state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+            stoch: (batch_size, stoch_size)
+        """
+        state = dict(
+            mean=ptu.zeros([batch_size, self.stochastic_state_size]),
+            std=ptu.zeros([batch_size, self.stochastic_state_size]),
+            stoch=ptu.zeros([batch_size, self.stochastic_state_size]),
+            deter=ptu.zeros([batch_size, self.deterministic_state_size]),
+        )
         return state
 
 
@@ -371,85 +408,72 @@ class LowlevelRAPSWorldModel(WorldModel):
         idxs: List[int],
         use_network_action: bool = False,
     ):
-        actions = []
-        for i in range(path_length):
-            if i == 0:
-                action_ = action[1][:, 0] * 0
-            else:
-                inp = torch.cat(
-                    [action[0][:, i], self.get_features(state).detach()], dim=1
-                )
-                action_ = self.primitive_model(inp)
-                actions.append(action_.unsqueeze(1))
-                if use_network_action:
-                    action_ = action_
-                else:
-                    action_ = action[1][:, i]
-            (post_params, prior_params,) = self.obs_step(
-                state,
-                action_.detach(),
-                embed[:, i],
-            )
+        """
+        Forward world model on batch of data using observation/action steps.
 
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+        :param path_length: int
+        :param action: (batch_size, path_length, action_dim)
+        :param embed: (batch_size, path_length, embedding_size)
+        :param post: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :param prior: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :param state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        :param idxs: List[int] defines which steps for which to use obs.
+        :param use_network_action: bool defines whether to use network action or not.
 
-            for k in prior.keys():
-                if i == 0:
-                    # auto encode first action!
-                    prior[k].append(post_params[k].unsqueeze(1))
-                else:
-                    prior[k].append(prior_params[k].unsqueeze(1))
-            state = post_params
-        return post, prior, torch.cat(actions, dim=1)
-
-    @jit.script_method
-    def forward_batch_raps_intermediate_obs(
-        self,
-        path_length: int,
-        action: Tuple[Tensor, Tensor],
-        embed: Tensor,
-        post: Dict[str, List[Tensor]],
-        prior: Dict[str, List[Tensor]],
-        state: Dict[str, Tensor],
-        idxs: List[int],
-        use_network_action: bool = False,
-    ):
+        :return: List[Dict]
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        """
         actions = []
         ctr = 0
-        for i in range(path_length):
-            if i == 0:
-                action_ = action[1][:, 0] * 0
+        for step in range(path_length):
+            if step == 0:
+                # action corresponding to reset obs should always be 0.
+                action_to_apply = action[1][:, 0] * 0
             else:
                 inp = torch.cat(
-                    [action[0][:, i], self.get_features(state).detach()], dim=1
+                    [action[0][:, step], self.get_features(state).detach()], dim=1
                 )
-                action_ = self.primitive_model(inp)
-                actions.append(action_.unsqueeze(1))
+                action_pred = self.primitive_model(inp)
+                actions.append(action_pred.unsqueeze(1))
                 if use_network_action:
-                    action_ = action_
+                    action_to_apply = action_pred
                 else:
-                    action_ = action[1][:, i]
-            if i not in idxs:
-                prior_params = self.action_step(state, action_.detach())
+                    action_to_apply = action[1][:, step]
+            if step not in idxs:
+                prior_params = self.action_step(state, action_to_apply.detach())
                 post_params = prior_params
             else:
                 (post_params, prior_params,) = self.obs_step(
                     state,
-                    action_.detach(),
+                    action_to_apply.detach(),
                     embed[:, ctr],
                 )
                 ctr += 1
 
-            for k in post.keys():
-                post[k].append(post_params[k].unsqueeze(1))
+            for key in post.keys():
+                post[key].append(post_params[key].unsqueeze(1))
 
-            for k in prior.keys():
-                if i == 0:
-                    # auto encode first action!
-                    prior[k].append(post_params[k].unsqueeze(1))
+            for key in prior.keys():
+                if step == 0:
+                    # Auto encode first action.
+                    prior[key].append(post_params[key].unsqueeze(1))
                 else:
-                    prior[k].append(prior_params[k].unsqueeze(1))
+                    prior[key].append(prior_params[key].unsqueeze(1))
             state = post_params
         return post, prior, torch.cat(actions, dim=1)
 
@@ -460,44 +484,70 @@ class LowlevelRAPSWorldModel(WorldModel):
         use_network_action=False,
         state=None,
         batch_indices=None,
-        rt_idxs=None,
-        forward_batch_method="forward_batch",
+        raps_obs_indices=None,
     ):
         """
-        :param: obs (Bx(Bl)xO) : Batch of (batch len) trajectories of observations (dim O)
-        :param: action (Bx(Bl)xA) : Batch of (batch len) trajectories of actions (dim A)
-        """
+        Forward world model on trajectory.
 
+        :param obs: (batch_size, path_length, obs_dim)
+        :param action: List [(batch_size, path_length, high_level_action_dim), (batch_size, path_length, low_level_action_dim)]
+        :param use_network_action:
+        :param state:
+        :param batch_indices:
+        :param raps_obs_indices:
+
+        :return post: Dict
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :return prior:
+            mean: (batch_size, path_length, stoch_size)
+            std: (batch_size, path_length, stoch_size)
+            stoch: (batch_size, path_length, stoch_size)
+            deter: (batch_size, path_length, deter_size)
+        :return post_dist:
+            mean: (batch_size*(path_length), stoch_size)
+            std: (batch_size*(path_length), stoch_size)
+        :return prior_dist:
+            mean: (batch_size*(path_length), stoch_size)
+            std: (batch_size*(path_length), stoch_size)
+        :return image_dist:
+            mean: (batch_size*(path_length), obs_dim)
+        :return reward_dist:
+            mean: (batch_size*(raps_path_length), 1)
+        :return pred_discount_dist
+            logits: (batch_size*(raps_path_length), 1)
+        :return embed: (batch_size, path_length, embed_dim)
+        :return low_level_action_preds: (batch_size, path_length, low_level_action_dim)
+        """
+        assert (
+            obs.shape[:2] == action[0].shape[:2] == action[1].shape[:2]
+        ), "Obs and action first two dimensions should be the same."
         original_batch_size = action[1].shape[0]
         path_length = action[1].shape[1]
         if state is None:
             state = self.initial(original_batch_size)
-        if self.discrete_latents:
-            post, prior = (
-                dict(logits=[], stoch=[], deter=[]),
-                dict(logits=[], stoch=[], deter=[]),
-            )
-        else:
-            post, prior = (
-                dict(mean=[], std=[], stoch=[], deter=[]),
-                dict(mean=[], std=[], stoch=[], deter=[]),
-            )
+        post, prior = (
+            dict(mean=[], std=[], stoch=[], deter=[]),
+            dict(mean=[], std=[], stoch=[], deter=[]),
+        )
         obs_path_len = obs.shape[1]
         obs = obs.reshape(-1, obs.shape[-1])
         embed = self.encode(obs)
         embedding_size = embed.shape[1]
         embed = embed.reshape(original_batch_size, obs_path_len, embedding_size)
+
         if obs_path_len < path_length:
-            idxs = rt_idxs.tolist()
+            idxs = raps_obs_indices.tolist()
         else:
-            idxs = [
-                -1,
-            ]
-        if forward_batch_method == "forward_batch_raps_intermediate_obs":
-            forward_batch = self.forward_batch_raps_intermediate_obs
-        else:
-            forward_batch = self.forward_batch
-        post, prior, actions = forward_batch(
+            idxs = np.arange(
+                0,
+                path_length,
+                1,
+            ).tolist()
+
+        post, prior, low_level_action_preds = self.forward_batch(
             path_length,
             action,
             embed,
@@ -508,11 +558,11 @@ class LowlevelRAPSWorldModel(WorldModel):
             use_network_action,
         )
 
-        for k in post.keys():
-            post[k] = torch.cat(post[k], dim=1)
+        for key in post.keys():
+            post[key] = torch.cat(post[key], dim=1)
 
-        for k in prior.keys():
-            prior[k] = torch.cat(prior[k], dim=1)
+        for key in prior.keys():
+            prior[key] = torch.cat(prior[key], dim=1)
 
         if self.use_prior_instead_of_posterior:
             # in this case, o_hat_t depends on a_t-1 and o_t-1, reset obs decoded from null state + action
@@ -521,67 +571,46 @@ class LowlevelRAPSWorldModel(WorldModel):
         else:
             feat = self.get_features(post)
 
-        rt_feat = feat[:, rt_idxs]
-        rt_feat = rt_feat.reshape(-1, rt_feat.shape[-1])
+        raps_obs_feat = feat[:, raps_obs_indices]
+        raps_obs_feat = raps_obs_feat.reshape(-1, raps_obs_feat.shape[-1])
 
-        if batch_indices.shape != rt_idxs.shape:
-            batch_size = batch_indices.shape[0]
-            idxs = np.arange(batch_size).reshape(-1, 1)
-            feat = feat[idxs, batch_indices]
-            feat = feat.reshape(-1, feat.shape[-1])
+        if batch_indices.shape != raps_obs_indices.shape:
+            feat = get_indexed_arr_from_batch_indices(feat, batch_indices).reshape(
+                -1, feat.shape[-1]
+            )
         else:
             feat = feat[:, batch_indices]
 
         images = self.decode(feat)
-        rewards = self.reward(rt_feat)
-        pred_discounts = self.pred_discount(rt_feat)
+        rewards = self.reward(raps_obs_feat)
+        pred_discounts = self.pred_discount(raps_obs_feat)
 
-        if self.discrete_latents:
+        if batch_indices.shape != raps_obs_indices.shape:
             post_dist = self.get_dist(
-                post["logits"][idxs, batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
+                get_indexed_arr_from_batch_indices(post["mean"], batch_indices).reshape(
+                    -1, post["mean"].shape[-1]
                 ),
-                None,
-                latent=True,
+                get_indexed_arr_from_batch_indices(post["std"], batch_indices).reshape(
+                    -1, post["std"].shape[-1]
+                ),
             )
             prior_dist = self.get_dist(
-                prior["logits"][idxs, batch_indices].reshape(
-                    -1, post["logits"].shape[-1]
+                get_indexed_arr_from_batch_indices(
+                    prior["mean"], batch_indices
+                ).reshape(-1, prior["mean"].shape[-1]),
+                get_indexed_arr_from_batch_indices(prior["std"], batch_indices).reshape(
+                    -1, prior["std"].shape[-1]
                 ),
-                None,
-                latent=True,
             )
         else:
-            if batch_indices.shape != rt_idxs.shape:
-                post_dist = self.get_dist(
-                    post["mean"][idxs, batch_indices].reshape(
-                        -1, post["mean"].shape[-1]
-                    ),
-                    post["std"][idxs, batch_indices].reshape(-1, post["std"].shape[-1]),
-                    latent=True,
-                )
-                prior_dist = self.get_dist(
-                    prior["mean"][idxs, batch_indices].reshape(
-                        -1, prior["mean"].shape[-1]
-                    ),
-                    prior["std"][idxs, batch_indices].reshape(
-                        -1, prior["std"].shape[-1]
-                    ),
-                    latent=True,
-                )
-            else:
-                post_dist = self.get_dist(
-                    post["mean"][:, batch_indices].reshape(-1, post["mean"].shape[-1]),
-                    post["std"][:, batch_indices].reshape(-1, post["std"].shape[-1]),
-                    latent=True,
-                )
-                prior_dist = self.get_dist(
-                    prior["mean"][:, batch_indices].reshape(
-                        -1, prior["mean"].shape[-1]
-                    ),
-                    prior["std"][:, batch_indices].reshape(-1, prior["std"].shape[-1]),
-                    latent=True,
-                )
+            post_dist = self.get_dist(
+                post["mean"][:, batch_indices].reshape(-1, post["mean"].shape[-1]),
+                post["std"][:, batch_indices].reshape(-1, post["std"].shape[-1]),
+            )
+            prior_dist = self.get_dist(
+                prior["mean"][:, batch_indices].reshape(-1, prior["mean"].shape[-1]),
+                prior["std"][:, batch_indices].reshape(-1, prior["std"].shape[-1]),
+            )
         image_dist = self.get_dist(images, ptu.ones_like(images), dims=3)
         if self.reward_classifier:
             reward_dist = self.get_dist(rewards, None, normal=False)
@@ -597,27 +626,43 @@ class LowlevelRAPSWorldModel(WorldModel):
             reward_dist,
             pred_discount_dist,
             embed,
-            actions,
+            low_level_action_preds,
         )
 
     @jit.script_method
     def forward_high_level_step(
         self,
-        new_state: Dict[str, torch.Tensor],
+        state: Dict[str, torch.Tensor],
         observation: torch.Tensor,
-        ll_a: torch.Tensor,
+        low_level_action: torch.Tensor,
         num_low_level_actions_per_primitive: int,
         high_level_action: torch.Tensor,
         use_raps_obs: bool = False,
         use_true_actions: bool = True,
-        use_any_obs: bool = True,
+        use_obs: bool = True,
     ):
-        ll_a_pred = []
-        for k in range(0, num_low_level_actions_per_primitive):
-            embed = self.encode(observation[:, k])
+        """
+        Forward world model over one high level action.
+
+        :param state: Dict
+            mean: (batch_size, stoch_size)
+            std: (batch_size, stoch_size)
+            stoch: (batch_size, stoch_size)
+            deter: (batch_size, deter_size)
+        :param observation: (batch_size, obs_dim)
+        :param low_level_action: (batch_size, low_level_action_dim)
+        :param num_low_level_actions_per_primitive: int defines subsampling rate for LL_RAPS
+        :param high_level_action: (batch_size, high_level_action_dim)
+        :param use_raps_obs:
+        :param use_true_actions: if true, use environment low level actions, otherwise use primitive model predictions
+        :param use_obs: if true, take obs_steps, otherwise take action_steps
+        """
+        low_level_action_preds = []
+        new_state = state
+        for idx in range(0, num_low_level_actions_per_primitive):
             phase = (
                 torch.ones((high_level_action.shape[0], 1), device=ptu.device)
-                * (k + 1)
+                * (idx + 1)
                 / num_low_level_actions_per_primitive
             )
             hl = torch.cat((high_level_action, phase), 1)
@@ -625,54 +670,44 @@ class LowlevelRAPSWorldModel(WorldModel):
                 [hl, self.get_features(new_state)],
                 dim=1,
             )
-            a = self.primitive_model(inp)
-            if use_any_obs:
+            low_level_action_pred = self.primitive_model(inp)
+            if use_obs:
+                embed = self.encode(observation[:, idx])
                 if use_raps_obs:
-                    if k == num_low_level_actions_per_primitive - 1:
+                    if idx == num_low_level_actions_per_primitive - 1:
                         if use_true_actions:
-                            new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                            new_state, _ = self.obs_step(
+                                new_state, low_level_action[:, idx], embed
+                            )
                         else:
-                            new_state, _ = self.obs_step(new_state, a, embed)
+                            new_state, _ = self.obs_step(
+                                new_state, low_level_action_pred, embed
+                            )
                     else:
                         if use_true_actions:
-                            new_state = self.action_step(new_state, ll_a[:, k])
+                            new_state = self.action_step(
+                                new_state, low_level_action[:, idx]
+                            )
                         else:
-                            new_state = self.action_step(new_state, a)
+                            new_state = self.action_step(
+                                new_state, low_level_action_pred
+                            )
                 else:
                     if use_true_actions:
-                        new_state, _ = self.obs_step(new_state, ll_a[:, k], embed)
+                        new_state, _ = self.obs_step(
+                            new_state, low_level_action[:, idx], embed
+                        )
                     else:
-                        new_state, _ = self.obs_step(new_state, a, embed)
+                        new_state, _ = self.obs_step(
+                            new_state, low_level_action_pred, embed
+                        )
             else:
                 if use_true_actions:
-                    new_state = self.action_step(new_state, ll_a[:, k])
+                    new_state = self.action_step(new_state, low_level_action[:, idx])
                 else:
-                    new_state = self.action_step(new_state, a)
-
-            ll_a_pred.append(a)
-        return new_state, ll_a_pred
-
-    @jit.script_method
-    def forward_high_level_step_primitive_model(
-        self,
-        new_state: Dict[str, torch.Tensor],
-        high_level_action: torch.Tensor,
-        num_low_level_actions_per_primitive: int,
-    ) -> Dict[str, torch.Tensor]:
-        for k in range(0, num_low_level_actions_per_primitive):
-            phase = (
-                torch.ones((high_level_action.shape[0], 1), device=ptu.device)
-                * (k + 1)
-                / num_low_level_actions_per_primitive
-            )
-            hl = torch.cat((high_level_action, phase), 1)
-            inp = torch.cat(
-                [hl, self.get_features(new_state)],
-                dim=1,
-            )
-            a = self.primitive_model(inp)
-            new_state = self.action_step(new_state, a)
-        return new_state
+                    new_state = self.action_step(new_state, low_level_action_pred)
+            low_level_action_preds.append(low_level_action_pred)
+        return new_state, low_level_action_preds
 
 
 class StateConcatObsWorldModel(WorldModel):
@@ -687,21 +722,6 @@ class StateConcatObsWorldModel(WorldModel):
         encoded_im = self.conv_encoder(self.preprocess(obs_im))
         return torch.cat((encoded_im, obs_state), dim=1)
 
-    def flatten_obs(self, obs, shape):
-        if (
-            len(obs.shape) == 2
-            and obs.shape[-1] == np.prod(self.image_shape) + self.vec_obs_size
-        ):
-            obs = obs[:, : -self.vec_obs_size].reshape(-1, *shape)
-        elif (
-            len(obs.shape) == 2
-            and obs.shape[-1] != np.prod(self.image_shape) + self.vec_obs_size
-        ):
-            obs = obs.reshape(-1, *shape)
-        else:
-            obs = obs[:, :, : -self.vec_obs_size].reshape(-1, *shape)
-        return obs
-
 
 class LayerNorm(jit.ScriptModule):
     def __init__(self, normalized_shape):
@@ -715,15 +735,15 @@ class LayerNorm(jit.ScriptModule):
         self.normalized_shape = normalized_shape
 
     @jit.script_method
-    def compute_layernorm_stats(self, input):
-        mu = input.mean(-1, keepdim=True)
-        sigma = input.std(-1, keepdim=True, unbiased=False)
+    def compute_layernorm_stats(self, input_):
+        mu = input_.mean(-1, keepdim=True)
+        sigma = input_.std(-1, keepdim=True, unbiased=False)
         return mu, sigma
 
     @jit.script_method
-    def forward(self, input):
-        mu, sigma = self.compute_layernorm_stats(input)
-        return (input - mu) / sigma * self.weight + self.bias
+    def forward(self, input_):
+        mu, sigma = self.compute_layernorm_stats(input_)
+        return (input_ - mu) / sigma * self.weight + self.bias
 
 
 class LayerNormGRUCell(jit.ScriptModule):
@@ -770,29 +790,23 @@ class LayerNormGRUCell(jit.ScriptModule):
             s += ", nonlinearity={nonlinearity}"
         return s.format(**self.__dict__)
 
-    def check_forward_input(self, input: Tensor) -> None:
-        if input.size(1) != self.input_size:
+    def check_forward_input(self, input_: Tensor) -> None:
+        if input_.size(1) != self.input_size:
             raise RuntimeError(
-                "input has inconsistent input_size: got {}, expected {}".format(
-                    input.size(1), self.input_size
-                )
+                f"input has inconsistent input_size: got {input.size(1)}, expected {self.input_size}"
             )
 
     def check_forward_hidden(
-        self, input: Tensor, hx: Tensor, hidden_label: str = ""
+        self, input_: Tensor, hx: Tensor, hidden_label: str = ""
     ) -> None:
-        if input.size(0) != hx.size(0):
+        if input_.size(0) != hx.size(0):
             raise RuntimeError(
-                "Input batch size {} doesn't match hidden{} batch size {}".format(
-                    input.size(0), hidden_label, hx.size(0)
-                )
+                f"Input batch size {input.size(0)} doesn't match hidden {hidden_label} batch size {hx.size(0)}"
             )
 
         if hx.size(1) != self.hidden_size:
             raise RuntimeError(
-                "hidden{} has inconsistent hidden_size: got {}, expected {}".format(
-                    hidden_label, hx.size(1), self.hidden_size
-                )
+                f"hidden {hidden_label} has inconsistent hidden_size: got {hx.size(1)}, expected {self.hidden_size}"
             )
 
     def reset_parameters(self) -> None:

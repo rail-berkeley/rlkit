@@ -6,16 +6,20 @@ import numpy as np
 
 from rlkit.data_management.simple_replay_buffer import SimpleReplayBuffer
 from rlkit.envs.env_utils import get_dim
+from rlkit.torch.model_based.dreamer.utils import (
+    get_batch_length_indices,
+    get_indexed_arr_from_batch_indices,
+)
 
 
 class EpisodeReplayBuffer(SimpleReplayBuffer):
     def __init__(
         self,
-        max_replay_buffer_size,
         env,
-        max_path_length,
         observation_dim,
         action_dim,
+        max_replay_buffer_size,
+        max_path_length,
         replace=True,
         batch_length=50,
         use_batch_length=False,
@@ -29,13 +33,15 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
-            (max_replay_buffer_size, max_path_length, observation_dim),
+            (max_replay_buffer_size, max_path_length + 1, observation_dim),
             dtype=np.uint8,
         )
-        self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
-        self._rewards = np.zeros((max_replay_buffer_size, max_path_length, 1))
+        self._actions = np.zeros(
+            (max_replay_buffer_size, max_path_length + 1, action_dim)
+        )
+        self._rewards = np.zeros((max_replay_buffer_size, max_path_length + 1, 1))
         self._terminals = np.zeros(
-            (max_replay_buffer_size, max_path_length, 1), dtype="uint8"
+            (max_replay_buffer_size, max_path_length + 1, 1), dtype="uint8"
         )
         self._replace = replace
         self.batch_length = batch_length
@@ -44,6 +50,7 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self._size = 0
 
     def add_path(self, path):
+        # transpose to change from path collector format (path_length, batch) or buffer format (batch, path_length)
         self._observations[self._top : self._top + self.env.n_envs] = path[
             "observations"
         ].transpose(1, 0, 2)
@@ -69,34 +76,28 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             indices = np.random.choice(
                 self._size,
                 size=batch_size,
-                replace=True,
+                replace=self._replace or self._size < batch_size,
             )
             if not self._replace and self._size < batch_size:
                 warnings.warn(
-                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                    "Replace was set to false, but is temporarily set to true \
+                    because batch size is larger than current size of replay."
                 )
-            batch_start = np.random.randint(
-                0, self.max_path_length - self.batch_length, size=(batch_size)
+            batch_indices = get_batch_length_indices(
+                self.max_path_length, self.batch_length, batch_size
             )
-            batch_indices = np.linspace(
-                batch_start,
-                batch_start + self.batch_length,
-                self.batch_length,
-                endpoint=False,
-            ).astype(int)
-
-            observations = self._observations[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            actions = self._actions[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            rewards = self._rewards[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
-            terminals = self._terminals[indices][
-                np.arange(batch_size), batch_indices
-            ].transpose(1, 0, 2)
+            observations = get_indexed_arr_from_batch_indices(
+                self._observations[indices], batch_indices
+            )
+            actions = get_indexed_arr_from_batch_indices(
+                self._actions[indices], batch_indices
+            )
+            rewards = get_indexed_arr_from_batch_indices(
+                self._rewards[indices], batch_indices
+            )
+            terminals = get_indexed_arr_from_batch_indices(
+                self._terminals[indices], batch_indices
+            )
         else:
             indices = np.random.choice(
                 self._size,
@@ -105,12 +106,20 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
             )
             if not self._replace and self._size < batch_size:
                 warnings.warn(
-                    "Replace was set to false, but is temporarily set to true because batch size is larger than current size of replay."
+                    "Replace was set to false, but is temporarily set to true \
+                    because batch size is larger than current size of replay."
                 )
             observations = self._observations[indices]
             actions = self._actions[indices]
             rewards = self._rewards[indices]
             terminals = self._terminals[indices]
+        assert (
+            observations.shape[0]
+            == actions.shape[0]
+            == rewards.shape[0]
+            == terminals.shape[0]
+            == batch_size
+        )
         batch = dict(
             observations=observations,
             actions=actions,
@@ -128,12 +137,12 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
 class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
     def __init__(
         self,
-        max_replay_buffer_size,
         env,
-        max_path_length,
-        num_low_level_actions_per_primitive,
         observation_dim,
         action_dim,
+        max_replay_buffer_size,
+        max_path_length,
+        num_low_level_actions_per_primitive,
         low_level_action_dim,
         replace=True,
         batch_length=50,
@@ -212,18 +221,18 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         prioritized_indices = np.array(range(self._size))[mask > 0]
         if prioritized_indices.shape[0] > 0 and self.prioritize_fraction > 0:
             if self.uniform_priorities:
-                p = np.ones_like(prioritized_indices)
+                priorities = np.ones_like(prioritized_indices)
             else:
-                p = self._rewards[: self._size][:, :, 0][prioritized_indices].sum(
-                    axis=1
-                )
-            p = p / p.sum()
+                priorities = self._rewards[: self._size][:, :, 0][
+                    prioritized_indices
+                ].sum(axis=1)
+            normalized_priorities = priorities / priorities.sum()
             indices = np.random.choice(
                 prioritized_indices.shape[0],
                 size=int(self.prioritize_fraction * batch_size),
                 replace=prioritized_indices.shape[0]
                 < int(self.prioritize_fraction * batch_size),
-                p=p,
+                p=normalized_priorities,
             )
             prioritized_indices = prioritized_indices[indices]
             indices = np.random.choice(

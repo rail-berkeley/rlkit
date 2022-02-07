@@ -5,7 +5,7 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
     gym.logger.setLevel(40)
     import robosuite as suite
 
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.primitives_wrappers import (
         NormalizeBoxEnvFixed,
         RobosuitePrimitives,
         RobosuiteWrapper,
@@ -33,10 +33,10 @@ def make_base_robosuite_env(env_name, kwargs, use_dm_backend=True):
 
 
 def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
-    reward_type = env_kwargs["reward_type"]
+    action_space_kwargs = env_kwargs["action_space_kwargs"]
     env_kwargs_new = env_kwargs.copy()
-    if "reward_type" in env_kwargs_new:
-        del env_kwargs_new["reward_type"]
+    if "action_space_kwargs" in env_kwargs_new:
+        del env_kwargs_new["action_space_kwargs"]
     import gym
 
     gym.logger.setLevel(40)
@@ -49,8 +49,10 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
     )
     from metaworld.envs.mujoco.sawyer_xyz.sawyer_xyz_env import SawyerXYZEnv
 
-    from rlkit.envs.dm_backend_wrappers import SawyerMocapBaseDMBackendMetaworld
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.dm_backend_wrappers import (
+        SawyerMocapBaseDMBackendMetaworld,
+    )
+    from rlkit.envs.wrappers.primitives_wrappers import (
         MetaworldWrapper,
         SawyerXYZEnvMetaworldPrimitives,
     )
@@ -67,8 +69,8 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
             parent.__bases__ = (SawyerXYZEnvMetaworldPrimitives,)
         if use_dm_backend:
             SawyerXYZEnv.__bases__ = (SawyerMocapBaseDMBackendMetaworld,)
-    SawyerXYZEnvMetaworldPrimitives.control_mode = env_kwargs["control_mode"]
-    SawyerMocapBaseDMBackendMetaworld.control_mode = env_kwargs["control_mode"]
+    SawyerXYZEnvMetaworldPrimitives.control_mode = action_space_kwargs["control_mode"]
+    SawyerMocapBaseDMBackendMetaworld.control_mode = action_space_kwargs["control_mode"]
     if env_name in ALL_V1_ENVIRONMENTS:
         env_cls = ALL_V1_ENVIRONMENTS[env_name]
     else:
@@ -87,68 +89,49 @@ def make_base_metaworld_env(env_name, env_kwargs=None, use_dm_backend=True):
         env._set_task_called = True
     else:
         env = env_cls(seed=42)
-    env.reset_action_space(**env_kwargs_new)
+    env.reset_action_space(**action_space_kwargs)
     env.reset()
-    env = MetaworldWrapper(env, reward_type=reward_type)
+    env = MetaworldWrapper(env, **env_kwargs_new)
     return env
 
 
 def make_base_kitchen_env(env_class, env_kwargs):
     from d4rl.kitchen.env_dict import ALL_KITCHEN_ENVIRONMENTS
 
-    env = ALL_KITCHEN_ENVIRONMENTS[env_class](**env_kwargs)
+    for key, value in env_kwargs["action_space_kwargs"].items():
+        env_kwargs[key] = value
+    env_kwargs_new = env_kwargs.copy()
+    del env_kwargs_new["action_space_kwargs"]
+    env = ALL_KITCHEN_ENVIRONMENTS[env_class](**env_kwargs_new)
     return env
 
 
 def make_env(env_suite, env_name, env_kwargs):
-    from railrl.envs.wrappers.predictive_wrapper_env import RealNVPWrapper
-
-    from rlkit.envs.primitives_wrappers import (
+    from rlkit.envs.wrappers.primitives_wrappers import (
         ActionRepeat,
-        GetObservationWrapper,
-        IgnoreLastAction,
-        ImageEnvMetaworld,
         ImageUnFlattenWrapper,
         NormalizeActions,
         TimeLimit,
     )
 
     usage_kwargs = env_kwargs["usage_kwargs"]
-    image_kwargs = env_kwargs["image_kwargs"]
     max_path_length = usage_kwargs["max_path_length"]
     use_dm_backend = usage_kwargs.get("use_dm_backend", True)
     use_raw_action_wrappers = usage_kwargs.get("use_raw_action_wrappers", False)
-    use_image_obs = usage_kwargs.get("use_image_obs", True)
     unflatten_images = usage_kwargs.get("unflatten_images", False)
-    use_real_nvp_wrappers = usage_kwargs.get("use_real_nvp_wrappers", False)
 
     env_kwargs_new = env_kwargs.copy()
     if "usage_kwargs" in env_kwargs_new:
         del env_kwargs_new["usage_kwargs"]
-    if "image_kwargs" in env_kwargs_new:
-        del env_kwargs_new["image_kwargs"]
 
     if env_suite == "kitchen":
         env = make_base_kitchen_env(env_name, env_kwargs_new)
     elif env_suite == "metaworld":
         env = make_base_metaworld_env(env_name, env_kwargs_new, use_dm_backend)
-        if use_image_obs:
-            env = ImageEnvMetaworld(
-                env,
-                **image_kwargs,
-            )
     elif env_suite == "robosuite":
         env = make_base_robosuite_env(env_name, env_kwargs_new, use_dm_backend)
     if unflatten_images:
         env = ImageUnFlattenWrapper(env)
-
-    if use_real_nvp_wrappers:
-        env = GetObservationWrapper(IgnoreLastAction(env))
-        env = RealNVPWrapper(
-            env,
-            usage_kwargs.get("model_path"),
-            action_scale=1,
-        )
 
     if use_raw_action_wrappers:
         env = ActionRepeat(env, 2)
@@ -156,5 +139,5 @@ def make_env(env_suite, env_name, env_kwargs):
         env = TimeLimit(env, max_path_length // 2)
     else:
         env = TimeLimit(env, max_path_length)
-    env.reset()
+    env.reset
     return env

@@ -1,18 +1,15 @@
-import argparse
 import random
 import subprocess
 
 import rlkit.util.hyperparameter as hyp
 from rlkit.launchers.launcher_util import run_experiment
-from rlkit.torch.model_based.dreamer.experiments.dmc_dreamer import experiment
+from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
+from rlkit.torch.model_based.dreamer.experiments.dmc_dreamer_experiment import (
+    experiment,
+)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
+    args = get_args()
     if args.debug:
         algorithm_kwargs = dict(
             num_epochs=5,
@@ -57,7 +54,6 @@ if __name__ == "__main__":
             model_hidden_size=400,
             stochastic_state_size=32,
             deterministic_state_size=200,
-            embedding_size=32 * 48,
             rssm_hidden_size=200,
             reward_num_layers=2,
             pred_discount_num_layers=3,
@@ -96,14 +92,13 @@ if __name__ == "__main__":
             # "cartpole_swingup",
             # "cartpole_balance",
             "cartpole_balance_sparse",
-            "hopper_stand",
-            "walker_run",
-            "quadruped_walk",
-            "acrobot_swingup",
+            # "hopper_stand",
+            # "walker_run",
+            # "quadruped_walk",
+            # "acrobot_swingup",
             # "hopper_hop",
             # "cheetah_run",
         ],
-        # "model_kwargs.use_prior_instead_of_posterior": [True, False],
     }
     sweeper = hyp.DeterministicHyperparameterSweeper(
         search_space,
@@ -127,6 +122,7 @@ if __name__ == "__main__":
                 )[:-1],
                 seed=seed,
                 exp_id=exp_id,
+                skip_wait=False,
             )
             num_exps_launched += 1
     print("Num exps launched: ", num_exps_launched)

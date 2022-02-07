@@ -1,4 +1,3 @@
-import numpy as np
 import torch
 from torch import jit
 from torch import nn as nn
@@ -38,7 +37,7 @@ class CNN(jit.ScriptModule):
         )
 
         def init_weights(m):
-            if type(m) == nn.Conv2d:
+            if isinstance(m, nn.Conv2d):
                 hidden_init(m.weight)
                 m.bias.data.fill_(0)
 
@@ -80,8 +79,8 @@ class CNN(jit.ScriptModule):
         self.to(memory_format=torch.channels_last)
 
     @jit.script_method
-    def forward(self, input):
-        conv_input = input.narrow(
+    def forward(self, input_):
+        conv_input = input_.narrow(
             start=0, length=self.conv_input_length, dim=1
         ).contiguous()
         h = conv_input.view(
@@ -169,8 +168,8 @@ class DCNN(jit.ScriptModule):
         self.to(memory_format=torch.channels_last)
 
     @jit.script_method
-    def forward(self, input):
-        h = self.fc_block(input)
+    def forward(self, input_):
+        h = self.fc_block(input_)
         h = h.view(
             -1,
             self.deconv_input_channels,

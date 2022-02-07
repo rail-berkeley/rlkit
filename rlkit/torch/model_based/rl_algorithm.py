@@ -3,7 +3,6 @@ import time
 from collections import OrderedDict
 
 import gtimer as gt
-import wandb
 
 from rlkit.core import eval_util, logger
 from rlkit.data_management.replay_buffer import ReplayBuffer
@@ -17,13 +16,13 @@ def _get_epoch_timings():
     for key in sorted(times_itrs):
         time = times_itrs[key][-1]
         epoch_time += time
-        times["time/{} (s)".format(key)] = time
+        times[f"time/{key} (s)"] = time
     times["time/epoch (s)"] = epoch_time
     times["time/total (s)"] = gt.get_times().total
     return times
 
 
-class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
+class BaseRLAlgorithm(metaclass=abc.ABCMeta):
     def __init__(
         self,
         trainer,
@@ -32,7 +31,6 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         exploration_data_collector: DataCollector,
         evaluation_data_collector: DataCollector,
         replay_buffer: ReplayBuffer,
-        use_wandb: bool = False,
     ):
         self.trainer = trainer
         self.expl_env = exploration_env
@@ -43,10 +41,6 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         self._start_epoch = 0
 
         self.post_epoch_funcs = []
-        self.use_wandb = use_wandb
-        if use_wandb:
-            for network in trainer.networks:
-                wandb.watch(network, log="all")
 
     def train(self, start_epoch=0):
         self._start_epoch = start_epoch
@@ -74,24 +68,18 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
 
     def _get_snapshot(self):
         snapshot = {}
-        for k, v in self.trainer.get_snapshot().items():
-            snapshot["trainer/" + k] = v
-        for k, v in self.expl_data_collector.get_snapshot().items():
-            snapshot["exploration/" + k] = v
-        for k, v in self.eval_data_collector.get_snapshot().items():
-            snapshot["evaluation/" + k] = v
-        for k, v in self.replay_buffer.get_snapshot().items():
-            snapshot["replay_buffer/" + k] = v
+        for key, value in self.trainer.get_snapshot().items():
+            snapshot["trainer/" + key] = value
+        for key, value in self.expl_data_collector.get_snapshot().items():
+            snapshot["exploration/" + key] = value
+        for key, value in self.eval_data_collector.get_snapshot().items():
+            snapshot["evaluation/" + key] = value
+        for key, value in self.replay_buffer.get_snapshot().items():
+            snapshot["replay_buffer/" + key] = value
         return snapshot
 
-    def _log_wandb(self, d, prefix, epoch):
-        updated_d = {}
-        for k, v in d.items():
-            updated_d[prefix + k] = v
-        wandb.log(updated_d, step=epoch)
-
     def _log_stats(self, epoch):
-        logger.log("Epoch {} finished".format(epoch), with_timestamp=True)
+        logger.log(f"Epoch {epoch} finished", with_timestamp=True)
 
         """
         Replay Buffer
@@ -99,21 +87,11 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(
             self.replay_buffer.get_diagnostics(), prefix="replay_buffer/"
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.replay_buffer.get_diagnostics(),
-                prefix="replay_buffer/",
-                epoch=epoch,
-            )
 
         """
         Trainer
         """
         logger.record_dict(self.trainer.get_diagnostics(), prefix="trainer/")
-        if self.use_wandb:
-            self._log_wandb(
-                self.trainer.get_diagnostics(), prefix="trainer/", epoch=epoch
-            )
 
         """
         Exploration
@@ -121,12 +99,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         logger.record_dict(
             self.expl_data_collector.get_diagnostics(), prefix="exploration/"
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.expl_data_collector.get_diagnostics(),
-                prefix="exploration/",
-                epoch=epoch,
-            )
+
         expl_paths = self.expl_data_collector.get_epoch_paths()
         if len(expl_paths) > 0:
             if hasattr(self.expl_env, "get_diagnostics"):
@@ -134,22 +107,12 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
                     self.expl_env.get_diagnostics(expl_paths),
                     prefix="exploration/",
                 )
-                if self.use_wandb:
-                    self._log_wandb(
-                        self.expl_env.get_diagnostics(expl_paths),
-                        prefix="exploration/",
-                        epoch=epoch,
-                    )
+
             logger.record_dict(
                 eval_util.get_generic_path_information(expl_paths),
                 prefix="exploration/",
             )
-            if self.use_wandb:
-                self._log_wandb(
-                    eval_util.get_generic_path_information(expl_paths),
-                    prefix="exploration/",
-                    epoch=epoch,
-                )
+
         """
         Evaluation
         """
@@ -157,34 +120,17 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
             self.eval_data_collector.get_diagnostics(),
             prefix="evaluation/",
         )
-        if self.use_wandb:
-            self._log_wandb(
-                self.eval_data_collector.get_diagnostics(),
-                prefix="evaluation/",
-                epoch=epoch,
-            )
         eval_paths = self.eval_data_collector.get_epoch_paths()
         if hasattr(self.eval_env, "get_diagnostics"):
             logger.record_dict(
                 self.eval_env.get_diagnostics(eval_paths),
                 prefix="evaluation/",
             )
-            if self.use_wandb:
-                self._log_wandb(
-                    self.eval_env.get_diagnostics(eval_paths),
-                    prefix="evaluation/",
-                    epoch=epoch,
-                )
+
         logger.record_dict(
             eval_util.get_generic_path_information(eval_paths),
             prefix="evaluation/",
         )
-        if self.use_wandb:
-            self._log_wandb(
-                eval_util.get_generic_path_information(eval_paths),
-                prefix="evaluation/",
-                epoch=epoch,
-            )
 
         """
         Misc
@@ -193,12 +139,7 @@ class BaseRLAlgorithm(object, metaclass=abc.ABCMeta):
         timings = _get_epoch_timings()
         timings["time/training and exploration (s)"] = self.total_train_expl_time
         logger.record_dict(timings)
-        if self.use_wandb:
-            self._log_wandb(
-                timings,
-                prefix="",
-                epoch=epoch,
-            )
+
         logger.record_tabular("Epoch", epoch)
         logger.dump_tabular(with_prefix=False, with_timestamp=False)
 
@@ -232,7 +173,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         pretrain_policy=None,
         num_pretrain_steps=0,
         use_pretrain_policy_for_initial_data=True,
-        use_wandb=False,
         eval_buffer=None,
     ):
         super().__init__(
@@ -242,7 +182,6 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             exploration_data_collector,
             evaluation_data_collector,
             replay_buffer,
-            use_wandb=use_wandb,
         )
         self.batch_size = batch_size
         self.max_path_length = max_path_length
@@ -273,7 +212,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
         self.total_train_expl_time += time.time() - st
         self.trainer.buffer = self.replay_buffer
         self.training_mode(True)
-        for train_step in range(self.num_pretrain_steps):
+        for _ in range(self.num_pretrain_steps):
             train_data = self.replay_buffer.random_batch(self.batch_size)
             self.trainer.train(train_data)
         self.training_mode(False)
@@ -288,7 +227,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             )
             gt.stamp("evaluation sampling")
             st = time.time()
-            for train_loop in range(self.num_train_loops_per_epoch):
+            for _ in range(self.num_train_loops_per_epoch):
                 new_expl_paths = self.expl_data_collector.collect_new_paths(
                     self.max_path_length,
                     self.num_expl_steps_per_train_loop,

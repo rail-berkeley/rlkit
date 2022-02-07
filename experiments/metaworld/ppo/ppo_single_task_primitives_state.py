@@ -16,13 +16,10 @@ def experiment(variant):
     experiment(variant)
 
 
+from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
+
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--exp_prefix", type=str, default="test")
-    parser.add_argument("--num_seeds", type=int, default=1)
-    parser.add_argument("--mode", type=str, default="local")
-    parser.add_argument("--debug", action="store_true", default=False)
-    args = parser.parse_args()
+    args = get_args()
     if args.debug:
         exp_prefix = "test" + args.exp_prefix
     else:
