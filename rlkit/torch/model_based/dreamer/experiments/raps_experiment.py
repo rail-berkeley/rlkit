@@ -140,15 +140,12 @@ def experiment(variant):
         save_env_in_snapshot=False,
     )
 
+    variant["replay_buffer_kwargs"]["use_batch_length"] = use_batch_length
     replay_buffer = EpisodeReplayBuffer(
-        variant["replay_buffer_size"],
         expl_env,
-        variant["algorithm_kwargs"]["max_path_length"] + 1,
         obs_dim,
         action_dim,
-        replace=False,
-        use_batch_length=use_batch_length,
-        batch_length=50,
+        **variant["replay_buffer_kwargs"],
     )
     eval_filename = variant.get("eval_buffer_path", None)
     if eval_filename is not None:

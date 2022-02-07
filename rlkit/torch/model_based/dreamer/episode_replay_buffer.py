@@ -15,11 +15,11 @@ from rlkit.torch.model_based.dreamer.utils import (
 class EpisodeReplayBuffer(SimpleReplayBuffer):
     def __init__(
         self,
-        max_replay_buffer_size,
         env,
-        max_path_length,
         observation_dim,
         action_dim,
+        max_replay_buffer_size,
+        max_path_length,
         replace=True,
         batch_length=50,
         use_batch_length=False,
@@ -33,13 +33,15 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
-            (max_replay_buffer_size, max_path_length, observation_dim),
+            (max_replay_buffer_size, max_path_length + 1, observation_dim),
             dtype=np.uint8,
         )
-        self._actions = np.zeros((max_replay_buffer_size, max_path_length, action_dim))
-        self._rewards = np.zeros((max_replay_buffer_size, max_path_length, 1))
+        self._actions = np.zeros(
+            (max_replay_buffer_size, max_path_length + 1, action_dim)
+        )
+        self._rewards = np.zeros((max_replay_buffer_size, max_path_length + 1, 1))
         self._terminals = np.zeros(
-            (max_replay_buffer_size, max_path_length, 1), dtype="uint8"
+            (max_replay_buffer_size, max_path_length + 1, 1), dtype="uint8"
         )
         self._replace = replace
         self.batch_length = batch_length

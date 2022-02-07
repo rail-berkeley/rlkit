@@ -28,6 +28,7 @@ def get_args():
         "-sv", "--search_values", nargs="*", default=[], action="append"
     )
     parser.add_argument("-st", "--search_types", nargs="*", default=[])
+    parser.add_argument("-g", "--use_gpu", action="store_true", default=True)
 
     args = parser.parse_args()
 

@@ -1,9 +1,8 @@
-import random
-import subprocess
-
-import rlkit.util.hyperparameter as hyp
-from rlkit.launchers.launcher_util import run_experiment
 from rlkit.torch.model_based.dreamer.experiments.arguments import get_args
+from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
+    preprocess_variant_raps,
+    setup_sweep_and_launch_exp,
+)
 from rlkit.torch.model_based.dreamer.experiments.raps_experiment import experiment
 
 if __name__ == "__main__":
@@ -18,7 +17,6 @@ if __name__ == "__main__":
             num_train_loops_per_epoch=1,
             num_trains_per_train_loop=10,
             batch_size=30,
-            max_path_length=5,
         )
     else:
         algorithm_kwargs = dict(
@@ -26,7 +24,6 @@ if __name__ == "__main__":
             num_eval_steps_per_epoch=30,
             min_num_steps_before_training=2500,
             num_pretrain_steps=100,
-            max_path_length=5,
             batch_size=417,
             num_expl_steps_per_train_loop=60,
             num_train_loops_per_epoch=20,
@@ -48,7 +45,6 @@ if __name__ == "__main__":
             use_workspace_limits=True,
             control_mode="primitives",
             usage_kwargs=dict(
-                max_path_length=5,
                 use_dm_backend=True,
                 use_raw_action_wrappers=False,
                 unflatten_images=False,
@@ -96,35 +92,16 @@ if __name__ == "__main__":
             detach_rewards=False,
             imagination_horizon=5,
         ),
+        replay_buffer_kwargs=dict(
+            batch_length=50,
+            use_batch_length=False,
+            max_replay_buffer_size=int(5e5),
+        ),
         num_expl_envs=10,
         num_eval_envs=1,
         expl_amount=0.3,
         save_video=True,
+        max_path_length=5,
     )
 
-    search_space = {
-        key: value for key, value in zip(args.search_keys, args.search_values)
-    }
-    sweeper = hyp.DeterministicHyperparameterSweeper(
-        search_space,
-        default_parameters=variant,
-    )
-    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
-        for _ in range(args.num_seeds):
-            seed = random.randint(0, 100000)
-            variant["seed"] = seed
-            variant["exp_id"] = exp_id
-            python_cmd = subprocess.check_output("which python", shell=True).decode(
-                "utf-8"
-            )[:-1]
-            run_experiment(
-                experiment,
-                exp_prefix=args.exp_prefix,
-                mode=args.mode,
-                variant=variant,
-                use_gpu=True,
-                snapshot_mode="none",
-                python_cmd=python_cmd,
-                seed=seed,
-                exp_id=exp_id,
-            )
+    setup_sweep_and_launch_exp(preprocess_variant_raps, variant, experiment, args)

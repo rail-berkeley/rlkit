@@ -1,4 +1,5 @@
 def preprocess_variant_p2exp(variant):
+    variant = variant.copy()
     if variant["reward_type"] == "intrinsic":
         variant["algorithm"] = variant["algorithm"] + "Intrinsic"
         variant["trainer_kwargs"]["exploration_intrinsic_reward_scale"] = 1.0
@@ -24,7 +25,19 @@ def preprocess_variant_p2exp(variant):
     return variant
 
 
+def preprocess_variant_raps(variant):
+    variant = variant.copy()
+    variant["algorithm_kwargs"]["max_path_length"] = variant["max_path_length"]
+    variant["replay_buffer_kwargs"]["max_path_length"] = variant["max_path_length"]
+
+    variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = variant[
+        "max_path_length"
+    ]
+    return variant
+
+
 def preprocess_variant_llraps(variant):
+    variant = variant.copy()
     variant["trainer_kwargs"]["batch_length"] = int(
         variant["num_low_level_actions_per_primitive"] * variant["max_path_length"] + 1
     )
@@ -48,14 +61,47 @@ def preprocess_variant_llraps(variant):
     variant["replay_buffer_kwargs"]["low_level_action_dim"] = variant[
         "low_level_action_dim"
     ]
-    variant["replay_buffer_kwargs"]["max_path_length"] = variant["max_path_length"]
 
-    variant["env_kwargs"]["usage_kwargs"]["max_path_length"] = variant[
-        "max_path_length"
-    ]
     variant["env_kwargs"]["action_space_kwargs"][
         "num_low_level_actions_per_primitive"
     ] = variant["num_low_level_actions_per_primitive"]
 
-    variant["algorithm_kwargs"]["max_path_length"] = variant["max_path_length"]
+    variant = preprocess_variant_raps(variant)
+
     return variant
+
+
+def setup_sweep_and_launch_exp(preprocess_variant_fn, variant, experiment_fn, args):
+    import random
+    import subprocess
+
+    import rlkit.util.hyperparameter as hyp
+    from rlkit.launchers.launcher_util import run_experiment
+
+    search_space = {
+        key: value for key, value in zip(args.search_keys, args.search_values)
+    }
+    sweeper = hyp.DeterministicHyperparameterSweeper(
+        search_space,
+        default_parameters=variant,
+    )
+    for exp_id, variant in enumerate(sweeper.iterate_hyperparameters()):
+        variant = preprocess_variant_fn(variant)
+        for _ in range(args.num_seeds):
+            seed = random.randint(0, 100000)
+            variant["seed"] = seed
+            variant["exp_id"] = exp_id
+            python_cmd = subprocess.check_output("which python", shell=True).decode(
+                "utf-8"
+            )[:-1]
+            run_experiment(
+                experiment_fn,
+                exp_prefix=args.exp_prefix,
+                mode=args.mode,
+                variant=variant,
+                use_gpu=args.use_gpu,
+                snapshot_mode="none",
+                python_cmd=python_cmd,
+                seed=seed,
+                exp_id=exp_id,
+            )
