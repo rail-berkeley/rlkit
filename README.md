@@ -80,6 +80,36 @@ pip install -e .
 cp rlkit/launchers/conf.py rlkit/launchers/conf_private.py
 ```
 
+## Example Commands:
+Debug:
+
+`python /path/to/experiment.py --debug`
+
+Replicate RAPS Kitchen results:
+
+`python experiments/ll_raps/dreamer_v2_single_task_primitives_kitchen.py -sk env_name -sv hinge_cabinet microwave kettle light_switch top_left_burner -st str --mode ssm --exp_prefix raps_kitchen_replicate --num_seeds 5`
+
+Replicate RAPS Metaworld results:
+
+`python experiments/ll_raps/dreamer_v2_single_task_primitives.py -sk env_name -sv assembly-v2 disassemble-v2 soccer-v2 sweep-into-v2 -st str --mode ssm --exp_prefix raps_mw_replicate --num_seeds 5`
+
+LLRAPS Kitchen:
+
+`python experiments/ll_raps/dreamer_v2_single_task_low_level_primitives_kitchen_raps_params.py -sk env_name -sv microwave hinge_cabinet top_left_burner kettle light_switch -st str --num_seeds 5 --mode ssm --exp_prefix ll_raps_kitchen_replicate`
+
+LLRAPS Metaworld:
+
+`python experiments/ll_raps/dreamer_v2_single_task_low_level_primitives_raps_params.py -sk env_name -sv assembly-v2 disassemble-v2 soccer-v2 sweep-into-v2 -st str --num_seeds 5 --mode ssm --exp_prefix ll_raps_mw_refactor_replicate`
+
+## How to run sweeps from command line
+`python /path/to/experiment.py -sk key1 key2 key3 -sv v11 v12 ... -sv v21 v22 ... -sv v31 v32 ... -st k1type k2type k3type`
+
+Example:
+
+`python experiments/ll_raps/dreamer_v2_single_task_low_level_primitives_raps_params.py -sk env_name num_low_level_actions_per_primitive -sv assembly-v2 disassemble-v2 soccer-v2 sweep-into-v2 -sv 5 10 -st str int`
+
+Basically, for each key, add `-sv <list of values>`
+
 ## Visualizing results
 During training, the results will be saved to a file called under
 ```
