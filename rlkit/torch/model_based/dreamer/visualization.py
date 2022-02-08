@@ -80,8 +80,11 @@ def visualize_rollout(
                     policy_o = (None, observation.reshape(1, -1))
                 else:
                     policy_o = observation.reshape(1, -1)
+                # hack to pass typing checks
                 vis = convert_img_to_save(
-                    world_model.get_image_from_obs(observation.reshape(1, -1))
+                    world_model.get_image_from_obs(
+                        torch.from_numpy(observation.reshape(1, -1))
+                    ).numpy()
                 )
                 add_text(vis, "Ground Truth", (1, 60), 0.25, (0, 255, 0))
             else:
@@ -105,8 +108,11 @@ def visualize_rollout(
                     _,
                     _,
                 ) = env.get_primitive_info_from_high_level_action(high_level_action[0])
+                # hack to pass typing checks
                 vis = convert_img_to_save(
-                    world_model.get_image_from_obs(observation.reshape(1, -1))
+                    world_model.get_image_from_obs(
+                        torch.from_numpy(observation.reshape(1, -1))
+                    ).numpy()
                 )
                 add_text(vis, primitive_name, (1, 60), 0.25, (0, 255, 0))
                 add_text(vis, f"r: {reward}", (35, 7), 0.3, (0, 0, 0))

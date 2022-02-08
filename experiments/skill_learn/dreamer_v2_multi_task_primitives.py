@@ -22,7 +22,7 @@ if __name__ == "__main__":
         )
     else:
         algorithm_kwargs = dict(
-            num_epochs=100,
+            num_epochs=1000,
             num_eval_steps_per_epoch=60,
             min_num_steps_before_training=2400,
             num_pretrain_steps=100,
@@ -32,7 +32,7 @@ if __name__ == "__main__":
             num_trains_per_train_loop=20,
         )
     variant = dict(
-        algorithm="RAPS",
+        algorithm="MultiTaskRAPS",
         version="normal",
         replay_buffer_size=int(5e5),
         algorithm_kwargs=algorithm_kwargs,
