@@ -1,0 +1,121 @@
+{
+  "actor_kwargs": {
+    "discrete_continuous_dist": true,
+    "dist": "tanh_normal_dreamer_v1",
+    "init_std": 0.0,
+    "min_std": 0.1,
+    "num_layers": 4
+  },
+  "algorithm": "LLRAPS",
+  "algorithm_kwargs": {
+    "batch_size": 200,
+    "max_path_length": 5,
+    "min_num_steps_before_training": 2500,
+    "num_epochs": 500,
+    "num_eval_steps_per_epoch": 30,
+    "num_expl_steps_per_train_loop": 60,
+    "num_pretrain_steps": 100,
+    "num_train_loops_per_epoch": 20,
+    "num_trains_per_train_loop": 20
+  },
+  "effective_batch_size": 400,
+  "env_kwargs": {
+    "action_space_kwargs": {
+      "action_scale": 1,
+      "camera_settings": {
+        "azimuth": 141.328125,
+        "distance": 0.38227044687537043,
+        "elevation": -53.203125160653144,
+        "lookat": [
+          0.21052547,
+          0.32329237,
+          0.587819
+        ]
+      },
+      "collect_primitives_info": true,
+      "control_mode": "primitives",
+      "num_low_level_actions_per_primitive": 5,
+      "render_intermediate_obs_to_info": true
+    },
+    "imheight": 64,
+    "imwidth": 64,
+    "reward_type": "sparse",
+    "usage_kwargs": {
+      "max_path_length": 5,
+      "unflatten_images": false,
+      "use_dm_backend": true,
+      "use_raw_action_wrappers": false
+    },
+    "use_image_obs": true
+  },
+  "env_name": "disassemble-v2",
+  "env_suite": "metaworld",
+  "exp_id": "0",
+  "exp_name": "02-07-ll_raps_mw_replicate_disassemble_2022_02_07_23_00_01_0000--s-23102",
+  "exp_prefix": "02-07-ll_raps_mw_replicate_disassemble",
+  "expl_amount": 0.3,
+  "instance_type": "None",
+  "low_level_action_dim": 9,
+  "max_path_length": 5,
+  "model_kwargs": {
+    "depth": 32,
+    "deterministic_state_size": 200,
+    "gru_layer_norm": true,
+    "model_hidden_size": 400,
+    "pred_discount_num_layers": 3,
+    "reward_num_layers": 2,
+    "rssm_hidden_size": 200,
+    "std_act": "sigmoid2",
+    "stochastic_state_size": 50,
+    "use_prior_instead_of_posterior": true
+  },
+  "num_eval_envs": 1,
+  "num_expl_envs": 10,
+  "num_low_level_actions_per_primitive": 5,
+  "pass_render_kwargs": true,
+  "primitive_model_kwargs": {
+    "apply_embedding": false,
+    "hidden_sizes": [
+      512,
+      512
+    ]
+  },
+  "replay_buffer_kwargs": {
+    "low_level_action_dim": 9,
+    "max_path_length": 5,
+    "max_replay_buffer_size": 115384,
+    "num_low_level_actions_per_primitive": 5,
+    "prioritize_fraction": 0.0,
+    "replace": false,
+    "uniform_priorities": true
+  },
+  "save_video": true,
+  "seed": "23102",
+  "trainer_kwargs": {
+    "actor_entropy_loss_schedule": "1e-4",
+    "actor_lr": 8e-05,
+    "adam_eps": 1e-05,
+    "batch_length": 26,
+    "detach_rewards": false,
+    "discount": 0.8,
+    "effective_batch_size_iterations": 2,
+    "forward_kl": false,
+    "free_nats": 1.0,
+    "imagination_horizon": 5,
+    "kl_loss_scale": 0.0,
+    "lam": 0.95,
+    "num_low_level_actions_per_primitive": 5,
+    "policy_gradient_loss_scale": 1.0,
+    "pred_discount_loss_scale": 10.0,
+    "reward_loss_scale": 2.0,
+    "target_update_period": 100,
+    "transition_loss_scale": 0.8,
+    "use_pred_discount": true,
+    "vf_lr": 8e-05,
+    "world_model_lr": 0.0003
+  },
+  "version": "normal",
+  "vf_kwargs": {
+    "num_layers": 3
+  }
+}

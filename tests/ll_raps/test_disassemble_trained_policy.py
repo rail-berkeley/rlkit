@@ -123,7 +123,7 @@ def test_disassemble_trained_policy_success():
     directory = os.getcwd()
     path = os.path.join(
         directory,
-        "tests/ll_raps/02-05-ll_raps_mw_refactor_replicate_2022_02_05_00_17_28_0000--s-93433",
+        "tests/ll_raps/02-07-ll_raps_mw_replicate_disassemble_2022_02_07_23_00_01_0000--s-23102",
     )
     final_reward = run_trained_policy(path)
     assert final_reward == 1.0
