@@ -42,11 +42,10 @@ class ActorModel(Mlp):
             **kwargs,
         )
         self._min_std = min_std
-        self._init_std = ptu.tensor(init_std)
         self._mean_scale = mean_scale
         self.use_tanh_normal = use_tanh_normal
         self._dist = dist
-        self.raw_init_std = torch.log(torch.exp(self._init_std) - 1).item()
+        self.raw_init_std = torch.log(torch.exp(ptu.tensor(init_std)) - 1)
 
     @jit.script_method
     def forward_net(self, input_):
