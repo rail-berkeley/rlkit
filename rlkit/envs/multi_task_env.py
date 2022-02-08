@@ -8,17 +8,23 @@ import rlkit.envs.primitives_make_env as primitives_make_env
 
 class MultiTaskEnv(gym.Env):
     def __init__(self, env_suite, env_names, env_kwargs):
+        """
+        Multi-task environment which on reset, samples a new env.
+        Observations from each env are concatenated with a one-hot vector giving the task index.
+        Note: you must collect at least one trajectory from each environment per epoch otherwise
+        the logging code will break due to missing keys.
+        """
         self.env_kwargs = env_kwargs
         self.env_names = env_names
         self.env_suite = env_suite
         self.num_resets = 0
-        self.vec_obs_size = len(env_names)
+        self.num_multitask_envs = len(env_names)
         self.reset()
         # assume action space is constant across envs
         old_obs_space = self.env.observation_space
         self.observation_space = gym.spaces.Box(
-            np.concatenate((old_obs_space.low, np.zeros(self.vec_obs_size))),
-            np.concatenate((old_obs_space.high, np.ones(self.vec_obs_size))),
+            np.concatenate((old_obs_space.low, np.zeros(self.num_multitask_envs))),
+            np.concatenate((old_obs_space.high, np.ones(self.num_multitask_envs))),
         )
         self.action_space = self.env.action_space
 
@@ -44,10 +50,9 @@ class MultiTaskEnv(gym.Env):
 
     def reset(self):
         if hasattr(self, "env"):
-            self.env.close()
             del self.env
             gc.collect()
-        self.idx = self.num_resets % self.vec_obs_size
+        self.idx = self.num_resets % self.num_multitask_envs
         env_name = self.env_names[self.idx]
         self.env = primitives_make_env.make_env(
             self.env_suite, env_name, self.env_kwargs
@@ -58,12 +63,12 @@ class MultiTaskEnv(gym.Env):
         return o
 
     def get_one_hot(self, idx):
-        one_hot = np.zeros(self.vec_obs_size)
+        one_hot = np.zeros(self.num_multitask_envs)
         one_hot[idx] = 1
         return one_hot
 
     def __getattr__(self, name):
-        if name is not "env":
+        if name != "env":
             return getattr(self.env, name)
         else:
             raise AttributeError("")

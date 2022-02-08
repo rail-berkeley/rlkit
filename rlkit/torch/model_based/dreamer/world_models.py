@@ -43,18 +43,20 @@ class WorldModel(jit.ScriptModule):
         self.image_shape = image_shape
         self.stochastic_state_size = stochastic_state_size
         self.deterministic_state_size = deterministic_state_size
+        self.rssm_hidden_size = rssm_hidden_size
         self.depth = depth
         self.conv_act = conv_act
-        img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
+        self.model_act = model_act
+        self.img_and_obs_step_mlp_output_size = 2 * stochastic_state_size
         full_stochastic_state_size = stochastic_state_size
         self.feature_size = deterministic_state_size + full_stochastic_state_size
-        embedding_size = depth * 32
+        self.embedding_size = depth * 32
 
         self.obs_step_mlp = Mlp(
-            hidden_sizes=[rssm_hidden_size],
-            input_size=embedding_size + deterministic_state_size,
-            output_size=img_and_obs_step_mlp_output_size,
-            hidden_activation=model_act,
+            hidden_sizes=[self.rssm_hidden_size],
+            input_size=self.embedding_size + self.deterministic_state_size,
+            output_size=self.img_and_obs_step_mlp_output_size,
+            hidden_activation=self.model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         self.action_step_feature_extractor = torch.nn.Linear(
@@ -65,7 +67,7 @@ class WorldModel(jit.ScriptModule):
         self.action_step_mlp = Mlp(
             hidden_sizes=[rssm_hidden_size],
             input_size=deterministic_state_size,
-            output_size=img_and_obs_step_mlp_output_size,
+            output_size=self.img_and_obs_step_mlp_output_size,
             hidden_activation=model_act,
             hidden_init=torch.nn.init.xavier_uniform_,
         )
@@ -121,7 +123,7 @@ class WorldModel(jit.ScriptModule):
             hidden_init=torch.nn.init.xavier_uniform_,
         )
         self.std_act = std_act
-        self.model_act = model_act(inplace=True)
+        self.apply_model_act = model_act(inplace=True)
 
     @jit.script_method
     def transform_std(self, std):
@@ -186,7 +188,7 @@ class WorldModel(jit.ScriptModule):
         """
         prev_stoch = prev_state["stoch"]
         x = torch.cat([prev_stoch, prev_action], -1)
-        x = self.model_act(self.action_step_feature_extractor(x))
+        x = self.apply_model_act(self.action_step_feature_extractor(x))
         deter_new = self.rnn(x, prev_state["deter"])
         x = self.action_step_mlp(deter_new)
         mean, std = x.split(self.stochastic_state_size, -1)
@@ -389,6 +391,10 @@ class WorldModel(jit.ScriptModule):
             deter=ptu.zeros([batch_size, self.deterministic_state_size]),
         )
         return state
+
+    @jit.script_method
+    def get_image_from_obs(self, obs):
+        return obs
 
 
 class LowlevelRAPSWorldModel(WorldModel):
@@ -711,16 +717,38 @@ class LowlevelRAPSWorldModel(WorldModel):
 
 
 class StateConcatObsWorldModel(WorldModel):
-    def __init__(self, *args, vec_obs_size=0, **kwargs):
+    def __init__(self, *args, vec_obs_size=0, apply_embedding=False, **kwargs):
         super().__init__(*args, **kwargs)
         self.vec_obs_size = vec_obs_size
+        self.obs_step_mlp = Mlp(
+            hidden_sizes=[self.rssm_hidden_size],
+            input_size=self.embedding_size
+            + self.deterministic_state_size
+            + self.vec_obs_size,
+            output_size=self.img_and_obs_step_mlp_output_size,
+            hidden_activation=self.model_act,
+            hidden_init=torch.nn.init.xavier_uniform_,
+        )
+        self.apply_embedding = apply_embedding
+        self.embedding = nn.Embedding(vec_obs_size, vec_obs_size)
 
     @jit.script_method
     def encode(self, obs):
-        obs_im = obs[:, : -self.vec_obs_size]
+        obs_im = self.get_image_from_obs(obs)
         obs_state = obs[:, -self.vec_obs_size :]
         encoded_im = self.conv_encoder(self.preprocess(obs_im))
+        if self.apply_embedding:
+            obs_state = self.embedding(obs_state.argmax(dim=1))
         return torch.cat((encoded_im, obs_state), dim=1)
+
+    @jit.script_method
+    def get_image_from_obs(self, obs):
+        if len(obs.shape) == 2:
+            return obs[:, : -self.vec_obs_size]
+        elif len(obs.shape) == 3:
+            return obs[:, :, : -self.vec_obs_size]
+        else:
+            raise ValueError("Invalid obs shape")
 
 
 class LayerNorm(jit.ScriptModule):

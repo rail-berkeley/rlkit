@@ -188,7 +188,10 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
                 pred_discount_dist,
                 _,
             ) = self.world_model(obs, actions)
-            obs = obs.reshape(-1, *self.image_shape)
+            obs = self.world_model.get_image_from_obs(obs).reshape(
+                -1, *self.image_shape
+            )
+
             rewards = rewards.reshape(-1, rewards.shape[-1])
             terminals = terminals.reshape(-1, terminals.shape[-1])
             world_model_loss = self.world_model_loss(
