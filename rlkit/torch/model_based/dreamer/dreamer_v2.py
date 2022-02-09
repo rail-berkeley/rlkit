@@ -1,4 +1,6 @@
+import os
 import os.path as osp
+import pickle
 from collections import Counter, OrderedDict
 
 import numpy as np
@@ -16,7 +18,6 @@ from rlkit.torch.torch_rl_algorithm import TorchTrainer
 class DreamerV2Trainer(TorchTrainer, LossFunction):
     def __init__(
         self,
-        env,
         actor,
         vf,
         target_vf,
@@ -63,14 +64,13 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         torch.backends.cudnn.benchmark = True
 
         self.scaler = torch.cuda.amp.GradScaler()
-        self.env = env
         self.use_pred_discount = use_pred_discount
         self.actor = actor.to(ptu.device)
         self.world_model = world_model.to(ptu.device)
         self.vf = vf.to(ptu.device)
         self.target_vf = target_vf.to(ptu.device)
 
-        self.optimizer_class = optim.Adam
+        optimizer_class = optim.Adam
 
         self.actor_lr = actor_lr
         self.adam_eps = adam_eps
@@ -78,26 +78,26 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.vf_lr = vf_lr
         self.world_model_lr = world_model_lr
 
-        self.actor_optimizer = self.optimizer_class(
+        self.actor_optimizer = optimizer_class(
             self.actor.parameters(),
             lr=actor_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.vf_optimizer = self.optimizer_class(
+        self.vf_optimizer = optimizer_class(
             self.vf.parameters(),
             lr=vf_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
-        self.world_model_optimizer = self.optimizer_class(
+        self.world_model_optimizer = optimizer_class(
             self.world_model.parameters(),
             lr=world_model_lr,
             eps=adam_eps,
             weight_decay=weight_decay,
         )
         self.use_actor_value_optimizer = use_actor_value_optimizer
-        self.actor_value_optimizer = self.optimizer_class(
+        self.actor_value_optimizer = optimizer_class(
             list(self.actor.parameters()) + list(self.vf.parameters()),
             lr=actor_value_lr,
             eps=adam_eps,
@@ -114,6 +114,7 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.reward_loss_scale = reward_loss_scale
         self.transition_loss_scale = transition_loss_scale
         self.policy_gradient_loss_scale = policy_gradient_loss_scale
+        self.actor_entropy_loss_schedule = actor_entropy_loss_schedule
         self.actor_entropy_loss_scale = lambda x=actor_entropy_loss_schedule: schedule(
             x, self._n_train_steps_total
         )
@@ -835,11 +836,99 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
             prefix + "RAPS Obs Primitive Discount Error"
         ] = discount_error
 
-    def save(self, filepath):
-        torch.save(self.actor.state_dict(), osp.join(filepath, "actor.ptc"))
-        torch.save(self.vf.state_dict(), osp.join(filepath, "vf.ptc"))
-        torch.save(self.target_vf.state_dict(), osp.join(filepath, "target_vf.ptc"))
-        torch.save(self.world_model.state_dict(), osp.join(filepath, "world_model.ptc"))
+    def save(self, path, suffix):
+        actor = self.actor
+        vf = self.vf
+        world_model = self.world_model
+        target_vf = self.target_vf
+        actor_optimizer = self.actor_optimizer
+        vf_optimizer = self.vf_optimizer
+        world_model_optimizer = self.world_model_optimizer
+        scaler = self.scaler
+        actor_value_optimizer = self.actor_value_optimizer
+        actor_entropy_loss_scale = self.actor_entropy_loss_scale
+
+        delattr(self, "actor")
+        delattr(self, "vf")
+        delattr(self, "world_model")
+        delattr(self, "target_vf")
+        delattr(self, "actor_optimizer")
+        delattr(self, "vf_optimizer")
+        delattr(self, "world_model_optimizer")
+        delattr(self, "scaler")
+        delattr(self, "actor_value_optimizer")
+        delattr(self, "actor_entropy_loss_scale")
+
+        if hasattr(self, "buffer"):
+            delattr(self, "buffer")
+
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        torch.save(
+            {
+                "actor_state_dict": actor.state_dict(),
+                "vf_state_dict": vf.state_dict(),
+                "world_model_state_dict": world_model.state_dict(),
+                "target_vf_state_dict": target_vf.state_dict(),
+                "actor_optimizer_state_dict": actor_optimizer.state_dict(),
+                "vf_optimizer_state_dict": vf_optimizer.state_dict(),
+                "world_model_optimizer_state_dict": world_model_optimizer.state_dict(),
+                "scaler_state_dict": scaler.state_dict(),
+                "actor_value_optimizer_state_dict": actor_value_optimizer.state_dict(),
+            },
+            os.path.join(path, base_suffix + "_networks_and_optimizers.ptc"),
+        )
+
+        self.actor = actor
+        self.vf = vf
+        self.world_model = world_model
+        self.target_vf = target_vf
+        self.actor_optimizer = actor_optimizer
+        self.vf_optimizer = vf_optimizer
+        self.world_model_optimizer = world_model_optimizer
+        self.scaler = scaler
+        self.actor_value_optimizer = actor_value_optimizer
+        self.actor_entropy_loss_scale = actor_entropy_loss_scale
+
+    def load(self, path, suffix):
+        trainer = pickle.load(open(os.path.join(path, suffix), "rb"))
+        trainer.actor = self.actor
+        trainer.vf = self.vf
+        trainer.world_model = self.world_model
+        trainer.target_vf = self.target_vf
+        trainer.actor_optimizer = self.actor_optimizer
+        trainer.vf_optimizer = self.vf_optimizer
+        trainer.world_model_optimizer = self.world_model_optimizer
+        trainer.scaler = self.scaler
+        trainer.actor_value_optimizer = self.actor_value_optimizer
+
+        base_suffix = suffix.replace(".pkl", "")
+        checkpoint = torch.load(
+            os.path.join(path, base_suffix + "_networks_and_optimizers.ptc")
+        )
+        trainer.actor.load_state_dict(checkpoint["actor_state_dict"])
+        trainer.vf.load_state_dict(checkpoint["vf_state_dict"])
+        trainer.world_model.load_state_dict(checkpoint["world_model_state_dict"])
+        trainer.target_vf.load_state_dict(checkpoint["target_vf_state_dict"])
+        trainer.actor_optimizer.load_state_dict(
+            checkpoint["actor_optimizer_state_dict"]
+        )
+        trainer.vf_optimizer.load_state_dict(checkpoint["vf_optimizer_state_dict"])
+        trainer.world_model_optimizer.load_state_dict(
+            checkpoint["world_model_optimizer_state_dict"]
+        )
+        trainer.scaler.load_state_dict(checkpoint["scaler_state_dict"])
+        trainer.actor_value_optimizer.load_state_dict(
+            checkpoint["actor_value_optimizer_state_dict"]
+        )
+        trainer.actor_entropy_loss_scale = (
+            lambda x=self.actor_entropy_loss_schedule: schedule(
+                x, self._n_train_steps_total
+            )
+        )
+
+        return trainer
 
 
 class DreamerV2LowLevelRAPSTrainer(DreamerV2Trainer):

@@ -39,7 +39,15 @@ def experiment(variant):
             lambda: primitives_make_env.make_env(env_suite, env_name, env_kwargs)
             for _ in range(num_expl_envs)
         ]
-        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+        expl_env = StableBaselinesVecEnv(
+            env_fns=env_fns,
+            start_method="fork",
+            reload_state_args=(
+                num_expl_envs,
+                primitives_make_env.make_env,
+                (env_suite, env_name, env_kwargs),
+            ),
+        )
     else:
         expl_envs = [primitives_make_env.make_env(env_suite, env_name, env_kwargs)]
         expl_env = DummyVecEnv(
@@ -142,7 +150,7 @@ def experiment(variant):
 
     variant["replay_buffer_kwargs"]["use_batch_length"] = use_batch_length
     replay_buffer = EpisodeReplayBuffer(
-        expl_env,
+        num_expl_envs,
         obs_dim,
         action_dim,
         **variant["replay_buffer_kwargs"],
@@ -162,9 +170,7 @@ def experiment(variant):
         eval_buffer.load_buffer(eval_filename, eval_env.envs[0].num_primitives)
     else:
         eval_buffer = None
-    trainer_class = DreamerV2Trainer
-    trainer = trainer_class(
-        eval_env,
+    trainer = DreamerV2Trainer(
         actor,
         vf,
         target_vf,

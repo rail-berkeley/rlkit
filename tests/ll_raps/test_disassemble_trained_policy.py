@@ -15,7 +15,6 @@ from rlkit.torch.model_based.dreamer.experiments.experiment_utils import (
     preprocess_variant_llraps,
 )
 from rlkit.torch.model_based.dreamer.mlp import Mlp
-from rlkit.torch.model_based.dreamer.visualization import visualize_rollout
 from rlkit.torch.model_based.dreamer.world_models import LowlevelRAPSWorldModel
 
 

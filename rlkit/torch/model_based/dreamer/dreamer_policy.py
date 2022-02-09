@@ -1,3 +1,6 @@
+import os
+import pickle
+
 import numpy as np
 import torch
 
@@ -59,6 +62,37 @@ class DreamerPolicy(Policy):
 
     def reset(self, o):
         self.state = None
+
+    def save(self, path, suffix):
+        world_model = self.world_model
+        actor = self.actor
+
+        delattr(self, "world_model")
+        delattr(self, "actor")
+
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        torch.save(
+            {
+                "actor_state_dict": actor.state_dict(),
+                "world_model_state_dict": world_model.state_dict(),
+            },
+            os.path.join(path, base_suffix + "_networks.ptc"),
+        )
+
+        self.world_model = world_model
+        self.actor = actor
+
+    def load(self, path, suffix):
+        policy = pickle.load(open(os.path.join(path, suffix), "rb"))
+        policy.world_model = self.world_model
+        policy.actor = self.actor
+        base_suffix = suffix.replace(".pkl", "")
+        checkpoint = torch.load(os.path.join(path, base_suffix + "_networks.ptc"))
+        policy.actor.load_state_dict(checkpoint["actor_state_dict"])
+        policy.world_model.load_state_dict(checkpoint["world_model_state_dict"])
+        return policy
 
 
 class DreamerLowLevelRAPSPolicy(DreamerPolicy):
@@ -138,3 +172,16 @@ class ActionSpaceSamplePolicy(Policy):
 
     def reset(self, o):
         return super().reset()
+
+    def save(self, path, suffix):
+        env = self.env
+        delattr(self, "env")
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+        base_suffix = suffix.replace(".pkl", "")
+        env.save(path, base_suffix + "_env.pkl")
+        self.env = env
+
+    def load(self, path, suffix):
+        policy = pickle.load(open(os.path.join(path, suffix), "rb"))
+        base_suffix = suffix.replace(".pkl", "")
+        policy.env = self.env.load(path, base_suffix + "_env.pkl")

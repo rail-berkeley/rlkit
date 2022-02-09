@@ -1,4 +1,6 @@
 import gc
+import os
+import pickle
 import warnings
 
 import h5py
@@ -15,7 +17,7 @@ from rlkit.torch.model_based.dreamer.utils import (
 class EpisodeReplayBuffer(SimpleReplayBuffer):
     def __init__(
         self,
-        env,
+        n_envs,
         observation_dim,
         action_dim,
         max_replay_buffer_size,
@@ -24,12 +26,8 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         batch_length=50,
         use_batch_length=False,
     ):
-        self.env = env
-        self._ob_space = env.observation_space
-        self._action_space = env.action_space
+        self.n_envs = n_envs
 
-        self._observation_dim = get_dim(self._ob_space)
-        self._action_dim = get_dim(self._action_space)
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
@@ -51,25 +49,25 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
 
     def add_path(self, path):
         # transpose to change from path collector format (path_length, batch) or buffer format (batch, path_length)
-        self._observations[self._top : self._top + self.env.n_envs] = path[
+        self._observations[self._top : self._top + self.n_envs] = path[
             "observations"
         ].transpose(1, 0, 2)
-        self._actions[self._top : self._top + self.env.n_envs] = path[
-            "actions"
-        ].transpose(1, 0, 2)
-        self._rewards[self._top : self._top + self.env.n_envs] = np.expand_dims(
+        self._actions[self._top : self._top + self.n_envs] = path["actions"].transpose(
+            1, 0, 2
+        )
+        self._rewards[self._top : self._top + self.n_envs] = np.expand_dims(
             path["rewards"].transpose(1, 0), -1
         )
-        self._terminals[self._top : self._top + self.env.n_envs] = np.expand_dims(
+        self._terminals[self._top : self._top + self.n_envs] = np.expand_dims(
             path["terminals"].transpose(1, 0), -1
         )
 
         self._advance()
 
     def _advance(self):
-        self._top = (self._top + self.env.n_envs) % self._max_replay_buffer_size
+        self._top = (self._top + self.n_envs) % self._max_replay_buffer_size
         if self._size < self._max_replay_buffer_size:
-            self._size += self.env.n_envs
+            self._size += self.n_envs
 
     def random_batch(self, batch_size):
         if self.use_batch_length:
@@ -133,11 +131,58 @@ class EpisodeReplayBuffer(SimpleReplayBuffer):
         d["reward_in_buffer"] = self._rewards.sum()
         return d
 
+    def save(self, path, suffix):
+        observations = self._observations
+        actions = self._actions
+        rewards = self._rewards
+        terminals = self._terminals
+
+        delattr(self, "_observations")
+        delattr(self, "_actions")
+        delattr(self, "_rewards")
+        delattr(self, "_terminals")
+
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        f = h5py.File(os.path.join(path, base_suffix + "_contents.hdf5"), "w")
+        f.create_dataset(
+            "observations", data=observations, compression="gzip", compression_opts=9
+        )
+        f.create_dataset(
+            "actions", data=actions, compression="gzip", compression_opts=9
+        )
+        f.create_dataset(
+            "rewards", data=rewards, compression="gzip", compression_opts=9
+        )
+        f.create_dataset(
+            "terminals", data=terminals, compression="gzip", compression_opts=9
+        )
+        f.close()
+
+        self._observations = observations
+        self._actions = actions
+        self._rewards = rewards
+        self._terminals = terminals
+
+    def load(self, path, suffix):
+        replay_buffer = pickle.load(open(os.path.join(path, suffix), "rb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        f = h5py.File(os.path.join(path, base_suffix + "buffer_contents.hdf5"), "r")
+        replay_buffer._observations = f["observations"][:]
+        replay_buffer._actions = f["actions"][:]
+        replay_buffer._rewards = f["rewards"][:]
+        replay_buffer._terminals = f["terminals"][:]
+        f.close()
+
+        return replay_buffer
+
 
 class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
     def __init__(
         self,
-        env,
+        n_envs,
         observation_dim,
         action_dim,
         max_replay_buffer_size,
@@ -150,12 +195,8 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         prioritize_fraction=0,
         uniform_priorities=True,
     ):
-        self.env = env
-        self._ob_space = env.observation_space
-        self._action_space = env.action_space
+        self.n_envs = n_envs
 
-        self._observation_dim = get_dim(self._ob_space)
-        self._action_dim = get_dim(self._action_space)
         self.max_path_length = max_path_length
         self._max_replay_buffer_size = max_replay_buffer_size
         self._observations = np.zeros(
@@ -193,28 +234,26 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         self.uniform_priorities = uniform_priorities
 
     def add_path(self, path):
-        self._observations[self._top : self._top + self.env.n_envs] = path[
-            "observations"
-        ]
-        self._low_level_actions[self._top : self._top + self.env.n_envs] = path[
+        self._observations[self._top : self._top + self.n_envs] = path["observations"]
+        self._low_level_actions[self._top : self._top + self.n_envs] = path[
             "low_level_actions"
         ]
-        self._high_level_actions[self._top : self._top + self.env.n_envs] = path[
+        self._high_level_actions[self._top : self._top + self.n_envs] = path[
             "high_level_actions"
         ]
-        self._rewards[self._top : self._top + self.env.n_envs] = np.expand_dims(
+        self._rewards[self._top : self._top + self.n_envs] = np.expand_dims(
             path["rewards"].transpose(1, 0), -1
         )
-        self._terminals[self._top : self._top + self.env.n_envs] = np.expand_dims(
+        self._terminals[self._top : self._top + self.n_envs] = np.expand_dims(
             path["terminals"].transpose(1, 0), -1
         )
 
         self._advance()
 
     def _advance(self):
-        self._top = (self._top + self.env.n_envs) % self._max_replay_buffer_size
+        self._top = (self._top + self.n_envs) % self._max_replay_buffer_size
         if self._size < self._max_replay_buffer_size:
-            self._size += self.env.n_envs
+            self._size += self.n_envs
 
     def random_batch(self, batch_size):
         mask = np.where(self._rewards[: self._size].sum(axis=1) > 0, 1, 0)[:, 0]
@@ -292,3 +331,63 @@ class EpisodeReplayBufferLowLevelRAPS(EpisodeReplayBuffer):
         del rewards
         del terminals
         gc.collect()
+
+    def save(self, path, suffix):
+        observations = self._observations
+        low_level_actions = self._low_level_actions
+        high_level_actions = self._high_level_actions
+        rewards = self._rewards
+        terminals = self._terminals
+
+        delattr(self, "_observations")
+        delattr(self, "_low_level_actions")
+        delattr(self, "_high_level_actions")
+        delattr(self, "_rewards")
+        delattr(self, "_terminals")
+
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        f = h5py.File(os.path.join(path, base_suffix + "_contents.hdf5"), "w")
+        f.create_dataset(
+            "observations", data=observations, compression="gzip", compression_opts=9
+        )
+        f.create_dataset(
+            "low_level_actions",
+            data=low_level_actions,
+            compression="gzip",
+            compression_opts=9,
+        )
+        f.create_dataset(
+            "high_level_actions",
+            data=high_level_actions,
+            compression="gzip",
+            compression_opts=9,
+        )
+        f.create_dataset(
+            "rewards", data=rewards, compression="gzip", compression_opts=9
+        )
+        f.create_dataset(
+            "terminals", data=terminals, compression="gzip", compression_opts=9
+        )
+        f.close()
+
+        self._observations = observations
+        self._low_level_actions = low_level_actions
+        self._high_level_actions = high_level_actions
+        self._rewards = rewards
+        self._terminals = terminals
+
+    def load(self, path, suffix):
+        replay_buffer = pickle.load(open(os.path.join(path, suffix), "rb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        f = h5py.File(os.path.join(path, base_suffix + "buffer_contents.hdf5"), "r")
+        replay_buffer._observations = f["observations"][:]
+        replay_buffer._low_level_actions = f["low_level_actions"][:]
+        replay_buffer._high_level_actions = f["high_level_actions"][:]
+        replay_buffer._rewards = f["rewards"][:]
+        replay_buffer._terminals = f["terminals"][:]
+        f.close()
+
+        return replay_buffer

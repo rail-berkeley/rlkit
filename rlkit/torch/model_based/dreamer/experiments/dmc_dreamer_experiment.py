@@ -116,11 +116,11 @@ def experiment(variant):
     )
 
     replay_buffer = EpisodeReplayBuffer(
-        variant["replay_buffer_size"],
-        expl_env,
-        501,
+        1,
         obs_dim,
         action_dim,
+        variant["replay_buffer_size"],
+        500,
         replace=False,
         use_batch_length=True,
         batch_length=50,
@@ -131,7 +131,6 @@ def experiment(variant):
     else:
         trainer_class = DreamerTrainer
     trainer = trainer_class(
-        env=eval_env,
         world_model=world_model,
         actor=actor,
         vf=vf,
@@ -149,10 +148,6 @@ def experiment(variant):
         **variant["algorithm_kwargs"],
     )
     algorithm.to(ptu.device)
-    # if variant.get("save_video", False):
-    #     algorithm.post_epoch_funcs.append(post_epoch_visualize_func)
     print("TRAINING")
     algorithm.to(ptu.device)
     algorithm.train()
-    # if variant.get("save_video", False):
-    #     post_epoch_visualize_func(algorithm, -1)

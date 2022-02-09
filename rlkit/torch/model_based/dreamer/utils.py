@@ -161,3 +161,50 @@ def subsample_array_across_batch_length(
         return indexed_arr, batch_indices
     else:
         return indexed_arr
+
+
+def save_env(env, path):
+    import pickle
+
+    pickle.dump(env, open(path, "wb"))
+
+
+def load_env(path):
+    import pickle
+
+    env = pickle.load(open(path, "rb"))
+    return env
+
+
+def save_vec_env(path, env_suite, env_name, env_kwargs, n_envs, make_env):
+    import pickle
+
+    env_kwargs["n_envs"] = n_envs
+    env_kwargs["make_env"] = make_env
+    env_kwargs["env_name"] = env_name
+    env_kwargs["env_suite"] = env_suite
+    pickle.dump(env_kwargs, open(path, "wb"))
+
+
+def load_vec_env(path):
+    """
+    Since we cannot pickle a vec env directly, we have to rebuild it from the env_kwargs.
+    This will lose saved elements of the vec env / reset them.
+    """
+    import pickle
+
+    from rlkit.envs.wrappers.mujoco_vec_wrappers import StableBaselinesVecEnv
+
+    env_kwargs = pickle.load(open(path, "rb"))
+    make_env = env_kwargs["make_env"]
+    n_envs = env_kwargs["n_envs"]
+    env_name = env_kwargs["env_name"]
+    env_suite = env_kwargs["env_suite"]
+    del env_kwargs["make_env"]
+    del env_kwargs["n_envs"]
+    del env_kwargs["env_name"]
+    del env_kwargs["env_suite"]
+
+    env_fns = [lambda: make_env(env_suite, env_name, env_kwargs) for _ in range(n_envs)]
+    env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+    return env

@@ -1,4 +1,6 @@
 import abc
+import os
+import pickle
 import time
 from collections import OrderedDict
 
@@ -210,7 +212,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.replay_buffer.add_paths(init_expl_paths)
             self.expl_data_collector.end_epoch(-1)
         self.total_train_expl_time += time.time() - st
-        self.trainer.buffer = self.replay_buffer
+        self.trainer.buffer = self.replay_buffer  # TODO: make a cleaner of doing this
         self.training_mode(True)
         for _ in range(self.num_pretrain_steps):
             train_data = self.replay_buffer.random_batch(self.batch_size)
@@ -252,6 +254,68 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
             self.total_train_expl_time += time.time() - st
 
             self._end_epoch(epoch)
+
+    def save(self):
+        path = logger.get_snapshot_dir()
+        trainer = self.trainer
+        expl_data_collector = self.expl_data_collector
+        eval_data_collector = self.eval_data_collector
+        replay_buffer = self.replay_buffer
+        expl_env = self.expl_env
+        eval_env = self.eval_env
+        pretrain_policy = self.pretrain_policy
+
+        delattr(self, "trainer")
+        delattr(self, "expl_data_collector")
+        delattr(self, "eval_data_collector")
+        delattr(self, "replay_buffer")
+        delattr(self, "expl_env")
+        delattr(self, "eval_env")
+        delattr(self, "pretrain_policy")
+
+        pickle.dump(self, open(os.path.join(path, "algorithm.pkl"), "wb"))
+
+        trainer.save(path, "trainer.pkl")
+        expl_data_collector.save(path, "expl_data_collector.pkl")
+        eval_data_collector.save(path, "eval_data_collector.pkl")
+        replay_buffer.save(path, "replay_buffer.pkl")
+        expl_env.save(path, "expl_env.pkl")
+        eval_env.save(path, "eval_env.pkl")
+        pretrain_policy.save(path, "pretrain_policy.pkl")
+
+        self.trainer = trainer
+        self.expl_data_collector = expl_data_collector
+        self.eval_data_collector = eval_data_collector
+        self.replay_buffer = replay_buffer
+        self.expl_env = expl_env
+        self.eval_env = eval_env
+        self.pretrain_policy = pretrain_policy
+
+    def load(self):
+        path = logger.get_snapshot_dir()
+        algorithm = pickle.load(open(os.path.join(path, "algorithm.pkl"), "rb"))
+        algorithm.trainer = self.trainer
+        algorithm.expl_data_collector = self.expl_data_collector
+        algorithm.eval_data_collector = self.eval_data_collector
+        algorithm.replay_buffer = self.replay_buffer
+        algorithm.expl_env = self.expl_env
+        algorithm.eval_env = self.eval_env
+        algorithm.pretrain_policy = self.pretrain_policy
+
+        algorithm.trainer.load(path, "trainer.pkl")
+        algorithm.expl_data_collector.load(path, "expl_data_collector.pkl")
+        algorithm.eval_data_collector.load(path, "eval_data_collector.pkl")
+        algorithm.replay_buffer.load(path, "replay_buffer.pkl")
+        algorithm.expl_env.load(path, "expl_env.pkl")
+        algorithm.eval_env.load(path, "eval_env.pkl")
+        algorithm.pretrain_policy.load(path, "pretrain_policy.pkl")
+        return algorithm
+
+    def _end_epoch(self, epoch):
+        super()._end_epoch(epoch)
+        if epoch % 100 == 0:
+            # TODO: update this hardcoded quantity, just something large so you don't save every epoch
+            self.save()
 
 
 class TorchBatchRLAlgorithm(BatchRLAlgorithm):

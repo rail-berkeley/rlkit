@@ -21,7 +21,10 @@ class TimeLimit(gym.Wrapper):
         self._step = None
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def step(
         self,
@@ -56,7 +59,10 @@ class ActionRepeat(gym.Wrapper):
         self._amount = amount
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def step(
         self,
@@ -94,7 +100,10 @@ class NormalizeActions(gym.Wrapper):
         self.action_space = gym.spaces.Box(low, high, dtype=np.float32)
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def step(
         self,
@@ -125,7 +134,10 @@ class ImageUnFlattenWrapper(gym.Wrapper):
         )
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def reset(self):
         obs = self.env.reset()
@@ -190,7 +202,10 @@ class MetaworldWrapper(gym.Wrapper):
         return img
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def reset(self):
         obs = super().reset()
@@ -703,7 +718,10 @@ class RobosuiteWrapper(GymWrapper):
         self.observation_space = spaces.Box(0, 255, (self.imlength,), dtype=np.uint8)
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
     def reset(self):
         o = super().reset()
@@ -742,7 +760,10 @@ class RobosuiteWrapper(GymWrapper):
         return obs, reward, done, new_info
 
     def __getattr__(self, name):
-        return getattr(self.env, name)
+        if name != "env":
+            return getattr(self.env, name)
+        else:
+            raise AttributeError("")
 
 
 class NormalizeBoxEnvFixed(NormalizedBoxEnv):

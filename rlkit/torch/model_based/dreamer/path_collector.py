@@ -1,3 +1,5 @@
+import os
+import pickle
 from collections import OrderedDict, deque
 
 from rlkit.core.eval_util import create_stats_ordered_dict
@@ -130,3 +132,26 @@ class VecMdpPathCollector(PathCollector):
         if self.env_class:
             snapshot_dict["env_class"] = self.env_class
         return snapshot_dict
+
+    def save(self, path, suffix):
+        env = self._env
+        policy = self._policy
+
+        delattr(self, "_env")
+        delattr(self, "_policy")
+        pickle.dump(self, open(os.path.join(path, suffix), "wb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        env.save(path, base_suffix + "_env.pkl")
+        policy.save(path, base_suffix + "_policy.pkl")
+
+        self._env = env
+        self._policy = policy
+
+    def load(self, path, suffix):
+        collector = pickle.load(open(os.path.join(path, suffix), "rb"))
+
+        base_suffix = suffix.replace(".pkl", "")
+        collector._env = self._env.load(path, base_suffix + "_env.pkl")
+        collector._policy = self._policy.load(path, base_suffix + "_policy.pkl")
+        return collector

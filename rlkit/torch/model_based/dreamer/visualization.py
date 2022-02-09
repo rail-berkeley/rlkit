@@ -386,8 +386,6 @@ def post_epoch_visualize_func(algorithm, epoch):
                 use_true_actions=False,
                 num_rollouts=2,
             )
-        print("Saving networks: ")
-        algorithm.trainer.save(logger.get_snapshot_dir())
 
 
 @torch.no_grad()

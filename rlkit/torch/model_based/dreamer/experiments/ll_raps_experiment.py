@@ -47,7 +47,15 @@ def experiment(variant):
 
     if num_expl_envs > 1:
         env_fns = [make_env_lambda for _ in range(num_expl_envs)]
-        expl_env = StableBaselinesVecEnv(env_fns=env_fns, start_method="fork")
+        expl_env = StableBaselinesVecEnv(
+            env_fns=env_fns,
+            start_method="fork",
+            reload_state_args=(
+                num_expl_envs,
+                make_env,
+                (env_suite, env_name, env_kwargs),
+            ),
+        )
     else:
         expl_envs = [make_env_lambda()]
         expl_env = DummyVecEnv(
@@ -169,7 +177,7 @@ def experiment(variant):
     )
 
     replay_buffer = EpisodeReplayBufferLowLevelRAPS(
-        expl_env, obs_dim, action_dim, **variant["replay_buffer_kwargs"]
+        num_expl_envs, obs_dim, action_dim, **variant["replay_buffer_kwargs"]
     )
     filename = variant.get("replay_buffer_path", None)
     if filename is not None:
@@ -191,7 +199,6 @@ def experiment(variant):
         eval_buffer = None
 
     trainer = DreamerV2LowLevelRAPSTrainer(
-        eval_env,
         actor,
         vf,
         target_vf,
