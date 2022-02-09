@@ -313,7 +313,7 @@ class BatchRLAlgorithm(BaseRLAlgorithm, metaclass=abc.ABCMeta):
 
     def _end_epoch(self, epoch):
         super()._end_epoch(epoch)
-        if epoch % 100 == 0:
+        if (epoch + 1) % 100 == 0:
             # TODO: update this hardcoded quantity, just something large so you don't save every epoch
             self.save()
 
