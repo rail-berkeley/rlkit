@@ -860,7 +860,11 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         delattr(self, "actor_entropy_loss_scale")
 
         if hasattr(self, "buffer"):
+            buffer = self.buffer
             delattr(self, "buffer")
+            had_buffer = True
+        else:
+            had_buffer = False
 
         pickle.dump(self, open(os.path.join(path, suffix), "wb"))
 
@@ -890,6 +894,8 @@ class DreamerV2Trainer(TorchTrainer, LossFunction):
         self.scaler = scaler
         self.actor_value_optimizer = actor_value_optimizer
         self.actor_entropy_loss_scale = actor_entropy_loss_scale
+        if had_buffer:
+            self.buffer = buffer
 
     def load(self, path, suffix):
         trainer = pickle.load(open(os.path.join(path, suffix), "rb"))
