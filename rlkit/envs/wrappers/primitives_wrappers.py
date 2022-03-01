@@ -1,6 +1,7 @@
 import gym
 import mujoco_py
 import numpy as np
+import pdb
 from d4rl.kitchen.adept_envs.simulation.renderer import DMRenderer
 from gym import spaces
 from gym.spaces.box import Box
@@ -181,7 +182,7 @@ class MetaworldWrapper(gym.Wrapper):
         self.imwidth = imwidth
         self.imheight = imheight
         self.observation_space = Box(
-            0, 255, (3 * self.imwidth * self.imheight,), dtype=np.uint8
+            0, 255, (6 * self.imwidth * self.imheight,), dtype=np.uint8
         )
         self.image_shape = (3, self.imwidth, self.imheight)
         self.reward_scale = reward_scale
