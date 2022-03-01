@@ -505,10 +505,17 @@ class DMControlBackendMetaworldMujocoEnv(MujocoEnv):
         if mode == "human":
             self.renderer.render_to_window()
         elif mode == "rgb_array":
-            return self.renderer.render_offscreen(
+            # TODO Why reverse iterate?
+            primary_img = self.renderer.render_offscreen(
                 imwidth,
                 imheight,
             )[:, :, ::-1]
+            gripper_img = self.renderer.render_offscreen(
+                imwidth,
+                imheight,
+                camera_id=self.model.camera_name2id('gripperPOV')
+            )[:, :, :: -1]
+            return np.concatenate([primary_img, gripper_img], axis=2)
         else:
             raise ValueError("mode can only be either 'human' or 'rgb_array'")
 
