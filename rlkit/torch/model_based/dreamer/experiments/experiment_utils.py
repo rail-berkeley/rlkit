@@ -49,7 +49,7 @@ def preprocess_variant_llraps(variant):
     ]
 
     variant["replay_buffer_kwargs"]["max_replay_buffer_size"] = int(
-        3e6
+        3e4
         / (
             variant["num_low_level_actions_per_primitive"] * variant["max_path_length"]
             + 1
