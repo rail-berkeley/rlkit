@@ -19,8 +19,7 @@ https://github.com/anair13/mj_envs
 
 Data can be downloaded from the following links:
 
-MuJoCo benchmark tasks - https://drive.google.com/file/d/1edcuicVv2d-PqH1aZUVbO5CeRq3lqK89/view
-
-Dexterous manipulation - https://drive.google.com/file/d/1SsVaQKZnY5UkuR78WrInp9XxTdKHbF0x/view
+MuJoCo benchmark tasks - https://drive.google.com/file/d/1IMUqUShv7tVqBvowvPkORe50KJ9gqPgR/view?usp=sharing
+Dexterous manipulation - https://drive.google.com/file/d/1yUdJnGgYit94X_AvV6JJP5Y3Lx2JF30Y/view?usp=sharing
 
 You will then have to update the paths in rlkit/launchers/experiments/awac/awac_rl.py
